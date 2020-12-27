@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"sort"
 	"ticker-tape/internal/quote"
 	"ticker-tape/internal/ui/component/watchlist"
 	"time"
@@ -33,7 +34,7 @@ type Model struct {
 func (m Model) updateQuotes() tea.Cmd {
 	return tea.Tick(time.Second*time.Duration(m.requestInterval), func(t time.Time) tea.Msg {
 		return QuoteMsg{
-			quotes: m.requestQuotes(m.symbols),
+			quotes: sortQuotes(m.requestQuotes(m.symbols)),
 		}
 	})
 }
@@ -58,7 +59,7 @@ func (m Model) Init() tea.Cmd {
 	m.watchlist = watchlist.NewModel()
 	return func() tea.Msg {
 		return QuoteMsg{
-			quotes: m.requestQuotes(m.symbols),
+			quotes: sortQuotes(m.requestQuotes(m.symbols)),
 		}
 	}
 }
@@ -117,4 +118,9 @@ func (m Model) View() string {
 
 func footer(elementWidth int) string {
 	return footerHighlightStyle(" 🚀 ticker-tape ") + helpStyle(" q: exit")
+}
+
+func sortQuotes(q []quote.Quote) []quote.Quote {
+	sort.Slice(q, func(i, j int) bool { return q[i].RegularMarketChangePercent < q[j].RegularMarketChangePercent })
+	return q
 }

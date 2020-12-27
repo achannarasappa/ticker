@@ -24,12 +24,6 @@ const (
 	maxPercentChangeColorGradient = 10
 )
 
-const (
-	PositivePriceChange = iota
-	NegativePriceChange
-	NeutralPriceChange
-)
-
 type Model struct {
 	Width  int
 	Quotes []quote.Quote
@@ -110,10 +104,10 @@ func priceText(change float64, changePercent float64) string {
 	}
 
 	if change > 0.0 {
-		return stylePricePositive(change)("↑ " + convertFloatToString(change) + "  (" + convertFloatToString(changePercent) + "%)")
+		return stylePricePositive(changePercent)("↑ " + convertFloatToString(change) + "  (" + convertFloatToString(changePercent) + "%)")
 	}
 
-	return stylePriceNegative(change)("↓ " + convertFloatToString(change) + " (" + convertFloatToString(changePercent) + "%)")
+	return stylePriceNegative(changePercent)("↓ " + convertFloatToString(change) + " (" + convertFloatToString(changePercent) + "%)")
 }
 
 // util
@@ -145,19 +139,8 @@ func getNormalizedPercentWithMax(percent float64, maxPercent float64) float64 {
 
 	absolutePercent := math.Abs(percent)
 	if absolutePercent > maxPercent {
-		return 1
+		return 1.0
 	}
-
-	return percent / maxPercent
-
-}
-
-// Accepts a start color, end color, and percent and returns the color at the position between them
-func getColorHex(startColorHex string, endColorHex string, normalizedPercent float64) string {
-
-	c1, _ := colorful.Hex(startColorHex)
-	c2, _ := colorful.Hex(endColorHex)
-
-	return c1.BlendHsv(c2, normalizedPercent).Hex()
+	return math.Abs(percent / maxPercent)
 
 }

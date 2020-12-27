@@ -25,13 +25,18 @@ func main() {
 		"ESTC",
 		"ARKW",
 		"BTC-USD",
+		"NIO",
+		"GME",
+		"CMPS",
 	}
 
 	p := tea.NewProgram(ui.NewModel(symbols, quote.GetQuotes))
 
+	p.EnableMouseCellMotion()
 	p.EnterAltScreen()
 	err := p.Start()
 	p.ExitAltScreen()
+	p.DisableMouseCellMotion()
 
 	if err != nil {
 		log.Fatal(err)

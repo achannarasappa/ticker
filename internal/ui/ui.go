@@ -48,13 +48,6 @@ func NewModel(symbols []string, requestQuotes func([]string) []quote.Quote) Mode
 	}
 }
 
-// func temp(symbols []string) []quote.Quote {
-// 	return []quote.Quote{
-// 		{Symbol: "AAPL", ShortName: "Apple, Inc.", RegularMarketPrice: 1000.1, RegularMarketChange: 10.1, RegularMarketChangePercent: 1.1},
-// 		{Symbol: "ABNB", ShortName: "AirBnB, Inc.", RegularMarketPrice: 645.1, RegularMarketChange: 4.1, RegularMarketChangePercent: 0.9},
-// 	}
-// }
-
 func (m Model) Init() tea.Cmd {
 	m.watchlist = watchlist.NewModel()
 	return func() tea.Msg {
@@ -68,8 +61,9 @@ type QuoteMsg struct {
 	quotes []quote.Quote
 }
 
-func (m Model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := message.(type) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+
+	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -105,6 +99,8 @@ func (m Model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	}
 
+	m.viewport, _ = m.viewport.Update(msg)
+
 	return m, nil
 }
 
@@ -113,10 +109,10 @@ func (m Model) View() string {
 		return "\n  Initalizing..."
 	}
 
-	return fmt.Sprintf("%s\n%s", m.viewport.View(), footer(m.viewport.Width))
+	return fmt.Sprintf("%s\n%s", m.viewport.View(), footer())
 }
 
-func footer(elementWidth int) string {
+func footer() string {
 	return footerHighlightStyle(" 🚀 ticker-tape ") + helpStyle(" q: exit")
 }
 

@@ -16,8 +16,8 @@ var (
 	styleNeutral       = util.NewStyle("#d4d4d4", "", false)
 	styleNeutralBold   = util.NewStyle("#d4d4d4", "", true)
 	styleNeutralFaded  = util.NewStyle("#616161", "", false)
-	stylePricePositive = newStyleFromGradient("#cae891", "#adff00")
-	stylePriceNegative = newStyleFromGradient("#f5a07d", "#ff5200")
+	stylePricePositive = newStyleFromGradient("#D8FF80", "#75BF00")
+	stylePriceNegative = newStyleFromGradient("#FFA780", "#BF3900")
 )
 
 const (
@@ -138,7 +138,7 @@ func newStyleFromGradient(startColorHex string, endColorHex string) func(float64
 func getNormalizedPercentWithMax(percent float64, maxPercent float64) float64 {
 
 	absolutePercent := math.Abs(percent)
-	if absolutePercent > maxPercent {
+	if absolutePercent >= maxPercent {
 		return 1.0
 	}
 	return math.Abs(percent / maxPercent)

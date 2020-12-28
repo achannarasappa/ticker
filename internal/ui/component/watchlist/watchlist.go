@@ -10,6 +10,7 @@ import (
 
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/muesli/reflow/ansi"
+	. "github.com/novalagung/gubrak"
 )
 
 var (
@@ -41,8 +42,9 @@ func (m Model) View() string {
 }
 
 func watchlist(q []quote.Quote, elementWidth int) string {
+	quotes := sortQuotes(q)
 	quoteSummaries := ""
-	for _, quote := range q {
+	for _, quote := range quotes {
 		quoteSummaries = quoteSummaries + "\n" + quoteSummary(quote, elementWidth)
 	}
 	return quoteSummaries
@@ -50,52 +52,18 @@ func watchlist(q []quote.Quote, elementWidth int) string {
 
 func quoteSummary(q quote.Quote, elementWidth int) string {
 
-	p := getPrice(q)
-
 	firstLine := lineWithGap(
 		styleNeutralBold(q.Symbol),
-		styleNeutral(convertFloatToString(p.Price)),
+		styleNeutral(convertFloatToString(q.Price)),
 		elementWidth,
 	)
 	secondLine := lineWithGap(
 		styleNeutralFaded(q.ShortName),
-		priceText(p.Change, p.ChangePercent),
+		priceText(q.Change, q.ChangePercent),
 		elementWidth,
 	)
 
 	return fmt.Sprintf("%s\n%s", firstLine, secondLine)
-}
-
-type quoteMeta struct {
-	Price         float64
-	Change        float64
-	ChangePercent float64
-}
-
-func getPrice(q quote.Quote) quoteMeta {
-
-	if q.MarketState == "REGULAR" {
-		return quoteMeta{
-			Price:         q.RegularMarketPrice,
-			Change:        q.RegularMarketChange,
-			ChangePercent: q.RegularMarketChangePercent,
-		}
-	}
-
-	if q.MarketState == "POST" {
-		return quoteMeta{
-			Price:         q.PostMarketPrice,
-			Change:        q.PostMarketChange,
-			ChangePercent: q.PostMarketChangePercent,
-		}
-	}
-
-	return quoteMeta{
-		Price:         q.RegularMarketPrice,
-		Change:        0.0,
-		ChangePercent: 0.0,
-	}
-
 }
 
 func priceText(change float64, changePercent float64) string {
@@ -143,4 +111,23 @@ func getNormalizedPercentWithMax(percent float64, maxPercent float64) float64 {
 	}
 	return math.Abs(percent / maxPercent)
 
+}
+
+// Sort by change percent and keep all inactive quotes at the end
+func sortQuotes(q []quote.Quote) []quote.Quote {
+	if len(q) <= 0 {
+		return q
+	}
+
+	activeQuotes, inactiveQuotes, _ := Partition(q, func(v quote.Quote) bool {
+		return v.IsActive
+	})
+
+	sortedActiveQuotes, _ := SortBy(activeQuotes, func(v quote.Quote) float64 {
+		return v.ChangePercent
+	})
+
+	concatQuotes, _ := Concat(sortedActiveQuotes, inactiveQuotes)
+
+	return (concatQuotes).([]quote.Quote)
 }

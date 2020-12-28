@@ -7,8 +7,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-type Quote struct {
-	Currency                   string  `json:"currency"`
+type ResponseQuote struct {
 	ShortName                  string  `json:"shortName"`
 	Symbol                     string  `json:"symbol"`
 	MarketState                string  `json:"marketState"`
@@ -20,11 +19,61 @@ type Quote struct {
 	PostMarketPrice            float64 `json:"postMarketPrice"`
 }
 
+type Quote struct {
+	ResponseQuote
+	Price         float64
+	Change        float64
+	ChangePercent float64
+	IsActive      bool
+}
+
 type Response struct {
 	QuoteResponse struct {
-		Quotes []Quote     `json:"result"`
-		Error  interface{} `json:"error"`
+		Quotes []ResponseQuote `json:"result"`
+		Error  interface{}     `json:"error"`
 	} `json:"quoteResponse"`
+}
+
+func transformResponseQuote(responseQuote ResponseQuote) Quote {
+
+	if responseQuote.MarketState == "REGULAR" {
+		return Quote{
+			ResponseQuote: responseQuote,
+			Price:         responseQuote.RegularMarketPrice,
+			Change:        responseQuote.RegularMarketChange,
+			ChangePercent: responseQuote.RegularMarketChangePercent,
+			IsActive:      true,
+		}
+	}
+
+	if responseQuote.MarketState == "POST" {
+		return Quote{
+			ResponseQuote: responseQuote,
+			Price:         responseQuote.PostMarketPrice,
+			Change:        responseQuote.PostMarketChange,
+			ChangePercent: responseQuote.PostMarketChangePercent,
+			IsActive:      true,
+		}
+	}
+
+	return Quote{
+		ResponseQuote: responseQuote,
+		Price:         responseQuote.RegularMarketPrice,
+		Change:        0.0,
+		ChangePercent: 0.0,
+		IsActive:      false,
+	}
+
+}
+
+func transformResponseQuotes(responseQuotes []ResponseQuote) []Quote {
+
+	quotes := make([]Quote, 0)
+	for _, responseQuote := range responseQuotes {
+		quotes = append(quotes, transformResponseQuote(responseQuote))
+	}
+	return quotes
+
 }
 
 func GetQuotes(symbols []string) []Quote {
@@ -34,5 +83,5 @@ func GetQuotes(symbols []string) []Quote {
 		SetResult(&Response{}).
 		Get(url)
 
-	return (response.Result().(*Response)).QuoteResponse.Quotes
+	return transformResponseQuotes((response.Result().(*Response)).QuoteResponse.Quotes)
 }

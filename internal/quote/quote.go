@@ -21,10 +21,11 @@ type ResponseQuote struct {
 
 type Quote struct {
 	ResponseQuote
-	Price         float64
-	Change        float64
-	ChangePercent float64
-	IsActive      bool
+	Price                   float64
+	Change                  float64
+	ChangePercent           float64
+	IsActive                bool
+	IsRegularTradingSession bool
 }
 
 type Response struct {
@@ -38,30 +39,45 @@ func transformResponseQuote(responseQuote ResponseQuote) Quote {
 
 	if responseQuote.MarketState == "REGULAR" {
 		return Quote{
-			ResponseQuote: responseQuote,
-			Price:         responseQuote.RegularMarketPrice,
-			Change:        responseQuote.RegularMarketChange,
-			ChangePercent: responseQuote.RegularMarketChangePercent,
-			IsActive:      true,
+			ResponseQuote:           responseQuote,
+			Price:                   responseQuote.RegularMarketPrice,
+			Change:                  responseQuote.RegularMarketChange,
+			ChangePercent:           responseQuote.RegularMarketChangePercent,
+			IsActive:                true,
+			IsRegularTradingSession: true,
 		}
 	}
 
 	if responseQuote.MarketState == "POST" {
 		return Quote{
-			ResponseQuote: responseQuote,
-			Price:         responseQuote.PostMarketPrice,
-			Change:        responseQuote.PostMarketChange,
-			ChangePercent: responseQuote.PostMarketChangePercent,
-			IsActive:      true,
+			ResponseQuote:           responseQuote,
+			Price:                   responseQuote.PostMarketPrice,
+			Change:                  responseQuote.PostMarketChange,
+			ChangePercent:           responseQuote.PostMarketChangePercent,
+			IsActive:                true,
+			IsRegularTradingSession: false,
 		}
 	}
 
+	// temporary for testing
+	// if responseQuote.MarketState == "CLOSED" {
+	// 	return Quote{
+	// 		ResponseQuote:           responseQuote,
+	// 		Price:                   responseQuote.RegularMarketPrice,
+	// 		Change:                  responseQuote.RegularMarketChange,
+	// 		ChangePercent:           responseQuote.RegularMarketChangePercent,
+	// 		IsActive:                true,
+	// 		IsRegularTradingSession: true,
+	// 	}
+	// }
+
 	return Quote{
-		ResponseQuote: responseQuote,
-		Price:         responseQuote.RegularMarketPrice,
-		Change:        0.0,
-		ChangePercent: 0.0,
-		IsActive:      false,
+		ResponseQuote:           responseQuote,
+		Price:                   responseQuote.RegularMarketPrice,
+		Change:                  0.0,
+		ChangePercent:           0.0,
+		IsActive:                false,
+		IsRegularTradingSession: false,
 	}
 
 }

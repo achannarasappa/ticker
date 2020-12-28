@@ -8,7 +8,6 @@ require (
 	github.com/charmbracelet/glamour v0.2.0
 	github.com/cjbassi/drawille-go v0.0.0-20190126131713-27dc511fe6fd // indirect
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776
-	github.com/gizak/termui/v3 v3.1.0
 	github.com/go-resty/resty/v2 v2.3.0
 	github.com/lucasb-eyer/go-colorful v1.0.3
 	github.com/mattn/go-runewidth v0.0.9

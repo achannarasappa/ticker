@@ -3,26 +3,25 @@ package watchlist
 import (
 	"fmt"
 	"math"
-	"strconv"
-	"strings"
 	"ticker-tape/internal/quote"
-	"ticker-tape/internal/ui/util"
+	. "ticker-tape/internal/ui/util"
 
 	"github.com/lucasb-eyer/go-colorful"
-	"github.com/muesli/reflow/ansi"
 	. "github.com/novalagung/gubrak"
 )
 
 var (
-	styleNeutral       = util.NewStyle("#d4d4d4", "", false)
-	styleNeutralBold   = util.NewStyle("#d4d4d4", "", true)
-	styleNeutralFaded  = util.NewStyle("#616161", "", false)
+	styleNeutral       = NewStyle("#d4d4d4", "", false)
+	styleNeutralBold   = NewStyle("#d4d4d4", "", true)
+	styleNeutralFaded  = NewStyle("#616161", "", false)
+	styleNeutralBgBold = NewStyle("#d4d4d4", "#3a3a3a", true)
 	stylePricePositive = newStyleFromGradient("#D8FF80", "#75BF00")
 	stylePriceNegative = newStyleFromGradient("#FFA780", "#BF3900")
 )
 
 const (
 	maxPercentChangeColorGradient = 10
+	extendedSessionOffset         = 30
 )
 
 type Model struct {
@@ -52,44 +51,45 @@ func watchlist(q []quote.Quote, elementWidth int) string {
 
 func quoteSummary(q quote.Quote, elementWidth int) string {
 
-	firstLine := lineWithGap(
+	firstLine := LineWithGap(
 		styleNeutralBold(q.Symbol),
-		styleNeutral(convertFloatToString(q.Price)),
+		LineWithGap(
+			marketStateText(q),
+			styleNeutral(ConvertFloatToString(q.Price)),
+			extendedSessionOffset,
+		),
 		elementWidth,
 	)
-	secondLine := lineWithGap(
+	secondLine := LineWithGap(
 		styleNeutralFaded(q.ShortName),
-		priceText(q.Change, q.ChangePercent),
+		LineWithGap(
+			marketStateText(q),
+			priceText(q.Change, q.ChangePercent),
+			extendedSessionOffset,
+		),
 		elementWidth,
 	)
 
 	return fmt.Sprintf("%s\n%s", firstLine, secondLine)
 }
 
+func marketStateText(q quote.Quote) string {
+	if q.IsRegularTradingSession {
+		return ""
+	}
+	return styleNeutralBgBold(" " + q.MarketState + " ")
+}
+
 func priceText(change float64, changePercent float64) string {
 	if change == 0.0 {
-		return styleNeutralFaded("  " + convertFloatToString(change) + "  (" + convertFloatToString(changePercent) + "%)")
+		return styleNeutralFaded("  " + ConvertFloatToString(change) + "  (" + ConvertFloatToString(changePercent) + "%)")
 	}
 
 	if change > 0.0 {
-		return stylePricePositive(changePercent)("↑ " + convertFloatToString(change) + "  (" + convertFloatToString(changePercent) + "%)")
+		return stylePricePositive(changePercent)("↑ " + ConvertFloatToString(change) + "  (" + ConvertFloatToString(changePercent) + "%)")
 	}
 
-	return stylePriceNegative(changePercent)("↓ " + convertFloatToString(change) + " (" + convertFloatToString(changePercent) + "%)")
-}
-
-// util
-func lineWithGap(leftText string, rightText string, elementWidth int) string {
-	innerGapWidth := elementWidth - ansi.PrintableRuneWidth(leftText) - ansi.PrintableRuneWidth(rightText)
-	if innerGapWidth > 0 {
-		return leftText + strings.Repeat(" ", innerGapWidth) + rightText
-	}
-
-	return leftText + " " + rightText
-}
-
-func convertFloatToString(f float64) string {
-	return strconv.FormatFloat(f, 'f', 2, 64)
+	return stylePriceNegative(changePercent)("↓ " + ConvertFloatToString(change) + " (" + ConvertFloatToString(changePercent) + "%)")
 }
 
 func newStyleFromGradient(startColorHex string, endColorHex string) func(float64) func(string) string {
@@ -98,7 +98,7 @@ func newStyleFromGradient(startColorHex string, endColorHex string) func(float64
 
 	return func(percent float64) func(string) string {
 		normalizedPercent := getNormalizedPercentWithMax(percent, maxPercentChangeColorGradient)
-		return util.NewStyle(c1.BlendHsv(c2, normalizedPercent).Hex(), "", false)
+		return NewStyle(c1.BlendHsv(c2, normalizedPercent).Hex(), "", false)
 	}
 }
 

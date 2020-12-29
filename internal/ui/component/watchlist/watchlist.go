@@ -15,7 +15,7 @@ var (
 	styleNeutral       = NewStyle("#d4d4d4", "", false)
 	styleNeutralBold   = NewStyle("#d4d4d4", "", true)
 	styleNeutralFaded  = NewStyle("#616161", "", false)
-	styleNeutralBgBold = NewStyle("#d4d4d4", "#3a3a3a", true)
+	styleNeutralBgBold = NewStyle("#4e4e4e", "#262626", true)
 	stylePricePositive = newStyleFromGradient("#C6FF40", "#779929")
 	stylePriceNegative = newStyleFromGradient("#FF7940", "#994926")
 )

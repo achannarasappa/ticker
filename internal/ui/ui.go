@@ -6,15 +6,17 @@ import (
 	"ticker-tape/internal/ui/component/watchlist"
 	"time"
 
+	. "ticker-tape/internal/ui/util"
+	. "ticker-tape/internal/ui/util/text"
+
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/muesli/termenv"
+	"github.com/muesli/reflow/ansi"
 )
 
 var (
-	color                = termenv.ColorProfile().Color
-	footerHighlightStyle = termenv.Style{}.Foreground(color("#ffc27d")).Background(color("#f37329")).Bold().Styled
-	helpStyle            = termenv.Style{}.Foreground(color("241")).Styled
+	styleLogo = NewStyle("#ffc27d", "#f37329", true)
+	styleHelp = NewStyle("#4e4e4e", "", true)
 )
 
 const (
@@ -108,9 +110,11 @@ func (m Model) View() string {
 		return "\n  Initalizing..."
 	}
 
-	return fmt.Sprintf("%s\n%s", m.viewport.View(), footer())
+	return fmt.Sprintf("%s\n%s", m.viewport.View(), footer(m.viewport.Width))
 }
 
-func footer() string {
-	return footerHighlightStyle(" 🚀 ticker-tape ") + helpStyle(" q: exit")
+func footer(width int) string {
+	logo := styleLogo(" 🚀 ticker-tape ")
+	return logo + Left(styleHelp(" q: exit"), styleHelp)(width-ansi.PrintableRuneWidth(logo))
+
 }

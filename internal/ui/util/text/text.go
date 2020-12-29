@@ -65,12 +65,18 @@ func Right(text string) Element {
 	}
 }
 
-func Left(text string) Element {
+func Left(text string, applyStyle ...func(string) string) Element {
+
+	separator := " "
+
+	if len(applyStyle) > 0 {
+		separator = applyStyle[0](separator)
+	}
 
 	return func(width int) string {
 		gapWidth := width - ansi.PrintableRuneWidth(text)
 		if gapWidth > 0 {
-			return text + strings.Repeat(" ", gapWidth)
+			return text + strings.Repeat(separator, gapWidth)
 		}
 
 		return text

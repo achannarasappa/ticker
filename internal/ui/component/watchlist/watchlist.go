@@ -1,10 +1,11 @@
 package watchlist
 
 import (
-	"fmt"
 	"math"
 	"ticker-tape/internal/quote"
 	. "ticker-tape/internal/ui/util"
+
+	. "ticker-tape/internal/ui/util/text"
 
 	"github.com/lucasb-eyer/go-colorful"
 	. "github.com/novalagung/gubrak"
@@ -15,13 +16,12 @@ var (
 	styleNeutralBold   = NewStyle("#d4d4d4", "", true)
 	styleNeutralFaded  = NewStyle("#616161", "", false)
 	styleNeutralBgBold = NewStyle("#d4d4d4", "#3a3a3a", true)
-	stylePricePositive = newStyleFromGradient("#D8FF80", "#75BF00")
-	stylePriceNegative = newStyleFromGradient("#FFA780", "#BF3900")
+	stylePricePositive = newStyleFromGradient("#C6FF40", "#779929")
+	stylePriceNegative = newStyleFromGradient("#FF7940", "#994926")
 )
 
 const (
 	maxPercentChangeColorGradient = 10
-	extendedSessionOffset         = 30
 )
 
 type Model struct {
@@ -49,32 +49,34 @@ func watchlist(q []quote.Quote, elementWidth int) string {
 	return quoteSummaries
 }
 
-func quoteSummary(q quote.Quote, elementWidth int) string {
+func quoteSummary(q quote.Quote, width int) string {
 
-	firstLine := LineWithGap(
-		styleNeutralBold(q.Symbol),
-		LineWithGap(
-			marketStateText(q),
-			styleNeutral(ConvertFloatToString(q.Price)),
-			extendedSessionOffset,
+	return JoinText(
+		Text(
+			width,
+			styleNeutralBold(q.Symbol),
+			Right(
+				Text(
+					30,
+					marketStateText(q),
+					Right(
+						styleNeutral(ConvertFloatToString(q.Price)),
+					),
+				),
+			),
 		),
-		elementWidth,
-	)
-	secondLine := LineWithGap(
-		styleNeutralFaded(q.ShortName),
-		LineWithGap(
-			marketStateText(q),
-			priceText(q.Change, q.ChangePercent),
-			extendedSessionOffset,
+		Text(
+			width,
+			styleNeutralFaded(q.ShortName),
+			Right(
+				priceText(q.Change, q.ChangePercent),
+			),
 		),
-		elementWidth,
 	)
-
-	return fmt.Sprintf("%s\n%s", firstLine, secondLine)
 }
 
 func marketStateText(q quote.Quote) string {
-	if q.IsRegularTradingSession {
+	if q.IsRegularTradingSession || !q.IsActive {
 		return ""
 	}
 	return styleNeutralBgBold(" " + q.MarketState + " ")
@@ -123,9 +125,9 @@ func sortQuotes(q []quote.Quote) []quote.Quote {
 		return v.IsActive
 	})
 
-	sortedActiveQuotes, _ := SortBy(activeQuotes, func(v quote.Quote) float64 {
+	sortedActiveQuotes, _ := OrderBy(activeQuotes, func(v quote.Quote) float64 {
 		return v.ChangePercent
-	})
+	}, false)
 
 	concatQuotes, _ := Concat(sortedActiveQuotes, inactiveQuotes)
 

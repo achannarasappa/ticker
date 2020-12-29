@@ -17,6 +17,9 @@ type ResponseQuote struct {
 	PostMarketChange           float64 `json:"postMarketChange"`
 	PostMarketChangePercent    float64 `json:"postMarketChangePercent"`
 	PostMarketPrice            float64 `json:"postMarketPrice"`
+	PreMarketChange            float64 `json:"preMarketChange"`
+	PreMarketChangePercent     float64 `json:"preMarketChangePercent"`
+	PreMarketPrice             float64 `json:"preMarketPrice"`
 }
 
 type Quote struct {
@@ -51,9 +54,20 @@ func transformResponseQuote(responseQuote ResponseQuote) Quote {
 	if responseQuote.MarketState == "POST" {
 		return Quote{
 			ResponseQuote:           responseQuote,
-			Price:                   responseQuote.PostMarketPrice,
-			Change:                  responseQuote.PostMarketChange,
-			ChangePercent:           responseQuote.PostMarketChangePercent,
+			Price:                   responseQuote.PostMarketPrice + responseQuote.RegularMarketPrice,
+			Change:                  responseQuote.PostMarketChange + responseQuote.RegularMarketChange,
+			ChangePercent:           responseQuote.PostMarketChangePercent + responseQuote.RegularMarketChangePercent,
+			IsActive:                true,
+			IsRegularTradingSession: false,
+		}
+	}
+
+	if responseQuote.MarketState == "PRE" {
+		return Quote{
+			ResponseQuote:           responseQuote,
+			Price:                   responseQuote.PreMarketPrice,
+			Change:                  responseQuote.PreMarketChange,
+			ChangePercent:           responseQuote.PreMarketChangePercent,
 			IsActive:                true,
 			IsRegularTradingSession: false,
 		}

@@ -11,7 +11,7 @@ require (
 	github.com/go-resty/resty/v2 v2.3.0
 	github.com/lucasb-eyer/go-colorful v1.0.3
 	github.com/mattn/go-runewidth v0.0.9
-	github.com/muesli/reflow v0.2.0
+	github.com/muesli/reflow v0.2.1-0.20201126184510-3bcb929042f2
 	github.com/muesli/termenv v0.7.4
 	github.com/novalagung/gubrak v1.0.0
 	github.com/novalagung/gubrak/v2 v2.0.1

@@ -2,18 +2,21 @@ package main
 
 import (
 	"log"
+	"ticker-tape/internal/position"
 	"ticker-tape/internal/quote"
 	"ticker-tape/internal/ui"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/novalagung/gubrak/v2"
 )
 
 func main() {
 
-	symbols := []string{
+	symbolsWatchlist := []string{
 		"NET",
 		"TSLA",
 		"MSFT",
+
 		"OKTA",
 		"TEAM",
 		"GOOG",
@@ -23,14 +26,22 @@ func main() {
 		"FB",
 		"AMZN",
 		"ESTC",
-		"ARKW",
 		"BTC-USD",
-		"NIO",
-		"GME",
+		"XRP-USD",
 		"CMPS",
+		"SNAP",
+		"SNOW",
 	}
 
-	p := tea.NewProgram(ui.NewModel(symbols, quote.GetQuotes))
+	symbols := (gubrak.
+		From(position.GetSymbols()).
+		Concat(symbolsWatchlist).
+		Uniq().
+		Result()).([]string)
+
+	positions := position.GetPositions(quote.GetQuotes(symbols))
+
+	p := tea.NewProgram(ui.NewModel(symbols, positions, quote.GetQuotes))
 
 	p.EnableMouseCellMotion()
 	p.EnterAltScreen()

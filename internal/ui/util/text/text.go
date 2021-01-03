@@ -7,10 +7,6 @@ import (
 	"github.com/muesli/reflow/ansi"
 )
 
-type Element func(int) string
-type ElementText func(string) Element
-type ElementTextSegment func(int, int) string
-
 func getElementWidth(widthTotal int, count int) (int, int) {
 	remainder := widthTotal % count
 	width := int(math.Floor(float64(widthTotal) / float64(count)))
@@ -18,78 +14,62 @@ func getElementWidth(widthTotal int, count int) (int, int) {
 	return width, remainder
 }
 
-func Text(width int, arguments ...interface{}) string {
+type TextAlign int
 
-	widthElementWithoutRemainder, remainder := getElementWidth(width, len(arguments))
-	var elementString string
-	for i, argument := range arguments {
+const (
+	LeftAlign TextAlign = iota
+	RightAlign
+)
 
-		widthElement := widthElementWithoutRemainder
+func (ta TextAlign) String() string {
+	return [...]string{"LeftAlign", "RightAlign"}[ta]
+}
+
+type Cell struct {
+	Text  string
+	Width int
+	Align TextAlign
+}
+
+func Line(width int, cells ...Cell) string {
+
+	widthFlex := width
+	var widthFlexCells []*int
+
+	for i, cell := range cells {
+		if cell.Width <= 0 {
+			widthFlexCells = append(widthFlexCells, &cells[i].Width)
+			continue
+		}
+		widthFlex -= cell.Width
+	}
+
+	widthWithoutRemainder, remainder := getElementWidth(widthFlex, len(widthFlexCells))
+	for i := range widthFlexCells {
+
+		*widthFlexCells[i] = widthWithoutRemainder
 		if i < remainder {
-			widthElement = widthElementWithoutRemainder + 1
-		}
-
-		switch element := argument.(type) {
-		case Element:
-			elementString = elementString + element(widthElement)
-		case string:
-			elementString = elementString + Left(element)(widthElement)
+			*widthFlexCells[i] = widthWithoutRemainder + 1
 		}
 	}
 
-	return elementString
+	var gridLine string
+	for _, cell := range cells {
+
+		if cell.Align == RightAlign {
+			gridLine += strings.Repeat(" ", cell.Width-ansi.PrintableRuneWidth(cell.Text)) + cell.Text
+			continue
+		}
+
+		gridLine += cell.Text + strings.Repeat(" ", cell.Width-ansi.PrintableRuneWidth(cell.Text))
+	}
+	return gridLine
 
 }
 
-func Center(text string) Element {
-
-	return func(width int) string {
-		gapWidth := width - ansi.PrintableRuneWidth(text)
-		if gapWidth > 0 {
-			return strings.Repeat(" ", gapWidth) + text
-		}
-
-		return text
-	}
-}
-
-func Right(text string) Element {
-
-	return func(width int) string {
-		gapWidth := width - ansi.PrintableRuneWidth(text)
-		if gapWidth > 0 {
-			return strings.Repeat(" ", gapWidth) + text
-		}
-
-		return text
-	}
-}
-
-func Left(text string, applyStyle ...func(string) string) Element {
-
-	separator := " "
-
-	if len(applyStyle) > 0 {
-		separator = applyStyle[0](separator)
-	}
-
-	return func(width int) string {
-		gapWidth := width - ansi.PrintableRuneWidth(text)
-		if gapWidth > 0 {
-			return text + strings.Repeat(separator, gapWidth)
-		}
-
-		return text
-	}
-}
-
-func JoinText(texts ...string) string {
+func JoinLines(texts ...string) string {
 	return strings.Join(
 		texts,
 		"\n",
 	)
 }
-
-// func getElementWidthWithEvenSpacing(width int, textSegmentCount int) int {
-// 	return int(math.Floor(float64(width) / float64(textSegmentCount)))
-// }

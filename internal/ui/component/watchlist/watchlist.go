@@ -2,13 +2,14 @@ package watchlist
 
 import (
 	"math"
+	"ticker-tape/internal/position"
 	"ticker-tape/internal/quote"
 	. "ticker-tape/internal/ui/util"
 
 	. "ticker-tape/internal/ui/util/text"
 
 	"github.com/lucasb-eyer/go-colorful"
-	. "github.com/novalagung/gubrak"
+	"github.com/novalagung/gubrak/v2"
 )
 
 var (
@@ -25,52 +26,68 @@ const (
 )
 
 type Model struct {
-	Width  int
-	Quotes []quote.Quote
+	Width     int
+	Quotes    []quote.Quote
+	Positions map[string]position.Position
 }
 
 // NewModel returns a model with default values.
-func NewModel() Model {
+func NewModel(positions map[string]position.Position) Model {
 	return Model{
-		Width: 100,
+		Width:     100,
+		Positions: positions,
 	}
 }
 
 func (m Model) View() string {
-	return watchlist(m.Quotes, m.Width)
-}
 
-func watchlist(q []quote.Quote, elementWidth int) string {
-	quotes := sortQuotes(q)
-	quoteSummaries := ""
+	quotes := sortQuotes(m.Quotes)
+	items := ""
 	for _, quote := range quotes {
-		quoteSummaries = quoteSummaries + "\n" + quoteSummary(quote, elementWidth)
+		items += "\n" + item(quote, m.Positions[quote.Symbol], m.Width)
 	}
-	return quoteSummaries
+	return items
 }
 
-func quoteSummary(q quote.Quote, width int) string {
+func item(q quote.Quote, p position.Position, width int) string {
 
-	return JoinText(
-		Text(
+	return JoinLines(
+		Line(
 			width,
-			styleNeutralBold(q.Symbol),
-			Right(
-				Text(
-					30,
-					marketStateText(q),
-					Right(
-						styleNeutral(ConvertFloatToString(q.Price)),
-					),
-				),
-			),
+			Cell{
+				Text: styleNeutralBold(q.Symbol),
+			},
+			Cell{
+				Width: 10,
+				Text:  marketStateText(q),
+				Align: RightAlign,
+			},
+			Cell{
+				Width: 25,
+				Text:  valueText(p.Value),
+				Align: RightAlign,
+			},
+			Cell{
+				Width: 25,
+				Text:  styleNeutral(ConvertFloatToString(q.Price)),
+				Align: RightAlign,
+			},
 		),
-		Text(
+		Line(
 			width,
-			styleNeutralFaded(q.ShortName),
-			Right(
-				priceText(q.Change, q.ChangePercent),
-			),
+			Cell{
+				Text: styleNeutralFaded(q.ShortName),
+			},
+			Cell{
+				Width: 25,
+				Text:  valueChangeText(p.DayChange, p.DayChangePercent),
+				Align: RightAlign,
+			},
+			Cell{
+				Width: 25,
+				Text:  quoteChangeText(q.Change, q.ChangePercent),
+				Align: RightAlign,
+			},
 		),
 	)
 }
@@ -82,7 +99,23 @@ func marketStateText(q quote.Quote) string {
 	return styleNeutralBgBold(" " + q.MarketState + " ")
 }
 
-func priceText(change float64, changePercent float64) string {
+func valueText(value float64) string {
+	if value <= 0.0 {
+		return ""
+	}
+
+	return styleNeutral(ConvertFloatToString(value))
+}
+
+func valueChangeText(change float64, changePercent float64) string {
+	if change == 0.0 {
+		return ""
+	}
+
+	return quoteChangeText(change, changePercent)
+}
+
+func quoteChangeText(change float64, changePercent float64) string {
 	if change == 0.0 {
 		return styleNeutralFaded("  " + ConvertFloatToString(change) + "  (" + ConvertFloatToString(changePercent) + "%)")
 	}
@@ -121,15 +154,20 @@ func sortQuotes(q []quote.Quote) []quote.Quote {
 		return q
 	}
 
-	activeQuotes, inactiveQuotes, _ := Partition(q, func(v quote.Quote) bool {
-		return v.IsActive
-	})
+	activeQuotes, inactiveQuotes, _ := gubrak.
+		From(q).
+		Partition(func(v quote.Quote) bool {
+			return v.IsActive
+		}).
+		ResultAndError()
 
-	sortedActiveQuotes, _ := OrderBy(activeQuotes, func(v quote.Quote) float64 {
-		return v.ChangePercent
-	}, false)
-
-	concatQuotes, _ := Concat(sortedActiveQuotes, inactiveQuotes)
+	concatQuotes := gubrak.
+		From(activeQuotes).
+		OrderBy(func(v quote.Quote) float64 {
+			return v.ChangePercent
+		}, false).
+		Concat(inactiveQuotes).
+		Result()
 
 	return (concatQuotes).([]quote.Quote)
 }

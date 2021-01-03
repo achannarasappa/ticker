@@ -2,16 +2,15 @@ package ui
 
 import (
 	"fmt"
+	"ticker-tape/internal/position"
 	"ticker-tape/internal/quote"
 	"ticker-tape/internal/ui/component/watchlist"
 	"time"
 
 	. "ticker-tape/internal/ui/util"
-	. "ticker-tape/internal/ui/util/text"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/muesli/reflow/ansi"
 )
 
 var (
@@ -40,17 +39,17 @@ func (m Model) updateQuotes() tea.Cmd {
 	})
 }
 
-func NewModel(symbols []string, requestQuotes func([]string) []quote.Quote) Model {
+func NewModel(symbols []string, positions map[string]position.Position, requestQuotes func([]string) []quote.Quote) Model {
 	return Model{
 		ready:           false,
 		requestInterval: 3,
 		requestQuotes:   requestQuotes,
 		symbols:         symbols,
+		watchlist:       watchlist.NewModel(positions),
 	}
 }
 
 func (m Model) Init() tea.Cmd {
-	m.watchlist = watchlist.NewModel()
 	return func() tea.Msg {
 		return QuoteMsg{
 			quotes: m.requestQuotes(m.symbols),
@@ -114,7 +113,6 @@ func (m Model) View() string {
 }
 
 func footer(width int) string {
-	logo := styleLogo(" 🚀 ticker-tape ")
-	return logo + Left(styleHelp(" q: exit"), styleHelp)(width-ansi.PrintableRuneWidth(logo))
+	return styleLogo(" 🚀 ticker-tape ") + styleHelp(" q: exit")
 
 }

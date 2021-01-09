@@ -16,7 +16,6 @@ var (
 	styleNeutral       = NewStyle("#d4d4d4", "", false)
 	styleNeutralBold   = NewStyle("#d4d4d4", "", true)
 	styleNeutralFaded  = NewStyle("#616161", "", false)
-	styleNeutralBgBold = NewStyle("#4e4e4e", "#262626", true)
 	stylePricePositive = newStyleFromGradient("#C6FF40", "#779929")
 	stylePriceNegative = newStyleFromGradient("#FF7940", "#994926")
 )
@@ -93,10 +92,15 @@ func item(q quote.Quote, p position.Position, width int) string {
 }
 
 func marketStateText(q quote.Quote) string {
-	if q.IsRegularTradingSession || !q.IsActive {
-		return ""
+	if q.IsRegularTradingSession {
+		return styleNeutralFaded(" ⦿  ")
 	}
-	return styleNeutralBgBold(" " + q.MarketState + " ")
+
+	if !q.IsRegularTradingSession && q.IsActive {
+		return styleNeutralFaded(" ⦾  ")
+	}
+
+	return ""
 }
 
 func valueText(value float64) string {

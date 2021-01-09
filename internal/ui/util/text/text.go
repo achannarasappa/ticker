@@ -56,12 +56,18 @@ func Line(width int, cells ...Cell) string {
 	var gridLine string
 	for _, cell := range cells {
 
+		textWidth := ansi.PrintableRuneWidth(cell.Text)
+		if textWidth > cell.Width {
+			cell.Text = cell.Text[:cell.Width]
+			textWidth = cell.Width
+		}
+
 		if cell.Align == RightAlign {
-			gridLine += strings.Repeat(" ", cell.Width-ansi.PrintableRuneWidth(cell.Text)) + cell.Text
+			gridLine += strings.Repeat(" ", cell.Width-textWidth) + cell.Text
 			continue
 		}
 
-		gridLine += cell.Text + strings.Repeat(" ", cell.Width-ansi.PrintableRuneWidth(cell.Text))
+		gridLine += cell.Text + strings.Repeat(" ", cell.Width-textWidth)
 	}
 	return gridLine
 

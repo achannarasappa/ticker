@@ -55,7 +55,7 @@ func transformResponseQuote(responseQuote ResponseQuote) Quote {
 	if responseQuote.MarketState == "POST" {
 		return Quote{
 			ResponseQuote:           responseQuote,
-			Price:                   responseQuote.PostMarketPrice + responseQuote.RegularMarketPrice,
+			Price:                   responseQuote.PostMarketPrice,
 			Change:                  responseQuote.PostMarketChange + responseQuote.RegularMarketChange,
 			ChangePercent:           responseQuote.PostMarketChangePercent + responseQuote.RegularMarketChangePercent,
 			IsActive:                true,

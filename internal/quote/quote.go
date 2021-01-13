@@ -14,6 +14,7 @@ type ResponseQuote struct {
 	RegularMarketChange        float64 `json:"regularMarketChange"`
 	RegularMarketChangePercent float64 `json:"regularMarketChangePercent"`
 	RegularMarketPrice         float64 `json:"regularMarketPrice"`
+	RegularMarketPreviousClose float64 `json:"regularMarketPreviousClose"`
 	PostMarketChange           float64 `json:"postMarketChange"`
 	PostMarketChangePercent    float64 `json:"postMarketChangePercent"`
 	PostMarketPrice            float64 `json:"postMarketPrice"`
@@ -73,18 +74,6 @@ func transformResponseQuote(responseQuote ResponseQuote) Quote {
 		}
 	}
 
-	// temporary for testing
-	// if responseQuote.MarketState == "CLOSED" {
-	// 	return Quote{
-	// 		ResponseQuote:           responseQuote,
-	// 		Price:                   responseQuote.RegularMarketPrice,
-	// 		Change:                  responseQuote.RegularMarketChange,
-	// 		ChangePercent:           responseQuote.RegularMarketChangePercent,
-	// 		IsActive:                true,
-	// 		IsRegularTradingSession: true,
-	// 	}
-	// }
-
 	return Quote{
 		ResponseQuote:           responseQuote,
 		Price:                   responseQuote.RegularMarketPrice,
@@ -106,12 +95,14 @@ func transformResponseQuotes(responseQuotes []ResponseQuote) []Quote {
 
 }
 
-func GetQuotes(symbols []string) []Quote {
-	symbolsString := strings.Join(symbols, ",")
-	url := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=%s", symbolsString)
-	response, _ := resty.New().R().
-		SetResult(&Response{}).
-		Get(url)
+func GetQuotes(client resty.Client) func([]string) []Quote {
+	return func(symbols []string) []Quote {
+		symbolsString := strings.Join(symbols, ",")
+		url := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=%s", symbolsString)
+		res, _ := client.R().
+			SetResult(Response{}).
+			Get(url)
 
-	return transformResponseQuotes((response.Result().(*Response)).QuoteResponse.Quotes)
+		return transformResponseQuotes((res.Result().(*Response)).QuoteResponse.Quotes)
+	}
 }

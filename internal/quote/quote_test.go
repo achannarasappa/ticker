@@ -37,7 +37,7 @@ var _ = Describe("Quote", func() {
 				return resp, nil
 			})
 
-			output := GetQuotes(*client)([]string{"NET"})
+			output := GetQuotes(*client, []string{"NET"})()
 			expected := []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -88,7 +88,7 @@ var _ = Describe("Quote", func() {
 					return resp, nil
 				})
 
-				output := GetQuotes(*client)([]string{"NET"})
+				output := GetQuotes(*client, []string{"NET"})()
 				expected := []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -143,7 +143,7 @@ var _ = Describe("Quote", func() {
 					return resp, nil
 				})
 
-				output := GetQuotes(*client)([]string{"NET"})
+				output := GetQuotes(*client, []string{"NET"})()
 				expected := []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -198,7 +198,7 @@ var _ = Describe("Quote", func() {
 					return resp, nil
 				})
 
-				output := GetQuotes(*client)([]string{"NET"})
+				output := GetQuotes(*client, []string{"NET"})()
 				expected := []Quote{
 					{
 						ResponseQuote: ResponseQuote{

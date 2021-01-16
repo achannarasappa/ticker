@@ -31,10 +31,9 @@ type Model struct {
 }
 
 // NewModel returns a model with default values.
-func NewModel(positions map[string]position.Position) Model {
+func NewModel() Model {
 	return Model{
-		Width:     100,
-		Positions: positions,
+		Width: 100,
 	}
 }
 

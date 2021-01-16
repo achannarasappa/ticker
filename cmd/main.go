@@ -2,12 +2,13 @@ package main
 
 import (
 	"log"
+	"os"
 	"ticker-tape/internal/position"
 	"ticker-tape/internal/quote"
 	"ticker-tape/internal/ui"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/novalagung/gubrak/v2"
+	"github.com/go-resty/resty/v2"
 )
 
 func main() {
@@ -33,19 +34,28 @@ func main() {
 		"SNOW",
 	}
 
-	symbols := (gubrak.
-		From(position.GetSymbols()).
-		Concat(symbolsWatchlist).
-		Uniq().
-		Result()).([]string)
+	var (
+		err    error
+		handle *os.File
+	)
 
-	positions := position.GetPositions(quote.GetQuotes(symbols))
+	handle, err = os.Open("./positions.yaml")
 
-	p := tea.NewProgram(ui.NewModel(symbols, positions, quote.GetQuotes))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer handle.Close()
+
+	lots := position.GetLots(handle)
+	symbols := position.GetSymbols(symbolsWatchlist, lots)
+
+	client := resty.New()
+
+	p := tea.NewProgram(ui.NewModel(position.GetPositions(lots), quote.GetQuotes(*client, symbols)))
 
 	p.EnableMouseCellMotion()
 	p.EnterAltScreen()
-	err := p.Start()
+	err = p.Start()
 	p.ExitAltScreen()
 	p.DisableMouseCellMotion()
 

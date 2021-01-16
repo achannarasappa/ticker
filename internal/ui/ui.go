@@ -24,9 +24,9 @@ const (
 
 type Model struct {
 	ready           bool
-	requestQuotes   func([]string) []quote.Quote
+	getQuotes       func() []quote.Quote
+	getPositions    func([]quote.Quote) map[string]position.Position
 	requestInterval int
-	symbols         []string
 	viewport        viewport.Model
 	watchlist       watchlist.Model
 }
@@ -34,25 +34,24 @@ type Model struct {
 func (m Model) updateQuotes() tea.Cmd {
 	return tea.Tick(time.Second*time.Duration(m.requestInterval), func(t time.Time) tea.Msg {
 		return QuoteMsg{
-			quotes: m.requestQuotes(m.symbols),
+			quotes: m.getQuotes(),
 		}
 	})
 }
 
-func NewModel(symbols []string, positions map[string]position.Position, requestQuotes func([]string) []quote.Quote) Model {
+func NewModel(getPositions func([]quote.Quote) map[string]position.Position, getQuotes func() []quote.Quote) Model {
 	return Model{
 		ready:           false,
 		requestInterval: 3,
-		requestQuotes:   requestQuotes,
-		symbols:         symbols,
-		watchlist:       watchlist.NewModel(positions),
+		getQuotes:       getQuotes,
+		getPositions:    getPositions,
 	}
 }
 
 func (m Model) Init() tea.Cmd {
 	return func() tea.Msg {
 		return QuoteMsg{
-			quotes: m.requestQuotes(m.symbols),
+			quotes: m.getQuotes(),
 		}
 	}
 }
@@ -92,6 +91,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case QuoteMsg:
 		m.watchlist.Quotes = msg.quotes
+		m.watchlist.Positions = m.getPositions(msg.quotes)
 		if m.ready {
 			m.viewport.SetContent(m.watchlist.View())
 		}

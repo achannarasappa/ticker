@@ -15,7 +15,6 @@ import (
 )
 
 func removeFormatting(text string) string {
-	// return strings.ReplaceAll(stripansi.Strip(text), " ", "")
 	return stripansi.Strip(text)
 }
 
@@ -38,8 +37,9 @@ var _ = Describe("Watchlist", func() {
 				}
 			}
 
-			m := NewModel(positionMap)
+			m := NewModel()
 			m.Width = 80
+			m.Positions = positionMap
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -159,7 +159,7 @@ var _ = Describe("Watchlist", func() {
 	Context("when there are more than one symbols on the watchlist", func() {
 		It("should render a watchlist with each symbol", func() {
 
-			m := NewModel(map[string]Position{})
+			m := NewModel()
 			m.Width = 80
 			m.Quotes = []Quote{
 				{
@@ -224,8 +224,7 @@ var _ = Describe("Watchlist", func() {
 
 	Context("when no quotes are set", func() {
 		It("should render an empty watchlist", func() {
-			input := map[string]Position{}
-			m := NewModel(input)
+			m := NewModel()
 			Expect(m.View()).To(Equal(""))
 		})
 

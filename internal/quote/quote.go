@@ -95,8 +95,8 @@ func transformResponseQuotes(responseQuotes []ResponseQuote) []Quote {
 
 }
 
-func GetQuotes(client resty.Client) func([]string) []Quote {
-	return func(symbols []string) []Quote {
+func GetQuotes(client resty.Client, symbols []string) func() []Quote {
+	return func() []Quote {
 		symbolsString := strings.Join(symbols, ",")
 		url := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=%s", symbolsString)
 		res, _ := client.R().

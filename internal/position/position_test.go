@@ -40,14 +40,16 @@ var _ = Describe("Position", func() {
 
 	Describe("GetSymbols", func() {
 		It("should return a slice of symbols", func() {
-			input := map[string]AggregatedLot{
+			inputAggregatedLots := map[string]AggregatedLot{
 				"ABNB": {Symbol: "ABNB", Cost: 5110, Quantity: 35},
 				"ARKW": {Symbol: "ARKW", Cost: 6090, Quantity: 40},
 			}
-			output := GetSymbols(input)
+			inputSymbols := []string{"GOOG", "ARKW"}
+			output := GetSymbols(inputSymbols, inputAggregatedLots)
 			expected := []string{
 				"ABNB",
 				"ARKW",
+				"GOOG",
 			}
 			Expect(output).To(Equal(expected))
 		})

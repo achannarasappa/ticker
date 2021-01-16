@@ -65,14 +65,17 @@ func GetLots(handle io.Reader) map[string]AggregatedLot {
 	return (aggregatedLots).(map[string]AggregatedLot)
 }
 
-func GetSymbols(aggregatedLots map[string]AggregatedLot) []string {
+func GetSymbols(symbols []string, aggregatedLots map[string]AggregatedLot) []string {
 
-	symbols := make([]string, 0)
+	symbolsFromAggregatedLots := make([]string, 0)
 	for k := range aggregatedLots {
-		symbols = append(symbols, k)
+		symbolsFromAggregatedLots = append(symbolsFromAggregatedLots, k)
 	}
 
-	return symbols
+	return (gubrak.From(symbolsFromAggregatedLots).
+		Concat(symbols).
+		Uniq().
+		Result()).([]string)
 
 }
 

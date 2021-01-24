@@ -1,0 +1,9 @@
+*
+!cmd/*
+!internal/**/*
+!main.go
+!README.md
+!LICENSE
+!go.mod
+!go.sum
+!.gitignore

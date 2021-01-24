@@ -64,18 +64,21 @@ var _ = Describe("Cli", func() {
 			config          cli.Config
 			options         cli.Options
 			fs              afero.Fs
-			watchlist       string = "GME,BB"
+			watchlist       string
 			refreshInterval int
+			configPath      string
 		)
 
 		BeforeEach(func() {
 			config = cli.Config{}
 			options = cli.Options{
+				ConfigPath:      &configPath,
 				Watchlist:       &watchlist,
 				RefreshInterval: &refreshInterval,
 			}
 			watchlist = "GME,BB"
 			refreshInterval = 0
+			configPath = ""
 			fs = afero.NewMemMapFs()
 			fs.MkdirAll("./", 0755)
 			// afero.WriteFile(fs, ".ticker.yaml", []byte("file b"), 0644)
@@ -97,7 +100,7 @@ var _ = Describe("Cli", func() {
 
 		When("there is a error opening the config file", func() {
 			It("should return an error", func() {
-				options.ConfigPath = ".config-file-that-does-not-exist.yaml"
+				configPath = ".config-file-that-does-not-exist.yaml"
 				output := Validate(&config, fs, options)(&cobra.Command{}, []string{})
 				Expect(output).To(MatchError("Invalid config: open .config-file-that-does-not-exist.yaml: file does not exist"))
 			})
@@ -105,7 +108,7 @@ var _ = Describe("Cli", func() {
 
 		When("there is a error parsing the config file", func() {
 			It("should return an error", func() {
-				options.ConfigPath = ".ticker.yaml"
+				configPath = ".ticker.yaml"
 				afero.WriteFile(fs, ".ticker.yaml", []byte("invalid yaml content"), 0644)
 				output := Validate(&config, fs, options)(&cobra.Command{}, []string{})
 				Expect(output).To(MatchError("Invalid config: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `invalid...` into cli.Config"))
@@ -147,7 +150,7 @@ var _ = Describe("Cli", func() {
 		When("there is a watchlist in the config file", func() {
 			It("should set the watchlist from the config file", func() {
 				watchlist = ""
-				options.ConfigPath = ".ticker.yaml"
+				configPath = ".ticker.yaml"
 				afero.WriteFile(fs, ".ticker.yaml", []byte("watchlist:\n  - NET"), 0644)
 				Validate(&config, fs, options)(&cobra.Command{}, []string{})
 				Expect(config.Watchlist).To(Equal([]string{

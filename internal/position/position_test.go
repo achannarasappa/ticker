@@ -1,8 +1,6 @@
 package position_test
 
 import (
-	"strings"
-
 	. "ticker/internal/position"
 	. "ticker/internal/quote"
 
@@ -12,23 +10,13 @@ import (
 
 var _ = Describe("Position", func() {
 
-	var (
-		lotFixture = `
-  - symbol: "ABNB"
-    quantity: 35.0
-    unit_cost: 146.00
-  - symbol: "ARKW"
-    quantity: 20.0
-    unit_cost: 152.25
-  - symbol: "ARKW"
-    quantity: 20.0
-    unit_cost: 152.25
-`
-	)
-
 	Describe("GetLots", func() {
 		It("should return a map of aggregated lots", func() {
-			input := strings.NewReader(lotFixture)
+			input := []Lot{
+				{Symbol: "ABNB", UnitCost: 146.00, Quantity: 35},
+				{Symbol: "ARKW", UnitCost: 152.25, Quantity: 20},
+				{Symbol: "ARKW", UnitCost: 152.25, Quantity: 20},
+			}
 			output := GetLots(input)
 			expected := map[string]AggregatedLot{
 				"ABNB": {Symbol: "ABNB", Cost: 5110, Quantity: 35},

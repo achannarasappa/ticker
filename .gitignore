@@ -1,5 +1,7 @@
 *
+!cmd
 !cmd/*
+!internal
 !internal/**/*
 !main.go
 !README.md
@@ -7,3 +9,6 @@
 !go.mod
 !go.sum
 !.gitignore
+!.goreleaser.yml
+!.github
+!.github/**/*

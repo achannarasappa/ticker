@@ -32,7 +32,7 @@ brews:
     name: ticker
     tap:
       owner: achannarasappa
-      name: homebrew-tap
+      name: tap
     commit_author:
       name: achannarasappa
       email: git@ani.dev

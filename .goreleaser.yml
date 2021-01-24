@@ -27,8 +27,6 @@ release:
   github:
       owner: achannarasappa
       name: ticker
-signs:
-  - artifacts: all
 brews:
   -
     name: ticker

@@ -2,15 +2,17 @@ package ui
 
 import (
 	"fmt"
-	"ticker-tape/internal/position"
-	"ticker-tape/internal/quote"
-	"ticker-tape/internal/ui/component/watchlist"
+	"ticker/internal/cli"
+	"ticker/internal/position"
+	"ticker/internal/quote"
+	"ticker/internal/ui/component/watchlist"
 	"time"
 
-	. "ticker-tape/internal/ui/util"
+	. "ticker/internal/ui/util"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/go-resty/resty/v2"
 )
 
 var (
@@ -39,12 +41,16 @@ func (m Model) updateQuotes() tea.Cmd {
 	})
 }
 
-func NewModel(getPositions func([]quote.Quote) map[string]position.Position, getQuotes func() []quote.Quote) Model {
+func NewModel(config cli.Config, client *resty.Client) Model {
+
+	aggregatedLots := position.GetLots(config.Lots)
+	symbols := position.GetSymbols(config.Watchlist, aggregatedLots)
+
 	return Model{
 		ready:           false,
 		requestInterval: 3,
-		getQuotes:       getQuotes,
-		getPositions:    getPositions,
+		getQuotes:       quote.GetQuotes(*client, symbols),
+		getPositions:    position.GetPositions(aggregatedLots),
 	}
 }
 
@@ -113,6 +119,6 @@ func (m Model) View() string {
 }
 
 func footer(width int) string {
-	return styleLogo(" 🚀 ticker-tape ") + styleHelp(" q: exit")
+	return styleLogo(" 🚀 ticker ") + styleHelp(" q: exit")
 
 }

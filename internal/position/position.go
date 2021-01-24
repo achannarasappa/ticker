@@ -1,12 +1,9 @@
 package position
 
 import (
-	"io"
-	"log"
-	. "ticker-tape/internal/quote"
+	. "ticker/internal/quote"
 
 	"github.com/novalagung/gubrak/v2"
-	"gopkg.in/yaml.v2"
 )
 
 type Position struct {
@@ -28,14 +25,10 @@ type AggregatedLot struct {
 	Quantity float64
 }
 
-func GetLots(handle io.Reader) map[string]AggregatedLot {
+func GetLots(lots []Lot) map[string]AggregatedLot {
 
-	lots := []Lot{}
-	decoderLots := yaml.NewDecoder(handle)
-	err := decoderLots.Decode(&lots)
-
-	if err != nil {
-		log.Fatalf("error: %v", err)
+	if lots == nil {
+		return map[string]AggregatedLot{}
 	}
 
 	aggregatedLots := gubrak.

@@ -2,11 +2,11 @@ package watchlist
 
 import (
 	"math"
-	"ticker-tape/internal/position"
-	"ticker-tape/internal/quote"
-	. "ticker-tape/internal/ui/util"
+	"ticker/internal/position"
+	"ticker/internal/quote"
+	. "ticker/internal/ui/util"
 
-	. "ticker-tape/internal/ui/util/text"
+	. "ticker/internal/ui/util/text"
 
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/novalagung/gubrak/v2"

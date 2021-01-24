@@ -3,8 +3,8 @@ package position_test
 import (
 	"strings"
 
-	. "ticker-tape/internal/position"
-	. "ticker-tape/internal/quote"
+	. "ticker/internal/position"
+	. "ticker/internal/quote"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

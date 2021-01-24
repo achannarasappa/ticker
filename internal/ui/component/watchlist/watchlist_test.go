@@ -9,9 +9,9 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	. "ticker-tape/internal/position"
-	. "ticker-tape/internal/quote"
-	. "ticker-tape/internal/ui/component/watchlist"
+	. "ticker/internal/position"
+	. "ticker/internal/quote"
+	. "ticker/internal/ui/component/watchlist"
 )
 
 func removeFormatting(text string) string {

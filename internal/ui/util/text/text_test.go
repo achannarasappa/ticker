@@ -1,7 +1,7 @@
 package text_test
 
 import (
-	. "ticker-tape/internal/ui/util/text"
+	. "ticker/internal/ui/util/text"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "ticker-tape/internal/ui/util"
+	. "ticker/internal/ui/util"
 )
 
 var _ = Describe("Util", func() {

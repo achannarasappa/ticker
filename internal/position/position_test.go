@@ -24,6 +24,15 @@ var _ = Describe("Position", func() {
 			}
 			Expect(output).To(Equal(expected))
 		})
+
+		When("lots are not set", func() {
+			It("returns en empty aggregated lot", func() {
+				var input []Lot = nil
+				output := GetLots(input)
+				expected := map[string]AggregatedLot{}
+				Expect(output).To(Equal(expected))
+			})
+		})
 	})
 
 	Describe("GetSymbols", func() {

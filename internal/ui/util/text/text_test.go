@@ -9,6 +9,23 @@ import (
 
 var _ = Describe("Text", func() {
 
+	Describe("TextAlign", func() {
+		When("left align is selected", func() {
+			It("returns the text for left align text", func() {
+				input := LeftAlign.String()
+				output := "LeftAlign"
+				Expect(input).To(Equal(output))
+			})
+		})
+		When("right align is selected", func() {
+			It("returns the text for right align text", func() {
+				input := RightAlign.String()
+				output := "RightAlign"
+				Expect(input).To(Equal(output))
+			})
+		})
+	})
+
 	Describe("Line", func() {
 		It("should output text with spaces filled to the width", func() {
 			input := Line(10, Cell{

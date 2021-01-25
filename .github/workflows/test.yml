@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         go-version: [1.14.x, 1.15.x]
-        platform: [ubuntu-latest, macos-latestt]
+        platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
     - name: Install Go

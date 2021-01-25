@@ -48,7 +48,7 @@ var _ = Describe("Position", func() {
 				"ARKW",
 				"GOOG",
 			}
-			Expect(output).To(Equal(expected))
+			Expect(output).To(ContainElements(expected))
 		})
 	})
 

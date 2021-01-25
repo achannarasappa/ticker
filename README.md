@@ -1,5 +1,10 @@
-# ticker
+Ticker
+==========
 
+<p>
+    <a href="https://github.com/achannarasappa/ticker/releases"><img src="https://img.shields.io/github/release/achannarasappa/ticker.svg" alt="Latest Release"></a>
+    <a href="https://github.com/achannarasappa/ticker/actions"><img src="https://github.com/achannarasappa/ticker/workflows/Test/badge.svg" alt="Build Status"></a>
+</p>
 Terminal stock watcher and stock position tracker
 
 ## Features

@@ -17,6 +17,7 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: ${{ matrix.go-version }}
+    - name: Install Ginkgo
       run: go get -u github.com/onsi/ginkgo/ginkgo
     - name: Checkout code
       uses: actions/checkout@v2

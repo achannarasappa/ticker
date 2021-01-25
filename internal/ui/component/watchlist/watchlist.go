@@ -1,6 +1,7 @@
 package watchlist
 
 import (
+	"fmt"
 	"math"
 	"ticker/internal/position"
 	"ticker/internal/quote"
@@ -39,6 +40,10 @@ func NewModel() Model {
 
 func (m Model) View() string {
 
+	if m.Width < 80 {
+		return fmt.Sprintf("Terminal window too narrow to render content\nResize to fix (%d/80)", m.Width)
+	}
+
 	quotes := sortQuotes(m.Quotes)
 	items := ""
 	for _, quote := range quotes {
@@ -56,7 +61,7 @@ func item(q quote.Quote, p position.Position, width int) string {
 				Text: styleNeutralBold(q.Symbol),
 			},
 			Cell{
-				Width: 10,
+				Width: 5,
 				Text:  marketStateText(q),
 				Align: RightAlign,
 			},

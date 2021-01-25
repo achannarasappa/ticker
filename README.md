@@ -4,8 +4,8 @@ Terminal stock watcher and stock position tracker
 
 ## Features
 
-* Watch stock price quotes
-* Track value of stock positions and update with price quote updates
+* Live stock price quotes
+* Track real-time value of your stock positions
 * Support for multiple cost basis lots
 
 ## Install
@@ -62,3 +62,6 @@ lots:
     quantity: 20.0
     unit_cost: 145.35
 ```
+
+* Symbols not on the watchlist that exists in `lots` will automatically be watched
+* `watchlist` and `lots` are both options properties

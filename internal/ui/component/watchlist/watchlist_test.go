@@ -156,7 +156,7 @@ var _ = Describe("Watchlist", func() {
 		),
 	)
 
-	Context("when there are more than one symbols on the watchlist", func() {
+	When("there are more than one symbols on the watchlist", func() {
 		It("should render a watchlist with each symbol", func() {
 
 			m := NewModel()
@@ -222,11 +222,18 @@ var _ = Describe("Watchlist", func() {
 		})
 	})
 
-	Context("when no quotes are set", func() {
+	When("no quotes are set", func() {
 		It("should render an empty watchlist", func() {
 			m := NewModel()
 			Expect(m.View()).To(Equal(""))
 		})
+	})
 
+	When("the window width is less than the minimum", func() {
+		It("should render an empty watchlist", func() {
+			m := NewModel()
+			m.Width = 70
+			Expect(m.View()).To(Equal("Terminal window too narrow to render content\nResize to fix (70/80)"))
+		})
 	})
 })

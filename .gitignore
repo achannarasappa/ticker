@@ -12,3 +12,4 @@
 !.goreleaser.yml
 !.github
 !.github/**/*
+*.coverprofile

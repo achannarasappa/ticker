@@ -9,6 +9,7 @@ import (
 	"time"
 
 	. "ticker/internal/ui/util"
+	. "ticker/internal/ui/util/text"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -21,7 +22,7 @@ var (
 )
 
 const (
-	footerHeight = 1
+	verticalMargins = 1
 )
 
 type Model struct {
@@ -31,12 +32,19 @@ type Model struct {
 	requestInterval int
 	viewport        viewport.Model
 	watchlist       watchlist.Model
+	lastUpdateTime  string
+}
+
+func getTime() string {
+	t := time.Now()
+	return fmt.Sprintf("%s %02d:%02d:%02d", t.Weekday().String(), t.Hour(), t.Minute(), t.Second())
 }
 
 func (m Model) updateQuotes() tea.Cmd {
 	return tea.Tick(time.Second*time.Duration(m.requestInterval), func(t time.Time) tea.Msg {
 		return QuoteMsg{
 			quotes: m.getQuotes(),
+			time:   getTime(),
 		}
 	})
 }
@@ -58,12 +66,14 @@ func (m Model) Init() tea.Cmd {
 	return func() tea.Msg {
 		return QuoteMsg{
 			quotes: m.getQuotes(),
+			time:   getTime(),
 		}
 	}
 }
 
 type QuoteMsg struct {
 	quotes []quote.Quote
+	time   string
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -81,23 +91,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
-		verticalMargins := footerHeight
+		m.watchlist.Width = msg.Width
+		viewportHeight := msg.Height - verticalMargins
 
 		if !m.ready {
-			m.viewport = viewport.Model{Width: msg.Width, Height: msg.Height - verticalMargins}
-			m.watchlist.Width = msg.Width
-			m.viewport.SetContent(m.watchlist.View())
+			m.viewport = viewport.Model{Width: msg.Width, Height: viewportHeight}
 			m.ready = true
 		} else {
-			m.watchlist.Width = msg.Width
 			m.viewport.Width = msg.Width
-			m.viewport.SetContent(m.watchlist.View())
-			m.viewport.Height = msg.Height - verticalMargins
+			m.viewport.Height = viewportHeight
 		}
+
+		m.viewport.SetContent(m.watchlist.View())
 
 	case QuoteMsg:
 		m.watchlist.Quotes = msg.quotes
 		m.watchlist.Positions = m.getPositions(msg.quotes)
+		m.lastUpdateTime = msg.time
 		if m.ready {
 			m.viewport.SetContent(m.watchlist.View())
 		}
@@ -115,10 +125,29 @@ func (m Model) View() string {
 		return "\n  Initalizing..."
 	}
 
-	return fmt.Sprintf("%s\n%s", m.viewport.View(), footer(m.viewport.Width))
+	return fmt.Sprintf("%s\n%s", m.viewport.View(), footer(m.viewport.Width, m.lastUpdateTime))
 }
 
-func footer(width int) string {
-	return styleLogo(" 🚀 ticker ") + styleHelp(" q: exit")
+func footer(width int, time string) string {
+
+	if width < 80 {
+		return styleLogo(" ticker ")
+	}
+
+	return Line(
+		width,
+		Cell{
+			Width: 10,
+			Text:  styleLogo(" ticker "),
+		},
+		Cell{
+			Width: 36,
+			Text:  styleHelp(" q: exit ↑: scroll up ↓: scroll down"),
+		},
+		Cell{
+			Text:  styleHelp("⟳  " + time),
+			Align: RightAlign,
+		},
+	)
 
 }

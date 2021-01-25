@@ -2,8 +2,8 @@ Ticker
 ==========
 
 <p>
-    <a href="https://github.com/achannarasappa/ticker/releases"><img src="https://img.shields.io/github/release/achannarasappa/ticker.svg" alt="Latest Release"></a>
-    <a href="https://github.com/achannarasappa/ticker/actions"><img src="https://github.com/achannarasappa/ticker/workflows/Test/badge.svg" alt="Build Status"></a>
+    <a href="https://github.com/achannarasappa/ticker/releases"><img src="https://img.shields.io/github/v/release/achannarasappa/ticker" alt="Latest Release"></a>
+    <a href="https://github.com/achannarasappa/ticker/actions"><img src="https://github.com/achannarasappa/ticker/workflows/test/badge.svg" alt="Build Status"></a>
 </p>
 Terminal stock watcher and stock position tracker
 

@@ -67,7 +67,6 @@ func init() {
 func initConfig() {
 	if configPath != "" {
 		viper.SetConfigFile(configPath)
-		configPath = viper.ConfigFileUsed()
 	} else {
 		home, err := homedir.Dir()
 		if err != nil {
@@ -79,4 +78,7 @@ func initConfig() {
 		viper.AddConfigPath(".")
 		viper.SetConfigName(".ticker")
 	}
+
+	viper.ReadInConfig()
+	configPath = viper.ConfigFileUsed()
 }

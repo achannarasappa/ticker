@@ -15,7 +15,7 @@ Terminal stock watcher and stock position tracker
 ## Features
 
 * Live stock price quotes
-* Track real-time value of your stock positions
+* Track value of your stock positions
 * Support for multiple cost basis lots
 
 ## Install
@@ -75,3 +75,7 @@ lots:
 
 * Symbols not on the watchlist that exists in `lots` will automatically be watched
 * `watchlist` and `lots` are both optional properties
+
+## Notes
+
+* Quotes are pulled from Yahoo finance which, like other financial news sources, provides delayed stock quotes as opposed to real-time quotes - information in `ticker` is appropriate for casual use cases such as position tracking and price watching but not for active trading where up to the minute/second pricing matters

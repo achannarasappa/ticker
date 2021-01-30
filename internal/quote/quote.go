@@ -10,6 +10,7 @@ import (
 type ResponseQuote struct {
 	ShortName                  string  `json:"shortName"`
 	Symbol                     string  `json:"symbol"`
+	Currency                   string  `json:"currency"`
 	MarketState                string  `json:"marketState"`
 	RegularMarketChange        float64 `json:"regularMarketChange"`
 	RegularMarketChangePercent float64 `json:"regularMarketChangePercent"`

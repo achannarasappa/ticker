@@ -24,7 +24,8 @@ var _ = Describe("Quote", func() {
 							"regularMarketTime": 1608832801,
 							"regularMarketPrice": 84.98,
 							"regularMarketPreviousClose": 81.9,
-							"symbol": "NET"
+							"symbol": "NET",
+							"currency": "USD"
 						}
 					],
 					"error": null
@@ -48,6 +49,7 @@ var _ = Describe("Quote", func() {
 						RegularMarketChangePercent: 3.7606857,
 						RegularMarketPrice:         84.98,
 						RegularMarketPreviousClose: 81.9,
+						Currency:                   "USD",
 					},
 					Price:                   84.98,
 					Change:                  3.0800018,
@@ -75,7 +77,8 @@ var _ = Describe("Quote", func() {
 								"regularMarketTime": 1608832801,
 								"regularMarketPrice": 84.98,
 								"regularMarketPreviousClose": 81.9,
-								"symbol": "NET"
+								"symbol": "NET",
+								"currency": "USD"
 							}
 						],
 						"error": null
@@ -102,6 +105,7 @@ var _ = Describe("Quote", func() {
 							PreMarketChange:            1.0399933,
 							PreMarketChangePercent:     1.2238094,
 							PreMarketPrice:             86.02,
+							Currency:                   "USD",
 						},
 						Price:                   86.02,
 						Change:                  1.0399933,
@@ -130,7 +134,8 @@ var _ = Describe("Quote", func() {
 								"regularMarketTime": 1608832801,
 								"regularMarketPrice": 84.98,
 								"regularMarketPreviousClose": 81.9,
-								"symbol": "NET"
+								"symbol": "NET",
+								"currency": "USD"
 							}
 						],
 						"error": null
@@ -157,6 +162,7 @@ var _ = Describe("Quote", func() {
 							PostMarketChange:           1.0399933,
 							PostMarketChangePercent:    1.2238094,
 							PostMarketPrice:            86.02,
+							Currency:                   "USD",
 						},
 						Price:                   86.02,
 						Change:                  4.1199951,
@@ -185,7 +191,8 @@ var _ = Describe("Quote", func() {
 								"regularMarketTime": 1608832801,
 								"regularMarketPrice": 84.98,
 								"regularMarketPreviousClose": 81.9,
-								"symbol": "NET"
+								"symbol": "NET",
+								"currency": "USD"
 							}
 						],
 						"error": null
@@ -212,6 +219,7 @@ var _ = Describe("Quote", func() {
 							PostMarketChange:           1.0399933,
 							PostMarketChangePercent:    1.2238094,
 							PostMarketPrice:            86.02,
+							Currency:                   "USD",
 						},
 						Price:                   84.98,
 						Change:                  0.0,

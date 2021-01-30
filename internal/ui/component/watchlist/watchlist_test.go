@@ -45,6 +45,7 @@ var _ = Describe("Watchlist", func() {
 					ResponseQuote: ResponseQuote{
 						Symbol:    "AAPL",
 						ShortName: "Apple Inc.",
+						Currency:  "USD",
 					},
 					Price:                   1.00 + change,
 					Change:                  change,
@@ -63,7 +64,7 @@ var _ = Describe("Watchlist", func() {
 			Position{},
 			strings.Join([]string{
 				"",
-				"AAPL                       ⦿                                                1.05",
+				"AAPL                       ⦿                                            1.05 USD",
 				"Apple Inc.                                                       ↑ 0.05  (0.05%)",
 			}, "\n"),
 		),
@@ -75,7 +76,7 @@ var _ = Describe("Watchlist", func() {
 			Position{},
 			strings.Join([]string{
 				"",
-				"AAPL                       ⦿                                                0.95",
+				"AAPL                       ⦿                                            0.95 USD",
 				"Apple Inc.                                                      ↓ -0.05 (-0.05%)",
 			}, "\n"),
 		),
@@ -87,7 +88,7 @@ var _ = Describe("Watchlist", func() {
 			Position{},
 			strings.Join([]string{
 				"",
-				"AAPL                       ⦾                                                1.05",
+				"AAPL                       ⦾                                            1.05 USD",
 				"Apple Inc.                                                       ↑ 0.05  (0.05%)",
 			}, "\n"),
 		),
@@ -108,7 +109,7 @@ var _ = Describe("Watchlist", func() {
 			},
 			strings.Join([]string{
 				"",
-				"AAPL                       ⦿                     105.00                     1.05",
+				"AAPL                       ⦿                     105.00                 1.05 USD",
 				"Apple Inc.                              ↑ 5.00  (5.00%)          ↑ 0.05  (0.05%)",
 			}, "\n"),
 		),
@@ -129,7 +130,7 @@ var _ = Describe("Watchlist", func() {
 			},
 			strings.Join([]string{
 				"",
-				"AAPL                       ⦿                      95.00                     0.95",
+				"AAPL                       ⦿                      95.00                 0.95 USD",
 				"Apple Inc.                             ↓ -5.00 (-5.00%)         ↓ -0.05 (-0.05%)",
 			}, "\n"),
 		),
@@ -150,7 +151,7 @@ var _ = Describe("Watchlist", func() {
 			},
 			strings.Join([]string{
 				"",
-				"AAPL                                              95.00                     1.00",
+				"AAPL                                              95.00                 1.00 USD",
 				"Apple Inc.                                                         0.00  (0.00%)",
 			}, "\n"),
 		),
@@ -166,6 +167,7 @@ var _ = Describe("Watchlist", func() {
 					ResponseQuote: ResponseQuote{
 						Symbol:    "AAPL",
 						ShortName: "Apple Inc.",
+						Currency:  "USD",
 					},
 					Price:                   1.05,
 					Change:                  0.00,
@@ -177,6 +179,7 @@ var _ = Describe("Watchlist", func() {
 					ResponseQuote: ResponseQuote{
 						Symbol:    "TW",
 						ShortName: "ThoughtWorks",
+						Currency:  "USD",
 					},
 					Price:                   109.04,
 					Change:                  3.53,
@@ -188,6 +191,7 @@ var _ = Describe("Watchlist", func() {
 					ResponseQuote: ResponseQuote{
 						Symbol:    "GOOG",
 						ShortName: "Google Inc.",
+						Currency:  "USD",
 					},
 					Price:                   2523.53,
 					Change:                  -32.02,
@@ -199,6 +203,7 @@ var _ = Describe("Watchlist", func() {
 					ResponseQuote: ResponseQuote{
 						Symbol:    "BTC-USD",
 						ShortName: "Bitcoin",
+						Currency:  "USD",
 					},
 					Price:                   50000.0,
 					Change:                  10000.0,
@@ -206,17 +211,31 @@ var _ = Describe("Watchlist", func() {
 					IsActive:                true,
 					IsRegularTradingSession: true,
 				},
+				{
+					ResponseQuote: ResponseQuote{
+						Symbol:    "IAG.L",
+						ShortName: "INTERNATIONAL CONSOLIDATED AIRL",
+						Currency:  "GBp",
+					},
+					Price:                   143.0,
+					Change:                  -2.6,
+					ChangePercent:           -1.78,
+					IsActive:                false,
+					IsRegularTradingSession: false,
+				},
 			}
 			expected := strings.Join([]string{
 				"",
-				"BTC-USD                    ⦿                                            50000.00",
+				"BTC-USD                    ⦿                                        50000.00 USD",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-				"TW                         ⦾                                              109.04",
+				"TW                         ⦾                                          109.04 USD",
 				"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
-				"GOOG                       ⦾                                             2523.53",
+				"GOOG                       ⦾                                         2523.53 USD",
 				"Google Inc.                                                    ↓ -32.02 (-1.35%)",
-				"AAPL                                                                        1.05",
+				"AAPL                                                                    1.05 USD",
 				"Apple Inc.                                                         0.00  (0.00%)",
+				"IAG.L                                                                 143.00 GBX",
+				"INTERNATIONAL CONSOLIDATED AIR                                  ↓ -2.60 (-1.78%)",
 			}, "\n")
 			Expect(removeFormatting(m.View())).To(Equal(expected))
 		})

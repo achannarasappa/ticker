@@ -72,7 +72,7 @@ func item(q quote.Quote, p position.Position, width int) string {
 			},
 			Cell{
 				Width: 25,
-				Text:  styleNeutral(ConvertFloatToString(q.Price)),
+				Text:  styleNeutral(ConvertFloatToString(q.Price) + " " + normalizeCurrency(q.Currency)),
 				Align: RightAlign,
 			},
 		),
@@ -133,6 +133,14 @@ func quoteChangeText(change float64, changePercent float64) string {
 	}
 
 	return stylePriceNegative(changePercent)("↓ " + ConvertFloatToString(change) + " (" + ConvertFloatToString(changePercent) + "%)")
+}
+
+func normalizeCurrency(currency string) string {
+	if currency == "GBp" {
+		return "GBX"
+	}
+
+	return currency
 }
 
 func newStyleFromGradient(startColorHex string, endColorHex string) func(float64) func(string) string {

@@ -1,11 +1,16 @@
-Ticker
-==========
-
 <p>
     <a href="https://github.com/achannarasappa/ticker/releases"><img src="https://img.shields.io/github/v/release/achannarasappa/ticker" alt="Latest Release"></a>
     <a href="https://github.com/achannarasappa/ticker/actions"><img src="https://github.com/achannarasappa/ticker/workflows/test/badge.svg" alt="Build Status"></a>
 </p>
+
+
+<h1 align="center">Ticker</h2>
+<p align="center">
 Terminal stock watcher and stock position tracker
+</p>
+<p align="center">
+<img align="center" src="./docs/ticker.gif" />
+</p>
 
 ## Features
 
@@ -69,4 +74,4 @@ lots:
 ```
 
 * Symbols not on the watchlist that exists in `lots` will automatically be watched
-* `watchlist` and `lots` are both options properties
+* `watchlist` and `lots` are both optional properties

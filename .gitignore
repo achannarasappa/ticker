@@ -3,6 +3,8 @@
 !cmd/*
 !internal
 !internal/**/*
+!docs
+!docs/*
 !main.go
 !README.md
 !LICENSE

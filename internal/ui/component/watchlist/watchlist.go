@@ -34,16 +34,16 @@ type Model struct {
 	Width                 int
 	Quotes                []quote.Quote
 	Positions             map[string]position.Position
-	Compact               bool
+	Separate              bool
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
 }
 
 // NewModel returns a model with default values.
-func NewModel(compact bool, extraInfoExchange bool, extraInfoFundamentals bool) Model {
+func NewModel(separate bool, extraInfoExchange bool, extraInfoFundamentals bool) Model {
 	return Model{
 		Width:                 80,
-		Compact:               compact,
+		Separate:              separate,
 		ExtraInfoExchange:     extraInfoExchange,
 		ExtraInfoFundamentals: extraInfoFundamentals,
 	}
@@ -71,11 +71,11 @@ func (m Model) View() string {
 		)
 	}
 
-	return strings.Join(items, separator(m.Compact, m.Width))
+	return strings.Join(items, separator(m.Separate, m.Width))
 }
 
-func separator(isCompact bool, width int) string {
-	if !isCompact {
+func separator(isSeparated bool, width int) string {
+	if isSeparated {
 		return "\n" + Line(
 			width,
 			Cell{

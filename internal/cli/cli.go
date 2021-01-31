@@ -15,7 +15,7 @@ type Config struct {
 	RefreshInterval       int            `yaml:"interval"`
 	Watchlist             []string       `yaml:"watchlist"`
 	Lots                  []position.Lot `yaml:"lots"`
-	Compact               bool           `yaml:"compact"`
+	Separate              bool           `yaml:"separate"`
 	ExtraInfoExchange     bool           `yaml:"extra-info-exchange"`
 	ExtraInfoFundamentals bool           `yaml:"extra-info-fundamentals"`
 }
@@ -24,7 +24,7 @@ type Options struct {
 	ConfigPath            *string
 	RefreshInterval       *int
 	Watchlist             *string
-	Compact               *bool
+	Separate              *bool
 	ExtraInfoExchange     *bool
 	ExtraInfoFundamentals *bool
 }
@@ -81,7 +81,7 @@ func read(fs afero.Fs, options Options, configFile *Config) (Config, error) {
 	}
 
 	config.RefreshInterval = getRefreshInterval(*options.RefreshInterval, configFile.RefreshInterval)
-	config.Compact = getBoolOption(*options.Compact, configFile.Compact)
+	config.Separate = getBoolOption(*options.Separate, configFile.Separate)
 	config.ExtraInfoExchange = getBoolOption(*options.ExtraInfoExchange, configFile.ExtraInfoExchange)
 	config.ExtraInfoFundamentals = getBoolOption(*options.ExtraInfoFundamentals, configFile.ExtraInfoFundamentals)
 

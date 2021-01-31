@@ -67,7 +67,7 @@ var _ = Describe("Cli", func() {
 			watchlist       string
 			refreshInterval int
 			configPath      string
-			compact         bool
+			separate        bool
 		)
 
 		BeforeEach(func() {
@@ -76,11 +76,11 @@ var _ = Describe("Cli", func() {
 				ConfigPath:      &configPath,
 				Watchlist:       &watchlist,
 				RefreshInterval: &refreshInterval,
-				Compact:         &compact,
+				Separate:        &separate,
 			}
 			watchlist = "GME,BB"
 			refreshInterval = 0
-			compact = false
+			separate = false
 			configPath = ""
 			fs = afero.NewMemMapFs()
 			fs.MkdirAll("./", 0755)
@@ -193,36 +193,36 @@ var _ = Describe("Cli", func() {
 			})
 		})
 
-		Describe("compact option", func() {
-			When("compact flag is set as a cli argument", func() {
+		Describe("separate option", func() {
+			When("separate flag is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
-					compact = true
+					separate = true
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.Compact).To(Equal(true))
+					Expect(config.Separate).To(Equal(true))
 				})
 
-				When("the config file also has a compact flag defined", func() {
-					It("should set the compact flag from the cli argument", func() {
-						compact = true
-						config.Compact = false
+				When("the config file also has a separate flag defined", func() {
+					It("should set the separate flag from the cli argument", func() {
+						separate = true
+						config.Separate = false
 						Validate(&config, fs, options)(&cobra.Command{}, []string{})
-						Expect(config.Compact).To(Equal(true))
+						Expect(config.Separate).To(Equal(true))
 					})
 				})
 			})
 
-			When("compact flag is set in the config file", func() {
+			When("separate flag is set in the config file", func() {
 				It("should set the config to the cli argument value", func() {
-					config.Compact = true
+					config.Separate = true
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.Compact).To(Equal(true))
+					Expect(config.Separate).To(Equal(true))
 				})
 			})
 
-			When("compact flag is not set", func() {
+			When("separate flag is not set", func() {
 				It("should set a default watch interval", func() {
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.Compact).To(Equal(false))
+					Expect(config.Separate).To(Equal(false))
 				})
 			})
 		})

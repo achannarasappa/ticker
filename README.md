@@ -51,7 +51,7 @@ ticker -w NET,AAPL,TSLA
 |-w|--watchlist||comma separated list of symbols to watch|
 |-e|--extra-info-exchange||display currency, exchange name, and quote delay for each quote |
 |-q|--extra-info-fundamentals||display open price, high, low, and volume for each quote |
-|  |--compact||compact layout without separators between each quote|
+|-s|--separate||layout with separators between each quote|
 
 ## Configuration
 

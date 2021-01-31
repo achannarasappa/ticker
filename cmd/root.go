@@ -19,7 +19,7 @@ var (
 	config                cli.Config
 	watchlist             string
 	refreshInterval       int
-	compact               bool
+	separate              bool
 	extraInfoExchange     bool
 	extraInfoFundamentals bool
 	rootCmd               = &cobra.Command{
@@ -32,7 +32,7 @@ var (
 				ConfigPath:            &configPath,
 				RefreshInterval:       &refreshInterval,
 				Watchlist:             &watchlist,
-				Compact:               &compact,
+				Separate:              &separate,
 				ExtraInfoExchange:     &extraInfoExchange,
 				ExtraInfoFundamentals: &extraInfoFundamentals,
 			},
@@ -53,7 +53,7 @@ func init() {
 	rootCmd.Flags().StringVar(&configPath, "config", "", "config file (default is $HOME/.ticker.yaml)")
 	rootCmd.Flags().StringVarP(&watchlist, "watchlist", "w", "", "comma separated list of symbols to watch")
 	rootCmd.Flags().IntVarP(&refreshInterval, "interval", "i", 0, "refresh interval in seconds")
-	rootCmd.Flags().BoolVar(&compact, "compact", false, "compact layout without separators between each quote")
+	rootCmd.Flags().BoolVar(&separate, "separate", false, "layout with separators between each quote")
 	rootCmd.Flags().BoolVar(&extraInfoExchange, "extra-info-exchange", false, "display currency, exchange name, and quote delay for each quote")
 	rootCmd.Flags().BoolVar(&extraInfoFundamentals, "extra-info-fundamentals", false, "display open price, high, low, and volume for each quote")
 }

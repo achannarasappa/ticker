@@ -204,21 +204,18 @@ var _ = Describe("Watchlist", func() {
 			expected := strings.Join([]string{
 				"BTC-USD                    ⦿                                            50000.00",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
 				"TW                         ⦾                                              109.04",
 				"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
-				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
 				"GOOG                       ⦾                                             2523.53",
 				"Google Inc.                                                    ↓ -32.02 (-1.35%)",
-				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
 				"AAPL                                                                        1.05",
 				"Apple Inc.                                                         0.00  (0.00%)",
 			}, "\n")
 			Expect(removeFormatting(m.View())).To(Equal(expected))
 		})
 
-		When("the compact layout flag is set", func() {
-			It("should render a watchlist without separators", func() {
+		When("the separate layout flag is set", func() {
+			It("should render a watchlist with separators", func() {
 
 				m := NewModel(true, false, false)
 				m.Quotes = []Quote{
@@ -259,8 +256,10 @@ var _ = Describe("Watchlist", func() {
 				expected := strings.Join([]string{
 					"BTC-USD                    ⦿                                            50000.00",
 					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
+					"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
 					"TW                         ⦾                                              109.04",
 					"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
+					"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
 					"GOOG                       ⦾                                             2523.53",
 					"Google Inc.                                                    ↓ -32.02 (-1.35%)",
 				}, "\n")

@@ -37,7 +37,7 @@ var _ = Describe("Watchlist", func() {
 				}
 			}
 
-			m := NewModel(false)
+			m := NewModel(false, false, false)
 			m.Width = 80
 			m.Positions = positionMap
 			m.Quotes = []Quote{
@@ -153,7 +153,7 @@ var _ = Describe("Watchlist", func() {
 	When("there are more than one symbols on the watchlist", func() {
 		It("should render a watchlist with each symbol", func() {
 
-			m := NewModel(false)
+			m := NewModel(false, false, false)
 			m.Width = 80
 			m.Quotes = []Quote{
 				{
@@ -220,7 +220,7 @@ var _ = Describe("Watchlist", func() {
 		When("the compact layout flag is set", func() {
 			It("should render a watchlist without separators", func() {
 
-				m := NewModel(true)
+				m := NewModel(true, false, false)
 				m.Quotes = []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -269,16 +269,72 @@ var _ = Describe("Watchlist", func() {
 		})
 	})
 
+	When("the option for extra exchange information is set", func() {
+		It("should render extra exchange information", func() {
+			m := NewModel(true, true, false)
+			m.Quotes = []Quote{
+				{
+					ResponseQuote: ResponseQuote{
+						Symbol:        "BTC-USD",
+						ShortName:     "Bitcoin",
+						Currency:      "USD",
+						ExchangeName:  "Cryptocurrency",
+						ExchangeDelay: 0,
+					},
+					Price:                   50000.0,
+					Change:                  10000.0,
+					ChangePercent:           20.0,
+					IsActive:                true,
+					IsRegularTradingSession: true,
+				},
+			}
+			expected := strings.Join([]string{
+				"BTC-USD                    ⦿                                            50000.00",
+				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
+				"                                              Cryptocurrency   Real-Time   USD  ",
+			}, "\n")
+			Expect(removeFormatting(m.View())).To(Equal(expected))
+		})
+
+		When("the exchange has a delay", func() {
+			It("should render extra exchange information with the delay amount", func() {
+				m := NewModel(true, true, false)
+				m.Quotes = []Quote{
+					{
+						ResponseQuote: ResponseQuote{
+							Symbol:        "BTC-USD",
+							ShortName:     "Bitcoin",
+							Currency:      "USD",
+							ExchangeName:  "Cryptocurrency",
+							ExchangeDelay: 15,
+						},
+						Price:                   50000.0,
+						Change:                  10000.0,
+						ChangePercent:           20.0,
+						IsActive:                true,
+						IsRegularTradingSession: true,
+					},
+				}
+				expected := strings.Join([]string{
+					"BTC-USD                    ⦿                                            50000.00",
+					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
+					"                                          Cryptocurrency   Delayed 15min   USD  ",
+				}, "\n")
+				Expect(removeFormatting(m.View())).To(Equal(expected))
+			})
+		})
+	})
+
 	When("no quotes are set", func() {
 		It("should render an empty watchlist", func() {
-			m := NewModel(false)
+			m := NewModel(false, false, false)
 			Expect(m.View()).To(Equal(""))
 		})
 	})
 
 	When("the window width is less than the minimum", func() {
 		It("should render an empty watchlist", func() {
-			m := NewModel(false)
+			m := NewModel(false, false, false)
 			m.Width = 70
 			Expect(m.View()).To(Equal("Terminal window too narrow to render content\nResize to fix (70/80)"))
 		})

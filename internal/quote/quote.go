@@ -11,6 +11,9 @@ type ResponseQuote struct {
 	ShortName                  string  `json:"shortName"`
 	Symbol                     string  `json:"symbol"`
 	MarketState                string  `json:"marketState"`
+	Currency                   string  `json:"currency"`
+	ExchangeName               string  `json:"fullExchangeName"`
+	ExchangeDelay              float64 `json:"exchangeDataDelayedBy"`
 	RegularMarketChange        float64 `json:"regularMarketChange"`
 	RegularMarketChangePercent float64 `json:"regularMarketChangePercent"`
 	RegularMarketPrice         float64 `json:"regularMarketPrice"`

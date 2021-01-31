@@ -49,6 +49,7 @@ ticker -w NET,AAPL,TSLA
 |  |--config|`~/.ticker.yaml`|config with watchlist and positions|
 |-i|--interval|`5`|Refresh interval in seconds|
 |-w|--watchlist||comma separated list of symbols to watch|
+|-e|--extra-info-exchange||display currency, exchange name, and quote delay for each quote |
 |  |--compact||compact layout without separators between each quote|
 
 ## Configuration

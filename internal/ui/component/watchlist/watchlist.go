@@ -3,6 +3,7 @@ package watchlist
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 	"ticker/internal/position"
 	"ticker/internal/quote"
@@ -19,6 +20,8 @@ var (
 	styleNeutralBold   = NewStyle("#d4d4d4", "", true)
 	styleNeutralFaded  = NewStyle("#616161", "", false)
 	styleLine          = NewStyle("#3a3a3a", "", false)
+	styleTag           = NewStyle("#d4d4d4", "#3a3a3a", false)
+	styleTagEnd        = NewStyle("#3a3a3a", "#3a3a3a", false)
 	stylePricePositive = newStyleFromGradient("#C6FF40", "#779929")
 	stylePriceNegative = newStyleFromGradient("#FF7940", "#994926")
 )
@@ -28,17 +31,21 @@ const (
 )
 
 type Model struct {
-	Width     int
-	Quotes    []quote.Quote
-	Positions map[string]position.Position
-	Compact   bool
+	Width             int
+	Quotes            []quote.Quote
+	Positions         map[string]position.Position
+	Compact           bool
+	ExtraInfoExchange bool
+	ExtraInfoQuote    bool
 }
 
 // NewModel returns a model with default values.
-func NewModel(compact bool) Model {
+func NewModel(compact bool, extraInfoExchange bool, extraInfoQuote bool) Model {
 	return Model{
-		Width:   80,
-		Compact: compact,
+		Width:             80,
+		Compact:           compact,
+		ExtraInfoExchange: extraInfoExchange,
+		ExtraInfoQuote:    extraInfoQuote,
 	}
 }
 
@@ -51,7 +58,17 @@ func (m Model) View() string {
 	quotes := sortQuotes(m.Quotes)
 	items := make([]string, 0)
 	for _, quote := range quotes {
-		items = append(items, item(quote, m.Positions[quote.Symbol], m.Width))
+		items = append(
+			items,
+			strings.Join(
+				[]string{
+					item(quote, m.Positions[quote.Symbol], m.Width),
+					// extraInfoQuote(m.ExtraInfoQuote, quote, m.Width),
+					extraInfoExchange(m.ExtraInfoExchange, quote, m.Width),
+				},
+				"",
+			),
+		)
 	}
 
 	return strings.Join(items, separator(m.Compact, m.Width))
@@ -111,6 +128,47 @@ func item(q quote.Quote, p position.Position, width int) string {
 			},
 		),
 	)
+}
+
+func extraInfoExchange(show bool, q quote.Quote, width int) string {
+	if !show {
+		return ""
+	}
+	return "\n" + Line(
+		width,
+		Cell{
+			Text:  "",
+			Align: RightAlign,
+		},
+		Cell{
+			Text:  tagText(q.ExchangeName) + " " + tagText(exchangeDelayText(q.ExchangeDelay)) + " " + tagText(q.Currency),
+			Align: RightAlign,
+		},
+		Cell{
+			Width: 1,
+			Text:  " ",
+			Align: RightAlign,
+		},
+	)
+}
+
+// func extraInfoQuote(show bool, q quote.Quote, width int) string {
+// 	if !show {
+// 		return ""
+// 	}
+// 	return ""
+// }
+
+func exchangeDelayText(delay float64) string {
+	if delay <= 0 {
+		return "Real-Time"
+	}
+
+	return "Delayed " + strconv.FormatFloat(delay, 'f', 0, 64) + "min"
+}
+
+func tagText(text string) string {
+	return styleTagEnd(" ") + styleTag(text) + styleTagEnd(" ")
 }
 
 func marketStateText(q quote.Quote) string {

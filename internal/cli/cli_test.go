@@ -123,81 +123,85 @@ var _ = Describe("Cli", func() {
 			})
 		})
 
-		When("there is no watchlist in the config file and no watchlist cli argument", func() {
-			It("should return an error", func() {
-				watchlist = ""
-				output := Validate(&config, fs, options)(&cobra.Command{}, []string{})
-				Expect(output).To(MatchError("Invalid config: No watchlist provided"))
+		Describe("watchlist", func() {
+			When("there is no watchlist in the config file and no watchlist cli argument", func() {
+				It("should return an error", func() {
+					watchlist = ""
+					output := Validate(&config, fs, options)(&cobra.Command{}, []string{})
+					Expect(output).To(MatchError("Invalid config: No watchlist provided"))
 
-			})
-		})
-
-		When("there is a watchlist as a cli argument", func() {
-			It("should set the watchlist from the cli argument", func() {
-				watchlist = "AAPL,TW"
-				Validate(&config, fs, options)(&cobra.Command{}, []string{})
-				Expect(config.Watchlist).To(Equal([]string{
-					"AAPL",
-					"TW",
-				}))
+				})
 			})
 
-			When("the config file also has a watchlist defined", func() {
+			When("there is a watchlist as a cli argument", func() {
 				It("should set the watchlist from the cli argument", func() {
-					watchlist = "F,GM"
-					afero.WriteFile(fs, ".ticker.yaml", []byte("watchlist:\n  - BIO"), 0644)
+					watchlist = "AAPL,TW"
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.Watchlist).To(Equal([]string{
-						"F",
-						"GM",
+						"AAPL",
+						"TW",
+					}))
+				})
+
+				When("the config file also has a watchlist defined", func() {
+					It("should set the watchlist from the cli argument", func() {
+						watchlist = "F,GM"
+						afero.WriteFile(fs, ".ticker.yaml", []byte("watchlist:\n  - BIO"), 0644)
+						Validate(&config, fs, options)(&cobra.Command{}, []string{})
+						Expect(config.Watchlist).To(Equal([]string{
+							"F",
+							"GM",
+						}))
+					})
+				})
+			})
+
+			When("there is a watchlist in the config file", func() {
+				It("should set the watchlist from the config file", func() {
+					watchlist = ""
+					configPath = ".ticker.yaml"
+					afero.WriteFile(fs, ".ticker.yaml", []byte("watchlist:\n  - NET"), 0644)
+					Validate(&config, fs, options)(&cobra.Command{}, []string{})
+					Expect(config.Watchlist).To(Equal([]string{
+						"NET",
 					}))
 				})
 			})
 		})
 
-		When("there is a watchlist in the config file", func() {
-			It("should set the watchlist from the config file", func() {
-				watchlist = ""
-				configPath = ".ticker.yaml"
-				afero.WriteFile(fs, ".ticker.yaml", []byte("watchlist:\n  - NET"), 0644)
-				Validate(&config, fs, options)(&cobra.Command{}, []string{})
-				Expect(config.Watchlist).To(Equal([]string{
-					"NET",
-				}))
-			})
-		})
-
-		When("refresh interval is set as a cli argument", func() {
-			It("should set the config to the cli argument value", func() {
-				refreshInterval = 9
-				Validate(&config, fs, options)(&cobra.Command{}, []string{})
-				Expect(config.RefreshInterval).To(Equal(9))
-			})
-
-			When("the config file also has a refresh interval defined", func() {
-				It("should set the refresh interval from the cli argument", func() {
-					refreshInterval = 8
-					configPath = ".ticker.yaml"
-					afero.WriteFile(fs, ".ticker.yaml", []byte("interval: 7"), 0644)
+		Describe("refresh interval option", func() {
+			When("refresh interval is set as a cli argument", func() {
+				It("should set the config to the cli argument value", func() {
+					refreshInterval = 9
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.RefreshInterval).To(Equal(8))
+					Expect(config.RefreshInterval).To(Equal(9))
+				})
+
+				When("the config file also has a refresh interval defined", func() {
+					It("should set the refresh interval from the cli argument", func() {
+						refreshInterval = 8
+						configPath = ".ticker.yaml"
+						afero.WriteFile(fs, ".ticker.yaml", []byte("interval: 7"), 0644)
+						Validate(&config, fs, options)(&cobra.Command{}, []string{})
+						Expect(config.RefreshInterval).To(Equal(8))
+					})
 				})
 			})
-		})
 
-		When("refresh interval is set in the config file", func() {
-			It("should set the config to the config argument value", func() {
-				configPath = ".ticker.yaml"
-				afero.WriteFile(fs, ".ticker.yaml", []byte("interval: 357"), 0644)
-				Validate(&config, fs, options)(&cobra.Command{}, []string{})
-				Expect(config.RefreshInterval).To(Equal(357))
+			When("refresh interval is set in the config file", func() {
+				It("should set the config to the config argument value", func() {
+					configPath = ".ticker.yaml"
+					afero.WriteFile(fs, ".ticker.yaml", []byte("interval: 357"), 0644)
+					Validate(&config, fs, options)(&cobra.Command{}, []string{})
+					Expect(config.RefreshInterval).To(Equal(357))
+				})
 			})
-		})
 
-		When("refresh interval is not set", func() {
-			It("should set a default watch interval", func() {
-				Validate(&config, fs, options)(&cobra.Command{}, []string{})
-				Expect(config.RefreshInterval).To(Equal(5))
+			When("refresh interval is not set", func() {
+				It("should set a default watch interval", func() {
+					Validate(&config, fs, options)(&cobra.Command{}, []string{})
+					Expect(config.RefreshInterval).To(Equal(5))
+				})
 			})
 		})
 

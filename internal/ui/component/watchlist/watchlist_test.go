@@ -37,7 +37,7 @@ var _ = Describe("Watchlist", func() {
 				}
 			}
 
-			m := NewModel()
+			m := NewModel(false)
 			m.Width = 80
 			m.Positions = positionMap
 			m.Quotes = []Quote{
@@ -62,7 +62,6 @@ var _ = Describe("Watchlist", func() {
 			0.05,
 			Position{},
 			strings.Join([]string{
-				"",
 				"AAPL                       ⦿                                                1.05",
 				"Apple Inc.                                                       ↑ 0.05  (0.05%)",
 			}, "\n"),
@@ -74,7 +73,6 @@ var _ = Describe("Watchlist", func() {
 			-0.05,
 			Position{},
 			strings.Join([]string{
-				"",
 				"AAPL                       ⦿                                                0.95",
 				"Apple Inc.                                                      ↓ -0.05 (-0.05%)",
 			}, "\n"),
@@ -86,7 +84,6 @@ var _ = Describe("Watchlist", func() {
 			0.05,
 			Position{},
 			strings.Join([]string{
-				"",
 				"AAPL                       ⦾                                                1.05",
 				"Apple Inc.                                                       ↑ 0.05  (0.05%)",
 			}, "\n"),
@@ -107,7 +104,6 @@ var _ = Describe("Watchlist", func() {
 				DayChangePercent: 5.0,
 			},
 			strings.Join([]string{
-				"",
 				"AAPL                       ⦿                     105.00                     1.05",
 				"Apple Inc.                              ↑ 5.00  (5.00%)          ↑ 0.05  (0.05%)",
 			}, "\n"),
@@ -128,7 +124,6 @@ var _ = Describe("Watchlist", func() {
 				DayChangePercent: -5.0,
 			},
 			strings.Join([]string{
-				"",
 				"AAPL                       ⦿                      95.00                     0.95",
 				"Apple Inc.                             ↓ -5.00 (-5.00%)         ↓ -0.05 (-0.05%)",
 			}, "\n"),
@@ -149,7 +144,6 @@ var _ = Describe("Watchlist", func() {
 				DayChangePercent: 0.0,
 			},
 			strings.Join([]string{
-				"",
 				"AAPL                                              95.00                     1.00",
 				"Apple Inc.                                                         0.00  (0.00%)",
 			}, "\n"),
@@ -159,7 +153,7 @@ var _ = Describe("Watchlist", func() {
 	When("there are more than one symbols on the watchlist", func() {
 		It("should render a watchlist with each symbol", func() {
 
-			m := NewModel()
+			m := NewModel(false)
 			m.Width = 80
 			m.Quotes = []Quote{
 				{
@@ -208,30 +202,83 @@ var _ = Describe("Watchlist", func() {
 				},
 			}
 			expected := strings.Join([]string{
-				"",
 				"BTC-USD                    ⦿                                            50000.00",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
+				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
 				"TW                         ⦾                                              109.04",
 				"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
+				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
 				"GOOG                       ⦾                                             2523.53",
 				"Google Inc.                                                    ↓ -32.02 (-1.35%)",
+				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
 				"AAPL                                                                        1.05",
 				"Apple Inc.                                                         0.00  (0.00%)",
 			}, "\n")
 			Expect(removeFormatting(m.View())).To(Equal(expected))
 		})
+
+		When("the compact layout flag is set", func() {
+			It("should render a watchlist without separators", func() {
+
+				m := NewModel(true)
+				m.Quotes = []Quote{
+					{
+						ResponseQuote: ResponseQuote{
+							Symbol:    "BTC-USD",
+							ShortName: "Bitcoin",
+						},
+						Price:                   50000.0,
+						Change:                  10000.0,
+						ChangePercent:           20.0,
+						IsActive:                true,
+						IsRegularTradingSession: true,
+					},
+					{
+						ResponseQuote: ResponseQuote{
+							Symbol:    "TW",
+							ShortName: "ThoughtWorks",
+						},
+						Price:                   109.04,
+						Change:                  3.53,
+						ChangePercent:           5.65,
+						IsActive:                true,
+						IsRegularTradingSession: false,
+					},
+					{
+						ResponseQuote: ResponseQuote{
+							Symbol:    "GOOG",
+							ShortName: "Google Inc.",
+						},
+						Price:                   2523.53,
+						Change:                  -32.02,
+						ChangePercent:           -1.35,
+						IsActive:                true,
+						IsRegularTradingSession: false,
+					},
+				}
+				expected := strings.Join([]string{
+					"BTC-USD                    ⦿                                            50000.00",
+					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
+					"TW                         ⦾                                              109.04",
+					"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
+					"GOOG                       ⦾                                             2523.53",
+					"Google Inc.                                                    ↓ -32.02 (-1.35%)",
+				}, "\n")
+				Expect(removeFormatting(m.View())).To(Equal(expected))
+			})
+		})
 	})
 
 	When("no quotes are set", func() {
 		It("should render an empty watchlist", func() {
-			m := NewModel()
+			m := NewModel(false)
 			Expect(m.View()).To(Equal(""))
 		})
 	})
 
 	When("the window width is less than the minimum", func() {
 		It("should render an empty watchlist", func() {
-			m := NewModel()
+			m := NewModel(false)
 			m.Width = 70
 			Expect(m.View()).To(Equal("Terminal window too narrow to render content\nResize to fix (70/80)"))
 		})

@@ -15,12 +15,14 @@ type Config struct {
 	RefreshInterval int            `yaml:"interval"`
 	Watchlist       []string       `yaml:"watchlist"`
 	Lots            []position.Lot `yaml:"lots"`
+	Compact         bool           `yaml:"compact"`
 }
 
 type Options struct {
 	ConfigPath      *string
 	RefreshInterval *int
 	Watchlist       *string
+	Compact         *bool
 }
 
 func Run(uiStartFn func() error) func(*cobra.Command, []string) {
@@ -75,6 +77,7 @@ func read(fs afero.Fs, options Options, configFile *Config) (Config, error) {
 	}
 
 	config.RefreshInterval = getRefreshInterval(*options.RefreshInterval, configFile.RefreshInterval)
+	config.Compact = getBoolOption(*options.Compact, configFile.Compact)
 
 	return config, err
 
@@ -91,4 +94,17 @@ func getRefreshInterval(optionsRefreshInterval int, configRefreshInterval int) i
 	}
 
 	return 5
+}
+
+func getBoolOption(cliValue bool, configValue bool) bool {
+
+	if cliValue {
+		return cliValue
+	}
+
+	if configValue {
+		return configValue
+	}
+
+	return false
 }

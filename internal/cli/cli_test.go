@@ -67,6 +67,7 @@ var _ = Describe("Cli", func() {
 			watchlist       string
 			refreshInterval int
 			configPath      string
+			compact         bool
 		)
 
 		BeforeEach(func() {
@@ -75,13 +76,14 @@ var _ = Describe("Cli", func() {
 				ConfigPath:      &configPath,
 				Watchlist:       &watchlist,
 				RefreshInterval: &refreshInterval,
+				Compact:         &compact,
 			}
 			watchlist = "GME,BB"
 			refreshInterval = 0
+			compact = false
 			configPath = ""
 			fs = afero.NewMemMapFs()
 			fs.MkdirAll("./", 0755)
-			// afero.WriteFile(fs, ".ticker.yaml", []byte("file b"), 0644)
 		})
 
 		It("should set the config", func() {
@@ -188,6 +190,40 @@ var _ = Describe("Cli", func() {
 			It("should set a default watch interval", func() {
 				Validate(&config, fs, options)(&cobra.Command{}, []string{})
 				Expect(config.RefreshInterval).To(Equal(5))
+			})
+		})
+
+		Describe("compact option", func() {
+			When("compact flag is set as a cli argument", func() {
+				It("should set the config to the cli argument value", func() {
+					compact = true
+					Validate(&config, fs, options)(&cobra.Command{}, []string{})
+					Expect(config.Compact).To(Equal(true))
+				})
+
+				When("the config file also has a compact flag defined", func() {
+					It("should set the compact flag from the cli argument", func() {
+						compact = true
+						config.Compact = false
+						Validate(&config, fs, options)(&cobra.Command{}, []string{})
+						Expect(config.Compact).To(Equal(true))
+					})
+				})
+			})
+
+			When("compact flag is set in the config file", func() {
+				It("should set the config to the cli argument value", func() {
+					config.Compact = true
+					Validate(&config, fs, options)(&cobra.Command{}, []string{})
+					Expect(config.Compact).To(Equal(true))
+				})
+			})
+
+			When("compact flag is not set", func() {
+				It("should set a default watch interval", func() {
+					Validate(&config, fs, options)(&cobra.Command{}, []string{})
+					Expect(config.Compact).To(Equal(false))
+				})
 			})
 		})
 	})

@@ -3,6 +3,7 @@ package watchlist
 import (
 	"fmt"
 	"math"
+	"strings"
 	"ticker/internal/position"
 	"ticker/internal/quote"
 	. "ticker/internal/ui/util"
@@ -17,6 +18,7 @@ var (
 	styleNeutral       = NewStyle("#d4d4d4", "", false)
 	styleNeutralBold   = NewStyle("#d4d4d4", "", true)
 	styleNeutralFaded  = NewStyle("#616161", "", false)
+	styleLine          = NewStyle("#3a3a3a", "", false)
 	stylePricePositive = newStyleFromGradient("#C6FF40", "#779929")
 	stylePriceNegative = newStyleFromGradient("#FF7940", "#994926")
 )
@@ -29,12 +31,14 @@ type Model struct {
 	Width     int
 	Quotes    []quote.Quote
 	Positions map[string]position.Position
+	Compact   bool
 }
 
 // NewModel returns a model with default values.
-func NewModel() Model {
+func NewModel(compact bool) Model {
 	return Model{
-		Width: 100,
+		Width:   80,
+		Compact: compact,
 	}
 }
 
@@ -45,11 +49,25 @@ func (m Model) View() string {
 	}
 
 	quotes := sortQuotes(m.Quotes)
-	items := ""
+	items := make([]string, 0)
 	for _, quote := range quotes {
-		items += "\n" + item(quote, m.Positions[quote.Symbol], m.Width)
+		items = append(items, item(quote, m.Positions[quote.Symbol], m.Width))
 	}
-	return items
+
+	return strings.Join(items, separator(m.Compact, m.Width))
+}
+
+func separator(isCompact bool, width int) string {
+	if !isCompact {
+		return "\n" + Line(
+			width,
+			Cell{
+				Text: styleLine(strings.Repeat("⎯", width)),
+			},
+		) + "\n"
+	}
+
+	return "\n"
 }
 
 func item(q quote.Quote, p position.Position, width int) string {

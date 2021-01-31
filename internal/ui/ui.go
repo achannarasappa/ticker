@@ -59,6 +59,7 @@ func NewModel(config cli.Config, client *resty.Client) Model {
 		requestInterval: 3,
 		getQuotes:       quote.GetQuotes(*client, symbols),
 		getPositions:    position.GetPositions(aggregatedLots),
+		watchlist:       watchlist.NewModel(config.Compact),
 	}
 }
 
@@ -142,7 +143,7 @@ func footer(width int, time string) string {
 		},
 		Cell{
 			Width: 36,
-			Text:  styleHelp(" q: exit ↑: scroll up ↓: scroll down"),
+			Text:  styleHelp("q: exit ↑: scroll up ↓: scroll down"),
 		},
 		Cell{
 			Text:  styleHelp("⟳  " + time),

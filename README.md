@@ -46,9 +46,10 @@ ticker -w NET,AAPL,TSLA
 ## Usage
 |Alias|Flag|Default|Description|
 |-|-|-|-|
-|   |--config|`~/.ticker.yaml`|config with watchlist and positions|
-|-i,|--interval|`5`|Refresh interval in seconds|
-|-w,|--watchlist||comma separated list of symbols to watch|
+|  |--config|`~/.ticker.yaml`|config with watchlist and positions|
+|-i|--interval|`5`|Refresh interval in seconds|
+|-w|--watchlist||comma separated list of symbols to watch|
+|  |--compact||compact layout without separators between each quote|
 
 ## Configuration
 

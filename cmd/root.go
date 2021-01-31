@@ -1,18 +1,3 @@
-/*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 package cmd
 
 import (
@@ -34,6 +19,7 @@ var (
 	config          cli.Config
 	watchlist       string
 	refreshInterval int
+	compact         bool
 	rootCmd         = &cobra.Command{
 		Use:   "ticker",
 		Short: "Terminal stock ticker and stock gain/loss tracker",
@@ -44,6 +30,7 @@ var (
 				ConfigPath:      &configPath,
 				RefreshInterval: &refreshInterval,
 				Watchlist:       &watchlist,
+				Compact:         &compact,
 			},
 		),
 		Run: cli.Run(ui.Start(&config)),
@@ -61,7 +48,8 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.Flags().StringVar(&configPath, "config", "", "config file (default is $HOME/.ticker.yaml)")
 	rootCmd.Flags().StringVarP(&watchlist, "watchlist", "w", "", "comma separated list of symbols to watch")
-	rootCmd.Flags().IntVarP(&refreshInterval, "interval", "i", 0, "Refresh interval in seconds")
+	rootCmd.Flags().IntVarP(&refreshInterval, "interval", "i", 0, "refresh interval in seconds")
+	rootCmd.Flags().BoolVar(&compact, "compact", false, "compact layout without separators between each quote")
 }
 
 func initConfig() {

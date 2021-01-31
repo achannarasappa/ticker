@@ -79,11 +79,10 @@ func read(fs afero.Fs, options Options, configFile *Config) (Config, error) {
 	if len(*options.Watchlist) != 0 {
 		config.Watchlist = strings.Split(strings.ReplaceAll(*options.Watchlist, " ", ""), ",")
 	}
-
-	config.RefreshInterval = getRefreshInterval(*options.RefreshInterval, configFile.RefreshInterval)
-	config.Separate = getBoolOption(*options.Separate, configFile.Separate)
-	config.ExtraInfoExchange = getBoolOption(*options.ExtraInfoExchange, configFile.ExtraInfoExchange)
-	config.ExtraInfoFundamentals = getBoolOption(*options.ExtraInfoFundamentals, configFile.ExtraInfoFundamentals)
+	config.RefreshInterval = getRefreshInterval(*options.RefreshInterval, config.RefreshInterval)
+	config.Separate = getBoolOption(*options.Separate, config.Separate)
+	config.ExtraInfoExchange = getBoolOption(*options.ExtraInfoExchange, config.ExtraInfoExchange)
+	config.ExtraInfoFundamentals = getBoolOption(*options.ExtraInfoFundamentals, config.ExtraInfoFundamentals)
 
 	return config, err
 

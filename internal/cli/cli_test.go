@@ -177,7 +177,8 @@ var _ = Describe("Cli", func() {
 			When("the config file also has a refresh interval defined", func() {
 				It("should set the refresh interval from the cli argument", func() {
 					refreshInterval = 8
-					config.RefreshInterval = 7
+					configPath = ".ticker.yaml"
+					afero.WriteFile(fs, ".ticker.yaml", []byte("interval: 7"), 0644)
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.RefreshInterval).To(Equal(8))
 				})
@@ -185,8 +186,9 @@ var _ = Describe("Cli", func() {
 		})
 
 		When("refresh interval is set in the config file", func() {
-			It("should set the config to the cli argument value", func() {
-				config.RefreshInterval = 357
+			It("should set the config to the config argument value", func() {
+				configPath = ".ticker.yaml"
+				afero.WriteFile(fs, ".ticker.yaml", []byte("interval: 357"), 0644)
 				Validate(&config, fs, options)(&cobra.Command{}, []string{})
 				Expect(config.RefreshInterval).To(Equal(357))
 			})
@@ -210,7 +212,8 @@ var _ = Describe("Cli", func() {
 				When("the config file also has a separate flag defined", func() {
 					It("should set the separate flag from the cli argument", func() {
 						separate = true
-						config.Separate = false
+						configPath = ".ticker.yaml"
+						afero.WriteFile(fs, ".ticker.yaml", []byte("separate: true"), 0644)
 						Validate(&config, fs, options)(&cobra.Command{}, []string{})
 						Expect(config.Separate).To(Equal(true))
 					})
@@ -218,8 +221,9 @@ var _ = Describe("Cli", func() {
 			})
 
 			When("separate flag is set in the config file", func() {
-				It("should set the config to the cli argument value", func() {
-					config.Separate = true
+				It("should set the config to the config argument value", func() {
+					configPath = ".ticker.yaml"
+					afero.WriteFile(fs, ".ticker.yaml", []byte("separate: true"), 0644)
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.Separate).To(Equal(true))
 				})
@@ -244,7 +248,8 @@ var _ = Describe("Cli", func() {
 				When("the config file also has a extra-info-exchange flag defined", func() {
 					It("should set the extra-info-exchange flag from the cli argument", func() {
 						extraInfoExchange = true
-						config.ExtraInfoExchange = false
+						configPath = ".ticker.yaml"
+						afero.WriteFile(fs, ".ticker.yaml", []byte("extra-info-exchange: false"), 0644)
 						Validate(&config, fs, options)(&cobra.Command{}, []string{})
 						Expect(config.ExtraInfoExchange).To(Equal(true))
 					})
@@ -252,8 +257,9 @@ var _ = Describe("Cli", func() {
 			})
 
 			When("extra-info-exchange flag is set in the config file", func() {
-				It("should set the config to the cli argument value", func() {
-					config.ExtraInfoExchange = true
+				It("should set the config to the config argument value", func() {
+					configPath = ".ticker.yaml"
+					afero.WriteFile(fs, ".ticker.yaml", []byte("extra-info-exchange: true"), 0644)
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.ExtraInfoExchange).To(Equal(true))
 				})
@@ -278,7 +284,8 @@ var _ = Describe("Cli", func() {
 				When("the config file also has a extra-info-fundamentals flag defined", func() {
 					It("should set the extra-info-fundamentals flag from the cli argument", func() {
 						extraInfoFundamentals = true
-						config.ExtraInfoFundamentals = false
+						configPath = ".ticker.yaml"
+						afero.WriteFile(fs, ".ticker.yaml", []byte("extra-info-fundamentals: false"), 0644)
 						Validate(&config, fs, options)(&cobra.Command{}, []string{})
 						Expect(config.ExtraInfoFundamentals).To(Equal(true))
 					})
@@ -287,7 +294,8 @@ var _ = Describe("Cli", func() {
 
 			When("extra-info-fundamentals flag is set in the config file", func() {
 				It("should set the config to the cli argument value", func() {
-					config.ExtraInfoFundamentals = true
+					configPath = ".ticker.yaml"
+					afero.WriteFile(fs, ".ticker.yaml", []byte("extra-info-fundamentals: true"), 0644)
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.ExtraInfoFundamentals).To(Equal(true))
 				})

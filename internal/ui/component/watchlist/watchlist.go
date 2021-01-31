@@ -31,21 +31,21 @@ const (
 )
 
 type Model struct {
-	Width             int
-	Quotes            []quote.Quote
-	Positions         map[string]position.Position
-	Compact           bool
-	ExtraInfoExchange bool
-	ExtraInfoQuote    bool
+	Width                 int
+	Quotes                []quote.Quote
+	Positions             map[string]position.Position
+	Compact               bool
+	ExtraInfoExchange     bool
+	ExtraInfoFundamentals bool
 }
 
 // NewModel returns a model with default values.
-func NewModel(compact bool, extraInfoExchange bool, extraInfoQuote bool) Model {
+func NewModel(compact bool, extraInfoExchange bool, extraInfoFundamentals bool) Model {
 	return Model{
-		Width:             80,
-		Compact:           compact,
-		ExtraInfoExchange: extraInfoExchange,
-		ExtraInfoQuote:    extraInfoQuote,
+		Width:                 80,
+		Compact:               compact,
+		ExtraInfoExchange:     extraInfoExchange,
+		ExtraInfoFundamentals: extraInfoFundamentals,
 	}
 }
 
@@ -63,7 +63,7 @@ func (m Model) View() string {
 			strings.Join(
 				[]string{
 					item(quote, m.Positions[quote.Symbol], m.Width),
-					// extraInfoQuote(m.ExtraInfoQuote, quote, m.Width),
+					extraInfoFundamentals(m.ExtraInfoFundamentals, quote, m.Width),
 					extraInfoExchange(m.ExtraInfoExchange, quote, m.Width),
 				},
 				"",
@@ -137,10 +137,6 @@ func extraInfoExchange(show bool, q quote.Quote, width int) string {
 	return "\n" + Line(
 		width,
 		Cell{
-			Text:  "",
-			Align: RightAlign,
-		},
-		Cell{
 			Text:  tagText(q.ExchangeName) + " " + tagText(exchangeDelayText(q.ExchangeDelay)) + " " + tagText(q.Currency),
 			Align: RightAlign,
 		},
@@ -152,12 +148,33 @@ func extraInfoExchange(show bool, q quote.Quote, width int) string {
 	)
 }
 
-// func extraInfoQuote(show bool, q quote.Quote, width int) string {
-// 	if !show {
-// 		return ""
-// 	}
-// 	return ""
-// }
+func extraInfoFundamentals(show bool, q quote.Quote, width int) string {
+	if !show {
+		return ""
+	}
+
+	return "\n" + Line(
+		width,
+		Cell{
+			Width: 25,
+			Text:  styleNeutralFaded("Prev Close: ") + styleNeutral(ConvertFloatToString(q.RegularMarketPreviousClose)),
+		},
+		Cell{
+			Width: 20,
+			Text:  styleNeutralFaded("Open: ") + styleNeutral(ConvertFloatToString(q.RegularMarketOpen)),
+		},
+		Cell{
+			Text: dayRangeText(q.RegularMarketDayRange),
+		},
+	)
+}
+
+func dayRangeText(dayRange string) string {
+	if len(dayRange) <= 0 {
+		return ""
+	}
+	return styleNeutralFaded("Day Range: ") + styleNeutral(dayRange)
+}
 
 func exchangeDelayText(delay float64) string {
 	if delay <= 0 {

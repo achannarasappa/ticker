@@ -12,21 +12,21 @@ import (
 )
 
 type Config struct {
-	RefreshInterval   int            `yaml:"interval"`
-	Watchlist         []string       `yaml:"watchlist"`
-	Lots              []position.Lot `yaml:"lots"`
-	Compact           bool           `yaml:"compact"`
-	ExtraInfoExchange bool           `yaml:"extra-info-exchange"`
-	ExtraInfoQuote    bool           `yaml:"extra-info-quote"`
+	RefreshInterval       int            `yaml:"interval"`
+	Watchlist             []string       `yaml:"watchlist"`
+	Lots                  []position.Lot `yaml:"lots"`
+	Compact               bool           `yaml:"compact"`
+	ExtraInfoExchange     bool           `yaml:"extra-info-exchange"`
+	ExtraInfoFundamentals bool           `yaml:"extra-info-fundamentals"`
 }
 
 type Options struct {
-	ConfigPath        *string
-	RefreshInterval   *int
-	Watchlist         *string
-	Compact           *bool
-	ExtraInfoExchange *bool
-	ExtraInfoQuote    *bool
+	ConfigPath            *string
+	RefreshInterval       *int
+	Watchlist             *string
+	Compact               *bool
+	ExtraInfoExchange     *bool
+	ExtraInfoFundamentals *bool
 }
 
 func Run(uiStartFn func() error) func(*cobra.Command, []string) {
@@ -83,7 +83,7 @@ func read(fs afero.Fs, options Options, configFile *Config) (Config, error) {
 	config.RefreshInterval = getRefreshInterval(*options.RefreshInterval, configFile.RefreshInterval)
 	config.Compact = getBoolOption(*options.Compact, configFile.Compact)
 	config.ExtraInfoExchange = getBoolOption(*options.ExtraInfoExchange, configFile.ExtraInfoExchange)
-	config.ExtraInfoQuote = getBoolOption(*options.ExtraInfoQuote, configFile.ExtraInfoQuote)
+	config.ExtraInfoFundamentals = getBoolOption(*options.ExtraInfoFundamentals, configFile.ExtraInfoFundamentals)
 
 	return config, err
 

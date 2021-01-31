@@ -15,26 +15,26 @@ import (
 )
 
 var (
-	configPath        string
-	config            cli.Config
-	watchlist         string
-	refreshInterval   int
-	compact           bool
-	extraInfoExchange bool
-	extraInfoQuote    bool
-	rootCmd           = &cobra.Command{
+	configPath            string
+	config                cli.Config
+	watchlist             string
+	refreshInterval       int
+	compact               bool
+	extraInfoExchange     bool
+	extraInfoFundamentals bool
+	rootCmd               = &cobra.Command{
 		Use:   "ticker",
 		Short: "Terminal stock ticker and stock gain/loss tracker",
 		Args: cli.Validate(
 			&config,
 			afero.NewOsFs(),
 			cli.Options{
-				ConfigPath:        &configPath,
-				RefreshInterval:   &refreshInterval,
-				Watchlist:         &watchlist,
-				Compact:           &compact,
-				ExtraInfoExchange: &extraInfoExchange,
-				ExtraInfoQuote:    &extraInfoQuote,
+				ConfigPath:            &configPath,
+				RefreshInterval:       &refreshInterval,
+				Watchlist:             &watchlist,
+				Compact:               &compact,
+				ExtraInfoExchange:     &extraInfoExchange,
+				ExtraInfoFundamentals: &extraInfoFundamentals,
 			},
 		),
 		Run: cli.Run(ui.Start(&config)),
@@ -55,7 +55,7 @@ func init() {
 	rootCmd.Flags().IntVarP(&refreshInterval, "interval", "i", 0, "refresh interval in seconds")
 	rootCmd.Flags().BoolVar(&compact, "compact", false, "compact layout without separators between each quote")
 	rootCmd.Flags().BoolVar(&extraInfoExchange, "extra-info-exchange", false, "display currency, exchange name, and quote delay for each quote")
-	rootCmd.Flags().BoolVar(&extraInfoQuote, "extra-info-quote", false, "display open price, high, low, and volume for each quote")
+	rootCmd.Flags().BoolVar(&extraInfoFundamentals, "extra-info-fundamentals", false, "display open price, high, low, and volume for each quote")
 }
 
 func initConfig() {

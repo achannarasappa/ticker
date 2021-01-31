@@ -18,6 +18,8 @@ type ResponseQuote struct {
 	RegularMarketChangePercent float64 `json:"regularMarketChangePercent"`
 	RegularMarketPrice         float64 `json:"regularMarketPrice"`
 	RegularMarketPreviousClose float64 `json:"regularMarketPreviousClose"`
+	RegularMarketOpen          float64 `json:"regularMarketOpen"`
+	RegularMarketDayRange      string  `json:"regularMarketDayRange"`
 	PostMarketChange           float64 `json:"postMarketChange"`
 	PostMarketChangePercent    float64 `json:"postMarketChangePercent"`
 	PostMarketPrice            float64 `json:"postMarketPrice"`

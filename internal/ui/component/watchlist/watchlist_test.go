@@ -325,6 +325,61 @@ var _ = Describe("Watchlist", func() {
 		})
 	})
 
+	When("the option for extra fundamental information is set", func() {
+		It("should render extra fundamental information", func() {
+			m := NewModel(true, false, true)
+			m.Quotes = []Quote{
+				{
+					ResponseQuote: ResponseQuote{
+						Symbol:                     "BTC-USD",
+						ShortName:                  "Bitcoin",
+						RegularMarketPreviousClose: 10000.0,
+						RegularMarketOpen:          10000.0,
+						RegularMarketDayRange:      "10000 - 10000",
+					},
+					Price:                   50000.0,
+					Change:                  10000.0,
+					ChangePercent:           20.0,
+					IsActive:                true,
+					IsRegularTradingSession: true,
+				},
+			}
+			expected := strings.Join([]string{
+				"BTC-USD                    ⦿                                            50000.00",
+				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
+				"Prev Close: 10000.00     Open: 10000.00      Day Range: 10000 - 10000           ",
+			}, "\n")
+			Expect(removeFormatting(m.View())).To(Equal(expected))
+		})
+
+		When("there is no day range", func() {
+			It("should not render the day range field", func() {
+				m := NewModel(true, false, true)
+				m.Quotes = []Quote{
+					{
+						ResponseQuote: ResponseQuote{
+							Symbol:                     "BTC-USD",
+							ShortName:                  "Bitcoin",
+							RegularMarketPreviousClose: 10000.0,
+							RegularMarketOpen:          10000.0,
+						},
+						Price:                   50000.0,
+						Change:                  10000.0,
+						ChangePercent:           20.0,
+						IsActive:                true,
+						IsRegularTradingSession: true,
+					},
+				}
+				expected := strings.Join([]string{
+					"BTC-USD                    ⦿                                            50000.00",
+					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
+					"Prev Close: 10000.00     Open: 10000.00                                         ",
+				}, "\n")
+				Expect(removeFormatting(m.View())).To(Equal(expected))
+			})
+		})
+	})
+
 	When("no quotes are set", func() {
 		It("should render an empty watchlist", func() {
 			m := NewModel(false, false, false)

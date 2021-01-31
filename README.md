@@ -17,6 +17,7 @@ Terminal stock watcher and stock position tracker
 * Live stock price quotes
 * Track value of your stock positions
 * Support for multiple cost basis lots
+* Support for pre and post market pricing
 
 ## Install
 

@@ -290,7 +290,7 @@ var _ = Describe("Watchlist", func() {
 			expected := strings.Join([]string{
 				"BTC-USD                    ⦿                                            50000.00",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-				"                                              Cryptocurrency   Real-Time   USD  ",
+				" USD   Real-Time   Cryptocurrency                                               ",
 			}, "\n")
 			Expect(removeFormatting(m.View())).To(Equal(expected))
 		})
@@ -317,7 +317,7 @@ var _ = Describe("Watchlist", func() {
 				expected := strings.Join([]string{
 					"BTC-USD                    ⦿                                            50000.00",
 					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-					"                                          Cryptocurrency   Delayed 15min   USD  ",
+					" USD   Delayed 15min   Cryptocurrency                                           ",
 				}, "\n")
 				Expect(removeFormatting(m.View())).To(Equal(expected))
 			})

@@ -137,13 +137,7 @@ func extraInfoExchange(show bool, q quote.Quote, width int) string {
 	return "\n" + Line(
 		width,
 		Cell{
-			Text:  tagText(q.ExchangeName) + " " + tagText(exchangeDelayText(q.ExchangeDelay)) + " " + tagText(q.Currency),
-			Align: RightAlign,
-		},
-		Cell{
-			Width: 1,
-			Text:  " ",
-			Align: RightAlign,
+			Text: tagText(q.Currency) + " " + tagText(exchangeDelayText(q.ExchangeDelay)) + " " + tagText(q.ExchangeName),
 		},
 	)
 }

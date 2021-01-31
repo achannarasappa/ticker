@@ -17,7 +17,7 @@ Terminal stock watcher and stock position tracker
 * Live stock price quotes
 * Track value of your stock positions
 * Support for multiple cost basis lots
-* Support for pre and post market pricing
+* Support for pre and post market price quotes
 
 ## Install
 
@@ -60,6 +60,10 @@ Configuration is not required to watch stock price but is helpful when always wa
 
 ```yaml
 # ~/.ticker.yaml
+show-tags: true
+show-fundamentals: true
+show-separator: true
+interval: 10
 watchlist:
   - NET
   - TEAM
@@ -78,7 +82,7 @@ lots:
 ```
 
 * Symbols not on the watchlist that exists in `lots` will automatically be watched
-* `watchlist` and `lots` are both optional properties
+* All properties in `.ticker.yaml` are optional
 
 ## Options
 

@@ -9,11 +9,16 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
-      - windows
-      - darwin
     hooks:
       post:
         - upx "{{ .Path }}"
+  - 
+    main: ./main.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - darwin
 archives:
   - 
     name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}-{{ .Mips }}{{ end }}"

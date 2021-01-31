@@ -61,26 +61,32 @@ var _ = Describe("Cli", func() {
 	Describe("Validate", func() {
 
 		var (
-			config          cli.Config
-			options         cli.Options
-			fs              afero.Fs
-			watchlist       string
-			refreshInterval int
-			configPath      string
-			separate        bool
+			config                cli.Config
+			options               cli.Options
+			fs                    afero.Fs
+			watchlist             string
+			refreshInterval       int
+			configPath            string
+			separate              bool
+			extraInfoExchange     bool
+			extraInfoFundamentals bool
 		)
 
 		BeforeEach(func() {
 			config = cli.Config{}
 			options = cli.Options{
-				ConfigPath:      &configPath,
-				Watchlist:       &watchlist,
-				RefreshInterval: &refreshInterval,
-				Separate:        &separate,
+				ConfigPath:            &configPath,
+				Watchlist:             &watchlist,
+				RefreshInterval:       &refreshInterval,
+				Separate:              &separate,
+				ExtraInfoExchange:     &extraInfoExchange,
+				ExtraInfoFundamentals: &extraInfoFundamentals,
 			}
 			watchlist = "GME,BB"
 			refreshInterval = 0
 			separate = false
+			extraInfoExchange = false
+			extraInfoFundamentals = false
 			configPath = ""
 			fs = afero.NewMemMapFs()
 			fs.MkdirAll("./", 0755)
@@ -223,6 +229,74 @@ var _ = Describe("Cli", func() {
 				It("should set a default watch interval", func() {
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.Separate).To(Equal(false))
+				})
+			})
+		})
+
+		Describe("extra-info-exchange option", func() {
+			When("extra-info-exchange flag is set as a cli argument", func() {
+				It("should set the config to the cli argument value", func() {
+					extraInfoExchange = true
+					Validate(&config, fs, options)(&cobra.Command{}, []string{})
+					Expect(config.ExtraInfoExchange).To(Equal(true))
+				})
+
+				When("the config file also has a extra-info-exchange flag defined", func() {
+					It("should set the extra-info-exchange flag from the cli argument", func() {
+						extraInfoExchange = true
+						config.ExtraInfoExchange = false
+						Validate(&config, fs, options)(&cobra.Command{}, []string{})
+						Expect(config.ExtraInfoExchange).To(Equal(true))
+					})
+				})
+			})
+
+			When("extra-info-exchange flag is set in the config file", func() {
+				It("should set the config to the cli argument value", func() {
+					config.ExtraInfoExchange = true
+					Validate(&config, fs, options)(&cobra.Command{}, []string{})
+					Expect(config.ExtraInfoExchange).To(Equal(true))
+				})
+			})
+
+			When("extra-info-exchange flag is not set", func() {
+				It("should disable the option", func() {
+					Validate(&config, fs, options)(&cobra.Command{}, []string{})
+					Expect(config.ExtraInfoExchange).To(Equal(false))
+				})
+			})
+		})
+
+		Describe("extra-info-fundamentals option", func() {
+			When("extra-info-fundamentals flag is set as a cli argument", func() {
+				It("should set the config to the cli argument value", func() {
+					extraInfoFundamentals = true
+					Validate(&config, fs, options)(&cobra.Command{}, []string{})
+					Expect(config.ExtraInfoFundamentals).To(Equal(true))
+				})
+
+				When("the config file also has a extra-info-fundamentals flag defined", func() {
+					It("should set the extra-info-fundamentals flag from the cli argument", func() {
+						extraInfoFundamentals = true
+						config.ExtraInfoFundamentals = false
+						Validate(&config, fs, options)(&cobra.Command{}, []string{})
+						Expect(config.ExtraInfoFundamentals).To(Equal(true))
+					})
+				})
+			})
+
+			When("extra-info-fundamentals flag is set in the config file", func() {
+				It("should set the config to the cli argument value", func() {
+					config.ExtraInfoFundamentals = true
+					Validate(&config, fs, options)(&cobra.Command{}, []string{})
+					Expect(config.ExtraInfoFundamentals).To(Equal(true))
+				})
+			})
+
+			When("extra-info-fundamentals flag is not set", func() {
+				It("should disable the option", func() {
+					Validate(&config, fs, options)(&cobra.Command{}, []string{})
+					Expect(config.ExtraInfoFundamentals).To(Equal(false))
 				})
 			})
 		})

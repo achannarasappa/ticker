@@ -3,7 +3,7 @@ before:
   hooks:
     - go mod download
 builds:
-  - 
+  - id: build-upx
     main: ./main.go
     env:
       - CGO_ENABLED=0
@@ -12,7 +12,7 @@ builds:
     hooks:
       post:
         - upx "{{ .Path }}"
-  - 
+  - id: build
     main: ./main.go
     env:
       - CGO_ENABLED=0

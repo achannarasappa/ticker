@@ -49,9 +49,9 @@ ticker -w NET,AAPL,TSLA
 |  |--config|`~/.ticker.yaml`|config with watchlist and positions|
 |-i|--interval|`5`|Refresh interval in seconds|
 |-w|--watchlist||comma separated list of symbols to watch|
-|  |--extra-info-exchange||display currency, exchange name, and quote delay for each quote |
-|  |--extra-info-fundamentals||display open price, previous close, and day range |
-|  |--separate||layout with separators between each quote|
+|  |--show-tags||display currency, exchange name, and quote delay for each quote |
+|  |--show-fundamentals||display open price, previous close, and day range |
+|  |--show-separator||layout with separators between each quote|
 
 ## Configuration
 
@@ -81,10 +81,10 @@ lots:
 
 ## Options
 
-With `--extra-info-exchange`, `--extra-info-fundamentals`, and `--separate` options set, the layout and information displayed expands:
+With `--show-tags`, `--show-fundamentals`, and `--show-separator` options set, the layout and information displayed expands:
 
 <img src="./docs/ticker-all-options.png" />
 
 ## Notes
 
-* **Real-time quotes** - Quotes are pulled from Yahoo finance which may provide delayed stock quotes depending on the exchange. The major US exchanges (NYSE, NASDAQ) have real-time quotes however other exchanges may not. Consult the [help article](https://help.yahoo.com/kb/SLN2310.html) on exchange delays to determine which exchanges you can expect delays for or use the `--extra-info-exchange` flag to include timeliness of data alongside quotes in `ticker`.
+* **Real-time quotes** - Quotes are pulled from Yahoo finance which may provide delayed stock quotes depending on the exchange. The major US exchanges (NYSE, NASDAQ) have real-time quotes however other exchanges may not. Consult the [help article](https://help.yahoo.com/kb/SLN2310.html) on exchange delays to determine which exchanges you can expect delays for or use the `--show-tags` flag to include timeliness of data alongside quotes in `ticker`.

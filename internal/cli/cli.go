@@ -15,9 +15,9 @@ type Config struct {
 	RefreshInterval       int            `yaml:"interval"`
 	Watchlist             []string       `yaml:"watchlist"`
 	Lots                  []position.Lot `yaml:"lots"`
-	Separate              bool           `yaml:"separate"`
-	ExtraInfoExchange     bool           `yaml:"extra-info-exchange"`
-	ExtraInfoFundamentals bool           `yaml:"extra-info-fundamentals"`
+	Separate              bool           `yaml:"show-separator"`
+	ExtraInfoExchange     bool           `yaml:"show-tags"`
+	ExtraInfoFundamentals bool           `yaml:"show-fundamentals"`
 }
 
 type Options struct {
@@ -51,7 +51,6 @@ func Validate(config *Config, fs afero.Fs, options Options) func(*cobra.Command,
 }
 
 func read(fs afero.Fs, options Options, configFile *Config) (Config, error) {
-
 	var (
 		err    error
 		config Config

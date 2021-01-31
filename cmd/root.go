@@ -53,9 +53,9 @@ func init() {
 	rootCmd.Flags().StringVar(&configPath, "config", "", "config file (default is $HOME/.ticker.yaml)")
 	rootCmd.Flags().StringVarP(&watchlist, "watchlist", "w", "", "comma separated list of symbols to watch")
 	rootCmd.Flags().IntVarP(&refreshInterval, "interval", "i", 0, "refresh interval in seconds")
-	rootCmd.Flags().BoolVar(&separate, "separate", false, "layout with separators between each quote")
-	rootCmd.Flags().BoolVar(&extraInfoExchange, "extra-info-exchange", false, "display currency, exchange name, and quote delay for each quote")
-	rootCmd.Flags().BoolVar(&extraInfoFundamentals, "extra-info-fundamentals", false, "display open price, high, low, and volume for each quote")
+	rootCmd.Flags().BoolVar(&separate, "show-separator", false, "layout with separators between each quote")
+	rootCmd.Flags().BoolVar(&extraInfoExchange, "show-tags", false, "display currency, exchange name, and quote delay for each quote")
+	rootCmd.Flags().BoolVar(&extraInfoFundamentals, "show-fundamentals", false, "display open price, high, low, and volume for each quote")
 }
 
 func initConfig() {

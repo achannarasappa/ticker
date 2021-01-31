@@ -205,35 +205,35 @@ var _ = Describe("Cli", func() {
 			})
 		})
 
-		Describe("separate option", func() {
-			When("separate flag is set as a cli argument", func() {
+		Describe("show-separator option", func() {
+			When("show-separator flag is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					separate = true
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.Separate).To(Equal(true))
 				})
 
-				When("the config file also has a separate flag defined", func() {
-					It("should set the separate flag from the cli argument", func() {
+				When("the config file also has a show-separator flag defined", func() {
+					It("should set the show-separator flag from the cli argument", func() {
 						separate = true
 						configPath = ".ticker.yaml"
-						afero.WriteFile(fs, ".ticker.yaml", []byte("separate: true"), 0644)
+						afero.WriteFile(fs, ".ticker.yaml", []byte("show-separator: true"), 0644)
 						Validate(&config, fs, options)(&cobra.Command{}, []string{})
 						Expect(config.Separate).To(Equal(true))
 					})
 				})
 			})
 
-			When("separate flag is set in the config file", func() {
+			When("show-separator flag is set in the config file", func() {
 				It("should set the config to the config argument value", func() {
 					configPath = ".ticker.yaml"
-					afero.WriteFile(fs, ".ticker.yaml", []byte("separate: true"), 0644)
+					afero.WriteFile(fs, ".ticker.yaml", []byte("show-separator: true"), 0644)
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.Separate).To(Equal(true))
 				})
 			})
 
-			When("separate flag is not set", func() {
+			When("show-separator flag is not set", func() {
 				It("should set a default watch interval", func() {
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.Separate).To(Equal(false))
@@ -241,35 +241,35 @@ var _ = Describe("Cli", func() {
 			})
 		})
 
-		Describe("extra-info-exchange option", func() {
-			When("extra-info-exchange flag is set as a cli argument", func() {
+		Describe("show-tags option", func() {
+			When("show-tags flag is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					extraInfoExchange = true
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.ExtraInfoExchange).To(Equal(true))
 				})
 
-				When("the config file also has a extra-info-exchange flag defined", func() {
-					It("should set the extra-info-exchange flag from the cli argument", func() {
+				When("the config file also has a show-tags flag defined", func() {
+					It("should set the show-tags flag from the cli argument", func() {
 						extraInfoExchange = true
 						configPath = ".ticker.yaml"
-						afero.WriteFile(fs, ".ticker.yaml", []byte("extra-info-exchange: false"), 0644)
+						afero.WriteFile(fs, ".ticker.yaml", []byte("show-tags: false"), 0644)
 						Validate(&config, fs, options)(&cobra.Command{}, []string{})
 						Expect(config.ExtraInfoExchange).To(Equal(true))
 					})
 				})
 			})
 
-			When("extra-info-exchange flag is set in the config file", func() {
+			When("show-tags flag is set in the config file", func() {
 				It("should set the config to the config argument value", func() {
 					configPath = ".ticker.yaml"
-					afero.WriteFile(fs, ".ticker.yaml", []byte("extra-info-exchange: true"), 0644)
+					afero.WriteFile(fs, ".ticker.yaml", []byte("show-tags: true"), 0644)
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.ExtraInfoExchange).To(Equal(true))
 				})
 			})
 
-			When("extra-info-exchange flag is not set", func() {
+			When("show-tags flag is not set", func() {
 				It("should disable the option", func() {
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.ExtraInfoExchange).To(Equal(false))
@@ -277,35 +277,35 @@ var _ = Describe("Cli", func() {
 			})
 		})
 
-		Describe("extra-info-fundamentals option", func() {
-			When("extra-info-fundamentals flag is set as a cli argument", func() {
+		Describe("show-fundamentals option", func() {
+			When("show-fundamentals flag is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					extraInfoFundamentals = true
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.ExtraInfoFundamentals).To(Equal(true))
 				})
 
-				When("the config file also has a extra-info-fundamentals flag defined", func() {
-					It("should set the extra-info-fundamentals flag from the cli argument", func() {
+				When("the config file also has a show-fundamentals flag defined", func() {
+					It("should set the show-fundamentals flag from the cli argument", func() {
 						extraInfoFundamentals = true
 						configPath = ".ticker.yaml"
-						afero.WriteFile(fs, ".ticker.yaml", []byte("extra-info-fundamentals: false"), 0644)
+						afero.WriteFile(fs, ".ticker.yaml", []byte("show-fundamentals: false"), 0644)
 						Validate(&config, fs, options)(&cobra.Command{}, []string{})
 						Expect(config.ExtraInfoFundamentals).To(Equal(true))
 					})
 				})
 			})
 
-			When("extra-info-fundamentals flag is set in the config file", func() {
+			When("show-fundamentals flag is set in the config file", func() {
 				It("should set the config to the cli argument value", func() {
 					configPath = ".ticker.yaml"
-					afero.WriteFile(fs, ".ticker.yaml", []byte("extra-info-fundamentals: true"), 0644)
+					afero.WriteFile(fs, ".ticker.yaml", []byte("show-fundamentals: true"), 0644)
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.ExtraInfoFundamentals).To(Equal(true))
 				})
 			})
 
-			When("extra-info-fundamentals flag is not set", func() {
+			When("show-fundamentals flag is not set", func() {
 				It("should disable the option", func() {
 					Validate(&config, fs, options)(&cobra.Command{}, []string{})
 					Expect(config.ExtraInfoFundamentals).To(Equal(false))

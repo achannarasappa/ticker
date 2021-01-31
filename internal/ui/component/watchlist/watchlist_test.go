@@ -214,7 +214,7 @@ var _ = Describe("Watchlist", func() {
 			Expect(removeFormatting(m.View())).To(Equal(expected))
 		})
 
-		When("the separate layout flag is set", func() {
+		When("the show-separator layout flag is set", func() {
 			It("should render a watchlist with separators", func() {
 
 				m := NewModel(true, false, false)

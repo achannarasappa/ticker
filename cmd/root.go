@@ -12,6 +12,7 @@ import (
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+	"github.com/adrg/xdg"
 )
 
 var (
@@ -61,6 +62,8 @@ func init() {
 func initConfig() {
 	if configPath != "" {
 		viper.SetConfigFile(configPath)
+		viper.ReadInConfig()
+		configPath = viper.ConfigFileUsed()
 	} else {
 		home, err := homedir.Dir()
 		if err != nil {
@@ -68,11 +71,23 @@ func initConfig() {
 			os.Exit(1)
 		}
 
+		viper.SetConfigName(".ticker")
 		viper.AddConfigPath(home)
 		viper.AddConfigPath(".")
-		viper.SetConfigName(".ticker")
-	}
+		viper.AddConfigPath(xdg.ConfigHome)
+		viper.AddConfigPath(xdg.ConfigHome + "/ticker")
+		viper.ReadInConfig()
 
-	viper.ReadInConfig()
-	configPath = viper.ConfigFileUsed()
+		configPath = viper.ConfigFileUsed()
+		if configPath == "" {
+
+			viper.SetConfigName("ticker")
+			viper.AddConfigPath(home)
+			viper.AddConfigPath(".")
+			viper.AddConfigPath(xdg.ConfigHome)
+			viper.AddConfigPath(xdg.ConfigHome + "/ticker")
+			viper.ReadInConfig()
+			configPath = viper.ConfigFileUsed()
+		}
+	}
 }

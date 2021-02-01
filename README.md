@@ -56,7 +56,7 @@ ticker -w NET,AAPL,TSLA
 
 ## Configuration
 
-Configuration is not required to watch stock price but is helpful when always watching the same stocks. Configuration can also be used to set cost basis lots which will in turn be used to show daily gain or loss on any position.
+Configuration is not required to watch stock price but is helpful when always watching the same stocks. Configuration can also be used to set cost basis lots which will in turn be used to show daily gain or loss on any position. The configuration file can be named either `ticker.yaml` or `.ticker.yaml,` and can be located in `~`, `~/.config`, or `~/.config/ticker`.
 
 ```yaml
 # ~/.ticker.yaml

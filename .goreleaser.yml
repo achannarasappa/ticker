@@ -9,6 +9,11 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
+    goarch:
+      - amd64
+      - 386
+      - arm
+      - arm64
     hooks:
       post:
         - upx "{{ .Path }}"

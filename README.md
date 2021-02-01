@@ -84,7 +84,7 @@ lots:
 * Symbols not on the watchlist that exists in `lots` will automatically be watched
 * All properties in `.ticker.yaml` are optional
 
-## Options
+### Display Options
 
 With `--show-tags`, `--show-fundamentals`, and `--show-separator` options set, the layout and information displayed expands:
 
@@ -93,3 +93,4 @@ With `--show-tags`, `--show-fundamentals`, and `--show-separator` options set, t
 ## Notes
 
 * **Real-time quotes** - Quotes are pulled from Yahoo finance which may provide delayed stock quotes depending on the exchange. The major US exchanges (NYSE, NASDAQ) have real-time quotes however other exchanges may not. Consult the [help article](https://help.yahoo.com/kb/SLN2310.html) on exchange delays to determine which exchanges you can expect delays for or use the `--show-tags` flag to include timeliness of data alongside quotes in `ticker`.
+* **Cryptocurrencies**  - `ticker` supports any cryptocurrency Yahoo / CoinMarketCap supports. A full list can be found [here](https://finance.yahoo.com/cryptocurrencies?offset=0&count=100)

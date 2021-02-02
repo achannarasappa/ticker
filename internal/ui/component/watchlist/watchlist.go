@@ -37,15 +37,17 @@ type Model struct {
 	Separate              bool
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
+	SortQuotesBy          string
 }
 
 // NewModel returns a model with default values.
-func NewModel(separate bool, extraInfoExchange bool, extraInfoFundamentals bool) Model {
+func NewModel(separate bool, extraInfoExchange bool, extraInfoFundamentals bool, sortQuotesBy string) Model {
 	return Model{
 		Width:                 80,
 		Separate:              separate,
 		ExtraInfoExchange:     extraInfoExchange,
 		ExtraInfoFundamentals: extraInfoFundamentals,
+		SortQuotesBy:          sortQuotesBy,
 	}
 }
 
@@ -55,7 +57,7 @@ func (m Model) View() string {
 		return fmt.Sprintf("Terminal window too narrow to render content\nResize to fix (%d/80)", m.Width)
 	}
 
-	quotes := sortQuotes(m.Quotes)
+	quotes := sortQuotes(m.Quotes, m.SortQuotesBy)
 	items := make([]string, 0)
 	for _, quote := range quotes {
 		items = append(
@@ -244,7 +246,7 @@ func getNormalizedPercentWithMax(percent float64, maxPercent float64) float64 {
 }
 
 // Sort by change percent and keep all inactive quotes at the end
-func sortQuotes(q []quote.Quote) []quote.Quote {
+func sortQuotes(q []quote.Quote, sortQuotesBy string) []quote.Quote {
 	if len(q) <= 0 {
 		return q
 	}
@@ -258,11 +260,33 @@ func sortQuotes(q []quote.Quote) []quote.Quote {
 
 	concatQuotes := gubrak.
 		From(activeQuotes).
-		OrderBy(func(v quote.Quote) float64 {
-			return v.ChangePercent
-		}, false).
+		OrderBy(orderByFunction(sortQuotesBy)).
 		Concat(inactiveQuotes).
 		Result()
 
 	return (concatQuotes).([]quote.Quote)
+}
+
+func orderByFunction(sortQuotesBy string) func(v quote.Quote) string {
+	functionToOrderBy := orderBySymbol
+	switch sortQuotesBy {
+	case "Symbol":
+		functionToOrderBy = orderBySymbol
+	case "ExchangeName":
+		functionToOrderBy = orderByExchangeName
+	}
+
+	return functionToOrderBy
+}
+
+func orderBySymbol(v quote.Quote) string {
+	return v.Symbol
+}
+
+func orderByExchangeName(v quote.Quote) string {
+	return v.ExchangeName
+}
+
+func orderByChangePercent(v quote.Quote) float64 {
+	return v.ChangePercent
 }

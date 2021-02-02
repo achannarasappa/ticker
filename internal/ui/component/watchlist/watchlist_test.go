@@ -37,7 +37,7 @@ var _ = Describe("Watchlist", func() {
 				}
 			}
 
-			m := NewModel(false, false, false)
+			m := NewModel(false, false, false, "ChangePercent")
 			m.Width = 80
 			m.Positions = positionMap
 			m.Quotes = []Quote{
@@ -153,7 +153,7 @@ var _ = Describe("Watchlist", func() {
 	When("there are more than one symbols on the watchlist", func() {
 		It("should render a watchlist with each symbol", func() {
 
-			m := NewModel(false, false, false)
+			m := NewModel(false, false, false, "Name")
 			m.Width = 80
 			m.Quotes = []Quote{
 				{
@@ -217,7 +217,7 @@ var _ = Describe("Watchlist", func() {
 		When("the show-separator layout flag is set", func() {
 			It("should render a watchlist with separators", func() {
 
-				m := NewModel(true, false, false)
+				m := NewModel(true, false, false, "ChangePercent")
 				m.Quotes = []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -270,7 +270,7 @@ var _ = Describe("Watchlist", func() {
 
 	When("the option for extra exchange information is set", func() {
 		It("should render extra exchange information", func() {
-			m := NewModel(true, true, false)
+			m := NewModel(true, true, false, "ChangePercent")
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -297,7 +297,7 @@ var _ = Describe("Watchlist", func() {
 
 		When("the exchange has a delay", func() {
 			It("should render extra exchange information with the delay amount", func() {
-				m := NewModel(true, true, false)
+				m := NewModel(true, true, false, "ChangePercent")
 				m.Quotes = []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -326,7 +326,7 @@ var _ = Describe("Watchlist", func() {
 
 	When("the option for extra fundamental information is set", func() {
 		It("should render extra fundamental information", func() {
-			m := NewModel(true, false, true)
+			m := NewModel(true, false, true, "ChangePercent")
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -353,7 +353,7 @@ var _ = Describe("Watchlist", func() {
 
 		When("there is no day range", func() {
 			It("should not render the day range field", func() {
-				m := NewModel(true, false, true)
+				m := NewModel(true, false, true, "ChangePercent")
 				m.Quotes = []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -381,14 +381,14 @@ var _ = Describe("Watchlist", func() {
 
 	When("no quotes are set", func() {
 		It("should render an empty watchlist", func() {
-			m := NewModel(false, false, false)
+			m := NewModel(false, false, false, "ChangePercent")
 			Expect(m.View()).To(Equal(""))
 		})
 	})
 
 	When("the window width is less than the minimum", func() {
 		It("should render an empty watchlist", func() {
-			m := NewModel(false, false, false)
+			m := NewModel(false, false, false, "ChangePercent")
 			m.Width = 70
 			Expect(m.View()).To(Equal("Terminal window too narrow to render content\nResize to fix (70/80)"))
 		})

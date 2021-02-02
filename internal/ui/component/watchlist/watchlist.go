@@ -258,35 +258,30 @@ func sortQuotes(q []quote.Quote, sortQuotesBy string) []quote.Quote {
 		}).
 		ResultAndError()
 
-	concatQuotes := gubrak.
-		From(activeQuotes).
-		OrderBy(orderByFunction(sortQuotesBy)).
+	quotesToShow := gubrak.
+		From(activeQuotes)
+	appendOrderBy(quotesToShow, sortQuotesBy)
+	concatQuotes := quotesToShow.
 		Concat(inactiveQuotes).
 		Result()
 
 	return (concatQuotes).([]quote.Quote)
 }
 
-func orderByFunction(sortQuotesBy string) func(v quote.Quote) string {
-	functionToOrderBy := orderBySymbol
-	switch sortQuotesBy {
-	case "Symbol":
-		functionToOrderBy = orderBySymbol
-	case "ExchangeName":
-		functionToOrderBy = orderByExchangeName
+func appendOrderBy(quotes gubrak.IChainable, sortQuotesBy string) {
+	switch strings.ToLower(sortQuotesBy) {
+	case "symbol":
+		quotes.OrderBy(func(v quote.Quote) string {
+			return v.Symbol
+		})
+	case "exchangename":
+		quotes.OrderBy(func(v quote.Quote) string {
+			return v.ExchangeName
+		})
+	case "changepercent":
+	default:
+		quotes.OrderBy(func(v quote.Quote) float64 {
+			return v.ChangePercent
+		}, false)
 	}
-
-	return functionToOrderBy
-}
-
-func orderBySymbol(v quote.Quote) string {
-	return v.Symbol
-}
-
-func orderByExchangeName(v quote.Quote) string {
-	return v.ExchangeName
-}
-
-func orderByChangePercent(v quote.Quote) float64 {
-	return v.ChangePercent
 }

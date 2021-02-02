@@ -245,7 +245,8 @@ func getNormalizedPercentWithMax(percent float64, maxPercent float64) float64 {
 
 }
 
-// Sort by change percent and keep all inactive quotes at the end
+// Sort by `sortQuotesBy` parameter (Symbol or Change Percent).
+// Keep all inactive quotes at the end
 func sortQuotes(q []quote.Quote, sortQuotesBy string) []quote.Quote {
 	if len(q) <= 0 {
 		return q
@@ -260,7 +261,11 @@ func sortQuotes(q []quote.Quote, sortQuotesBy string) []quote.Quote {
 
 	quotesToShow := gubrak.
 		From(activeQuotes)
+
+	// Append the orderBy functionality
 	appendOrderBy(quotesToShow, sortQuotesBy)
+
+	// Append the inactive quotes to the end
 	concatQuotes := quotesToShow.
 		Concat(inactiveQuotes).
 		Result()

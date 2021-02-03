@@ -1,0 +1,34 @@
+name: ticker
+base: core20
+adopt-info: ticker
+summary: Terminal stock watcher and stock position tracker
+description: |
+  Features:
+  Live stock price quotes
+  Track value of your stock positions
+  Support for multiple cost basis lots
+  Support for pre and post market price quotes
+
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: amd64
+  - build-on: arm64
+  - build-on: s390x
+  - build-on: ppc64el
+  - build-on: armhf
+
+parts:
+  ticker:
+    plugin: go
+    source: .
+    override-pull: |
+      snapcraftctl pull
+      snapcraftctl set-version "$(git describe --tags | sed -e 's/^v//')"
+
+apps:
+  ticker:
+    command: bin/ticker
+    plugs:
+      - network

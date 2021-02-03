@@ -153,7 +153,7 @@ var _ = Describe("Watchlist", func() {
 	When("there are more than one symbols on the watchlist", func() {
 		It("should render a watchlist with each symbol", func() {
 
-			m := NewModel(false, false, false, "Name")
+			m := NewModel(false, false, false, "ChangePercent")
 			m.Width = 80
 			m.Quotes = []Quote{
 				{

@@ -280,7 +280,6 @@ func appendOrderBy(quotes gubrak.IChainable, sortQuotesBy string) {
 			return v.Symbol
 		})
 	case "changepercent":
-	default:
 		quotes.OrderBy(func(v quote.Quote) float64 {
 			return v.ChangePercent
 		}, false)

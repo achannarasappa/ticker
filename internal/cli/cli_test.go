@@ -341,6 +341,8 @@ var _ = Describe("Cli", func() {
 			})
 		})
 	})
+
+	//nolint:errcheck
 	Describe("ReadConfig", func() {
 
 		var (

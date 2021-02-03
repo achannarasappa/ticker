@@ -400,6 +400,20 @@ var _ = Describe("Cli", func() {
 					Expect(err).To(BeNil())
 				})
 			})
+			When("there is a config file in the XDG config directory", func() {
+				It("should read the config file from disk", func() {
+					inputHome, _ := homedir.Dir()
+					inputConfigHome := inputHome + "/.config"
+					inputConfigPath := ""
+					fs.MkdirAll(inputConfigHome, 0755)
+					fs.Create(inputConfigHome + "/.ticker.yaml")
+					afero.WriteFile(fs, inputConfigHome+"/.ticker.yaml", []byte("watchlist:\n  - ABNB"), 0644)
+					config, err := ReadConfig(fs, inputConfigPath)
+
+					Expect(config.Watchlist).To(Equal([]string{"ABNB"}))
+					Expect(err).To(BeNil())
+				})
+			})
 		})
 
 		When("there is an error reading the config file", func() {

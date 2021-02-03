@@ -6,6 +6,7 @@ import (
 	"strings"
 	"ticker/internal/position"
 
+	"github.com/adrg/xdg"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -106,8 +107,9 @@ func getConfigPath(fs afero.Fs, configPathOption string) (string, error) {
 	v.SetConfigType("yaml")
 	v.AddConfigPath(home)
 	v.AddConfigPath(".")
+	v.AddConfigPath(xdg.ConfigHome)
+	v.AddConfigPath(xdg.ConfigHome + "/ticker")
 	v.SetConfigName(".ticker")
-
 	err = v.ReadInConfig()
 
 	if err != nil {

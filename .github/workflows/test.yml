@@ -28,6 +28,8 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.15.x
+    - name: Install Ginkgo
+      run: go get -u github.com/onsi/ginkgo/ginkgo
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Calc coverage

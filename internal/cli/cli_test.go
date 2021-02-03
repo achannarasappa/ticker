@@ -85,6 +85,7 @@ var _ = Describe("Cli", func() {
 			extraInfoExchange = false
 			extraInfoFundamentals = false
 			fs = afero.NewMemMapFs()
+			//nolint:errcheck
 			fs.MkdirAll("./", 0755)
 		})
 

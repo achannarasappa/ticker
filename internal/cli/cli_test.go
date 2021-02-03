@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/mitchellh/go-homedir"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/afero"
@@ -61,21 +62,17 @@ var _ = Describe("Cli", func() {
 	Describe("Validate", func() {
 
 		var (
-			config                cli.Config
 			options               cli.Options
 			fs                    afero.Fs
 			watchlist             string
 			refreshInterval       int
-			configPath            string
 			separate              bool
 			extraInfoExchange     bool
 			extraInfoFundamentals bool
 		)
 
 		BeforeEach(func() {
-			config = cli.Config{}
 			options = cli.Options{
-				ConfigPath:            &configPath,
 				Watchlist:             &watchlist,
 				RefreshInterval:       &refreshInterval,
 				Separate:              &separate,
@@ -87,12 +84,12 @@ var _ = Describe("Cli", func() {
 			separate = false
 			extraInfoExchange = false
 			extraInfoFundamentals = false
-			configPath = ""
 			fs = afero.NewMemMapFs()
 			fs.MkdirAll("./", 0755)
 		})
 
 		It("should set the config", func() {
+			inputConfig := cli.Config{}
 			expected := cli.Config{
 				RefreshInterval: 5,
 				Watchlist: []string{
@@ -101,25 +98,16 @@ var _ = Describe("Cli", func() {
 				},
 				Lots: nil,
 			}
-			output := Validate(&config, fs, options)(&cobra.Command{}, []string{})
-			Expect(output).To(BeNil())
-			Expect(config).To(Equal(expected))
+			outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+			Expect(outputErr).To(BeNil())
+			Expect(inputConfig).To(Equal(expected))
 		})
 
-		When("there is a error opening the config file", func() {
-			It("should return an error", func() {
-				configPath = ".config-file-that-does-not-exist.yaml"
-				output := Validate(&config, fs, options)(&cobra.Command{}, []string{})
-				Expect(output).To(MatchError("Invalid config: open .config-file-that-does-not-exist.yaml: file does not exist"))
-			})
-		})
-
-		When("there is a error parsing the config file", func() {
-			It("should return an error", func() {
-				configPath = ".ticker.yaml"
-				afero.WriteFile(fs, ".ticker.yaml", []byte("invalid yaml content"), 0644)
-				output := Validate(&config, fs, options)(&cobra.Command{}, []string{})
-				Expect(output).To(MatchError("Invalid config: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `invalid...` into cli.Config"))
+		When("a deferred error is passed in", func() {
+			It("validation fails", func() {
+				inputConfig := cli.Config{}
+				outputErr := Validate(&inputConfig, fs, options, errors.New("some config error"))(&cobra.Command{}, []string{})
+				Expect(outputErr).To(MatchError("some config error"))
 			})
 		})
 
@@ -127,8 +115,9 @@ var _ = Describe("Cli", func() {
 			When("there is no watchlist in the config file and no watchlist cli argument", func() {
 				It("should return an error", func() {
 					watchlist = ""
-					output := Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(output).To(MatchError("Invalid config: No watchlist provided"))
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(MatchError("Invalid config: No watchlist provided"))
 
 				})
 			})
@@ -136,8 +125,10 @@ var _ = Describe("Cli", func() {
 			When("there is a watchlist as a cli argument", func() {
 				It("should set the watchlist from the cli argument", func() {
 					watchlist = "AAPL,TW"
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.Watchlist).To(Equal([]string{
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.Watchlist).To(Equal([]string{
 						"AAPL",
 						"TW",
 					}))
@@ -146,9 +137,12 @@ var _ = Describe("Cli", func() {
 				When("the config file also has a watchlist defined", func() {
 					It("should set the watchlist from the cli argument", func() {
 						watchlist = "F,GM"
-						afero.WriteFile(fs, ".ticker.yaml", []byte("watchlist:\n  - BIO"), 0644)
-						Validate(&config, fs, options)(&cobra.Command{}, []string{})
-						Expect(config.Watchlist).To(Equal([]string{
+						inputConfig := cli.Config{
+							Watchlist: []string{"BIO"},
+						}
+						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+						Expect(outputErr).To(BeNil())
+						Expect(inputConfig.Watchlist).To(Equal([]string{
 							"F",
 							"GM",
 						}))
@@ -159,10 +153,12 @@ var _ = Describe("Cli", func() {
 			When("there is a watchlist in the config file", func() {
 				It("should set the watchlist from the config file", func() {
 					watchlist = ""
-					configPath = ".ticker.yaml"
-					afero.WriteFile(fs, ".ticker.yaml", []byte("watchlist:\n  - NET"), 0644)
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.Watchlist).To(Equal([]string{
+					inputConfig := cli.Config{
+						Watchlist: []string{"NET"},
+					}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.Watchlist).To(Equal([]string{
 						"NET",
 					}))
 				})
@@ -173,34 +169,42 @@ var _ = Describe("Cli", func() {
 			When("refresh interval is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					refreshInterval = 9
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.RefreshInterval).To(Equal(9))
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.RefreshInterval).To(Equal(9))
 				})
 
 				When("the config file also has a refresh interval defined", func() {
 					It("should set the refresh interval from the cli argument", func() {
 						refreshInterval = 8
-						configPath = ".ticker.yaml"
-						afero.WriteFile(fs, ".ticker.yaml", []byte("interval: 7"), 0644)
-						Validate(&config, fs, options)(&cobra.Command{}, []string{})
-						Expect(config.RefreshInterval).To(Equal(8))
+						inputConfig := cli.Config{
+							RefreshInterval: 7,
+						}
+						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+						Expect(outputErr).To(BeNil())
+						Expect(inputConfig.RefreshInterval).To(Equal(8))
 					})
 				})
 			})
 
 			When("refresh interval is set in the config file", func() {
 				It("should set the config to the config argument value", func() {
-					configPath = ".ticker.yaml"
-					afero.WriteFile(fs, ".ticker.yaml", []byte("interval: 357"), 0644)
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.RefreshInterval).To(Equal(357))
+					inputConfig := cli.Config{
+						RefreshInterval: 357,
+					}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.RefreshInterval).To(Equal(357))
 				})
 			})
 
 			When("refresh interval is not set", func() {
 				It("should set a default watch interval", func() {
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.RefreshInterval).To(Equal(5))
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.RefreshInterval).To(Equal(5))
 				})
 			})
 		})
@@ -209,34 +213,42 @@ var _ = Describe("Cli", func() {
 			When("show-separator flag is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					separate = true
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.Separate).To(Equal(true))
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.Separate).To(Equal(true))
 				})
 
 				When("the config file also has a show-separator flag defined", func() {
 					It("should set the show-separator flag from the cli argument", func() {
 						separate = true
-						configPath = ".ticker.yaml"
-						afero.WriteFile(fs, ".ticker.yaml", []byte("show-separator: true"), 0644)
-						Validate(&config, fs, options)(&cobra.Command{}, []string{})
-						Expect(config.Separate).To(Equal(true))
+						inputConfig := cli.Config{
+							Separate: true,
+						}
+						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+						Expect(outputErr).To(BeNil())
+						Expect(inputConfig.Separate).To(Equal(true))
 					})
 				})
 			})
 
 			When("show-separator flag is set in the config file", func() {
 				It("should set the config to the config argument value", func() {
-					configPath = ".ticker.yaml"
-					afero.WriteFile(fs, ".ticker.yaml", []byte("show-separator: true"), 0644)
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.Separate).To(Equal(true))
+					inputConfig := cli.Config{
+						Separate: true,
+					}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.Separate).To(Equal(true))
 				})
 			})
 
 			When("show-separator flag is not set", func() {
 				It("should set a default watch interval", func() {
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.Separate).To(Equal(false))
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.Separate).To(Equal(false))
 				})
 			})
 		})
@@ -245,34 +257,42 @@ var _ = Describe("Cli", func() {
 			When("show-tags flag is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					extraInfoExchange = true
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.ExtraInfoExchange).To(Equal(true))
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.ExtraInfoExchange).To(Equal(true))
 				})
 
 				When("the config file also has a show-tags flag defined", func() {
 					It("should set the show-tags flag from the cli argument", func() {
 						extraInfoExchange = true
-						configPath = ".ticker.yaml"
-						afero.WriteFile(fs, ".ticker.yaml", []byte("show-tags: false"), 0644)
-						Validate(&config, fs, options)(&cobra.Command{}, []string{})
-						Expect(config.ExtraInfoExchange).To(Equal(true))
+						inputConfig := cli.Config{
+							ExtraInfoExchange: false,
+						}
+						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+						Expect(outputErr).To(BeNil())
+						Expect(inputConfig.ExtraInfoExchange).To(Equal(true))
 					})
 				})
 			})
 
 			When("show-tags flag is set in the config file", func() {
 				It("should set the config to the config argument value", func() {
-					configPath = ".ticker.yaml"
-					afero.WriteFile(fs, ".ticker.yaml", []byte("show-tags: true"), 0644)
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.ExtraInfoExchange).To(Equal(true))
+					inputConfig := cli.Config{
+						ExtraInfoExchange: true,
+					}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.ExtraInfoExchange).To(Equal(true))
 				})
 			})
 
 			When("show-tags flag is not set", func() {
 				It("should disable the option", func() {
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.ExtraInfoExchange).To(Equal(false))
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.ExtraInfoExchange).To(Equal(false))
 				})
 			})
 		})
@@ -281,35 +301,126 @@ var _ = Describe("Cli", func() {
 			When("show-fundamentals flag is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					extraInfoFundamentals = true
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.ExtraInfoFundamentals).To(Equal(true))
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.ExtraInfoFundamentals).To(Equal(true))
 				})
 
 				When("the config file also has a show-fundamentals flag defined", func() {
 					It("should set the show-fundamentals flag from the cli argument", func() {
 						extraInfoFundamentals = true
-						configPath = ".ticker.yaml"
-						afero.WriteFile(fs, ".ticker.yaml", []byte("show-fundamentals: false"), 0644)
-						Validate(&config, fs, options)(&cobra.Command{}, []string{})
-						Expect(config.ExtraInfoFundamentals).To(Equal(true))
+						inputConfig := cli.Config{
+							ExtraInfoFundamentals: false,
+						}
+						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+						Expect(outputErr).To(BeNil())
+						Expect(inputConfig.ExtraInfoFundamentals).To(Equal(true))
 					})
 				})
 			})
 
 			When("show-fundamentals flag is set in the config file", func() {
 				It("should set the config to the cli argument value", func() {
-					configPath = ".ticker.yaml"
-					afero.WriteFile(fs, ".ticker.yaml", []byte("show-fundamentals: true"), 0644)
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.ExtraInfoFundamentals).To(Equal(true))
+					inputConfig := cli.Config{
+						ExtraInfoFundamentals: true,
+					}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.ExtraInfoFundamentals).To(Equal(true))
 				})
 			})
 
 			When("show-fundamentals flag is not set", func() {
 				It("should disable the option", func() {
-					Validate(&config, fs, options)(&cobra.Command{}, []string{})
-					Expect(config.ExtraInfoFundamentals).To(Equal(false))
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.ExtraInfoFundamentals).To(Equal(false))
 				})
+			})
+		})
+	})
+	Describe("ReadConfig", func() {
+
+		var (
+			fs afero.Fs
+		)
+
+		BeforeEach(func() {
+			fs = afero.NewMemMapFs()
+			afero.WriteFile(fs, ".ticker.yaml", []byte("watchlist:\n  - NOK"), 0644)
+		})
+
+		When("an explicit config file is set", func() {
+			It("should read the config file from disk", func() {
+				inputConfigPath := ".ticker.yaml"
+				config, err := ReadConfig(fs, inputConfigPath)
+
+				Expect(config.Watchlist).To(Equal([]string{"NOK"}))
+				Expect(err).To(BeNil())
+			})
+		})
+
+		When("the config path option is empty", func() {
+			When("there is no config file on disk", func() {
+				It("should return an error", func() {
+					inputHome, _ := homedir.Dir()
+					inputConfigPath := ""
+					fs.MkdirAll(inputHome, 0755)
+					config, err := ReadConfig(fs, inputConfigPath)
+
+					Expect(config).To(Equal(Config{}))
+					Expect(err).ToNot(BeNil())
+				})
+			})
+			When("there is a config file in the home directory", func() {
+				It("should read the config file from disk", func() {
+					inputHome, _ := homedir.Dir()
+					inputConfigPath := ""
+					fs.MkdirAll(inputHome, 0755)
+					fs.Create(inputHome + "/.ticker.yaml")
+					afero.WriteFile(fs, inputHome+"/.ticker.yaml", []byte("watchlist:\n  - AMD"), 0644)
+					config, err := ReadConfig(fs, inputConfigPath)
+
+					Expect(config.Watchlist).To(Equal([]string{"AMD"}))
+					Expect(err).To(BeNil())
+				})
+			})
+			When("there is a config file in the current directory", func() {
+				It("should read the config file from disk", func() {
+					inputCurrentDirectory, _ := os.Getwd()
+					inputConfigPath := ""
+					fs.MkdirAll(inputCurrentDirectory, 0755)
+					fs.Create(inputCurrentDirectory + "/.ticker.yaml")
+					afero.WriteFile(fs, inputCurrentDirectory+"/.ticker.yaml", []byte("watchlist:\n  - JNJ"), 0644)
+					config, err := ReadConfig(fs, inputConfigPath)
+
+					Expect(config.Watchlist).To(Equal([]string{"JNJ"}))
+					Expect(err).To(BeNil())
+				})
+			})
+		})
+
+		When("there is an error reading the config file", func() {
+			It("returns the error", func() {
+				inputConfigPath := ".config-file-that-does-not-exist.yaml"
+				config, err := ReadConfig(fs, inputConfigPath)
+
+				Expect(config).To(Equal(cli.Config{}))
+				Expect(err).To(MatchError("Invalid config: open .config-file-that-does-not-exist.yaml: file does not exist"))
+			})
+		})
+
+		When("there is an error parsing the config file", func() {
+			It("returns the error", func() {
+				inputConfigPath := ".ticker.yaml"
+				afero.WriteFile(fs, ".ticker.yaml", []byte("watchlist:\n   NOK"), 0644)
+				config, err := ReadConfig(fs, inputConfigPath)
+
+				Expect(config).To(Equal(cli.Config{}))
+				Expect(err).To(MatchError("Invalid config: yaml: unmarshal errors:\n  line 2: cannot unmarshal !!str `NOK` into []string"))
+
 			})
 		})
 	})

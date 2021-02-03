@@ -9,9 +9,6 @@ import (
 
 	"ticker/internal/cli"
 	"ticker/internal/ui"
-
-	homedir "github.com/mitchellh/go-homedir"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -22,6 +19,7 @@ var (
 	separate              bool
 	extraInfoExchange     bool
 	extraInfoFundamentals bool
+	err                   error
 	rootCmd               = &cobra.Command{
 		Use:   "ticker",
 		Short: "Terminal stock ticker and stock gain/loss tracker",
@@ -29,13 +27,13 @@ var (
 			&config,
 			afero.NewOsFs(),
 			cli.Options{
-				ConfigPath:            &configPath,
 				RefreshInterval:       &refreshInterval,
 				Watchlist:             &watchlist,
 				Separate:              &separate,
 				ExtraInfoExchange:     &extraInfoExchange,
 				ExtraInfoFundamentals: &extraInfoFundamentals,
 			},
+			err,
 		),
 		Run: cli.Run(ui.Start(&config)),
 	}
@@ -59,20 +57,5 @@ func init() {
 }
 
 func initConfig() {
-	if configPath != "" {
-		viper.SetConfigFile(configPath)
-	} else {
-		home, err := homedir.Dir()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		viper.AddConfigPath(home)
-		viper.AddConfigPath(".")
-		viper.SetConfigName(".ticker")
-	}
-
-	viper.ReadInConfig()
-	configPath = viper.ConfigFileUsed()
+	config, err = cli.ReadConfig(afero.NewOsFs(), configPath)
 }

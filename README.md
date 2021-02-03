@@ -54,6 +54,7 @@ ticker -w NET,AAPL,TSLA
 |  |--show-tags||display currency, exchange name, and quote delay for each quote |
 |  |--show-fundamentals||display open price, previous close, and day range |
 |  |--show-separator||layout with separators between each quote|
+|  |--proxy||proxy URL for requests (default is none)|
 
 ## Configuration
 
@@ -65,6 +66,7 @@ show-tags: true
 show-fundamentals: true
 show-separator: true
 interval: 10
+proxy: http://localhost:3128
 watchlist:
   - NET
   - TEAM

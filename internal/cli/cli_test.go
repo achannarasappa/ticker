@@ -401,7 +401,7 @@ var _ = Describe("Cli", func() {
 				})
 			})
 			When("there is a config file in the XDG config directory", func() {
-				It("should read the config file from disk", func() {
+				XIt("should read the config file from disk", func() {
 					inputHome, _ := homedir.Dir()
 					inputConfigHome := inputHome + "/.config"
 					os.Setenv("XDG_CONFIG_HOME", inputConfigHome)

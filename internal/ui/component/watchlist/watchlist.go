@@ -262,20 +262,21 @@ func sortQuotes(q []quote.Quote, sortQuotesBy string) []quote.Quote {
 	quotesToShow := gubrak.
 		From(activeQuotes)
 
-	// Append the orderBy functionality
-	appendOrderBy(quotesToShow, sortQuotesBy)
+		// Append the orderBy functionality
+	appendOrderBy(quotesToShow, sortQuotesBy, inactiveQuotes)
 
-	// Append the inactive quotes to the end
+	// Get the result from quotes
 	concatQuotes := quotesToShow.
-		Concat(inactiveQuotes).
 		Result()
 
 	return (concatQuotes).([]quote.Quote)
 }
 
-func appendOrderBy(quotes gubrak.IChainable, sortQuotesBy string) {
+func appendOrderBy(quotes gubrak.IChainable, sortQuotesBy string, inactiveQuotes interface{}) {
+
 	switch strings.ToLower(sortQuotesBy) {
 	case "symbol":
+		quotes.Concat(inactiveQuotes)
 		quotes.OrderBy(func(v quote.Quote) string {
 			return v.Symbol
 		})
@@ -283,5 +284,6 @@ func appendOrderBy(quotes gubrak.IChainable, sortQuotesBy string) {
 		quotes.OrderBy(func(v quote.Quote) float64 {
 			return v.ChangePercent
 		}, false)
+		quotes.Concat(inactiveQuotes)
 	}
 }

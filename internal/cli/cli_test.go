@@ -404,11 +404,13 @@ var _ = Describe("Cli", func() {
 				It("should read the config file from disk", func() {
 					inputHome, _ := homedir.Dir()
 					inputConfigHome := inputHome + "/.config"
+					os.Setenv("XDG_CONFIG_HOME", inputConfigHome)
 					inputConfigPath := ""
 					fs.MkdirAll(inputConfigHome, 0755)
 					fs.Create(inputConfigHome + "/.ticker.yaml")
 					afero.WriteFile(fs, inputConfigHome+"/.ticker.yaml", []byte("watchlist:\n  - ABNB"), 0644)
 					config, err := ReadConfig(fs, inputConfigPath)
+					os.Unsetenv("XDG_CONFIG_HOME")
 
 					Expect(config.Watchlist).To(Equal([]string{"ABNB"}))
 					Expect(err).To(BeNil())

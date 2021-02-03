@@ -83,6 +83,7 @@ lots:
 
 * Symbols not on the watchlist that exists in `lots` will automatically be watched
 * All properties in `.ticker.yaml` are optional
+* `.ticker.yaml` can be set in user home directory, the current directory, or [XDG config home](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
 
 ### Display Options
 

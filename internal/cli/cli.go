@@ -6,8 +6,11 @@ import (
 	"strings"
 	"ticker/internal/position"
 
+	"github.com/adrg/xdg"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 )
 
@@ -22,7 +25,6 @@ type Config struct {
 }
 
 type Options struct {
-	ConfigPath            *string
 	RefreshInterval       *int
 	Watchlist             *string
 	Separate              *bool
@@ -41,53 +43,83 @@ func Run(uiStartFn func() error) func(*cobra.Command, []string) {
 	}
 }
 
-func Validate(config *Config, fs afero.Fs, options Options) func(*cobra.Command, []string) error {
+func Validate(config *Config, fs afero.Fs, options Options, prevErr error) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		var err error
-		*config, err = read(fs, options, config)
-		if err != nil {
-			return fmt.Errorf("Invalid config: %w", err)
+
+		if prevErr != nil {
+			return prevErr
 		}
+
+		if len(config.Watchlist) == 0 && len(*options.Watchlist) == 0 {
+			return errors.New("Invalid config: No watchlist provided")
+		}
+
+		if len(*options.Watchlist) != 0 {
+			config.Watchlist = strings.Split(strings.ReplaceAll(*options.Watchlist, " ", ""), ",")
+		}
+
+		*config = mergeConfig(*config, options)
+
 		return nil
 	}
 }
 
-func read(fs afero.Fs, options Options, configFile *Config) (Config, error) {
-	var (
-		err    error
-		config Config
-	)
-	if *options.ConfigPath != "" {
+func ReadConfig(fs afero.Fs, configPathOption string) (Config, error) {
+	var config Config
+	configPath, err := getConfigPath(fs, configPathOption)
 
-		handle, err := fs.Open(*options.ConfigPath)
+	if err != nil {
+		return config, err
+	}
+	handle, err := fs.Open(configPath)
 
-		if err != nil {
-			return config, err
-		}
-
-		defer handle.Close()
-		err = yaml.NewDecoder(handle).Decode(&config)
-
-		if err != nil {
-			return config, err
-		}
+	if err != nil {
+		return config, fmt.Errorf("Invalid config: %w", err)
 	}
 
-	if len(config.Watchlist) == 0 && len(*options.Watchlist) == 0 {
-		return config, errors.New("No watchlist provided")
+	defer handle.Close()
+	err = yaml.NewDecoder(handle).Decode(&config)
+
+	if err != nil {
+		return config, fmt.Errorf("Invalid config: %w", err)
 	}
 
-	if len(*options.Watchlist) != 0 {
-		config.Watchlist = strings.Split(strings.ReplaceAll(*options.Watchlist, " ", ""), ",")
-	}
+	return config, nil
+}
+
+func mergeConfig(config Config, options Options) Config {
 	config.RefreshInterval = getRefreshInterval(*options.RefreshInterval, config.RefreshInterval)
 	config.Separate = getBoolOption(*options.Separate, config.Separate)
 	config.ExtraInfoExchange = getBoolOption(*options.ExtraInfoExchange, config.ExtraInfoExchange)
 	config.ExtraInfoFundamentals = getBoolOption(*options.ExtraInfoFundamentals, config.ExtraInfoFundamentals)
 	config.SortQuotesBy = getStringOption(*options.SortQuotesBy, config.SortQuotesBy)
 
-	return config, err
+	return config
+}
 
+func getConfigPath(fs afero.Fs, configPathOption string) (string, error) {
+	var err error
+	if configPathOption != "" {
+		return configPathOption, nil
+	}
+
+	home, _ := homedir.Dir()
+
+	v := viper.New()
+	v.SetFs(fs)
+	v.SetConfigType("yaml")
+	v.AddConfigPath(home)
+	v.AddConfigPath(".")
+	v.AddConfigPath(xdg.ConfigHome)
+	v.AddConfigPath(xdg.ConfigHome + "/ticker")
+	v.SetConfigName(".ticker")
+	err = v.ReadInConfig()
+
+	if err != nil {
+		return "", fmt.Errorf("Invalid config: %w", err)
+	}
+
+	return v.ConfigFileUsed(), nil
 }
 
 func getRefreshInterval(optionsRefreshInterval int, configRefreshInterval int) int {

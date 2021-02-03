@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
+	github.com/adrg/xdg v0.3.0
 	github.com/charmbracelet/bubbles v0.7.5
 	github.com/charmbracelet/bubbletea v0.12.2
 	github.com/go-resty/resty/v2 v2.3.0

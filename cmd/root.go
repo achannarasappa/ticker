@@ -19,6 +19,7 @@ var (
 	separate              bool
 	extraInfoExchange     bool
 	extraInfoFundamentals bool
+  proxy                 string
 	err                   error
 	rootCmd               = &cobra.Command{
 		Use:   "ticker",
@@ -32,6 +33,7 @@ var (
 				Separate:              &separate,
 				ExtraInfoExchange:     &extraInfoExchange,
 				ExtraInfoFundamentals: &extraInfoFundamentals,
+        Proxy:                 &proxy,
 			},
 			err,
 		),
@@ -54,6 +56,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&separate, "show-separator", false, "layout with separators between each quote")
 	rootCmd.Flags().BoolVar(&extraInfoExchange, "show-tags", false, "display currency, exchange name, and quote delay for each quote")
 	rootCmd.Flags().BoolVar(&extraInfoFundamentals, "show-fundamentals", false, "display open price, high, low, and volume for each quote")
+  rootCmd.Flags().StringVar(&proxy, "proxy", "", "proxy URL for requests (default is none)")
 }
 
 func initConfig() {

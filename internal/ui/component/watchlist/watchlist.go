@@ -281,6 +281,8 @@ func appendOrderBy(quotes gubrak.IChainable, sortQuotesBy string, inactiveQuotes
 			return v.Symbol
 		})
 	case "changepercent":
+		fallthrough
+	case "":
 		quotes.OrderBy(func(v quote.Quote) float64 {
 			return v.ChangePercent
 		}, false)

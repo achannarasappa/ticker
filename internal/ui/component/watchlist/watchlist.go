@@ -262,7 +262,7 @@ func sortQuotes(q []quote.Quote, sortQuotesBy string) []quote.Quote {
 	quotesToShow := gubrak.
 		From(activeQuotes)
 
-		// Append the orderBy functionality
+	// Append the orderBy functionality
 	appendOrderBy(quotesToShow, sortQuotesBy, inactiveQuotes)
 
 	// Get the result from quotes

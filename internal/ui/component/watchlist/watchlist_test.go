@@ -19,14 +19,14 @@ func removeFormatting(text string) string {
 }
 
 var _ = Describe("Watchlist", func() {
-	describe := func(desc string) func(bool, bool, float64, Position, string) string {
-		return func(isActive bool, isRegularTradingSession bool, change float64, position Position, expected string) string {
+	describe := func(desc string) func(bool, bool, bool, float64, Position, string) string {
+		return func(isActive bool, isRegularTradingSession bool, showTotals bool, change float64, position Position, expected string) string {
 			return fmt.Sprintf("%s expected:%s", desc, expected)
 		}
 	}
 
 	DescribeTable("should render a watchlist",
-		func(isActive bool, isRegularTradingSession bool, change float64, position Position, expected string) {
+		func(isActive bool, isRegularTradingSession bool, showTotals bool, change float64, position Position, expected string) {
 
 			var positionMap map[string]Position
 			if (position == Position{}) {
@@ -37,7 +37,7 @@ var _ = Describe("Watchlist", func() {
 				}
 			}
 
-			m := NewModel(false, false, false)
+			m := NewModel(false, false, false, showTotals)
 			m.Width = 80
 			m.Positions = positionMap
 			m.Quotes = []Quote{
@@ -59,6 +59,7 @@ var _ = Describe("Watchlist", func() {
 			describe("gain"),
 			true,
 			true,
+			false,
 			0.05,
 			Position{},
 			strings.Join([]string{
@@ -70,6 +71,7 @@ var _ = Describe("Watchlist", func() {
 			describe("loss"),
 			true,
 			true,
+			false,
 			-0.05,
 			Position{},
 			strings.Join([]string{
@@ -80,6 +82,7 @@ var _ = Describe("Watchlist", func() {
 		Entry(
 			describe("gain, after hours"),
 			true,
+			false,
 			false,
 			0.05,
 			Position{},
@@ -92,6 +95,7 @@ var _ = Describe("Watchlist", func() {
 			describe("position, gain"),
 			true,
 			true,
+			false,
 			0.05,
 			Position{
 				AggregatedLot: AggregatedLot{
@@ -112,6 +116,7 @@ var _ = Describe("Watchlist", func() {
 			describe("position, loss"),
 			true,
 			true,
+			false,
 			-0.05,
 			Position{
 				AggregatedLot: AggregatedLot{
@@ -132,6 +137,7 @@ var _ = Describe("Watchlist", func() {
 			describe("position, closed market"),
 			false,
 			false,
+			false,
 			0.0,
 			Position{
 				AggregatedLot: AggregatedLot{
@@ -148,12 +154,37 @@ var _ = Describe("Watchlist", func() {
 				"Apple Inc.                                                         0.00  (0.00%)",
 			}, "\n"),
 		),
+		Entry(
+			describe("position, show totals"),
+			false,
+			false,
+			true,
+			0.0,
+			Position{
+				AggregatedLot: AggregatedLot{
+					Symbol:   "AAPL",
+					Quantity: 100.0,
+					Cost:     100.0,
+				},
+				Value:            95.0,
+				DayChange:        0.0,
+				DayChangePercent: 0.0,
+			},
+			strings.Join([]string{
+				"AAPL                                              95.00                     1.00",
+				"Apple Inc.                                                         0.00  (0.00%)",
+				"                                                                                ",
+				"          Total Current Value:                    95.00                         ",
+				"             Total Cost Basis:                   100.00                         ",
+				"           Total Gains/Losses:         ↓ -5.00 (-0.05%)                         ",
+			}, "\n"),
+		),
 	)
 
 	When("there are more than one symbols on the watchlist", func() {
 		It("should render a watchlist with each symbol", func() {
 
-			m := NewModel(false, false, false)
+			m := NewModel(false, false, false, false)
 			m.Width = 80
 			m.Quotes = []Quote{
 				{
@@ -217,7 +248,7 @@ var _ = Describe("Watchlist", func() {
 		When("the show-separator layout flag is set", func() {
 			It("should render a watchlist with separators", func() {
 
-				m := NewModel(true, false, false)
+				m := NewModel(true, false, false, false)
 				m.Quotes = []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -270,7 +301,7 @@ var _ = Describe("Watchlist", func() {
 
 	When("the option for extra exchange information is set", func() {
 		It("should render extra exchange information", func() {
-			m := NewModel(true, true, false)
+			m := NewModel(true, true, false, false)
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -297,7 +328,7 @@ var _ = Describe("Watchlist", func() {
 
 		When("the exchange has a delay", func() {
 			It("should render extra exchange information with the delay amount", func() {
-				m := NewModel(true, true, false)
+				m := NewModel(true, true, false, false)
 				m.Quotes = []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -326,7 +357,7 @@ var _ = Describe("Watchlist", func() {
 
 	When("the option for extra fundamental information is set", func() {
 		It("should render extra fundamental information", func() {
-			m := NewModel(true, false, true)
+			m := NewModel(true, false, true, false)
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -353,7 +384,7 @@ var _ = Describe("Watchlist", func() {
 
 		When("there is no day range", func() {
 			It("should not render the day range field", func() {
-				m := NewModel(true, false, true)
+				m := NewModel(true, false, true, false)
 				m.Quotes = []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -381,14 +412,14 @@ var _ = Describe("Watchlist", func() {
 
 	When("no quotes are set", func() {
 		It("should render an empty watchlist", func() {
-			m := NewModel(false, false, false)
+			m := NewModel(false, false, false, false)
 			Expect(m.View()).To(Equal(""))
 		})
 	})
 
 	When("the window width is less than the minimum", func() {
 		It("should render an empty watchlist", func() {
-			m := NewModel(false, false, false)
+			m := NewModel(false, false, false, false)
 			m.Width = 70
 			Expect(m.View()).To(Equal("Terminal window too narrow to render content\nResize to fix (70/80)"))
 		})

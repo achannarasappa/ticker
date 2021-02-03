@@ -37,15 +37,17 @@ type Model struct {
 	Separate              bool
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
+	ShowTotals            bool
 }
 
 // NewModel returns a model with default values.
-func NewModel(separate bool, extraInfoExchange bool, extraInfoFundamentals bool) Model {
+func NewModel(separate bool, extraInfoExchange bool, extraInfoFundamentals bool, showTotals bool) Model {
 	return Model{
 		Width:                 80,
 		Separate:              separate,
 		ExtraInfoExchange:     extraInfoExchange,
 		ExtraInfoFundamentals: extraInfoFundamentals,
+		ShowTotals:            showTotals,
 	}
 }
 
@@ -70,8 +72,76 @@ func (m Model) View() string {
 			),
 		)
 	}
-
+	if m.ShowTotals {
+		items = append(items, showTotals(quotes, m.Positions, m.Width))
+	}
 	return strings.Join(items, separator(m.Separate, m.Width))
+}
+
+func showTotals(quotes []quote.Quote, positions map[string]position.Position, width int) string {
+	totalBasis := 0.0
+	totalCurrent := 0.0
+	for _, quote := range quotes {
+		if p, ok := positions[quote.Symbol]; ok {
+			totalBasis += p.Cost
+			totalCurrent += p.Value
+		}
+	}
+	if totalBasis <= 0.00001 {
+		// don't bother displaying if the total basis is near zero
+		return ""
+	}
+	return JoinLines(
+		Line(
+			width,
+			Cell{},
+		),
+		Line(
+			width,
+			Cell{
+				Text:  styleNeutralFaded("Total Current Value:"),
+				Align: RightAlign,
+			},
+			Cell{
+				Width: 25,
+				Text:  valueText(totalCurrent),
+				Align: RightAlign,
+			},
+			Cell{
+				Width: 25,
+			},
+		),
+		Line(
+			width,
+			Cell{
+				Text:  styleNeutralFaded("Total Cost Basis:"),
+				Align: RightAlign,
+			},
+			Cell{
+				Width: 25,
+				Text:  valueText(totalBasis),
+				Align: RightAlign,
+			},
+			Cell{
+				Width: 25,
+			},
+		),
+		Line(
+			width,
+			Cell{
+				Text:  styleNeutralFaded("Total Gains/Losses:"),
+				Align: RightAlign,
+			},
+			Cell{
+				Width: 25,
+				Text:  valueChangeText(totalCurrent-totalBasis, (totalCurrent-totalBasis)/totalBasis),
+				Align: RightAlign,
+			},
+			Cell{
+				Width: 25,
+			},
+		),
+	)
 }
 
 func separator(isSeparated bool, width int) string {

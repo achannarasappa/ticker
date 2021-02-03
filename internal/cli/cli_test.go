@@ -69,6 +69,7 @@ var _ = Describe("Cli", func() {
 			separate              bool
 			extraInfoExchange     bool
 			extraInfoFundamentals bool
+			showTotals            bool
 		)
 
 		BeforeEach(func() {
@@ -78,12 +79,14 @@ var _ = Describe("Cli", func() {
 				Separate:              &separate,
 				ExtraInfoExchange:     &extraInfoExchange,
 				ExtraInfoFundamentals: &extraInfoFundamentals,
+				ShowTotals:            &showTotals,
 			}
 			watchlist = "GME,BB"
 			refreshInterval = 0
 			separate = false
 			extraInfoExchange = false
 			extraInfoFundamentals = false
+			showTotals = false
 			fs = afero.NewMemMapFs()
 			fs.MkdirAll("./", 0755)
 		})

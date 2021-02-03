@@ -21,6 +21,7 @@ type Config struct {
 	Separate              bool           `yaml:"show-separator"`
 	ExtraInfoExchange     bool           `yaml:"show-tags"`
 	ExtraInfoFundamentals bool           `yaml:"show-fundamentals"`
+	ShowTotals            bool           `yaml:"show-totals"`
 }
 
 type Options struct {
@@ -29,6 +30,7 @@ type Options struct {
 	Separate              *bool
 	ExtraInfoExchange     *bool
 	ExtraInfoFundamentals *bool
+	ShowTotals            *bool
 }
 
 func Run(uiStartFn func() error) func(*cobra.Command, []string) {
@@ -90,6 +92,7 @@ func mergeConfig(config Config, options Options) Config {
 	config.Separate = getBoolOption(*options.Separate, config.Separate)
 	config.ExtraInfoExchange = getBoolOption(*options.ExtraInfoExchange, config.ExtraInfoExchange)
 	config.ExtraInfoFundamentals = getBoolOption(*options.ExtraInfoFundamentals, config.ExtraInfoFundamentals)
+	config.ShowTotals = getBoolOption(*options.ShowTotals, config.ShowTotals)
 
 	return config
 }

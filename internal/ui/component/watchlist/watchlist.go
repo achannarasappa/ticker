@@ -101,12 +101,12 @@ func item(q quote.Quote, p position.Position, width int) string {
 			},
 			Cell{
 				Width: 25,
-				Text:  ValueChangeText(p.DayChange, p.DayChangePercent),
+				Text:  valueChangeText(p.DayChange, p.DayChangePercent),
 				Align: RightAlign,
 			},
 			Cell{
 				Width: 25,
-				Text:  QuoteChangeText(q.Change, q.ChangePercent),
+				Text:  quoteChangeText(q.Change, q.ChangePercent),
 				Align: RightAlign,
 			},
 		),
@@ -175,6 +175,26 @@ func marketStateText(q quote.Quote) string {
 	}
 
 	return ""
+}
+
+func valueChangeText(change float64, changePercent float64) string {
+	if change == 0.0 {
+		return ""
+	}
+
+	return quoteChangeText(change, changePercent)
+}
+
+func quoteChangeText(change float64, changePercent float64) string {
+	if change == 0.0 {
+		return StyleNeutralFaded("  " + ConvertFloatToString(change) + "  (" + ConvertFloatToString(changePercent) + "%)")
+	}
+
+	if change > 0.0 {
+		return StylePricePositive(changePercent)("↑ " + ConvertFloatToString(change) + "  (" + ConvertFloatToString(changePercent) + "%)")
+	}
+
+	return StylePriceNegative(changePercent)("↓ " + ConvertFloatToString(change) + " (" + ConvertFloatToString(changePercent) + "%)")
 }
 
 // Sort by change percent and keep all inactive quotes at the end

@@ -69,6 +69,7 @@ var _ = Describe("Cli", func() {
 			separate              bool
 			extraInfoExchange     bool
 			extraInfoFundamentals bool
+			showSummary           bool
 			proxy                 string
 		)
 
@@ -79,6 +80,7 @@ var _ = Describe("Cli", func() {
 				Separate:              &separate,
 				ExtraInfoExchange:     &extraInfoExchange,
 				ExtraInfoFundamentals: &extraInfoFundamentals,
+				ShowSummary:           &showSummary,
 				Proxy:                 &proxy,
 			}
 			watchlist = "GME,BB"
@@ -87,6 +89,7 @@ var _ = Describe("Cli", func() {
 			separate = false
 			extraInfoExchange = false
 			extraInfoFundamentals = false
+			showSummary = false
 			fs = afero.NewMemMapFs()
 			//nolint:errcheck
 			fs.MkdirAll("./", 0755)
@@ -386,6 +389,50 @@ var _ = Describe("Cli", func() {
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.ExtraInfoFundamentals).To(Equal(false))
+				})
+			})
+		})
+
+		Describe("show-summary option", func() {
+			When("show-summary flag is set as a cli argument", func() {
+				It("should set the config to the cli argument value", func() {
+					showSummary = true
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.ShowSummary).To(Equal(true))
+				})
+
+				When("the config file also has a show-summary flag defined", func() {
+					It("should set the show-summary flag from the cli argument", func() {
+						showSummary = true
+						inputConfig := cli.Config{
+							ShowSummary: false,
+						}
+						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+						Expect(outputErr).To(BeNil())
+						Expect(inputConfig.ShowSummary).To(Equal(true))
+					})
+				})
+			})
+
+			When("show-summary flag is set in the config file", func() {
+				It("should set the config to the cli argument value", func() {
+					inputConfig := cli.Config{
+						ShowSummary: true,
+					}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.ShowSummary).To(Equal(true))
+				})
+			})
+
+			When("show-summary flag is not set", func() {
+				It("should disable the option", func() {
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.ShowSummary).To(Equal(false))
 				})
 			})
 		})

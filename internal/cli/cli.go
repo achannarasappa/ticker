@@ -21,6 +21,7 @@ type Config struct {
 	Separate              bool           `yaml:"show-separator"`
 	ExtraInfoExchange     bool           `yaml:"show-tags"`
 	ExtraInfoFundamentals bool           `yaml:"show-fundamentals"`
+	ShowSummary           bool           `yaml:"show-summary"`
 	Proxy                 string         `yaml:"proxy"`
 }
 
@@ -30,6 +31,7 @@ type Options struct {
 	Separate              *bool
 	ExtraInfoExchange     *bool
 	ExtraInfoFundamentals *bool
+	ShowSummary           *bool
 	Proxy                 *string
 }
 
@@ -92,6 +94,7 @@ func mergeConfig(config Config, options Options) Config {
 	config.Separate = getBoolOption(*options.Separate, config.Separate)
 	config.ExtraInfoExchange = getBoolOption(*options.ExtraInfoExchange, config.ExtraInfoExchange)
 	config.ExtraInfoFundamentals = getBoolOption(*options.ExtraInfoFundamentals, config.ExtraInfoFundamentals)
+	config.ShowSummary = getBoolOption(*options.ShowSummary, config.ShowSummary)
 	config.Proxy = getProxy(*options.Proxy, config.Proxy)
 
 	return config

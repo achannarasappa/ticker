@@ -1,6 +1,8 @@
 name: contract test
 
-on: [push, pull_request]
+on: 
+  schedule:
+    - cron:  '* 23 * * *'
 
 jobs:
   test:

@@ -95,4 +95,4 @@ var _ = Describe("Quote", func() {
 			Expect(resp.Status).To(Equal("200 OK"))
 		})
 	})
-})	
+})

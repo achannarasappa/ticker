@@ -92,7 +92,7 @@ var _ = Describe("Cli", func() {
 			extraInfoExchange = false
 			extraInfoFundamentals = false
 			showSummary = false
-			sort = "Name"
+			sort = ""
 			fs = afero.NewMemMapFs()
 			//nolint:errcheck
 			fs.MkdirAll("./", 0755)
@@ -108,7 +108,7 @@ var _ = Describe("Cli", func() {
 				},
 				Lots:  nil,
 				Proxy: "",
-				Sort:  "Name",
+				Sort:  "",
 			}
 			outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 			Expect(outputErr).To(BeNil())
@@ -437,6 +437,50 @@ var _ = Describe("Cli", func() {
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.ShowSummary).To(Equal(false))
+				})
+			})
+		})
+
+		Describe("sort option", func() {
+			When("sort flag is set as a cli argument", func() {
+				It("should set the config to the cli argument value", func() {
+					sort = "symbol"
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.Sort).To(Equal("symbol"))
+				})
+
+				When("the config file also has a sort flag defined", func() {
+					It("should set the sort flag from the cli argument", func() {
+						sort = "symbol"
+						inputConfig := cli.Config{
+							ShowSummary: false,
+						}
+						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+						Expect(outputErr).To(BeNil())
+						Expect(inputConfig.Sort).To(Equal("symbol"))
+					})
+				})
+			})
+
+			When("sort flag is set in the config file", func() {
+				It("should set the config to the cli argument value", func() {
+					inputConfig := cli.Config{
+						Sort: "symbol",
+					}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.Sort).To(Equal("symbol"))
+				})
+			})
+
+			When("sort flag is not set", func() {
+				It("should disable the option", func() {
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.Sort).To(Equal(""))
 				})
 			})
 		})

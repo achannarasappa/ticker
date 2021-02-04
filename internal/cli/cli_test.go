@@ -69,7 +69,7 @@ var _ = Describe("Cli", func() {
 			separate              bool
 			extraInfoExchange     bool
 			extraInfoFundamentals bool
-      proxy                 string
+			proxy                 string
 		)
 
 		BeforeEach(func() {
@@ -79,11 +79,11 @@ var _ = Describe("Cli", func() {
 				Separate:              &separate,
 				ExtraInfoExchange:     &extraInfoExchange,
 				ExtraInfoFundamentals: &extraInfoFundamentals,
-        Proxy:                 &proxy,
+				Proxy:                 &proxy,
 			}
 			watchlist = "GME,BB"
 			refreshInterval = 0
-      proxy = ""
+			proxy = ""
 			separate = false
 			extraInfoExchange = false
 			extraInfoFundamentals = false
@@ -100,8 +100,8 @@ var _ = Describe("Cli", func() {
 					"GME",
 					"BB",
 				},
-				Lots: nil,
-        Proxy: "",
+				Lots:  nil,
+				Proxy: "",
 			}
 			outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 			Expect(outputErr).To(BeNil())
@@ -173,22 +173,22 @@ var _ = Describe("Cli", func() {
 		Describe("proxy url option", func() {
 			When("proxy url is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
-          proxy = "http://localhost:3128"
+					proxy = "http://localhost:3128"
 					inputConfig := cli.Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
-          Expect(inputConfig.Proxy).To(BeEquivalentTo("http://localhost:3128"))
+					Expect(inputConfig.Proxy).To(BeEquivalentTo("http://localhost:3128"))
 				})
 
 				When("the config file also has a proxy url defined", func() {
 					It("should set the proxy url from the cli argument", func() {
-            proxy = "http://www.example.org:3128"
+						proxy = "http://www.example.org:3128"
 						inputConfig := cli.Config{
-              Proxy: "http://localhost:3128",
+							Proxy: "http://localhost:3128",
 						}
 						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 						Expect(outputErr).To(BeNil())
-            Expect(inputConfig.Proxy).To(BeEquivalentTo("http://www.example.org:3128"))
+						Expect(inputConfig.Proxy).To(BeEquivalentTo("http://www.example.org:3128"))
 					})
 				})
 			})
@@ -196,11 +196,11 @@ var _ = Describe("Cli", func() {
 			When("proxy url is set in the config file", func() {
 				It("should set the config to the config argument value", func() {
 					inputConfig := cli.Config{
-            Proxy: "http://localhost:3128",
+						Proxy: "http://localhost:3128",
 					}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
-          Expect(inputConfig.Proxy).To(BeEquivalentTo("http://localhost:3128"))
+					Expect(inputConfig.Proxy).To(BeEquivalentTo("http://localhost:3128"))
 				})
 			})
 

@@ -21,7 +21,7 @@ type Config struct {
 	Separate              bool           `yaml:"show-separator"`
 	ExtraInfoExchange     bool           `yaml:"show-tags"`
 	ExtraInfoFundamentals bool           `yaml:"show-fundamentals"`
-  Proxy                 string         `yaml:"proxy"`
+	Proxy                 string         `yaml:"proxy"`
 }
 
 type Options struct {
@@ -30,7 +30,7 @@ type Options struct {
 	Separate              *bool
 	ExtraInfoExchange     *bool
 	ExtraInfoFundamentals *bool
-  Proxy                 *string
+	Proxy                 *string
 }
 
 func Run(uiStartFn func() error) func(*cobra.Command, []string) {
@@ -92,7 +92,7 @@ func mergeConfig(config Config, options Options) Config {
 	config.Separate = getBoolOption(*options.Separate, config.Separate)
 	config.ExtraInfoExchange = getBoolOption(*options.ExtraInfoExchange, config.ExtraInfoExchange)
 	config.ExtraInfoFundamentals = getBoolOption(*options.ExtraInfoFundamentals, config.ExtraInfoFundamentals)
-  config.Proxy = getProxy(*options.Proxy, config.Proxy)
+	config.Proxy = getProxy(*options.Proxy, config.Proxy)
 
 	return config
 }
@@ -137,15 +137,15 @@ func getRefreshInterval(optionsRefreshInterval int, configRefreshInterval int) i
 
 func getProxy(optionsProxy string, configProxy string) string {
 
-  if len(optionsProxy) > 0 {
-    return optionsProxy
-  }
+	if len(optionsProxy) > 0 {
+		return optionsProxy
+	}
 
-  if len(configProxy) > 0 {
-    return configProxy
-  }
+	if len(configProxy) > 0 {
+		return configProxy
+	}
 
-  return ""
+	return ""
 }
 
 func getBoolOption(cliValue bool, configValue bool) bool {

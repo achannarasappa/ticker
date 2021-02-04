@@ -2,14 +2,13 @@ package quote_test
 
 import (
 	"fmt"
-	"net/http"
 	"io/ioutil"
+	"net/http"
 
 	"github.com/xeipuuv/gojsonschema"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	
 )
 
 var _ = Describe("Quote", func() {
@@ -67,7 +66,7 @@ var _ = Describe("Quote", func() {
 				},
 				"required": ["quoteResponse"]
 			  }`
-			
+
 			resp, err := http.Get("https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=NET")
 			if err != nil {
 				panic(err)
@@ -83,13 +82,13 @@ var _ = Describe("Quote", func() {
 			if err != nil {
 				panic(err.Error())
 			}
-		
+
 			if !result.Valid() {
 				fmt.Printf("Expected fields are not present in the response. see errors :\n")
 				for _, desc := range result.Errors() {
 					fmt.Printf("- %s\n", desc)
 				}
-			}             
+			}
 
 			Expect(result.Valid()).To(Equal(true))
 			Expect(resp.Status).To(Equal("200 OK"))

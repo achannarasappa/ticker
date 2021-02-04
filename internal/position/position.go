@@ -13,6 +13,15 @@ type Position struct {
 	DayChangePercent float64
 }
 
+type PositionSummary struct {
+	Value            float64
+	Cost             float64
+	Change           float64
+	DayChange        float64
+	ChangePercent    float64
+	DayChangePercent float64
+}
+
 type Lot struct {
 	Symbol   string  `yaml:"symbol"`
 	UnitCost float64 `yaml:"unit_cost"`
@@ -97,4 +106,25 @@ func GetPositions(aggregatedLots map[string]AggregatedLot) func([]Quote) map[str
 
 		return (positions).(map[string]Position)
 	}
+}
+
+func GetPositionSummary(positions map[string]Position) PositionSummary {
+
+	positionValueCost := gubrak.From(positions).
+		Reduce(func(acc PositionSummary, position Position, key string) PositionSummary {
+			acc.Value += position.Value
+			acc.Cost += position.Cost
+			acc.DayChange += position.DayChange
+			return acc
+		}, PositionSummary{}).
+		Result()
+
+	positionSummary := (positionValueCost).(PositionSummary)
+
+	positionSummary.Change = positionSummary.Value - positionSummary.Cost
+	positionSummary.ChangePercent = (positionSummary.Value / positionSummary.Cost) * 100
+	positionSummary.DayChangePercent = (positionSummary.DayChange / positionSummary.Value) * 100
+
+	return positionSummary
+
 }

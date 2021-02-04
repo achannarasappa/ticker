@@ -54,6 +54,7 @@ ticker -w NET,AAPL,TSLA
 |  |--show-tags||display currency, exchange name, and quote delay for each quote |
 |  |--show-fundamentals||display open price, previous close, and day range |
 |  |--show-separator||layout with separators between each quote|
+|  |--show-summary||show total day change, total value, and total value change|
 |  |--proxy||proxy URL for requests (default is none)|
 
 ## Configuration
@@ -90,7 +91,7 @@ lots:
 
 ### Display Options
 
-With `--show-tags`, `--show-fundamentals`, and `--show-separator` options set, the layout and information displayed expands:
+With  `--show-summary`, `--show-tags`, `--show-fundamentals`, and `--show-separator` options set, the layout and information displayed expands:
 
 <img src="./docs/ticker-all-options.png" />
 

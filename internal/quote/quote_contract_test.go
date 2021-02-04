@@ -13,7 +13,7 @@ import (
 )
 
 var _ = Describe("Quote", func() {
-	Describe("GetQuotes", func() {
+	Describe("GetQuotes Response", func() {
 		It("should have expected fields in the response", func() {
 			const responseSchema = `{
 				"properties": {
@@ -74,7 +74,7 @@ var _ = Describe("Quote", func() {
 			}
 			defer resp.Body.Close()
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, _ := ioutil.ReadAll(resp.Body)
 			bodyString := string(body)
 			expectedSchema := gojsonschema.NewStringLoader(responseSchema)
 			actualResponse := gojsonschema.NewStringLoader(bodyString)

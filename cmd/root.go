@@ -19,7 +19,7 @@ var (
 	separate              bool
 	extraInfoExchange     bool
 	extraInfoFundamentals bool
-	sortQuotesBy          string
+	sort                  string
 	err                   error
 	rootCmd               = &cobra.Command{
 		Use:   "ticker",
@@ -33,7 +33,7 @@ var (
 				Separate:              &separate,
 				ExtraInfoExchange:     &extraInfoExchange,
 				ExtraInfoFundamentals: &extraInfoFundamentals,
-				SortQuotesBy:          &sortQuotesBy,
+				Sort:                  &sort,
 			},
 			err,
 		),
@@ -56,7 +56,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&separate, "show-separator", false, "layout with separators between each quote")
 	rootCmd.Flags().BoolVar(&extraInfoExchange, "show-tags", false, "display currency, exchange name, and quote delay for each quote")
 	rootCmd.Flags().BoolVar(&extraInfoFundamentals, "show-fundamentals", false, "display open price, high, low, and volume for each quote")
-	rootCmd.Flags().StringVar(&sortQuotesBy, "sort-quotes-by", "", "sort the quotes according to [Symbol, ChangePercent]. default sort is by ChangePercent")
+	rootCmd.Flags().StringVar(&sort, "sort", "", "sort the quotes according to [Symbol, ChangePercent]. default sort is by ChangePercent")
 }
 
 func initConfig() {

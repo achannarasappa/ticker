@@ -21,7 +21,7 @@ type Config struct {
 	Separate              bool           `yaml:"show-separator"`
 	ExtraInfoExchange     bool           `yaml:"show-tags"`
 	ExtraInfoFundamentals bool           `yaml:"show-fundamentals"`
-	SortQuotesBy          string         `yaml:"sort-quotes-by"`
+	Sort                  string         `yaml:"sort"`
 }
 
 type Options struct {
@@ -30,7 +30,7 @@ type Options struct {
 	Separate              *bool
 	ExtraInfoExchange     *bool
 	ExtraInfoFundamentals *bool
-	SortQuotesBy          *string
+	Sort                  *string
 }
 
 func Run(uiStartFn func() error) func(*cobra.Command, []string) {
@@ -92,7 +92,7 @@ func mergeConfig(config Config, options Options) Config {
 	config.Separate = getBoolOption(*options.Separate, config.Separate)
 	config.ExtraInfoExchange = getBoolOption(*options.ExtraInfoExchange, config.ExtraInfoExchange)
 	config.ExtraInfoFundamentals = getBoolOption(*options.ExtraInfoFundamentals, config.ExtraInfoFundamentals)
-	config.SortQuotesBy = getStringOption(*options.SortQuotesBy, config.SortQuotesBy)
+	config.Sort = getStringOption(*options.Sort, config.Sort)
 
 	return config
 }

@@ -37,17 +37,17 @@ type Model struct {
 	Separate              bool
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
-	SortQuotesBy          string
+	Sort                  string
 }
 
 // NewModel returns a model with default values.
-func NewModel(separate bool, extraInfoExchange bool, extraInfoFundamentals bool, sortQuotesBy string) Model {
+func NewModel(separate bool, extraInfoExchange bool, extraInfoFundamentals bool, sort string) Model {
 	return Model{
 		Width:                 80,
 		Separate:              separate,
 		ExtraInfoExchange:     extraInfoExchange,
 		ExtraInfoFundamentals: extraInfoFundamentals,
-		SortQuotesBy:          sortQuotesBy,
+		Sort:                  sort,
 	}
 }
 
@@ -57,7 +57,7 @@ func (m Model) View() string {
 		return fmt.Sprintf("Terminal window too narrow to render content\nResize to fix (%d/80)", m.Width)
 	}
 
-	quotes := sortQuotes(m.Quotes, m.SortQuotesBy)
+	quotes := sortQuotes(m.Quotes, m.Sort)
 	items := make([]string, 0)
 	for _, quote := range quotes {
 		items = append(
@@ -245,9 +245,9 @@ func getNormalizedPercentWithMax(percent float64, maxPercent float64) float64 {
 
 }
 
-// Sort by `sortQuotesBy` parameter (Symbol or Change Percent).
+// Sort by `sort` parameter (Symbol or Change Percent).
 // Keep all inactive quotes at the end
-func sortQuotes(q []quote.Quote, sortQuotesBy string) []quote.Quote {
+func sortQuotes(q []quote.Quote, sort string) []quote.Quote {
 	if len(q) <= 0 {
 		return q
 	}
@@ -263,7 +263,7 @@ func sortQuotes(q []quote.Quote, sortQuotesBy string) []quote.Quote {
 		From(activeQuotes)
 
 	// Append the orderBy functionality
-	appendOrderBy(quotesToShow, sortQuotesBy, inactiveQuotes)
+	appendOrderBy(quotesToShow, sort, inactiveQuotes)
 
 	// Get the result from quotes
 	concatQuotes := quotesToShow.
@@ -272,9 +272,9 @@ func sortQuotes(q []quote.Quote, sortQuotesBy string) []quote.Quote {
 	return (concatQuotes).([]quote.Quote)
 }
 
-func appendOrderBy(quotes gubrak.IChainable, sortQuotesBy string, inactiveQuotes interface{}) {
+func appendOrderBy(quotes gubrak.IChainable, sort string, inactiveQuotes interface{}) {
 
-	switch strings.ToLower(sortQuotesBy) {
+	switch strings.ToLower(sort) {
 	case "symbol":
 		quotes.Concat(inactiveQuotes)
 		quotes.OrderBy(func(v quote.Quote) string {

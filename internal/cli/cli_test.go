@@ -69,7 +69,7 @@ var _ = Describe("Cli", func() {
 			separate              bool
 			extraInfoExchange     bool
 			extraInfoFundamentals bool
-			sortQuotesBy          string
+			sort                  string
 		)
 
 		BeforeEach(func() {
@@ -79,14 +79,14 @@ var _ = Describe("Cli", func() {
 				Separate:              &separate,
 				ExtraInfoExchange:     &extraInfoExchange,
 				ExtraInfoFundamentals: &extraInfoFundamentals,
-				SortQuotesBy:          &sortQuotesBy,
+				Sort:                  &sort,
 			}
 			watchlist = "GME,BB"
 			refreshInterval = 0
 			separate = false
 			extraInfoExchange = false
 			extraInfoFundamentals = false
-			sortQuotesBy = "Name"
+			sort = "Name"
 			fs = afero.NewMemMapFs()
 			fs.MkdirAll("./", 0755)
 		})
@@ -99,8 +99,8 @@ var _ = Describe("Cli", func() {
 					"GME",
 					"BB",
 				},
-				Lots:         nil,
-				SortQuotesBy: "Name",
+				Lots: nil,
+				Sort: "Name",
 			}
 			outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 			Expect(outputErr).To(BeNil())

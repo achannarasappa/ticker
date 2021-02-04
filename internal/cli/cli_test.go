@@ -69,7 +69,8 @@ var _ = Describe("Cli", func() {
 			separate              bool
 			extraInfoExchange     bool
 			extraInfoFundamentals bool
-            proxy                 string
+			showSummary           bool
+			proxy                 string
 			sort                  string
 		)
 
@@ -80,17 +81,20 @@ var _ = Describe("Cli", func() {
 				Separate:              &separate,
 				ExtraInfoExchange:     &extraInfoExchange,
 				ExtraInfoFundamentals: &extraInfoFundamentals,
-                Proxy:                 &proxy,
+				ShowSummary:           &showSummary,
+				Proxy:                 &proxy,
 				Sort:                  &sort,
 			}
 			watchlist = "GME,BB"
 			refreshInterval = 0
-            proxy = ""
+			proxy = ""
 			separate = false
 			extraInfoExchange = false
 			extraInfoFundamentals = false
+			showSummary = false
 			sort = "Name"
 			fs = afero.NewMemMapFs()
+			//nolint:errcheck
 			fs.MkdirAll("./", 0755)
 		})
 
@@ -102,9 +106,9 @@ var _ = Describe("Cli", func() {
 					"GME",
 					"BB",
 				},
-				Lots: nil,
-                Proxy: "",
-				Sort: "Name",
+				Lots:  nil,
+				Proxy: "",
+				Sort:  "Name",
 			}
 			outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 			Expect(outputErr).To(BeNil())
@@ -176,22 +180,22 @@ var _ = Describe("Cli", func() {
 		Describe("proxy url option", func() {
 			When("proxy url is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
-          proxy = "http://localhost:3128"
+					proxy = "http://localhost:3128"
 					inputConfig := cli.Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
-          Expect(inputConfig.Proxy).To(BeEquivalentTo("http://localhost:3128"))
+					Expect(inputConfig.Proxy).To(BeEquivalentTo("http://localhost:3128"))
 				})
 
 				When("the config file also has a proxy url defined", func() {
 					It("should set the proxy url from the cli argument", func() {
-            proxy = "http://www.example.org:3128"
+						proxy = "http://www.example.org:3128"
 						inputConfig := cli.Config{
-              Proxy: "http://localhost:3128",
+							Proxy: "http://localhost:3128",
 						}
 						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 						Expect(outputErr).To(BeNil())
-            Expect(inputConfig.Proxy).To(BeEquivalentTo("http://www.example.org:3128"))
+						Expect(inputConfig.Proxy).To(BeEquivalentTo("http://www.example.org:3128"))
 					})
 				})
 			})
@@ -199,11 +203,11 @@ var _ = Describe("Cli", func() {
 			When("proxy url is set in the config file", func() {
 				It("should set the config to the config argument value", func() {
 					inputConfig := cli.Config{
-            Proxy: "http://localhost:3128",
+						Proxy: "http://localhost:3128",
 					}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
-          Expect(inputConfig.Proxy).To(BeEquivalentTo("http://localhost:3128"))
+					Expect(inputConfig.Proxy).To(BeEquivalentTo("http://localhost:3128"))
 				})
 			})
 
@@ -389,6 +393,50 @@ var _ = Describe("Cli", func() {
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.ExtraInfoFundamentals).To(Equal(false))
+				})
+			})
+		})
+
+		Describe("show-summary option", func() {
+			When("show-summary flag is set as a cli argument", func() {
+				It("should set the config to the cli argument value", func() {
+					showSummary = true
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.ShowSummary).To(Equal(true))
+				})
+
+				When("the config file also has a show-summary flag defined", func() {
+					It("should set the show-summary flag from the cli argument", func() {
+						showSummary = true
+						inputConfig := cli.Config{
+							ShowSummary: false,
+						}
+						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+						Expect(outputErr).To(BeNil())
+						Expect(inputConfig.ShowSummary).To(Equal(true))
+					})
+				})
+			})
+
+			When("show-summary flag is set in the config file", func() {
+				It("should set the config to the cli argument value", func() {
+					inputConfig := cli.Config{
+						ShowSummary: true,
+					}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.ShowSummary).To(Equal(true))
+				})
+			})
+
+			When("show-summary flag is not set", func() {
+				It("should disable the option", func() {
+					inputConfig := cli.Config{}
+					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(BeNil())
+					Expect(inputConfig.ShowSummary).To(Equal(false))
 				})
 			})
 		})

@@ -20,6 +20,7 @@ var (
 	extraInfoExchange     bool
 	extraInfoFundamentals bool
 	proxy                 string
+	showSummary           bool
 	sort                  string
 	err                   error
 	rootCmd               = &cobra.Command{
@@ -34,6 +35,7 @@ var (
 				Separate:              &separate,
 				ExtraInfoExchange:     &extraInfoExchange,
 				ExtraInfoFundamentals: &extraInfoFundamentals,
+				ShowSummary:           &showSummary,
 				Proxy:                 &proxy,
 				Sort:                  &sort,
 			},
@@ -58,6 +60,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&separate, "show-separator", false, "layout with separators between each quote")
 	rootCmd.Flags().BoolVar(&extraInfoExchange, "show-tags", false, "display currency, exchange name, and quote delay for each quote")
 	rootCmd.Flags().BoolVar(&extraInfoFundamentals, "show-fundamentals", false, "display open price, high, low, and volume for each quote")
+	rootCmd.Flags().BoolVar(&showSummary, "show-summary", false, "display summary of total gain and loss for positions")
 	rootCmd.Flags().StringVar(&proxy, "proxy", "", "proxy URL for requests (default is none)")
 	rootCmd.Flags().StringVar(&sort, "sort", "", "sort the quotes according to [Symbol, ChangePercent]. default sort is by ChangePercent")
 }

@@ -2,7 +2,6 @@ package watchlist
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 	"ticker/internal/position"
@@ -11,23 +10,7 @@ import (
 
 	. "ticker/internal/ui/util/text"
 
-	"github.com/lucasb-eyer/go-colorful"
 	"github.com/novalagung/gubrak/v2"
-)
-
-var (
-	styleNeutral       = NewStyle("#d4d4d4", "", false)
-	styleNeutralBold   = NewStyle("#d4d4d4", "", true)
-	styleNeutralFaded  = NewStyle("#616161", "", false)
-	styleLine          = NewStyle("#3a3a3a", "", false)
-	styleTag           = NewStyle("#d4d4d4", "#3a3a3a", false)
-	styleTagEnd        = NewStyle("#3a3a3a", "#3a3a3a", false)
-	stylePricePositive = newStyleFromGradient("#C6FF40", "#779929")
-	stylePriceNegative = newStyleFromGradient("#FF7940", "#994926")
-)
-
-const (
-	maxPercentChangeColorGradient = 10
 )
 
 type Model struct {
@@ -81,7 +64,7 @@ func separator(isSeparated bool, width int) string {
 		return "\n" + Line(
 			width,
 			Cell{
-				Text: styleLine(strings.Repeat("⎯", width)),
+				Text: StyleLine(strings.Repeat("⎯", width)),
 			},
 		) + "\n"
 	}
@@ -95,7 +78,7 @@ func item(q quote.Quote, p position.Position, width int) string {
 		Line(
 			width,
 			Cell{
-				Text: styleNeutralBold(q.Symbol),
+				Text: StyleNeutralBold(q.Symbol),
 			},
 			Cell{
 				Width: 5,
@@ -104,19 +87,19 @@ func item(q quote.Quote, p position.Position, width int) string {
 			},
 			Cell{
 				Width: 25,
-				Text:  valueText(p.Value),
+				Text:  ValueText(p.Value),
 				Align: RightAlign,
 			},
 			Cell{
 				Width: 25,
-				Text:  styleNeutral(ConvertFloatToString(q.Price)),
+				Text:  StyleNeutral(ConvertFloatToString(q.Price)),
 				Align: RightAlign,
 			},
 		),
 		Line(
 			width,
 			Cell{
-				Text: styleNeutralFaded(q.ShortName),
+				Text: StyleNeutralFaded(q.ShortName),
 			},
 			Cell{
 				Width: 25,
@@ -153,11 +136,11 @@ func extraInfoFundamentals(show bool, q quote.Quote, width int) string {
 		width,
 		Cell{
 			Width: 25,
-			Text:  styleNeutralFaded("Prev Close: ") + styleNeutral(ConvertFloatToString(q.RegularMarketPreviousClose)),
+			Text:  StyleNeutralFaded("Prev Close: ") + StyleNeutral(ConvertFloatToString(q.RegularMarketPreviousClose)),
 		},
 		Cell{
 			Width: 20,
-			Text:  styleNeutralFaded("Open: ") + styleNeutral(ConvertFloatToString(q.RegularMarketOpen)),
+			Text:  StyleNeutralFaded("Open: ") + StyleNeutral(ConvertFloatToString(q.RegularMarketOpen)),
 		},
 		Cell{
 			Text: dayRangeText(q.RegularMarketDayRange),
@@ -169,7 +152,7 @@ func dayRangeText(dayRange string) string {
 	if len(dayRange) <= 0 {
 		return ""
 	}
-	return styleNeutralFaded("Day Range: ") + styleNeutral(dayRange)
+	return StyleNeutralFaded("Day Range: ") + StyleNeutral(dayRange)
 }
 
 func exchangeDelayText(delay float64) string {
@@ -181,27 +164,19 @@ func exchangeDelayText(delay float64) string {
 }
 
 func tagText(text string) string {
-	return styleTagEnd(" ") + styleTag(text) + styleTagEnd(" ")
+	return StyleTagEnd(" ") + StyleTag(text) + StyleTagEnd(" ")
 }
 
 func marketStateText(q quote.Quote) string {
 	if q.IsRegularTradingSession {
-		return styleNeutralFaded(" ⦿  ")
+		return StyleNeutralFaded(" ⦿  ")
 	}
 
 	if !q.IsRegularTradingSession && q.IsActive {
-		return styleNeutralFaded(" ⦾  ")
+		return StyleNeutralFaded(" ⦾  ")
 	}
 
 	return ""
-}
-
-func valueText(value float64) string {
-	if value <= 0.0 {
-		return ""
-	}
-
-	return styleNeutral(ConvertFloatToString(value))
 }
 
 func valueChangeText(change float64, changePercent float64) string {
@@ -214,35 +189,14 @@ func valueChangeText(change float64, changePercent float64) string {
 
 func quoteChangeText(change float64, changePercent float64) string {
 	if change == 0.0 {
-		return styleNeutralFaded("  " + ConvertFloatToString(change) + "  (" + ConvertFloatToString(changePercent) + "%)")
+		return StyleNeutralFaded("  " + ConvertFloatToString(change) + "  (" + ConvertFloatToString(changePercent) + "%)")
 	}
 
 	if change > 0.0 {
-		return stylePricePositive(changePercent)("↑ " + ConvertFloatToString(change) + "  (" + ConvertFloatToString(changePercent) + "%)")
+		return StylePricePositive(changePercent)("↑ " + ConvertFloatToString(change) + "  (" + ConvertFloatToString(changePercent) + "%)")
 	}
 
-	return stylePriceNegative(changePercent)("↓ " + ConvertFloatToString(change) + " (" + ConvertFloatToString(changePercent) + "%)")
-}
-
-func newStyleFromGradient(startColorHex string, endColorHex string) func(float64) func(string) string {
-	c1, _ := colorful.Hex(startColorHex)
-	c2, _ := colorful.Hex(endColorHex)
-
-	return func(percent float64) func(string) string {
-		normalizedPercent := getNormalizedPercentWithMax(percent, maxPercentChangeColorGradient)
-		return NewStyle(c1.BlendHsv(c2, normalizedPercent).Hex(), "", false)
-	}
-}
-
-// Normalize 0-100 percent with a maximum percent value
-func getNormalizedPercentWithMax(percent float64, maxPercent float64) float64 {
-
-	absolutePercent := math.Abs(percent)
-	if absolutePercent >= maxPercent {
-		return 1.0
-	}
-	return math.Abs(percent / maxPercent)
-
+	return StylePriceNegative(changePercent)("↓ " + ConvertFloatToString(change) + " (" + ConvertFloatToString(changePercent) + "%)")
 }
 
 // Sort by `sort` parameter (Symbol or Change Percent).

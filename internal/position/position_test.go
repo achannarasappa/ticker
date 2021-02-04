@@ -93,4 +93,48 @@ var _ = Describe("Position", func() {
 		})
 	})
 
+	Describe("GetPositionSummary", func() {
+		It("should return a summary of positions", func() {
+			input := map[string]Position{
+				"ARKW": {
+					AggregatedLot: AggregatedLot{
+						Symbol:   "ARKW",
+						Cost:     1000,
+						Quantity: 10,
+					},
+					Value:     2000,
+					DayChange: 200,
+				},
+				"RBLX": {
+					AggregatedLot: AggregatedLot{
+						Symbol:   "RBLX",
+						Cost:     1000,
+						Quantity: 10,
+					},
+					Value:     2000,
+					DayChange: 200,
+				},
+				"ANI": {
+					AggregatedLot: AggregatedLot{
+						Symbol:   "ANI",
+						Cost:     1000,
+						Quantity: 10,
+					},
+					Value:     2000,
+					DayChange: 200,
+				},
+			}
+			output := GetPositionSummary(input)
+			expected := PositionSummary{
+				Value:            6000,
+				Cost:             3000,
+				Change:           3000,
+				DayChange:        600,
+				ChangePercent:    200,
+				DayChangePercent: 10,
+			}
+
+			Expect(output).To(Equal(expected))
+		})
+	})
 })

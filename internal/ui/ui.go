@@ -2,9 +2,11 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 	"ticker/internal/cli"
 	"ticker/internal/position"
 	"ticker/internal/quote"
+	"ticker/internal/ui/component/summary"
 	"ticker/internal/ui/component/watchlist"
 	"time"
 
@@ -22,16 +24,18 @@ var (
 )
 
 const (
-	verticalMargins = 1
+	footerHeight = 1
 )
 
 type Model struct {
 	ready           bool
+	headerHeight    int
 	getQuotes       func() []quote.Quote
 	getPositions    func([]quote.Quote) map[string]position.Position
 	requestInterval int
 	viewport        viewport.Model
 	watchlist       watchlist.Model
+	summary         summary.Model
 	lastUpdateTime  string
 }
 
@@ -55,11 +59,13 @@ func NewModel(config cli.Config, client *resty.Client) Model {
 	symbols := position.GetSymbols(config.Watchlist, aggregatedLots)
 
 	return Model{
+		headerHeight:    getVerticalMargin(config),
 		ready:           false,
 		requestInterval: 3,
 		getQuotes:       quote.GetQuotes(*client, symbols),
 		getPositions:    position.GetPositions(aggregatedLots),
 		watchlist:       watchlist.NewModel(config.Separate, config.ExtraInfoExchange, config.ExtraInfoFundamentals, config.Sort),
+		summary:         summary.NewModel(),
 	}
 }
 
@@ -93,7 +99,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		m.watchlist.Width = msg.Width
-		viewportHeight := msg.Height - verticalMargins
+		m.summary.Width = msg.Width
+		viewportHeight := msg.Height - m.headerHeight - footerHeight
 
 		if !m.ready {
 			m.viewport = viewport.Model{Width: msg.Width, Height: viewportHeight}
@@ -106,8 +113,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetContent(m.watchlist.View())
 
 	case QuoteMsg:
+		positions := m.getPositions(msg.quotes)
 		m.watchlist.Quotes = msg.quotes
-		m.watchlist.Positions = m.getPositions(msg.quotes)
+		m.watchlist.Positions = positions
+		m.summary.Summary = position.GetPositionSummary(positions)
 		m.lastUpdateTime = msg.time
 		if m.ready {
 			m.viewport.SetContent(m.watchlist.View())
@@ -126,7 +135,14 @@ func (m Model) View() string {
 		return "\n  Initalizing..."
 	}
 
-	return fmt.Sprintf("%s\n%s", m.viewport.View(), footer(m.viewport.Width, m.lastUpdateTime))
+	return strings.Join(
+		[]string{
+			m.summary.View(),
+			m.viewport.View(),
+			footer(m.viewport.Width, m.lastUpdateTime),
+		},
+		"\n",
+	)
 }
 
 func footer(width int, time string) string {
@@ -151,4 +167,12 @@ func footer(width int, time string) string {
 		},
 	)
 
+}
+
+func getVerticalMargin(config cli.Config) int {
+	if config.ShowSummary {
+		return 2
+	}
+
+	return 0
 }

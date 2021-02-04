@@ -229,7 +229,7 @@ func sortQuotes(q []quote.Quote, sort string) []quote.Quote {
 func appendOrderBy(quotes gubrak.IChainable, sort string, inactiveQuotes interface{}) {
 
 	switch strings.ToLower(sort) {
-	case "symbol":
+	case "alpha":
 		quotes.Concat(inactiveQuotes)
 		quotes.OrderBy(func(v quote.Quote) string {
 			return v.Symbol

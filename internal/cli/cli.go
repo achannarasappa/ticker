@@ -21,6 +21,7 @@ type Config struct {
 	Separate              bool           `yaml:"show-separator"`
 	ExtraInfoExchange     bool           `yaml:"show-tags"`
 	ExtraInfoFundamentals bool           `yaml:"show-fundamentals"`
+    Proxy                 string         `yaml:"proxy"`
 	Sort                  string         `yaml:"sort"`
 }
 
@@ -30,6 +31,7 @@ type Options struct {
 	Separate              *bool
 	ExtraInfoExchange     *bool
 	ExtraInfoFundamentals *bool
+    Proxy                 *string
 	Sort                  *string
 }
 
@@ -92,6 +94,7 @@ func mergeConfig(config Config, options Options) Config {
 	config.Separate = getBoolOption(*options.Separate, config.Separate)
 	config.ExtraInfoExchange = getBoolOption(*options.ExtraInfoExchange, config.ExtraInfoExchange)
 	config.ExtraInfoFundamentals = getBoolOption(*options.ExtraInfoFundamentals, config.ExtraInfoFundamentals)
+    config.Proxy = getProxy(*options.Proxy, config.Proxy)
 	config.Sort = getStringOption(*options.Sort, config.Sort)
 
 	return config
@@ -133,6 +136,19 @@ func getRefreshInterval(optionsRefreshInterval int, configRefreshInterval int) i
 	}
 
 	return 5
+}
+
+func getProxy(optionsProxy string, configProxy string) string {
+
+  if len(optionsProxy) > 0 {
+    return optionsProxy
+  }
+
+  if len(configProxy) > 0 {
+    return configProxy
+  }
+
+  return ""
 }
 
 func getBoolOption(cliValue bool, configValue bool) bool {

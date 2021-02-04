@@ -1,8 +1,9 @@
 <p>
     <a href="https://github.com/achannarasappa/ticker/releases"><img src="https://img.shields.io/github/v/release/achannarasappa/ticker" alt="Latest Release"></a>
     <a href="https://github.com/achannarasappa/ticker/actions"><img src="https://github.com/achannarasappa/ticker/workflows/test/badge.svg" alt="Build Status"></a>
+    <a href='https://coveralls.io/github/achannarasappa/ticker?branch=master'><img src='https://coveralls.io/repos/github/achannarasappa/ticker/badge.svg?branch=master' alt='Coverage Status' /></a>
+    <a href='https://goreportcard.com/badge/github.com/achannarasappa/ticker'><img src='https://goreportcard.com/badge/github.com/achannarasappa/ticker' alt='Report Card' /></a>
 </p>
-
 
 <h1 align="center">Ticker</h2>
 <p align="center">
@@ -53,6 +54,7 @@ ticker -w NET,AAPL,TSLA
 |  |--show-tags||display currency, exchange name, and quote delay for each quote |
 |  |--show-fundamentals||display open price, previous close, and day range |
 |  |--show-separator||layout with separators between each quote|
+|  |--proxy||proxy URL for requests (default is none)|
 
 ## Configuration
 
@@ -64,6 +66,7 @@ show-tags: true
 show-fundamentals: true
 show-separator: true
 interval: 10
+proxy: http://localhost:3128
 watchlist:
   - NET
   - TEAM
@@ -95,7 +98,8 @@ With `--show-tags`, `--show-fundamentals`, and `--show-separator` options set, t
 
 * **Real-time quotes** - Quotes are pulled from Yahoo finance which may provide delayed stock quotes depending on the exchange. The major US exchanges (NYSE, NASDAQ) have real-time quotes however other exchanges may not. Consult the [help article](https://help.yahoo.com/kb/SLN2310.html) on exchange delays to determine which exchanges you can expect delays for or use the `--show-tags` flag to include timeliness of data alongside quotes in `ticker`.
 * **Cryptocurrencies**  - `ticker` supports any cryptocurrency Yahoo / CoinMarketCap supports. A full list can be found [here](https://finance.yahoo.com/cryptocurrencies?offset=0&count=100)
-* **Non-US Symbol** - Non-US symbols may differ from what they are natively named in those exchanges. Try searching the native name in [Yahoo finance](https://finance.yahoo.com/) to determine the symbol to use in `ticker`
+* **Non-US Symbols** - Non-US symbols may differ from what they are natively named in those exchanges. Try searching the native name in [Yahoo finance](https://finance.yahoo.com/) to determine the symbol to use in `ticker`
+* **Terminal fonts** - Font with support for the [`HORIZONTAL LINE SEPARATOR` unicode character](https://www.fileformat.info/info/unicode/char/23af/fontsupport.htm) is required to properly render separators (`--show-separator` option)
 
 ## Related Tools
 

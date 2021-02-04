@@ -21,6 +21,7 @@ var (
 	extraInfoFundamentals bool
 	proxy                 string
 	showSummary           bool
+	sort                  string
 	err                   error
 	rootCmd               = &cobra.Command{
 		Use:   "ticker",
@@ -36,6 +37,7 @@ var (
 				ExtraInfoFundamentals: &extraInfoFundamentals,
 				ShowSummary:           &showSummary,
 				Proxy:                 &proxy,
+				Sort:                  &sort,
 			},
 			err,
 		),
@@ -60,6 +62,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&extraInfoFundamentals, "show-fundamentals", false, "display open price, high, low, and volume for each quote")
 	rootCmd.Flags().BoolVar(&showSummary, "show-summary", false, "display summary of total gain and loss for positions")
 	rootCmd.Flags().StringVar(&proxy, "proxy", "", "proxy URL for requests (default is none)")
+	rootCmd.Flags().StringVar(&sort, "sort", "", "sort quotes on the UI. Set \"alpha\" to sort by ticker name. keep empty to sort according to change percent")
 }
 
 func initConfig() {

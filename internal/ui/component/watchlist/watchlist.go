@@ -234,7 +234,7 @@ func appendOrderBy(quotes gubrak.IChainable, sort string, inactiveQuotes interfa
 		quotes.OrderBy(func(v quote.Quote) string {
 			return v.Symbol
 		})
-	case "":
+	default:
 		quotes.OrderBy(func(v quote.Quote) float64 {
 			return v.ChangePercent
 		}, false)

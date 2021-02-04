@@ -26,6 +26,8 @@ type ResponseQuote struct {
 	PreMarketChange            float64 `json:"preMarketChange"`
 	PreMarketChangePercent     float64 `json:"preMarketChangePercent"`
 	PreMarketPrice             float64 `json:"preMarketPrice"`
+	PriceToBook                float64 `json:"priceToBook"`
+	TrailingPE                 float64 `json:"trailingPE"`
 }
 
 type Quote struct {

@@ -18,6 +18,7 @@ var (
 	refreshInterval       int
 	separate              bool
 	extraInfoExchange     bool
+	extraInfoQuote        bool
 	extraInfoFundamentals bool
 	proxy                 string
 	showSummary           bool
@@ -34,6 +35,7 @@ var (
 				Watchlist:             &watchlist,
 				Separate:              &separate,
 				ExtraInfoExchange:     &extraInfoExchange,
+				ExtraInfoQuote:        &extraInfoQuote,
 				ExtraInfoFundamentals: &extraInfoFundamentals,
 				ShowSummary:           &showSummary,
 				Proxy:                 &proxy,
@@ -59,7 +61,8 @@ func init() {
 	rootCmd.Flags().IntVarP(&refreshInterval, "interval", "i", 0, "refresh interval in seconds")
 	rootCmd.Flags().BoolVar(&separate, "show-separator", false, "layout with separators between each quote")
 	rootCmd.Flags().BoolVar(&extraInfoExchange, "show-tags", false, "display currency, exchange name, and quote delay for each quote")
-	rootCmd.Flags().BoolVar(&extraInfoFundamentals, "show-fundamentals", false, "display open price, high, low, and volume for each quote")
+	rootCmd.Flags().BoolVar(&extraInfoQuote, "show-extended-quote", false, "display open price, high, low, and volume for each quote")
+	rootCmd.Flags().BoolVar(&extraInfoFundamentals, "show-fundamentals", false, "display P/E and P/B for each ticker")
 	rootCmd.Flags().BoolVar(&showSummary, "show-summary", false, "display summary of total gain and loss for positions")
 	rootCmd.Flags().StringVar(&proxy, "proxy", "", "proxy URL for requests (default is none)")
 	rootCmd.Flags().StringVar(&sort, "sort", "", "sort quotes on the UI. Set \"alpha\" to sort by ticker name. Set \"value\" to sort by position value. Keep empty to sort according to change percent")

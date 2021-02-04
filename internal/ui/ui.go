@@ -8,6 +8,7 @@ import (
 	"github.com/achannarasappa/ticker/internal/cli"
 	"github.com/achannarasappa/ticker/internal/position"
 	"github.com/achannarasappa/ticker/internal/quote"
+	"github.com/achannarasappa/ticker/internal/sorter"
 	"github.com/achannarasappa/ticker/internal/ui/component/summary"
 	"github.com/achannarasappa/ticker/internal/ui/component/watchlist"
 
@@ -59,13 +60,21 @@ func NewModel(config cli.Config, client *resty.Client) Model {
 	aggregatedLots := position.GetLots(config.Lots)
 	symbols := position.GetSymbols(config.Watchlist, aggregatedLots)
 
+	watchlistOptions := []watchlist.WatchlistModelOption{
+		func(m *watchlist.Model) { m.Separate = config.Separate },
+		func(m *watchlist.Model) { m.ExtraInfoExchange = config.ExtraInfoExchange },
+		func(m *watchlist.Model) { m.ExtraInfoQuote = config.ExtraInfoQuote },
+		func(m *watchlist.Model) { m.ExtraInfoFundamentals = config.ExtraInfoFundamentals },
+		func(m *watchlist.Model) { m.Sorter = sorter.NewSorter(config.Sort) },
+	}
+
 	return Model{
 		headerHeight:    getVerticalMargin(config),
 		ready:           false,
 		requestInterval: config.RefreshInterval,
 		getQuotes:       quote.GetQuotes(*client, symbols),
 		getPositions:    position.GetPositions(aggregatedLots),
-		watchlist:       watchlist.NewModel(config.Separate, config.ExtraInfoExchange, config.ExtraInfoFundamentals, config.Sort),
+		watchlist:       watchlist.NewModel(watchlistOptions...),
 		summary:         summary.NewModel(),
 	}
 }

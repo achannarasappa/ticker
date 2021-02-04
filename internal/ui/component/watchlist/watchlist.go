@@ -19,19 +19,22 @@ type Model struct {
 	Positions             map[string]Position
 	Separate              bool
 	ExtraInfoExchange     bool
+	ExtraInfoQuote        bool
 	ExtraInfoFundamentals bool
 	Sorter                Sorter
 }
 
+type WatchlistModelOption func(*Model)
+
 // NewModel returns a model with default values.
-func NewModel(separate bool, extraInfoExchange bool, extraInfoFundamentals bool, sort string) Model {
-	return Model{
-		Width:                 80,
-		Separate:              separate,
-		ExtraInfoExchange:     extraInfoExchange,
-		ExtraInfoFundamentals: extraInfoFundamentals,
-		Sorter:                NewSorter(sort),
+func NewModel(options ...WatchlistModelOption) Model {
+	m := Model{
+		Width: 80,
 	}
+	for _, option := range options {
+		option(&m)
+	}
+	return m
 }
 
 func (m Model) View() string {
@@ -48,6 +51,7 @@ func (m Model) View() string {
 			strings.Join(
 				[]string{
 					item(quote, m.Positions[quote.Symbol], m.Width),
+					extraInfoQuote(m.ExtraInfoQuote, quote, m.Width),
 					extraInfoFundamentals(m.ExtraInfoFundamentals, quote, m.Width),
 					extraInfoExchange(m.ExtraInfoExchange, quote, m.Width),
 				},
@@ -127,7 +131,7 @@ func extraInfoExchange(show bool, q Quote, width int) string {
 	)
 }
 
-func extraInfoFundamentals(show bool, q Quote, width int) string {
+func extraInfoQuote(show bool, q Quote, width int) string {
 	if !show {
 		return ""
 	}
@@ -144,6 +148,23 @@ func extraInfoFundamentals(show bool, q Quote, width int) string {
 		},
 		Cell{
 			Text: dayRangeText(q.RegularMarketDayRange),
+		},
+	)
+}
+
+func extraInfoFundamentals(show bool, q Quote, width int) string {
+	if !show {
+		return ""
+	}
+
+	return "\n" + Line(
+		width,
+		Cell{
+			Width: 25,
+			Text:  StyleNeutralFaded("P/E: ") + StyleNeutral(ConvertFloatToString(q.TrailingPE)),
+		},
+		Cell{
+			Text: StyleNeutralFaded("P/B: ") + StyleNeutral(ConvertFloatToString(q.PriceToBook)),
 		},
 	)
 }

@@ -45,6 +45,26 @@ curl -Ls https://api.github.com/repos/achannarasappa/ticker/releases/latest \
 ticker -w NET,AAPL,TSLA
 ```
 
+### Docker
+
+```shell
+docker run -it --rm junior/ticker -w AAPL,TSLA,BTC-USD
+```
+
+### Docker with options
+
+```shell
+docker run -it --rm junior/ticker \
+  --show-tags --show-fundamentals --show-separator \
+  -w BTC-USD,AAPL,TSLA
+```
+
+### Docker with configuration file
+
+```shell
+docker run -it --rm -v ${PWD}/.ticker.yaml:/.ticker.yaml junior/ticker
+```
+
 ## Usage
 |Alias|Flag|Default|Description|
 |-|-|-|-|

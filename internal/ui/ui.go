@@ -61,7 +61,7 @@ func NewModel(config cli.Config, client *resty.Client) Model {
 	return Model{
 		headerHeight:    getVerticalMargin(config),
 		ready:           false,
-		requestInterval: 3,
+		requestInterval: config.RefreshInterval,
 		getQuotes:       quote.GetQuotes(*client, symbols),
 		getPositions:    position.GetPositions(aggregatedLots),
 		watchlist:       watchlist.NewModel(config.Separate, config.ExtraInfoExchange, config.ExtraInfoFundamentals, config.Sort),

@@ -12,18 +12,26 @@ const (
 )
 
 var (
-	StyleNeutral       = NewStyle("#d4d4d4", "", false)
-	StyleNeutralBold   = NewStyle("#d4d4d4", "", true)
-	StyleNeutralFaded  = NewStyle("#616161", "", false)
-	StyleLine          = NewStyle("#3a3a3a", "", false)
-	StyleTag           = NewStyle("#d4d4d4", "#3a3a3a", false)
-	StyleTagEnd        = NewStyle("#3a3a3a", "#3a3a3a", false)
+	StyleNeutral       = NewStyleANSI(te.ANSIWhite, 256, false)
+	StyleNeutralBold   = NewStyleANSI(te.ANSIWhite, 256, true)
+	StyleNeutralFaded  = NewStyleANSI(te.ANSIBrightBlack, 256, false)
+	StyleLine          = NewStyleANSI(te.ANSIBlack, 256, false)
+	StyleTag           = NewStyleANSI(te.ANSIWhite, te.ANSIBlack, false)
+	StyleTagEnd        = NewStyleANSI(te.ANSIWhite, te.ANSIBlack, false)
 	StylePricePositive = NewStyleFromGradient("#C6FF40", "#779929")
 	StylePriceNegative = NewStyleFromGradient("#FF7940", "#994926")
 )
 
 func NewStyle(fg string, bg string, bold bool) func(string) string {
 	s := te.Style{}.Foreground(te.ColorProfile().Color(fg)).Background(te.ColorProfile().Color(bg))
+	if bold {
+		s = s.Bold()
+	}
+	return s.Styled
+}
+
+func NewStyleANSI(fg te.ANSIColor, bg te.ANSIColor, bold bool) func(string) string {
+	s := te.Style{}.Foreground(fg).Background(bg)
 	if bold {
 		s = s.Bold()
 	}

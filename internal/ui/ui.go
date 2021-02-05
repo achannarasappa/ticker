@@ -19,8 +19,8 @@ import (
 )
 
 var (
-	styleLogo = NewStyle("#ffc27d", "#f37329", true)
-	styleHelp = NewStyle("#4e4e4e", "", true)
+	styleLogo = NewStyleANSI(0, 3, true)
+	styleHelp = NewStyleANSI(8, 256, true)
 )
 
 const (

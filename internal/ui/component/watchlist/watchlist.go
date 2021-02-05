@@ -104,7 +104,7 @@ func item(q quote.Quote, p position.Position, width int) string {
 			},
 			Cell{
 				Width: 25,
-				Text:  valueChangeText(p.DayChange, p.DayChangePercent),
+				Text:  valueChangeText(p.TotalChange, p.TotalChangePercent),
 				Align: RightAlign,
 			},
 			Cell{

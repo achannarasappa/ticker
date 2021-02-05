@@ -56,7 +56,7 @@ var _ = Describe("Position", func() {
 		It("should return a map of positions", func() {
 			inputAggregatedLots := map[string]AggregatedLot{
 				"ABNB": {Symbol: "ABNB", Cost: 5110, Quantity: 35},
-				"ARKW": {Symbol: "ARKW", Cost: 6090, Quantity: 40},
+				"ARKW": {Symbol: "ARKW", Cost: 4000, Quantity: 40},
 			}
 			inputQuotes := []Quote{
 				{
@@ -81,12 +81,14 @@ var _ = Describe("Position", func() {
 				"ARKW": {
 					AggregatedLot: AggregatedLot{
 						Symbol:   "ARKW",
-						Cost:     6090,
+						Cost:     4000,
 						Quantity: 40,
 					},
-					Value:            8000,
-					DayChange:        2000,
-					DayChangePercent: 50,
+					Value:              8000,
+					DayChange:          2000,
+					DayChangePercent:   50,
+					TotalChange:        4000,
+					TotalChangePercent: 100,
 				},
 			}
 			Expect(output).To(Equal(expected))

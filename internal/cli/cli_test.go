@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 
-	"ticker/internal/cli"
-	. "ticker/internal/cli"
+	"github.com/achannarasappa/ticker/internal/cli"
+	. "github.com/achannarasappa/ticker/internal/cli"
 )
 
 func getStdout(fn func()) string {

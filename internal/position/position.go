@@ -1,7 +1,7 @@
 package position
 
 import (
-	. "ticker/internal/quote"
+	. "github.com/achannarasappa/ticker/internal/quote"
 
 	"github.com/novalagung/gubrak/v2"
 )

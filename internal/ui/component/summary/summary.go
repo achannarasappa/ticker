@@ -2,8 +2,9 @@ package summary
 
 import (
 	"strings"
-	"ticker/internal/position"
-	. "ticker/internal/ui/util"
+
+	"github.com/achannarasappa/ticker/internal/position"
+	. "github.com/achannarasappa/ticker/internal/ui/util"
 )
 
 type Model struct {

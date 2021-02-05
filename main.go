@@ -1,6 +1,6 @@
 package main
 
-import "ticker/cmd"
+import "github.com/achannarasappa/ticker/cmd"
 
 func main() {
 	cmd.Execute()

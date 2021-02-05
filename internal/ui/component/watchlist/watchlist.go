@@ -4,22 +4,23 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"ticker/internal/position"
-	"ticker/internal/quote"
-	"ticker/internal/sorter"
-	. "ticker/internal/ui/util"
 
-	. "ticker/internal/ui/util/text"
+	. "github.com/achannarasappa/ticker/internal/position"
+	. "github.com/achannarasappa/ticker/internal/quote"
+	. "github.com/achannarasappa/ticker/internal/sorter"
+	. "github.com/achannarasappa/ticker/internal/ui/util"
+
+	. "github.com/achannarasappa/ticker/internal/ui/util/text"
 )
 
 type Model struct {
 	Width                 int
-	Quotes                []quote.Quote
-	Positions             map[string]position.Position
+	Quotes                []Quote
+	Positions             map[string]Position
 	Separate              bool
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
-	Sorter                sorter.Sorter
+	Sorter                Sorter
 }
 
 // NewModel returns a model with default values.
@@ -29,7 +30,7 @@ func NewModel(separate bool, extraInfoExchange bool, extraInfoFundamentals bool,
 		Separate:              separate,
 		ExtraInfoExchange:     extraInfoExchange,
 		ExtraInfoFundamentals: extraInfoFundamentals,
-		Sorter:                sorter.NewSorter(sort),
+		Sorter:                NewSorter(sort),
 	}
 }
 
@@ -71,7 +72,7 @@ func separator(isSeparated bool, width int) string {
 	return "\n"
 }
 
-func item(q quote.Quote, p position.Position, width int) string {
+func item(q Quote, p Position, width int) string {
 
 	return JoinLines(
 		Line(
@@ -114,7 +115,7 @@ func item(q quote.Quote, p position.Position, width int) string {
 	)
 }
 
-func extraInfoExchange(show bool, q quote.Quote, width int) string {
+func extraInfoExchange(show bool, q Quote, width int) string {
 	if !show {
 		return ""
 	}
@@ -126,7 +127,7 @@ func extraInfoExchange(show bool, q quote.Quote, width int) string {
 	)
 }
 
-func extraInfoFundamentals(show bool, q quote.Quote, width int) string {
+func extraInfoFundamentals(show bool, q Quote, width int) string {
 	if !show {
 		return ""
 	}
@@ -166,7 +167,7 @@ func tagText(text string) string {
 	return StyleTagEnd(" ") + StyleTag(text) + StyleTagEnd(" ")
 }
 
-func marketStateText(q quote.Quote) string {
+func marketStateText(q Quote) string {
 	if q.IsRegularTradingSession {
 		return StyleNeutralFaded(" ⦿  ")
 	}

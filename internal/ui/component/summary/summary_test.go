@@ -2,8 +2,9 @@ package summary_test
 
 import (
 	"strings"
-	"ticker/internal/position"
-	. "ticker/internal/ui/component/summary"
+
+	"github.com/achannarasappa/ticker/internal/position"
+	. "github.com/achannarasappa/ticker/internal/ui/component/summary"
 
 	"github.com/acarl005/stripansi"
 	. "github.com/onsi/ginkgo"

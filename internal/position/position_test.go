@@ -1,8 +1,8 @@
 package position_test
 
 import (
-	. "ticker/internal/position"
-	. "ticker/internal/quote"
+	. "github.com/achannarasappa/ticker/internal/position"
+	. "github.com/achannarasappa/ticker/internal/quote"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

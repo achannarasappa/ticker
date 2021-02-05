@@ -1,13 +1,13 @@
 package sorter
 
 import (
-	"ticker/internal/position"
-	"ticker/internal/quote"
+	. "github.com/achannarasappa/ticker/internal/position"
+	. "github.com/achannarasappa/ticker/internal/quote"
 
 	"github.com/novalagung/gubrak/v2"
 )
 
-type Sorter func(quotes []quote.Quote, positions map[string]position.Position) []quote.Quote
+type Sorter func(quotes []Quote, positions map[string]Position) []Quote
 
 func NewSorter(sort string) Sorter {
 	if sorter, ok := sortDict[sort]; ok {
@@ -18,21 +18,21 @@ func NewSorter(sort string) Sorter {
 }
 
 var sortDict = map[string]Sorter{
-	"alpha": func(quotes []quote.Quote, positions map[string]position.Position) []quote.Quote {
+	"alpha": func(quotes []Quote, positions map[string]Position) []Quote {
 		if len(quotes) <= 0 {
 			return quotes
 		}
 
 		result := gubrak.
 			From(quotes).
-			OrderBy(func(v quote.Quote) string {
+			OrderBy(func(v Quote) string {
 				return v.Symbol
 			}).
 			Result()
 
-		return (result).([]quote.Quote)
+		return (result).([]Quote)
 	},
-	"position": func(quotes []quote.Quote, positions map[string]position.Position) []quote.Quote {
+	"position": func(quotes []Quote, positions map[string]Position) []Quote {
 		if len(quotes) <= 0 {
 			return quotes
 		}
@@ -42,7 +42,7 @@ var sortDict = map[string]Sorter{
 		cActiveQuotes := gubrak.From(activeQuotes)
 		cInactiveQuotes := gubrak.From(inactiveQuotes)
 
-		positionsSorter := func(v quote.Quote) float64 {
+		positionsSorter := func(v Quote) float64 {
 			return positions[v.Symbol].Value
 		}
 
@@ -53,11 +53,11 @@ var sortDict = map[string]Sorter{
 			Concat(cInactiveQuotes.Result()).
 			Result()
 
-		return (result).([]quote.Quote)
+		return (result).([]Quote)
 	},
 }
 
-func defaultSorter(quotes []quote.Quote, positions map[string]position.Position) []quote.Quote {
+func defaultSorter(quotes []Quote, positions map[string]Position) []Quote {
 	if len(quotes) <= 0 {
 		return quotes
 	}
@@ -67,7 +67,7 @@ func defaultSorter(quotes []quote.Quote, positions map[string]position.Position)
 	cActiveQuotes := gubrak.
 		From(activeQuotes)
 
-	cActiveQuotes.OrderBy(func(v quote.Quote) float64 {
+	cActiveQuotes.OrderBy(func(v Quote) float64 {
 		return v.ChangePercent
 	}, false)
 
@@ -75,13 +75,13 @@ func defaultSorter(quotes []quote.Quote, positions map[string]position.Position)
 		Concat(inactiveQuotes).
 		Result()
 
-	return (result).([]quote.Quote)
+	return (result).([]Quote)
 }
 
-func splitActiveQuotes(quotes []quote.Quote) (interface{}, interface{}) {
+func splitActiveQuotes(quotes []Quote) (interface{}, interface{}) {
 	activeQuotes, inactiveQuotes, _ := gubrak.
 		From(quotes).
-		Partition(func(v quote.Quote) bool {
+		Partition(func(v Quote) bool {
 			return v.IsActive
 		}).
 		ResultAndError()

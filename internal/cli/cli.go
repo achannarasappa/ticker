@@ -4,7 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"ticker/internal/position"
+
+	"github.com/achannarasappa/ticker/internal/position"
 
 	"github.com/adrg/xdg"
 	"github.com/mitchellh/go-homedir"

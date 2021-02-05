@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "ticker/internal/quote"
+	. "github.com/achannarasappa/ticker/internal/quote"
 )
 
 var _ = Describe("Quote", func() {

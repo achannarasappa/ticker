@@ -3,15 +3,16 @@ package ui
 import (
 	"fmt"
 	"strings"
-	"ticker/internal/cli"
-	"ticker/internal/position"
-	"ticker/internal/quote"
-	"ticker/internal/ui/component/summary"
-	"ticker/internal/ui/component/watchlist"
 	"time"
 
-	. "ticker/internal/ui/util"
-	. "ticker/internal/ui/util/text"
+	"github.com/achannarasappa/ticker/internal/cli"
+	"github.com/achannarasappa/ticker/internal/position"
+	"github.com/achannarasappa/ticker/internal/quote"
+	"github.com/achannarasappa/ticker/internal/ui/component/summary"
+	"github.com/achannarasappa/ticker/internal/ui/component/watchlist"
+
+	. "github.com/achannarasappa/ticker/internal/ui/util"
+	. "github.com/achannarasappa/ticker/internal/ui/util/text"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"

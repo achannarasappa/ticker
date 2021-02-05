@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 
-	"ticker/internal/cli"
-	"ticker/internal/ui"
+	"github.com/achannarasappa/ticker/internal/cli"
+	"github.com/achannarasappa/ticker/internal/ui"
 )
 
 var (

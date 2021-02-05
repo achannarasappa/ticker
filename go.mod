@@ -1,4 +1,4 @@
-module ticker
+module github.com/achannarasappa/ticker
 
 go 1.15
 

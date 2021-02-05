@@ -434,6 +434,108 @@ var _ = Describe("Watchlist", func() {
 		})
 	})
 
+	When("the option for sort is set to 'position'", func() {
+		It("should render quotes by position value, with inactive quotes last", func() {
+			m := NewModel(true, false, false, "position")
+			m.Quotes = []Quote{
+				{
+					ResponseQuote: ResponseQuote{
+						Symbol:                     "BTC-USD",
+						ShortName:                  "Bitcoin",
+						RegularMarketPreviousClose: 10000.0,
+						RegularMarketOpen:          10000.0,
+						RegularMarketDayRange:      "10000 - 10000",
+					},
+					Price:                   50000.0,
+					Change:                  10000.0,
+					ChangePercent:           20.0,
+					IsActive:                true,
+					IsRegularTradingSession: true,
+				},
+				{
+					ResponseQuote: ResponseQuote{
+						Symbol:    "TW",
+						ShortName: "ThoughtWorks",
+					},
+					Price:                   109.04,
+					Change:                  3.53,
+					ChangePercent:           5.65,
+					IsActive:                true,
+					IsRegularTradingSession: false,
+				},
+				{
+					ResponseQuote: ResponseQuote{
+						Symbol:    "GOOG",
+						ShortName: "Google Inc.",
+					},
+					Price:                   2523.53,
+					Change:                  -32.02,
+					ChangePercent:           -1.35,
+					IsActive:                true,
+					IsRegularTradingSession: false,
+				},
+				{
+					ResponseQuote: ResponseQuote{
+						Symbol:    "MSFT",
+						ShortName: "Microsoft Corporation",
+					},
+					Price:                   242.01,
+					Change:                  -0.99,
+					ChangePercent:           -0.41,
+					IsActive:                false,
+					IsRegularTradingSession: false,
+				},
+			}
+
+			m.Positions = map[string]Position{
+				"BTC-USD": {
+					AggregatedLot: AggregatedLot{
+						Symbol:   "BTC-USD",
+						Cost:     30000.0,
+						Quantity: 1.0,
+					},
+					Value:            50000.0,
+					DayChange:        10000.0,
+					DayChangePercent: 20.0,
+				},
+				"GOOG": {
+					AggregatedLot: AggregatedLot{
+						Symbol:   "GOOG",
+						Cost:     2000.0,
+						Quantity: 1.0,
+					},
+					Value:            2523.53,
+					DayChange:        -32.02,
+					DayChangePercent: -1.35,
+				},
+				"MSFT": {
+					AggregatedLot: AggregatedLot{
+						Symbol:   "MSFT",
+						Cost:     200.0,
+						Quantity: 1.0,
+					},
+					Value:            242.01,
+					DayChange:        -0.99,
+					DayChangePercent: -0.41,
+				},
+			}
+			expected := strings.Join([]string{
+				"BTC-USD                    ⦿                   50000.00                 50000.00",
+				"Bitcoin                            ↑ 10000.00  (20.00%)     ↑ 10000.00  (20.00%)",
+				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
+				"GOOG                       ⦾                    2523.53                  2523.53",
+				"Google Inc.                           ↓ -32.02 (-1.35%)        ↓ -32.02 (-1.35%)",
+				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
+				"TW                         ⦾                                              109.04",
+				"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
+				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
+				"MSFT                                             242.01                   242.01",
+				"Microsoft Corporation                  ↓ -0.99 (-0.41%)         ↓ -0.99 (-0.41%)",
+			}, "\n")
+			Expect(removeFormatting(m.View())).To(Equal(expected))
+		})
+	})
+
 	When("the sort option isn't set", func() {
 		It("should render quotes by change percent", func() {
 			m := NewModel(true, false, false, "")

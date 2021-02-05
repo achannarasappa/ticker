@@ -95,10 +95,24 @@ type QuoteMsg struct {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
+	sorters := map[string]string{
+		"t": "alpha",
+		"c": "change",
+		"e": "pe",
+		"p": "value",
+		"b": "pb",
+	}
+
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "t", "c", "e", "b", "p":
+			m.watchlist.Sorter = sorter.NewSorter(sorters[msg.String()])
+			m.viewport.SetContent(m.watchlist.View())
+		case "r":
+			m.watchlist.Sorter.Reverse = !m.watchlist.Sorter.Reverse
+			m.viewport.SetContent(m.watchlist.View())
 		case "ctrl+c":
 			fallthrough
 		case "esc":

@@ -78,7 +78,7 @@ var _ = Describe("Sorter", func() {
 			It("should sort by default (change percent)", func() {
 				sorter := NewSorter("")
 
-				sortedQuotes := sorter(quotes, positions)
+				sortedQuotes := sorter.Sort(quotes, positions)
 				expected := []Quote{
 					bitcoinQuote,
 					twQuote,
@@ -93,7 +93,7 @@ var _ = Describe("Sorter", func() {
 			It("should sort by alphabetical order", func() {
 				sorter := NewSorter("alpha")
 
-				sortedQuotes := sorter(quotes, positions)
+				sortedQuotes := sorter.Sort(quotes, positions)
 				expected := []Quote{
 					bitcoinQuote,
 					googleQuote,
@@ -104,11 +104,27 @@ var _ = Describe("Sorter", func() {
 				Expect(sortedQuotes).To(Equal(expected))
 			})
 		})
+		When("sort is reversed", func() {
+			It("should sort by reverse alphabetical order", func() {
+				sorter := NewSorter("alpha")
+
+				sorter.Reverse = true
+				sortedQuotes := sorter.Sort(quotes, positions)
+				expected := []Quote{
+					twQuote,
+					msftQuote,
+					googleQuote,
+					bitcoinQuote,
+				}
+
+				Expect(sortedQuotes).To(Equal(expected))
+			})
+		})
 		When("providing \"position\" as a sort parameter", func() {
 			It("should sort position value, with inactive quotes last", func() {
 				sorter := NewSorter("value")
 
-				sortedQuotes := sorter(quotes, positions)
+				sortedQuotes := sorter.Sort(quotes, positions)
 				expected := []Quote{
 					bitcoinQuote,
 					googleQuote,
@@ -124,7 +140,7 @@ var _ = Describe("Sorter", func() {
 				It("should return no quotes", func() {
 					sorter := NewSorter("")
 
-					sortedQuotes := sorter([]Quote{}, map[string]Position{})
+					sortedQuotes := sorter.Sort([]Quote{}, map[string]Position{})
 					expected := []Quote{}
 					Expect(sortedQuotes).To(Equal(expected))
 				})
@@ -133,7 +149,7 @@ var _ = Describe("Sorter", func() {
 				It("should return no quotes", func() {
 					sorter := NewSorter("alpha")
 
-					sortedQuotes := sorter([]Quote{}, map[string]Position{})
+					sortedQuotes := sorter.Sort([]Quote{}, map[string]Position{})
 					expected := []Quote{}
 					Expect(sortedQuotes).To(Equal(expected))
 				})
@@ -142,7 +158,7 @@ var _ = Describe("Sorter", func() {
 				It("should return no quotes", func() {
 					sorter := NewSorter("value")
 
-					sortedQuotes := sorter([]Quote{}, map[string]Position{})
+					sortedQuotes := sorter.Sort([]Quote{}, map[string]Position{})
 					expected := []Quote{}
 					Expect(sortedQuotes).To(Equal(expected))
 				})

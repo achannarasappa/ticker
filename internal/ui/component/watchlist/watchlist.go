@@ -43,7 +43,7 @@ func (m Model) View() string {
 		return fmt.Sprintf("Terminal window too narrow to render content\nResize to fix (%d/80)", m.Width)
 	}
 
-	quotes := m.Sorter(m.Quotes, m.Positions)
+	quotes := m.Sort(m.Quotes, m.Positions)
 	items := make([]string, 0)
 	for _, quote := range quotes {
 		items = append(
@@ -61,6 +61,10 @@ func (m Model) View() string {
 	}
 
 	return strings.Join(items, separator(m.Separate, m.Width))
+}
+
+func (m Model) Sort(quotes []Quote, positions map[string]Position) []Quote {
+	return m.Sorter.Sort(m.Quotes, m.Positions)
 }
 
 func separator(isSeparated bool, width int) string {

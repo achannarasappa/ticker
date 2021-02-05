@@ -7,19 +7,37 @@ import (
 	"github.com/novalagung/gubrak/v2"
 )
 
-type Sorter func(quotes []Quote, positions map[string]Position) []Quote
+type sortFunction func(quotes []Quote, positions map[string]Position) []Quote
 
-func NewSorter(sort string) Sorter {
-	if sorter, ok := sortDict[sort]; ok {
-		return sorter
-	} else {
-		return sortByChange
-	}
+type Sorter struct {
+	fn      sortFunction
+	Reverse bool
 }
 
-var sortDict = map[string]Sorter{
-	"alpha": sortByTicker,
-	"value": sortByValue,
+func NewSorter(sort string) Sorter {
+	s := Sorter{}
+	if sorter, ok := sortDict[sort]; ok {
+		s.fn = sorter
+	} else {
+		s.fn = sortByChange
+	}
+	return s
+}
+
+func (s Sorter) Sort(quotes []Quote, positions map[string]Position) []Quote {
+	q := s.fn(quotes, positions)
+	if s.Reverse {
+		q = gubrak.From(q).Reverse().Result().([]Quote)
+	}
+	return q
+}
+
+var sortDict = map[string]sortFunction{
+	"alpha":  sortByTicker,
+	"value":  sortByValue,
+	"change": sortByChange,
+	"pe":     sortByPriceToEarnings,
+	"pb":     sortByPriceToBook,
 }
 
 func sortByTicker(quotes []Quote, positions map[string]Position) []Quote {
@@ -80,6 +98,36 @@ func sortByChange(quotes []Quote, positions map[string]Position) []Quote {
 		Result()
 
 	return (result).([]Quote)
+}
+
+func sortByPriceToBook(q []Quote, positions map[string]Position) []Quote {
+	if len(q) <= 0 {
+		return q
+	}
+
+	sorted := gubrak.
+		From(q).
+		OrderBy(func(v Quote) float64 {
+			return v.PriceToBook
+		}, false).
+		Result()
+
+	return (sorted).([]Quote)
+}
+
+func sortByPriceToEarnings(q []Quote, positions map[string]Position) []Quote {
+	if len(q) <= 0 {
+		return q
+	}
+
+	sorted := gubrak.
+		From(q).
+		OrderBy(func(v Quote) float64 {
+			return v.TrailingPE
+		}, false).
+		Result()
+
+	return (sorted).([]Quote)
 }
 
 func splitActiveQuotes(quotes []Quote) (interface{}, interface{}) {

@@ -119,5 +119,34 @@ var _ = Describe("Sorter", func() {
 				Expect(sortedQuotes).To(Equal(expected))
 			})
 		})
+		When("providing no quotes", func() {
+			When("default sorter", func() {
+				It("should return no quotes", func() {
+					sorter := NewSorter("")
+
+					sortedQuotes := sorter([]Quote{}, map[string]Position{})
+					expected := []Quote{}
+					Expect(sortedQuotes).To(Equal(expected))
+				})
+			})
+			When("alpha sorter", func() {
+				It("should return no quotes", func() {
+					sorter := NewSorter("alpha")
+
+					sortedQuotes := sorter([]Quote{}, map[string]Position{})
+					expected := []Quote{}
+					Expect(sortedQuotes).To(Equal(expected))
+				})
+			})
+			When("position sorter", func() {
+				It("should return no quotes", func() {
+					sorter := NewSorter("position")
+
+					sortedQuotes := sorter([]Quote{}, map[string]Position{})
+					expected := []Quote{}
+					Expect(sortedQuotes).To(Equal(expected))
+				})
+			})
+		})
 	})
 })

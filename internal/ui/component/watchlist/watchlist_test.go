@@ -482,7 +482,7 @@ var _ = Describe("Watchlist", func() {
 		})
 	})
 
-	When("the option for sort is set to 'position'", func() {
+	When("the option for sort is set to 'value'", func() {
 		It("should render quotes by position value, with inactive quotes last", func() {
 			m := NewModel(true, false, false, "value")
 			m.Quotes = []Quote{
@@ -569,16 +569,16 @@ var _ = Describe("Watchlist", func() {
 			}
 			expected := strings.Join([]string{
 				"BTC-USD                    ⦿                   50000.00                 50000.00",
-				"Bitcoin                            ↑ 10000.00  (20.00%)     ↑ 10000.00  (20.00%)",
+				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
 				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
 				"GOOG                       ⦾                    2523.53                  2523.53",
-				"Google Inc.                           ↓ -32.02 (-1.35%)        ↓ -32.02 (-1.35%)",
+				"Google Inc.                                                    ↓ -32.02 (-1.35%)",
 				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
 				"TW                         ⦾                                              109.04",
 				"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
 				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
 				"MSFT                                             242.01                   242.01",
-				"Microsoft Corporation                  ↓ -0.99 (-0.41%)         ↓ -0.99 (-0.41%)",
+				"Microsoft Corporation                                           ↓ -0.99 (-0.41%)",
 			}, "\n")
 			Expect(removeFormatting(m.View())).To(Equal(expected))
 		})

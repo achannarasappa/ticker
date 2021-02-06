@@ -8,9 +8,11 @@ import (
 
 type Position struct {
 	AggregatedLot
-	Value            float64
-	DayChange        float64
-	DayChangePercent float64
+	Value              float64
+	DayChange          float64
+	DayChangePercent   float64
+	TotalChange        float64
+	TotalChangePercent float64
 }
 
 type PositionSummary struct {
@@ -87,14 +89,17 @@ func GetPositions(aggregatedLots map[string]AggregatedLot) func([]Quote) map[str
 		positions := gubrak.
 			From(quotes).
 			Reduce(func(acc []Position, quote Quote) []Position {
-				if _, ok := aggregatedLots[quote.Symbol]; ok {
-					dayChange := quote.Change * aggregatedLots[quote.Symbol].Quantity
-					valuePreviousClose := quote.RegularMarketPreviousClose * aggregatedLots[quote.Symbol].Quantity
+				if aggLot, ok := aggregatedLots[quote.Symbol]; ok {
+					dayChange := quote.Change * aggLot.Quantity
+					totalChange := (quote.Price * aggLot.Quantity) - aggLot.Cost
+					valuePreviousClose := quote.RegularMarketPreviousClose * aggLot.Quantity
 					return append(acc, Position{
-						AggregatedLot:    aggregatedLots[quote.Symbol],
-						Value:            quote.Price * aggregatedLots[quote.Symbol].Quantity,
-						DayChange:        dayChange,
-						DayChangePercent: (dayChange / valuePreviousClose) * 100,
+						AggregatedLot:      aggLot,
+						Value:              quote.Price * aggLot.Quantity,
+						DayChange:          dayChange,
+						DayChangePercent:   (dayChange / valuePreviousClose) * 100,
+						TotalChange:        totalChange,
+						TotalChangePercent: (totalChange / aggLot.Cost) * 100,
 					})
 				}
 				return acc

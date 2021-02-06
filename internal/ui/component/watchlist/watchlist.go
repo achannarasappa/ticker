@@ -5,23 +5,22 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/achannarasappa/ticker/internal/position"
-	"github.com/achannarasappa/ticker/internal/quote"
+	. "github.com/achannarasappa/ticker/internal/position"
+	. "github.com/achannarasappa/ticker/internal/quote"
+	. "github.com/achannarasappa/ticker/internal/sorter"
 	. "github.com/achannarasappa/ticker/internal/ui/util"
 
 	. "github.com/achannarasappa/ticker/internal/ui/util/text"
-
-	"github.com/novalagung/gubrak/v2"
 )
 
 type Model struct {
 	Width                 int
-	Quotes                []quote.Quote
-	Positions             map[string]position.Position
+	Quotes                []Quote
+	Positions             map[string]Position
 	Separate              bool
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
-	Sort                  string
+	Sorter                Sorter
 }
 
 // NewModel returns a model with default values.
@@ -31,7 +30,7 @@ func NewModel(separate bool, extraInfoExchange bool, extraInfoFundamentals bool,
 		Separate:              separate,
 		ExtraInfoExchange:     extraInfoExchange,
 		ExtraInfoFundamentals: extraInfoFundamentals,
-		Sort:                  sort,
+		Sorter:                NewSorter(sort),
 	}
 }
 
@@ -41,7 +40,7 @@ func (m Model) View() string {
 		return fmt.Sprintf("Terminal window too narrow to render content\nResize to fix (%d/80)", m.Width)
 	}
 
-	quotes := sortQuotes(m.Quotes, m.Sort)
+	quotes := m.Sorter(m.Quotes, m.Positions)
 	items := make([]string, 0)
 	for _, quote := range quotes {
 		items = append(
@@ -73,7 +72,7 @@ func separator(isSeparated bool, width int) string {
 	return "\n"
 }
 
-func item(q quote.Quote, p position.Position, width int) string {
+func item(q Quote, p Position, width int) string {
 
 	return JoinLines(
 		Line(
@@ -116,7 +115,7 @@ func item(q quote.Quote, p position.Position, width int) string {
 	)
 }
 
-func extraInfoExchange(show bool, q quote.Quote, width int) string {
+func extraInfoExchange(show bool, q Quote, width int) string {
 	if !show {
 		return ""
 	}
@@ -128,7 +127,7 @@ func extraInfoExchange(show bool, q quote.Quote, width int) string {
 	)
 }
 
-func extraInfoFundamentals(show bool, q quote.Quote, width int) string {
+func extraInfoFundamentals(show bool, q Quote, width int) string {
 	if !show {
 		return ""
 	}
@@ -168,7 +167,7 @@ func tagText(text string) string {
 	return StyleTagEnd(" ") + StyleTag(text) + StyleTagEnd(" ")
 }
 
-func marketStateText(q quote.Quote) string {
+func marketStateText(q Quote) string {
 	if q.IsRegularTradingSession {
 		return StyleNeutralFaded(" ⦿  ")
 	}
@@ -198,47 +197,4 @@ func quoteChangeText(change float64, changePercent float64) string {
 	}
 
 	return StylePriceNegative(changePercent)("↓ " + ConvertFloatToString(change) + " (" + ConvertFloatToString(changePercent) + "%)")
-}
-
-// Sort by `sort` parameter (Symbol or Change Percent).
-// Keep all inactive quotes at the end
-func sortQuotes(q []quote.Quote, sort string) []quote.Quote {
-	if len(q) <= 0 {
-		return q
-	}
-
-	activeQuotes, inactiveQuotes, _ := gubrak.
-		From(q).
-		Partition(func(v quote.Quote) bool {
-			return v.IsActive
-		}).
-		ResultAndError()
-
-	quotesToShow := gubrak.
-		From(activeQuotes)
-
-	// Append the orderBy functionality
-	appendOrderBy(quotesToShow, sort, inactiveQuotes)
-
-	// Get the result from quotes
-	concatQuotes := quotesToShow.
-		Result()
-
-	return (concatQuotes).([]quote.Quote)
-}
-
-func appendOrderBy(quotes gubrak.IChainable, sort string, inactiveQuotes interface{}) {
-
-	switch strings.ToLower(sort) {
-	case "alpha":
-		quotes.Concat(inactiveQuotes)
-		quotes.OrderBy(func(v quote.Quote) string {
-			return v.Symbol
-		})
-	default:
-		quotes.OrderBy(func(v quote.Quote) float64 {
-			return v.ChangePercent
-		}, false)
-		quotes.Concat(inactiveQuotes)
-	}
 }

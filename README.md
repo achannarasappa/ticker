@@ -63,11 +63,11 @@ Configuration is not required to watch stock price but is helpful when always wa
 
 ```yaml
 # ~/.ticker.yaml
+show-summary: true
 show-tags: true
 show-fundamentals: true
 show-separator: true
-interval: 10
-proxy: http://localhost:3128
+interval: 5
 watchlist:
   - NET
   - TEAM

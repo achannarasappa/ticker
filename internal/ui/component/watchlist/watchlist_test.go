@@ -436,7 +436,7 @@ var _ = Describe("Watchlist", func() {
 
 	When("the option for sort is set to 'position'", func() {
 		It("should render quotes by position value, with inactive quotes last", func() {
-			m := NewModel(true, false, false, "position")
+			m := NewModel(true, false, false, "value")
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{

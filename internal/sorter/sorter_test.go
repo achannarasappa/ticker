@@ -106,7 +106,7 @@ var _ = Describe("Sorter", func() {
 		})
 		When("providing \"position\" as a sort parameter", func() {
 			It("should sort position value, with inactive quotes last", func() {
-				sorter := NewSorter("position")
+				sorter := NewSorter("value")
 
 				sortedQuotes := sorter(quotes, positions)
 				expected := []Quote{

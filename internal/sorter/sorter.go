@@ -18,8 +18,8 @@ func NewSorter(sort string) Sorter {
 }
 
 var sortDict = map[string]Sorter{
-	"alpha":    sortByTicker,
-	"position": sortByPosition,
+	"alpha": sortByTicker,
+	"value": sortByValue,
 }
 
 func sortByTicker(quotes []Quote, positions map[string]Position) []Quote {
@@ -37,7 +37,7 @@ func sortByTicker(quotes []Quote, positions map[string]Position) []Quote {
 	return (result).([]Quote)
 }
 
-func sortByPosition(quotes []Quote, positions map[string]Position) []Quote {
+func sortByValue(quotes []Quote, positions map[string]Position) []Quote {
 	if len(quotes) <= 0 {
 		return quotes
 	}

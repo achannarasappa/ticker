@@ -55,6 +55,7 @@ ticker -w NET,AAPL,TSLA
 |  |--show-fundamentals||display open price, previous close, and day range |
 |  |--show-separator||layout with separators between each quote|
 |  |--show-summary||show total day change, total value, and total value change|
+|  |--sort||sort quotes on the UI. Set `alpha` to sort by ticker name. Set `value` to sort by position value. Default is sort by change percent|
 |  |--proxy||proxy URL for requests (default is none)|
 
 ## Configuration

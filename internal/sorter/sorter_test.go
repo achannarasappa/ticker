@@ -138,9 +138,9 @@ var _ = Describe("Sorter", func() {
 					Expect(sortedQuotes).To(Equal(expected))
 				})
 			})
-			When("position sorter", func() {
+			When("value sorter", func() {
 				It("should return no quotes", func() {
-					sorter := NewSorter("position")
+					sorter := NewSorter("value")
 
 					sortedQuotes := sorter([]Quote{}, map[string]Position{})
 					expected := []Quote{}

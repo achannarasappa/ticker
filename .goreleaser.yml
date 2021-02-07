@@ -49,3 +49,12 @@ brews:
     homepage: "https://github.com/achannarasappa/ticker"
     description: "Terminal stock ticker with live updates and position tracking"
     license: "GPLv3"
+dockers:
+  -
+    goos: linux
+    goarch: amd64
+    image_templates:
+    - "achannarasappa/ticker:{{ .Tag }}"
+    - "achannarasappa/ticker:v{{ .Major }}"
+    - "achannarasappa/ticker:v{{ .Major }}.{{ .Minor }}"
+    - "achannarasappa/ticker:latest"

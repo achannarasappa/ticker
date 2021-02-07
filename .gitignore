@@ -10,6 +10,7 @@
 !LICENSE
 !go.mod
 !go.sum
+!Dockerfile
 !.gitignore
 !.goreleaser.yml
 !.github

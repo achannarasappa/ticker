@@ -80,4 +80,19 @@ docker_manifests:
   image_templates:
   - goticker/ticker:{{ .Version }}-amd64
   - goticker/ticker:{{ .Version }}-arm64v8
-  - goticker/ticker:latest
+- name_template: goticker/ticker:latest
+  image_templates:
+  - goticker/ticker:{{ .Version }}-amd64
+  - goticker/ticker:{{ .Version }}-arm64v8
+- name_template: goticker/ticker:{{ .Major }}
+  image_templates:
+  - goticker/ticker:{{ .Version }}-amd64
+  - goticker/ticker:{{ .Version }}-arm64v8
+- name_template: goticker/ticker:{{ .Major }}.{{ .Minor }}
+  image_templates:
+  - goticker/ticker:{{ .Version }}-amd64
+  - goticker/ticker:{{ .Version }}-arm64v8
+- name_template: goticker/ticker:{{ .Major }}.{{ .Minor }}.{{ .Patch }}
+  image_templates:
+  - goticker/ticker:{{ .Version }}-amd64
+  - goticker/ticker:{{ .Version }}-arm64v8

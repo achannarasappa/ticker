@@ -65,7 +65,7 @@ dockers:
 - image_templates: ["goticker/ticker:{{ .Version }}-arm64v8"]
   binaries: [ticker]
   goarch: arm64
-  dockerfile: goreleaser.Dockerfile
+  dockerfile: Dockerfile
   use_buildx: true
   build_flag_templates:
   - "--platform=linux/arm64/v8"

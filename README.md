@@ -24,12 +24,12 @@ Terminal stock watcher and stock position tracker
 
 Download the pre-compiled binaries from the [releases page](https://github.com/achannarasappa/ticker/releases) and copy to a location in `PATH` or see quick installs below
 
-**mac**
+**MacOS & Linux(Homebrew)**
 ```
 brew install achannarasappa/tap/ticker
 ```
 
-**linux**
+**Linux**
 ```sh
 curl -Ls https://api.github.com/repos/achannarasappa/ticker/releases/latest \
 | grep -wo "https.*linux-amd64*.tar.gz" \
@@ -57,7 +57,7 @@ ticker -w NET,AAPL,TSLA
 |-i|--interval|`5`|Refresh interval in seconds|
 |-w|--watchlist||comma separated list of symbols to watch|
 |  |--show-tags||display currency, exchange name, and quote delay for each quote |
-|  |--show-fundamentals||display open price, previous close, and day range |
+|  |--show-fundamentals||display open price, previous close, and day range |iod 6: 12:37 – 1:09
 |  |--show-separator||layout with separators between each quote|
 |  |--show-summary||show total day change, total value, and total value change|
 |  |--sort||sort quotes on the UI. Set `alpha` to sort by ticker name. Set `value` to sort by position value. Default is sort by change percent|

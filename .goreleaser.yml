@@ -35,20 +35,20 @@ checksum:
   name_template: "{{ .ProjectName }}-{{ .Version }}-checksums.txt"
 release:
   github:
-      owner: junior
+      owner: achannarasappa
       name: ticker
-# brews:
-#   -
-#     name: ticker
-#     tap:
-#       owner: achannarasappa
-#       name: tap
-#     commit_author:
-#       name: achannarasappa
-#       email: git@ani.dev
-#     homepage: "https://github.com/achannarasappa/ticker"
-#     description: "Terminal stock ticker with live updates and position tracking"
-#     license: "GPLv3"
+brews:
+  -
+    name: ticker
+    tap:
+      owner: achannarasappa
+      name: tap
+    commit_author:
+      name: achannarasappa
+      email: git@ani.dev
+    homepage: "https://github.com/achannarasappa/ticker"
+    description: "Terminal stock ticker with live updates and position tracking"
+    license: "GPLv3"
 dockers:
 - image_templates: ["goticker/ticker:{{ .Version }}-amd64"]
   binaries: [ticker]

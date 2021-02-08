@@ -80,3 +80,4 @@ docker_manifests:
   image_templates:
   - goticker/ticker:{{ .Version }}-amd64
   - goticker/ticker:{{ .Version }}-arm64v8
+  - goticker/ticker:latest

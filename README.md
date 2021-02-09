@@ -50,7 +50,7 @@ sudo snap install ticker
 ```
 
 ### Third-party repositories
-These repositories are maintained and updated by a third-party and may not have the latest versions available
+These repositories are maintained by a third-party and may not have the latest versions available
 
 **MacPorts**
 ```

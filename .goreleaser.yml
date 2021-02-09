@@ -96,23 +96,23 @@ docker_manifests:
   image_templates:
   - achannarasappa/ticker:{{ .Version }}-amd64
   - achannarasappa/ticker:{{ .Version }}-arm64v8
-# snapcrafts:
-#   -
-#     id: ticker
-#     name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
-#     replacements:
-#       darwin: mac
-#     publish: true
-#     summary: Terminal stock watcher and stock position tracker
-#     description: |
-#       Features:
-#       Live stock price quotes
-#       Track value of your stock positions
-#       Support for multiple cost basis lots
-#       Support for pre and post market price quotes
+snapcrafts:
+  -
+    id: ticker
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    replacements:
+      darwin: mac
+    publish: true
+    summary: Terminal stock watcher and stock position tracker
+    description: |
+      Features:
+      Live stock price quotes
+      Track value of your stock positions
+      Support for multiple cost basis lots
+      Support for pre and post market price quotes
 
-#     grade: stable
-#     confinement: strict
-#     apps:
-#       ticker:
-#         plugs: ["network"]
+    grade: stable
+    confinement: strict
+    apps:
+      ticker:
+        plugs: ["network"]

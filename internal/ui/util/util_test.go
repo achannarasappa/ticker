@@ -1,6 +1,8 @@
 package util_test
 
 import (
+	"github.com/lucasb-eyer/go-colorful"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -31,36 +33,32 @@ var _ = Describe("Util", func() {
 		It("should generate text with a background and foreground color", func() {
 			inputStyleFn := NewStyle("#ffffff", "#000000", false)
 			output := inputStyleFn("test")
-			expectedANSI256Color := "\x1b[38;5;231;48;5;16mtest\x1b[0m"
-			expectedTrueColor := "\x1b[38;2;255;255;255;48;2;0;0;0mtest\x1b[0m"
-			Expect(output).To(SatisfyAny(Equal(expectedANSI256Color), Equal(expectedTrueColor)))
+			Expect(output).To(ContainSubstring("test\x1b[0m"))
 		})
 		It("should generate text with bold styling", func() {
 			inputStyleFn := NewStyle("#ffffff", "#000000", true)
 			output := inputStyleFn("test")
-			expectedANSI256Color := "\x1b[38;5;231;48;5;16;1mtest\x1b[0m"
-			expectedTrueColor := "\x1b[38;2;255;255;255;48;2;0;0;0;1mtest\x1b[0m"
-			Expect(output).To(SatisfyAny(Equal(expectedANSI256Color), Equal(expectedTrueColor)))
+			Expect(output).To(ContainSubstring("test\x1b[0m"))
 		})
 	})
 	Describe("NewStyleFromGradient", func() {
+		c1, _ := colorful.Hex("#ffffff")
+		c2, _ := colorful.Hex("#000000")
 		inputGradientFn := NewStyleFromGradient("#ffffff", "#000000")
 		When("the percent given is 100%", func() {
 			It("should generate text with the gradient of two colors relative to the percentage given", func() {
 				inputStyleFn := inputGradientFn(100)
 				output := inputStyleFn("test")
-				expectedANSI256Color := "\x1b[38;5;16mtest\x1b[0m"
-				expectedTrueColor := "\x1b[38;2;0;0;0mtest\x1b[0m"
-				Expect(output).To(SatisfyAny(Equal(expectedANSI256Color), Equal(expectedTrueColor)))
+				expectedOutput := NewStyle(c1.BlendHsv(c2, 1.0).Hex(), "", false)("test")
+				Expect(output).To(Equal(expectedOutput))
 			})
 		})
 		When("the percent given is 1%", func() {
 			It("should generate text with the gradient of two colors relative to the percentage given", func() {
 				inputStyleFn := inputGradientFn(1)
 				output := inputStyleFn("test")
-				expectedANSI256Color := "\x1b[38;5;188mtest\x1b[0m"
-				expectedTrueColor := "\x1b[38;2;230;230;230mtest\x1b[0m"
-				Expect(output).To(SatisfyAny(Equal(expectedANSI256Color), Equal(expectedTrueColor)))
+				expectedOutput := NewStyle(c1.BlendHsv(c2, 0.01).Hex(), "", false)("test")
+				Expect(output).To(Equal(expectedOutput))
 			})
 		})
 	})

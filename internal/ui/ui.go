@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	styleLogo = NewStyle("#ffc27d", "#f37329", true)
+	styleLogo = NewStyle("#ffffd7", "#ff8700", true)
 	styleHelp = NewStyle("#4e4e4e", "", true)
 )
 

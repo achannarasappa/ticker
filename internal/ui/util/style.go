@@ -12,11 +12,11 @@ const (
 )
 
 var (
-	StyleNeutral       = NewStyle("#d4d4d4", "", false)
-	StyleNeutralBold   = NewStyle("#d4d4d4", "", true)
-	StyleNeutralFaded  = NewStyle("#616161", "", false)
+	StyleNeutral       = NewStyle("#d0d0d0", "", false)
+	StyleNeutralBold   = NewStyle("#d0d0d0", "", true)
+	StyleNeutralFaded  = NewStyle("#626262", "", false)
 	StyleLine          = NewStyle("#3a3a3a", "", false)
-	StyleTag           = NewStyle("#d4d4d4", "#3a3a3a", false)
+	StyleTag           = NewStyle("#d0d0d0", "#3a3a3a", false)
 	StyleTagEnd        = NewStyle("#3a3a3a", "#3a3a3a", false)
 	StylePricePositive = NewStyleFromGradient("#C6FF40", "#779929")
 	StylePriceNegative = NewStyleFromGradient("#FF7940", "#994926")

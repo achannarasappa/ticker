@@ -77,6 +77,4 @@ snapcrafts:
     confinement: strict
     apps:
       ticker:
-        command: bin/ticker
-        plugs:
-          - network
+        plugs: ["network"]

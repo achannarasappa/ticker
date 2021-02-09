@@ -50,7 +50,7 @@ brews:
     description: "Terminal stock ticker with live updates and position tracking"
     license: "GPLv3"
 dockers:
-- image_templates: ["goticker/ticker:{{ .Version }}-amd64"]
+- image_templates: ["achannarasappa/ticker:{{ .Version }}-amd64"]
   binaries: [ticker]
   dockerfile: Dockerfile
   use_buildx: true
@@ -62,7 +62,7 @@ dockers:
   - "--label=org.opencontainers.image.revision={{.FullCommit}}"
   - "--label=org.opencontainers.image.version={{.Version}}"
   - "--label=org.opencontainers.image.source={{.GitURL}}"
-- image_templates: ["goticker/ticker:{{ .Version }}-arm64v8"]
+- image_templates: ["achannarasappa/ticker:{{ .Version }}-arm64v8"]
   binaries: [ticker]
   goarch: arm64
   dockerfile: Dockerfile
@@ -76,23 +76,23 @@ dockers:
   - "--label=org.opencontainers.image.version={{.Version}}"
   - "--label=org.opencontainers.image.source={{.GitURL}}"
 docker_manifests:
-- name_template: goticker/ticker:{{ .Version }}
+- name_template: achannarasappa/ticker:{{ .Version }}
   image_templates:
-  - goticker/ticker:{{ .Version }}-amd64
-  - goticker/ticker:{{ .Version }}-arm64v8
-- name_template: goticker/ticker:latest
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
+- name_template: achannarasappa/ticker:latest
   image_templates:
-  - goticker/ticker:{{ .Version }}-amd64
-  - goticker/ticker:{{ .Version }}-arm64v8
-- name_template: goticker/ticker:{{ .Major }}
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
+- name_template: achannarasappa/ticker:{{ .Major }}
   image_templates:
-  - goticker/ticker:{{ .Version }}-amd64
-  - goticker/ticker:{{ .Version }}-arm64v8
-- name_template: goticker/ticker:{{ .Major }}.{{ .Minor }}
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
+- name_template: achannarasappa/ticker:{{ .Major }}.{{ .Minor }}
   image_templates:
-  - goticker/ticker:{{ .Version }}-amd64
-  - goticker/ticker:{{ .Version }}-arm64v8
-- name_template: goticker/ticker:{{ .Major }}.{{ .Minor }}.{{ .Patch }}
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
+- name_template: achannarasappa/ticker:{{ .Major }}.{{ .Minor }}.{{ .Patch }}
   image_templates:
-  - goticker/ticker:{{ .Version }}-amd64
-  - goticker/ticker:{{ .Version }}-arm64v8
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8

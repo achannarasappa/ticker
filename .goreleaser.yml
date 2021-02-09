@@ -75,7 +75,6 @@ snapcrafts:
 
     grade: stable
     confinement: strict
-    license: 	GPL-3.0-only
     apps:
       ticker:
         command: bin/ticker

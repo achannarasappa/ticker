@@ -24,17 +24,9 @@ Terminal stock watcher and stock position tracker
 
 Download the pre-compiled binaries from the [releases page](https://github.com/achannarasappa/ticker/releases) and copy to a location in `PATH` or see quick installs below
 
-**mac**
-
-...via [Homebrew](https://brew.sh):
+**homebrew**
 ```
 brew install achannarasappa/tap/ticker
-```
-
-...via [MacPorts](https://www.macports.org):
-```
-sudo port selfupdate
-sudo port install ticker
 ```
 
 **linux**
@@ -50,6 +42,20 @@ curl -Ls https://api.github.com/repos/achannarasappa/ticker/releases/latest \
 **docker**
 ```sh
 docker run -it --rm achannarasappa/ticker
+```
+
+**snap**
+```sh
+sudo snap install ticker
+```
+
+### Third-party repositories
+These repositories are maintained and updated by a third-party and may not have the latest versions available
+
+**MacPorts**
+```
+sudo port selfupdate
+sudo port install ticker
 ```
 
 ## Quick Start

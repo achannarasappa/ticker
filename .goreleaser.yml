@@ -50,14 +50,52 @@ brews:
     description: "Terminal stock ticker with live updates and position tracking"
     license: "GPLv3"
 dockers:
-  -
-    goos: linux
-    goarch: amd64
-    image_templates:
-    - "achannarasappa/ticker:{{ .Tag }}"
-    - "achannarasappa/ticker:v{{ .Major }}"
-    - "achannarasappa/ticker:v{{ .Major }}.{{ .Minor }}"
-    - "achannarasappa/ticker:latest"
+- image_templates: ["achannarasappa/ticker:{{ .Version }}-amd64"]
+  binaries: [ticker]
+  dockerfile: Dockerfile
+  use_buildx: true
+  build_flag_templates:
+  - "--platform=linux/amd64"
+  - "--pull"
+  - "--label=org.opencontainers.image.created={{.Date}}"
+  - "--label=org.opencontainers.image.title={{.ProjectName}}"
+  - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+  - "--label=org.opencontainers.image.version={{.Version}}"
+  - "--label=org.opencontainers.image.source={{.GitURL}}"
+- image_templates: ["achannarasappa/ticker:{{ .Version }}-arm64v8"]
+  binaries: [ticker]
+  goarch: arm64
+  dockerfile: Dockerfile
+  use_buildx: true
+  build_flag_templates:
+  - "--platform=linux/arm64/v8"
+  - "--pull"
+  - "--label=org.opencontainers.image.created={{.Date}}"
+  - "--label=org.opencontainers.image.title={{.ProjectName}}"
+  - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+  - "--label=org.opencontainers.image.version={{.Version}}"
+  - "--label=org.opencontainers.image.source={{.GitURL}}"
+docker_manifests:
+- name_template: achannarasappa/ticker:{{ .Version }}
+  image_templates:
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
+- name_template: achannarasappa/ticker:latest
+  image_templates:
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
+- name_template: achannarasappa/ticker:{{ .Major }}
+  image_templates:
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
+- name_template: achannarasappa/ticker:{{ .Major }}.{{ .Minor }}
+  image_templates:
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
+- name_template: achannarasappa/ticker:{{ .Major }}.{{ .Minor }}.{{ .Patch }}
+  image_templates:
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
 # snapcrafts:
 #   -
 #     id: ticker

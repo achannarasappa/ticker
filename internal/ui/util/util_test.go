@@ -32,15 +32,13 @@ var _ = Describe("Util", func() {
 			inputStyleFn := NewStyle("#ffffff", "#000000", false)
 			output := inputStyleFn("test")
 			expectedANSI256Color := "\x1b[38;5;231;48;5;16mtest\x1b[0m"
-			expectedTrueColor := "\x1b[38;2;255;255;255;48;2;0;0;0mtest\x1b[0m"
-			Expect(output).To(SatisfyAny(Equal(expectedANSI256Color), Equal(expectedTrueColor)))
+			Expect(output).To(Equal(expectedANSI256Color))
 		})
 		It("should generate text with bold styling", func() {
 			inputStyleFn := NewStyle("#ffffff", "#000000", true)
 			output := inputStyleFn("test")
 			expectedANSI256Color := "\x1b[38;5;231;48;5;16;1mtest\x1b[0m"
-			expectedTrueColor := "\x1b[38;2;255;255;255;48;2;0;0;0;1mtest\x1b[0m"
-			Expect(output).To(SatisfyAny(Equal(expectedANSI256Color), Equal(expectedTrueColor)))
+			Expect(output).To(Equal(expectedANSI256Color))
 		})
 	})
 	Describe("NewStyleFromGradient", func() {
@@ -50,8 +48,7 @@ var _ = Describe("Util", func() {
 				inputStyleFn := inputGradientFn(100)
 				output := inputStyleFn("test")
 				expectedANSI256Color := "\x1b[38;5;16mtest\x1b[0m"
-				expectedTrueColor := "\x1b[38;2;0;0;0mtest\x1b[0m"
-				Expect(output).To(SatisfyAny(Equal(expectedANSI256Color), Equal(expectedTrueColor)))
+				Expect(output).To(Equal(expectedANSI256Color))
 			})
 		})
 		When("the percent given is 1%", func() {
@@ -59,8 +56,7 @@ var _ = Describe("Util", func() {
 				inputStyleFn := inputGradientFn(1)
 				output := inputStyleFn("test")
 				expectedANSI256Color := "\x1b[38;5;188mtest\x1b[0m"
-				expectedTrueColor := "\x1b[38;2;230;230;230mtest\x1b[0m"
-				Expect(output).To(SatisfyAny(Equal(expectedANSI256Color), Equal(expectedTrueColor)))
+				Expect(output).To(Equal(expectedANSI256Color))
 			})
 		})
 	})

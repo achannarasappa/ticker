@@ -31,7 +31,7 @@ var _ = Describe("Util", func() {
 		It("should generate text with a background and foreground color", func() {
 			inputStyleFn := NewStyle("#ffffff", "#000000", false)
 			output := inputStyleFn("test")
-			expectedASCII := "test"
+			expectedASCII := "\x1b[;mtest\x1b[0m"
 			expectedANSI16Color := "\x1b[97;40mtest\x1b[0m"
 			expectedANSI256Color := "\x1b[38;5;231;48;5;16mtest\x1b[0m"
 			expectedTrueColor := "\x1b[38;2;255;255;255;48;2;0;0;0mtest\x1b[0m"
@@ -40,7 +40,7 @@ var _ = Describe("Util", func() {
 		It("should generate text with bold styling", func() {
 			inputStyleFn := NewStyle("#ffffff", "#000000", true)
 			output := inputStyleFn("test")
-			expectedASCII := "test"
+			expectedASCII := "\x1b[;;1mtest\x1b[0m"
 			expectedANSI16Color := "\x1b[97;40;1mtest\x1b[0m"
 			expectedANSI256Color := "\x1b[38;5;231;48;5;16;1mtest\x1b[0m"
 			expectedTrueColor := "\x1b[38;2;255;255;255;48;2;0;0;0;1mtest\x1b[0m"

@@ -17,20 +17,40 @@ func removeFormatting(text string) string {
 
 var _ = Describe("Summary", func() {
 
-	It("should render a summary", func() {
-		m := NewModel()
-		m.Summary = position.PositionSummary{
-			Value:            10000,
-			Cost:             1000,
-			Change:           9000,
-			DayChange:        100.0,
-			ChangePercent:    1000.0,
-			DayChangePercent: 10.0,
-		}
-		Expect(removeFormatting(m.View())).To(Equal(strings.Join([]string{
-			"Day: ↑ 100.00 (10.00%) • Change: ↑ 9000.00 (1000.00%) • Value: 10000.00",
-			"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-		}, "\n")))
+	When("the change is positive", func() {
+		It("should render a summary with up arrow", func() {
+			m := NewModel()
+			m.Summary = position.PositionSummary{
+				Value:            10000,
+				Cost:             1000,
+				Change:           9000,
+				DayChange:        100.0,
+				ChangePercent:    1000.0,
+				DayChangePercent: 10.0,
+			}
+			Expect(removeFormatting(m.View())).To(Equal(strings.Join([]string{
+				"Day: ↑ 100.00 (10.00%) • Change: ↑ 9000.00 (1000.00%) • Value: 10000.00",
+				"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+			}, "\n")))
+		})
+	})
+
+	When("the change is negative", func() {
+		It("should render a summary with down arrow", func() {
+			m := NewModel()
+			m.Summary = position.PositionSummary{
+				Value:            1000,
+				Cost:             10000,
+				Change:           -9000,
+				DayChange:        -100.0,
+				ChangePercent:    -1000.0,
+				DayChangePercent: -10.0,
+			}
+			Expect(removeFormatting(m.View())).To(Equal(strings.Join([]string{
+				"Day: ↓ -100.00 (-10.00%) • Change: ↓ -9000.00 (-1000.00%) • Value: 1000.00",
+				"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+			}, "\n")))
+		})
 	})
 
 	When("no quotes are set", func() {

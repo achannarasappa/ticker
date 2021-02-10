@@ -1,6 +1,8 @@
 package util_test
 
 import (
+	"os"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -29,6 +31,7 @@ var _ = Describe("Util", func() {
 	})
 	Describe("NewStyle", func() {
 		It("should generate text with a background and foreground color", func() {
+			os.Setenv("TERM", "xterm-256color")
 			inputStyleFn := NewStyle("#ffffff", "#000000", false)
 			output := inputStyleFn("test")
 			expectedANSI256Color := "\x1b[38;5;231;48;5;16mtest\x1b[0m"

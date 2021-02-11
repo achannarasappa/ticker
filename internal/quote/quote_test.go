@@ -167,9 +167,45 @@ var _ = Describe("Quote", func() {
 				}
 				Expect(output).To(Equal(expected))
 			})
+
+			When("there is no post-market price", func() {
+				It("should return the regular market price", func() {
+					responseFixture := `{
+						"quoteResponse": {
+							"result": [
+								{
+									"marketState": "POST",
+									"shortName": "Cloudflare, Inc.",
+									"regularMarketChange": 3.0800018,
+									"regularMarketChangePercent": 3.7606857,
+									"regularMarketTime": 1608832801,
+									"regularMarketPrice": 84.98,
+									"regularMarketPreviousClose": 81.9,
+									"symbol": "NET"
+								}
+							],
+							"error": null
+						}
+					}`
+					responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=NET"
+					httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+						resp := httpmock.NewStringResponse(200, responseFixture)
+						resp.Header.Set("Content-Type", "application/json")
+						return resp, nil
+					})
+
+					output := GetQuotes(*client, []string{"NET"})()
+					expectedPrice := 84.98
+					expectedChange := 3.0800018
+					expectedChangePercent := 3.7606857
+					Expect(output[0].Price).To(Equal(expectedPrice))
+					Expect(output[0].Change).To(Equal(expectedChange))
+					Expect(output[0].ChangePercent).To(Equal(expectedChangePercent))
+				})
+			})
 		})
 
-		When("the market is CLOSED", func() {
+		When("the market is closed", func() {
 			It("should return the post-market price added to the regular market price", func() {
 				responseFixture := `{
 					"quoteResponse": {

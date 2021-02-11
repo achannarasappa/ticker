@@ -23,7 +23,7 @@ var _ = Describe("Util", func() {
 		})
 		It("should generate text for values", func() {
 			output := ValueText(435.32)
-			expectedOutput := NewStyle("#d4d4d4", "", false)("435.32")
+			expectedOutput := NewStyle("#d0d0d0", "", false)("435.32")
 			Expect(output).To(Equal(expectedOutput))
 		})
 	})

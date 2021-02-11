@@ -59,7 +59,7 @@ var _ = Describe("Quote", func() {
 			Expect(output).To(Equal(expected))
 		})
 
-		Context("when the market is in a pre-market trading session", func() {
+		When("the market is in a pre-market trading session", func() {
 			It("should return the pre-market price", func() {
 				responseFixture := `{
 					"quoteResponse": {
@@ -114,7 +114,7 @@ var _ = Describe("Quote", func() {
 			})
 		})
 
-		Context("when the market is in a post-market trading session", func() {
+		When("the market is in a post-market trading session", func() {
 			It("should return the post-market price added to the regular market price", func() {
 				responseFixture := `{
 					"quoteResponse": {
@@ -169,7 +169,7 @@ var _ = Describe("Quote", func() {
 			})
 		})
 
-		Context("when the market is CLOSED", func() {
+		When("the market is CLOSED", func() {
 			It("should return the post-market price added to the regular market price", func() {
 				responseFixture := `{
 					"quoteResponse": {

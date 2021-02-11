@@ -112,6 +112,44 @@ var _ = Describe("Quote", func() {
 				}
 				Expect(output).To(Equal(expected))
 			})
+
+			When("there is no pre-market price", func() {
+				It("should return the regular market price", func() {
+					responseFixture := `{
+						"quoteResponse": {
+							"result": [
+								{
+									"marketState": "PRE",
+									"shortName": "Cloudflare, Inc.",
+									"regularMarketChange": 3.0800018,
+									"regularMarketChangePercent": 3.7606857,
+									"regularMarketTime": 1608832801,
+									"regularMarketPrice": 84.98,
+									"regularMarketPreviousClose": 81.9,
+									"symbol": "NET"
+								}
+							],
+							"error": null
+						}
+					}`
+					responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=NET"
+					httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+						resp := httpmock.NewStringResponse(200, responseFixture)
+						resp.Header.Set("Content-Type", "application/json")
+						return resp, nil
+					})
+
+					output := GetQuotes(*client, []string{"NET"})()
+					expectedPrice := 84.98
+					expectedChange := 0.0
+					expectedChangePercent := 0.0
+					Expect(output[0].Price).To(Equal(expectedPrice))
+					Expect(output[0].Change).To(Equal(expectedChange))
+					Expect(output[0].ChangePercent).To(Equal(expectedChangePercent))
+					Expect(output[0].IsActive).To(Equal(false))
+					Expect(output[0].IsRegularTradingSession).To(Equal(false))
+				})
+			})
 		})
 
 		When("the market is in a post-market trading session", func() {

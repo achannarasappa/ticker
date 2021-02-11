@@ -68,6 +68,17 @@ func transformResponseQuote(responseQuote ResponseQuote) Quote {
 		}
 	}
 
+	if responseQuote.MarketState == "PRE" && responseQuote.PreMarketPrice == 0.0 {
+		return Quote{
+			ResponseQuote:           responseQuote,
+			Price:                   responseQuote.RegularMarketPrice,
+			Change:                  0.0,
+			ChangePercent:           0.0,
+			IsActive:                false,
+			IsRegularTradingSession: false,
+		}
+	}
+
 	if responseQuote.MarketState == "POST" {
 		return Quote{
 			ResponseQuote:           responseQuote,

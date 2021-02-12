@@ -140,12 +140,9 @@ var _ = Describe("Quote", func() {
 					})
 
 					output := GetQuotes(*client, []string{"NET"})()
-					expectedPrice := 84.98
-					expectedChange := 0.0
-					expectedChangePercent := 0.0
-					Expect(output[0].Price).To(Equal(expectedPrice))
-					Expect(output[0].Change).To(Equal(expectedChange))
-					Expect(output[0].ChangePercent).To(Equal(expectedChangePercent))
+					Expect(output[0].Price).To(Equal(84.98))
+					Expect(output[0].Change).To(Equal(3.0800018))
+					Expect(output[0].ChangePercent).To(Equal(3.7606857))
 					Expect(output[0].IsActive).To(Equal(false))
 					Expect(output[0].IsRegularTradingSession).To(Equal(false))
 				})
@@ -251,9 +248,6 @@ var _ = Describe("Quote", func() {
 							{
 								"marketState": "CLOSED",
 								"shortName": "Cloudflare, Inc.",
-								"postMarketChange": 1.0399933,
-								"postMarketChangePercent": 1.2238094,
-								"postMarketPrice": 86.02,
 								"regularMarketChange": 3.0800018,
 								"regularMarketChangePercent": 3.7606857,
 								"regularMarketTime": 1608832801,
@@ -273,28 +267,49 @@ var _ = Describe("Quote", func() {
 				})
 
 				output := GetQuotes(*client, []string{"NET"})()
-				expected := []Quote{
-					{
-						ResponseQuote: ResponseQuote{
-							ShortName:                  "Cloudflare, Inc.",
-							Symbol:                     "NET",
-							MarketState:                "CLOSED",
-							RegularMarketChange:        3.0800018,
-							RegularMarketChangePercent: 3.7606857,
-							RegularMarketPrice:         84.98,
-							RegularMarketPreviousClose: 81.9,
-							PostMarketChange:           1.0399933,
-							PostMarketChangePercent:    1.2238094,
-							PostMarketPrice:            86.02,
-						},
-						Price:                   84.98,
-						Change:                  0.0,
-						ChangePercent:           0.0,
-						IsActive:                false,
-						IsRegularTradingSession: false,
-					},
-				}
-				Expect(output).To(Equal(expected))
+				Expect(output[0].Price).To(Equal(84.98))
+				Expect(output[0].Change).To(Equal(3.0800018))
+				Expect(output[0].ChangePercent).To(Equal(3.7606857))
+				Expect(output[0].IsActive).To(Equal(false))
+				Expect(output[0].IsRegularTradingSession).To(Equal(false))
+			})
+
+			When("there is a post market price", func() {
+				It("should show a closed state but with the post market change and price", func() {
+					responseFixture := `{
+						"quoteResponse": {
+							"result": [
+								{
+									"marketState": "CLOSED",
+									"shortName": "Cloudflare, Inc.",
+									"postMarketChange": 1.0399933,
+									"postMarketChangePercent": 1.2238094,
+									"postMarketPrice": 86.02,
+									"regularMarketChange": 3.0800018,
+									"regularMarketChangePercent": 3.7606857,
+									"regularMarketTime": 1608832801,
+									"regularMarketPrice": 84.98,
+									"regularMarketPreviousClose": 81.9,
+									"symbol": "NET"
+								}
+							],
+							"error": null
+						}
+					}`
+					responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=NET"
+					httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+						resp := httpmock.NewStringResponse(200, responseFixture)
+						resp.Header.Set("Content-Type", "application/json")
+						return resp, nil
+					})
+
+					output := GetQuotes(*client, []string{"NET"})()
+					Expect(output[0].Price).To(Equal(86.02))
+					Expect(output[0].Change).To(Equal(4.1199951))
+					Expect(output[0].ChangePercent).To(Equal(4.9844951))
+					Expect(output[0].IsActive).To(Equal(false))
+					Expect(output[0].IsRegularTradingSession).To(Equal(false))
+				})
 			})
 		})
 	})

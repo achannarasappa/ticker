@@ -72,8 +72,8 @@ func transformResponseQuote(responseQuote ResponseQuote) Quote {
 		return Quote{
 			ResponseQuote:           responseQuote,
 			Price:                   responseQuote.RegularMarketPrice,
-			Change:                  0.0,
-			ChangePercent:           0.0,
+			Change:                  responseQuote.RegularMarketChange,
+			ChangePercent:           responseQuote.RegularMarketChangePercent,
 			IsActive:                false,
 			IsRegularTradingSession: false,
 		}
@@ -101,11 +101,22 @@ func transformResponseQuote(responseQuote ResponseQuote) Quote {
 		}
 	}
 
+	if responseQuote.PostMarketPrice != 0.0 {
+		return Quote{
+			ResponseQuote:           responseQuote,
+			Price:                   responseQuote.PostMarketPrice,
+			Change:                  responseQuote.PostMarketChange + responseQuote.RegularMarketChange,
+			ChangePercent:           responseQuote.PostMarketChangePercent + responseQuote.RegularMarketChangePercent,
+			IsActive:                false,
+			IsRegularTradingSession: false,
+		}
+	}
+
 	return Quote{
 		ResponseQuote:           responseQuote,
 		Price:                   responseQuote.RegularMarketPrice,
-		Change:                  0.0,
-		ChangePercent:           0.0,
+		Change:                  responseQuote.RegularMarketChange,
+		ChangePercent:           responseQuote.RegularMarketChangePercent,
 		IsActive:                false,
 		IsRegularTradingSession: false,
 	}

@@ -13,6 +13,7 @@ import (
 
 	"github.com/achannarasappa/ticker/internal/cli"
 	. "github.com/achannarasappa/ticker/internal/cli"
+	"github.com/achannarasappa/ticker/internal/position"
 )
 
 func getStdout(fn func()) string {
@@ -131,6 +132,23 @@ var _ = Describe("Cli", func() {
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(MatchError("Invalid config: No watchlist provided"))
 
+				})
+
+				When("there are lots set", func() {
+					It("should not return an error", func() {
+						watchlist = ""
+						inputConfig := cli.Config{
+							Lots: []position.Lot{
+								{
+									Symbol:   "SYM",
+									UnitCost: 1.0,
+									Quantity: 1.0,
+								},
+							},
+						}
+						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
+						Expect(outputErr).NotTo(HaveOccurred())
+					})
 				})
 			})
 

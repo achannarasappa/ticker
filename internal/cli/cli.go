@@ -55,7 +55,7 @@ func Validate(config *Config, fs afero.Fs, options Options, prevErr error) func(
 			return prevErr
 		}
 
-		if len(config.Watchlist) == 0 && len(*options.Watchlist) == 0 {
+		if len(config.Watchlist) == 0 && len(*options.Watchlist) == 0 && len(config.Lots) == 0 {
 			return errors.New("Invalid config: No watchlist provided")
 		}
 

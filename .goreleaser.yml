@@ -51,7 +51,6 @@ brews:
     license: "GPLv3"
 dockers:
 - image_templates: ["achannarasappa/ticker:{{ .Version }}-amd64"]
-  ids: [ticker]
   dockerfile: Dockerfile
   use_buildx: true
   build_flag_templates:
@@ -63,7 +62,6 @@ dockers:
   - "--label=org.opencontainers.image.version={{.Version}}"
   - "--label=org.opencontainers.image.source={{.GitURL}}"
 - image_templates: ["achannarasappa/ticker:{{ .Version }}-arm64v8"]
-  ids: [ticker]
   goarch: arm64
   dockerfile: Dockerfile
   use_buildx: true

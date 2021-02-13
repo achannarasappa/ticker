@@ -5,15 +5,17 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/jarcoal/httpmock"
 	"github.com/mitchellh/go-homedir"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 
-	"github.com/achannarasappa/ticker/internal/cli"
 	. "github.com/achannarasappa/ticker/internal/cli"
-	"github.com/achannarasappa/ticker/internal/position"
+	. "github.com/achannarasappa/ticker/internal/currency"
+	. "github.com/achannarasappa/ticker/internal/position"
+	. "github.com/achannarasappa/ticker/test/http"
 )
 
 func getStdout(fn func()) string {
@@ -63,7 +65,7 @@ var _ = Describe("Cli", func() {
 	Describe("Validate", func() {
 
 		var (
-			options               cli.Options
+			options               Options
 			fs                    afero.Fs
 			watchlist             string
 			refreshInterval       int
@@ -76,7 +78,7 @@ var _ = Describe("Cli", func() {
 		)
 
 		BeforeEach(func() {
-			options = cli.Options{
+			options = Options{
 				Watchlist:             &watchlist,
 				RefreshInterval:       &refreshInterval,
 				Separate:              &separate,
@@ -100,8 +102,8 @@ var _ = Describe("Cli", func() {
 		})
 
 		It("should set the config", func() {
-			inputConfig := cli.Config{}
-			expected := cli.Config{
+			inputConfig := Config{}
+			expected := Config{
 				RefreshInterval: 5,
 				Watchlist: []string{
 					"GME",
@@ -118,7 +120,7 @@ var _ = Describe("Cli", func() {
 
 		When("a deferred error is passed in", func() {
 			It("validation fails", func() {
-				inputConfig := cli.Config{}
+				inputConfig := Config{}
 				outputErr := Validate(&inputConfig, fs, options, errors.New("some config error"))(&cobra.Command{}, []string{})
 				Expect(outputErr).To(MatchError("some config error"))
 			})
@@ -128,7 +130,7 @@ var _ = Describe("Cli", func() {
 			When("there is no watchlist in the config file and no watchlist cli argument", func() {
 				It("should return an error", func() {
 					watchlist = ""
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(MatchError("Invalid config: No watchlist provided"))
 
@@ -137,8 +139,8 @@ var _ = Describe("Cli", func() {
 				When("there are lots set", func() {
 					It("should not return an error", func() {
 						watchlist = ""
-						inputConfig := cli.Config{
-							Lots: []position.Lot{
+						inputConfig := Config{
+							Lots: []Lot{
 								{
 									Symbol:   "SYM",
 									UnitCost: 1.0,
@@ -155,7 +157,7 @@ var _ = Describe("Cli", func() {
 			When("there is a watchlist as a cli argument", func() {
 				It("should set the watchlist from the cli argument", func() {
 					watchlist = "AAPL,TW"
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.Watchlist).To(Equal([]string{
@@ -167,7 +169,7 @@ var _ = Describe("Cli", func() {
 				When("the config file also has a watchlist defined", func() {
 					It("should set the watchlist from the cli argument", func() {
 						watchlist = "F,GM"
-						inputConfig := cli.Config{
+						inputConfig := Config{
 							Watchlist: []string{"BIO"},
 						}
 						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -183,7 +185,7 @@ var _ = Describe("Cli", func() {
 			When("there is a watchlist in the config file", func() {
 				It("should set the watchlist from the config file", func() {
 					watchlist = ""
-					inputConfig := cli.Config{
+					inputConfig := Config{
 						Watchlist: []string{"NET"},
 					}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -199,7 +201,7 @@ var _ = Describe("Cli", func() {
 			When("proxy url is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					proxy = "http://localhost:3128"
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.Proxy).To(BeEquivalentTo("http://localhost:3128"))
@@ -208,7 +210,7 @@ var _ = Describe("Cli", func() {
 				When("the config file also has a proxy url defined", func() {
 					It("should set the proxy url from the cli argument", func() {
 						proxy = "http://www.example.org:3128"
-						inputConfig := cli.Config{
+						inputConfig := Config{
 							Proxy: "http://localhost:3128",
 						}
 						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -220,7 +222,7 @@ var _ = Describe("Cli", func() {
 
 			When("proxy url is set in the config file", func() {
 				It("should set the config to the config argument value", func() {
-					inputConfig := cli.Config{
+					inputConfig := Config{
 						Proxy: "http://localhost:3128",
 					}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -231,7 +233,7 @@ var _ = Describe("Cli", func() {
 
 			When("proxy url is not set", func() {
 				It("should set no proxy url", func() {
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.Proxy).To(BeEquivalentTo(""))
@@ -243,7 +245,7 @@ var _ = Describe("Cli", func() {
 			When("refresh interval is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					refreshInterval = 9
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.RefreshInterval).To(Equal(9))
@@ -252,7 +254,7 @@ var _ = Describe("Cli", func() {
 				When("the config file also has a refresh interval defined", func() {
 					It("should set the refresh interval from the cli argument", func() {
 						refreshInterval = 8
-						inputConfig := cli.Config{
+						inputConfig := Config{
 							RefreshInterval: 7,
 						}
 						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -264,7 +266,7 @@ var _ = Describe("Cli", func() {
 
 			When("refresh interval is set in the config file", func() {
 				It("should set the config to the config argument value", func() {
-					inputConfig := cli.Config{
+					inputConfig := Config{
 						RefreshInterval: 357,
 					}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -275,7 +277,7 @@ var _ = Describe("Cli", func() {
 
 			When("refresh interval is not set", func() {
 				It("should set a default watch interval", func() {
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.RefreshInterval).To(Equal(5))
@@ -287,7 +289,7 @@ var _ = Describe("Cli", func() {
 			When("show-separator flag is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					separate = true
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.Separate).To(Equal(true))
@@ -296,7 +298,7 @@ var _ = Describe("Cli", func() {
 				When("the config file also has a show-separator flag defined", func() {
 					It("should set the show-separator flag from the cli argument", func() {
 						separate = true
-						inputConfig := cli.Config{
+						inputConfig := Config{
 							Separate: true,
 						}
 						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -308,7 +310,7 @@ var _ = Describe("Cli", func() {
 
 			When("show-separator flag is set in the config file", func() {
 				It("should set the config to the config argument value", func() {
-					inputConfig := cli.Config{
+					inputConfig := Config{
 						Separate: true,
 					}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -319,7 +321,7 @@ var _ = Describe("Cli", func() {
 
 			When("show-separator flag is not set", func() {
 				It("should set a default watch interval", func() {
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.Separate).To(Equal(false))
@@ -331,7 +333,7 @@ var _ = Describe("Cli", func() {
 			When("show-tags flag is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					extraInfoExchange = true
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.ExtraInfoExchange).To(Equal(true))
@@ -340,7 +342,7 @@ var _ = Describe("Cli", func() {
 				When("the config file also has a show-tags flag defined", func() {
 					It("should set the show-tags flag from the cli argument", func() {
 						extraInfoExchange = true
-						inputConfig := cli.Config{
+						inputConfig := Config{
 							ExtraInfoExchange: false,
 						}
 						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -352,7 +354,7 @@ var _ = Describe("Cli", func() {
 
 			When("show-tags flag is set in the config file", func() {
 				It("should set the config to the config argument value", func() {
-					inputConfig := cli.Config{
+					inputConfig := Config{
 						ExtraInfoExchange: true,
 					}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -363,7 +365,7 @@ var _ = Describe("Cli", func() {
 
 			When("show-tags flag is not set", func() {
 				It("should disable the option", func() {
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.ExtraInfoExchange).To(Equal(false))
@@ -375,7 +377,7 @@ var _ = Describe("Cli", func() {
 			When("show-fundamentals flag is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					extraInfoFundamentals = true
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.ExtraInfoFundamentals).To(Equal(true))
@@ -384,7 +386,7 @@ var _ = Describe("Cli", func() {
 				When("the config file also has a show-fundamentals flag defined", func() {
 					It("should set the show-fundamentals flag from the cli argument", func() {
 						extraInfoFundamentals = true
-						inputConfig := cli.Config{
+						inputConfig := Config{
 							ExtraInfoFundamentals: false,
 						}
 						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -396,7 +398,7 @@ var _ = Describe("Cli", func() {
 
 			When("show-fundamentals flag is set in the config file", func() {
 				It("should set the config to the cli argument value", func() {
-					inputConfig := cli.Config{
+					inputConfig := Config{
 						ExtraInfoFundamentals: true,
 					}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -407,7 +409,7 @@ var _ = Describe("Cli", func() {
 
 			When("show-fundamentals flag is not set", func() {
 				It("should disable the option", func() {
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.ExtraInfoFundamentals).To(Equal(false))
@@ -419,7 +421,7 @@ var _ = Describe("Cli", func() {
 			When("show-summary flag is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					showSummary = true
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.ShowSummary).To(Equal(true))
@@ -428,7 +430,7 @@ var _ = Describe("Cli", func() {
 				When("the config file also has a show-summary flag defined", func() {
 					It("should set the show-summary flag from the cli argument", func() {
 						showSummary = true
-						inputConfig := cli.Config{
+						inputConfig := Config{
 							ShowSummary: false,
 						}
 						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -440,7 +442,7 @@ var _ = Describe("Cli", func() {
 
 			When("show-summary flag is set in the config file", func() {
 				It("should set the config to the cli argument value", func() {
-					inputConfig := cli.Config{
+					inputConfig := Config{
 						ShowSummary: true,
 					}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -451,7 +453,7 @@ var _ = Describe("Cli", func() {
 
 			When("show-summary flag is not set", func() {
 				It("should disable the option", func() {
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.ShowSummary).To(Equal(false))
@@ -463,7 +465,7 @@ var _ = Describe("Cli", func() {
 			When("sort flag is set as a cli argument", func() {
 				It("should set the config to the cli argument value", func() {
 					sort = "symbol"
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.Sort).To(Equal("symbol"))
@@ -472,7 +474,7 @@ var _ = Describe("Cli", func() {
 				When("the config file also has a sort flag defined", func() {
 					It("should set the sort flag from the cli argument", func() {
 						sort = "symbol"
-						inputConfig := cli.Config{
+						inputConfig := Config{
 							ShowSummary: false,
 						}
 						outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -484,7 +486,7 @@ var _ = Describe("Cli", func() {
 
 			When("sort flag is set in the config file", func() {
 				It("should set the config to the cli argument value", func() {
-					inputConfig := cli.Config{
+					inputConfig := Config{
 						Sort: "symbol",
 					}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
@@ -495,7 +497,7 @@ var _ = Describe("Cli", func() {
 
 			When("sort flag is not set", func() {
 				It("should disable the option", func() {
-					inputConfig := cli.Config{}
+					inputConfig := Config{}
 					outputErr := Validate(&inputConfig, fs, options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(BeNil())
 					Expect(inputConfig.Sort).To(Equal(""))
@@ -587,7 +589,7 @@ var _ = Describe("Cli", func() {
 				inputConfigPath := ".config-file-that-does-not-exist.yaml"
 				config, err := ReadConfig(fs, inputConfigPath)
 
-				Expect(config).To(Equal(cli.Config{}))
+				Expect(config).To(Equal(Config{}))
 				Expect(err).To(MatchError("Invalid config: open .config-file-that-does-not-exist.yaml: file does not exist"))
 			})
 		})
@@ -598,10 +600,33 @@ var _ = Describe("Cli", func() {
 				afero.WriteFile(fs, ".ticker.yaml", []byte("watchlist:\n   NOK"), 0644)
 				config, err := ReadConfig(fs, inputConfigPath)
 
-				Expect(config).To(Equal(cli.Config{}))
+				Expect(config).To(Equal(Config{}))
 				Expect(err).To(MatchError("Invalid config: yaml: unmarshal errors:\n  line 2: cannot unmarshal !!str `NOK` into []string"))
 
 			})
+		})
+	})
+
+	Describe("GetReference", func() {
+
+		It("should return reference information", func() {
+			MockResponse(ResponseParameters{Symbol: "VOW3.DE", Currency: "EUR", Price: 0.0})
+			MockResponse(ResponseParameters{Symbol: "EURUSD=X", Currency: "USD", Price: 1.2})
+			inputConfig := Config{
+				Watchlist: []string{
+					"VOW3.DE",
+				},
+			}
+			output, _ := GetReference(inputConfig, client)
+			outputHTTPCallCount := httpmock.GetCallCountInfo()
+
+			Expect(outputHTTPCallCount["GET https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=VOW3.DE"]).To(Equal(1))
+			Expect(outputHTTPCallCount["GET https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=EURUSD=X"]).To(Equal(1))
+			Expect(output).To(Equal(Reference{
+				CurrencyRates: map[string]CurrencyRate{
+					"EUR": {FromCurrency: "EUR", ToCurrency: "USD", Rate: 1.2},
+				},
+			}))
 		})
 	})
 })

@@ -1,4 +1,4 @@
-package cli_test
+package currency_test
 
 import (
 	"testing"
@@ -23,7 +23,7 @@ var _ = AfterSuite(func() {
 	httpmock.DeactivateAndReset()
 })
 
-func TestCli(t *testing.T) {
+func TestQuote(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Cli Suite")
+	RunSpecs(t, "Quote Suite")
 }

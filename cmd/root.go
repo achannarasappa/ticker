@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 
@@ -13,7 +14,9 @@ import (
 
 var (
 	configPath            string
+	client                resty.Client
 	config                cli.Config
+	reference             cli.Reference
 	watchlist             string
 	refreshInterval       int
 	separate              bool
@@ -41,7 +44,7 @@ var (
 			},
 			err,
 		),
-		Run: cli.Run(ui.Start(&config)),
+		Run: cli.Run(ui.Start(&client, &config, reference)),
 	}
 )
 
@@ -66,5 +69,11 @@ func init() {
 }
 
 func initConfig() {
+	client = *resty.New()
+	if len(config.Proxy) > 0 {
+		client.SetProxy(config.Proxy)
+	}
 	config, err = cli.ReadConfig(afero.NewOsFs(), configPath)
+	reference, err = cli.GetReference(config, &client)
+
 }

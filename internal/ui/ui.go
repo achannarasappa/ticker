@@ -54,7 +54,7 @@ func (m Model) updateQuotes() tea.Cmd {
 	})
 }
 
-func NewModel(config cli.Config, client *resty.Client) Model {
+func NewModel(config cli.Config, client *resty.Client, reference cli.Reference) Model {
 
 	aggregatedLots := position.GetLots(config.Lots)
 	symbols := position.GetSymbols(config.Watchlist, aggregatedLots)

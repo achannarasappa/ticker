@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/achannarasappa/ticker/internal/currency"
 	"github.com/achannarasappa/ticker/internal/position"
 
 	"github.com/adrg/xdg"
+	"github.com/go-resty/resty/v2"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -25,6 +27,7 @@ type Config struct {
 	ShowSummary           bool           `yaml:"show-summary"`
 	Proxy                 string         `yaml:"proxy"`
 	Sort                  string         `yaml:"sort"`
+	Currency              string         `yaml:"currency"`
 }
 
 type Options struct {
@@ -36,6 +39,10 @@ type Options struct {
 	ShowSummary           *bool
 	Proxy                 *string
 	Sort                  *string
+}
+
+type Reference struct {
+	CurrencyRates currency.CurrencyRates
 }
 
 func Run(uiStartFn func() error) func(*cobra.Command, []string) {
@@ -90,6 +97,19 @@ func ReadConfig(fs afero.Fs, configPathOption string) (Config, error) {
 	}
 
 	return config, nil
+}
+
+func GetReference(config Config, client *resty.Client) (Reference, error) {
+
+	aggregatedLots := position.GetLots(config.Lots)
+	symbols := position.GetSymbols(config.Watchlist, aggregatedLots)
+
+	currencyRates := currency.GetCurrencyRates(*client, symbols, config.Currency)
+
+	return Reference{
+		CurrencyRates: currencyRates,
+	}, nil
+
 }
 
 func mergeConfig(config Config, options Options) Config {

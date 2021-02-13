@@ -3,6 +3,8 @@
 !cmd/*
 !internal
 !internal/**/*
+!test
+!test/**/*
 !docs
 !docs/*
 !main.go

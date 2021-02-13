@@ -29,6 +29,7 @@ func MockResponse(responseParameters ResponseParameters) {
 		}
 	}`
 	t, _ := template.New("response").Parse(responseTemplate)
+	//nolint:errcheck
 	t.Execute(&responseBytes, responseParameters)
 	responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=" + responseParameters.Symbol
 	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {

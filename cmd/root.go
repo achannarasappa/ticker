@@ -22,7 +22,7 @@ var (
 	rootCmd    = &cobra.Command{
 		Use:   "ticker",
 		Short: "Terminal stock ticker and stock gain/loss tracker",
-		Args:  cli.Validate(dep, &ctx, &options, err),
+		Args:  cli.Validate(&ctx, &options, &err),
 		Run:   cli.Run(ui.Start(&dep, &ctx)),
 	}
 )

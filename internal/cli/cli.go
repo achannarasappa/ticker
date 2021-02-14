@@ -39,11 +39,11 @@ func Run(uiStartFn func() error) func(*cobra.Command, []string) {
 	}
 }
 
-func Validate(dep Dependencies, ctx *Context, options *Options, prevErr error) func(*cobra.Command, []string) error {
+func Validate(ctx *Context, options *Options, prevErr *error) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 
 		if prevErr != nil {
-			return prevErr
+			return *prevErr
 		}
 
 		if len(ctx.Config.Watchlist) == 0 && len(options.Watchlist) == 0 && len(ctx.Config.Lots) == 0 {

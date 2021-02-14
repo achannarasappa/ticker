@@ -384,7 +384,8 @@ var _ = Describe("Cli", func() {
 
 		When("a deferred error is passed in", func() {
 			It("validation fails", func() {
-				outputErr := Validate(c.Dependencies{}, &c.Context{}, &cli.Options{}, errors.New("some config error"))(&cobra.Command{}, []string{})
+				inputErr := errors.New("some config error")
+				outputErr := Validate(&c.Context{}, &cli.Options{}, &inputErr)(&cobra.Command{}, []string{})
 				Expect(outputErr).To(MatchError("some config error"))
 			})
 		})
@@ -393,7 +394,7 @@ var _ = Describe("Cli", func() {
 			When("there is no watchlist in the config file and no watchlist cli argument", func() {
 				It("should return an error", func() {
 					options.Watchlist = ""
-					outputErr := Validate(dep, &ctx, &options, nil)(&cobra.Command{}, []string{})
+					outputErr := Validate(&ctx, &options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(MatchError("Invalid config: No watchlist provided"))
 
 				})
@@ -410,7 +411,7 @@ var _ = Describe("Cli", func() {
 								},
 							},
 						}
-						outputErr := Validate(dep, &ctx, &options, nil)(&cobra.Command{}, []string{})
+						outputErr := Validate(&ctx, &options, nil)(&cobra.Command{}, []string{})
 						Expect(outputErr).NotTo(HaveOccurred())
 					})
 				})

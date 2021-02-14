@@ -20,10 +20,11 @@ var (
 	options    cli.Options
 	err        error
 	rootCmd    = &cobra.Command{
-		Use:   "ticker",
-		Short: "Terminal stock ticker and stock gain/loss tracker",
-		Args:  cli.Validate(&ctx, &options, &err),
-		Run:   cli.Run(ui.Start(&dep, &ctx)),
+		Version: "v3.1.0",
+		Use:     "ticker",
+		Short:   "Terminal stock ticker and stock gain/loss tracker",
+		Args:    cli.Validate(&ctx, &options, &err),
+		Run:     cli.Run(ui.Start(&dep, &ctx)),
 	}
 )
 

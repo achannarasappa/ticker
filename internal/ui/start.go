@@ -1,15 +1,13 @@
 package ui
 
 import (
-	"github.com/achannarasappa/ticker/internal/cli"
+	c "github.com/achannarasappa/ticker/internal/common"
 	tea "github.com/charmbracelet/bubbletea"
-
-	"github.com/go-resty/resty/v2"
 )
 
-func Start(client *resty.Client, config *cli.Config, reference cli.Reference) func() error {
+func Start(dep *c.Dependencies, ctx *c.Context) func() error {
 	return func() error {
-		p := tea.NewProgram(NewModel(*config, client, reference))
+		p := tea.NewProgram(NewModel(*dep, *ctx))
 
 		p.EnableMouseCellMotion()
 		p.EnterAltScreen()

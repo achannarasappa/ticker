@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	. "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/currency"
 	"github.com/achannarasappa/ticker/internal/position"
 
@@ -17,32 +18,15 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Config struct {
-	RefreshInterval       int            `yaml:"interval"`
-	Watchlist             []string       `yaml:"watchlist"`
-	Lots                  []position.Lot `yaml:"lots"`
-	Separate              bool           `yaml:"show-separator"`
-	ExtraInfoExchange     bool           `yaml:"show-tags"`
-	ExtraInfoFundamentals bool           `yaml:"show-fundamentals"`
-	ShowSummary           bool           `yaml:"show-summary"`
-	Proxy                 string         `yaml:"proxy"`
-	Sort                  string         `yaml:"sort"`
-	Currency              string         `yaml:"currency"`
-}
-
 type Options struct {
-	RefreshInterval       *int
-	Watchlist             *string
-	Separate              *bool
-	ExtraInfoExchange     *bool
-	ExtraInfoFundamentals *bool
-	ShowSummary           *bool
-	Proxy                 *string
-	Sort                  *string
-}
-
-type Reference struct {
-	CurrencyRates currency.CurrencyRates
+	RefreshInterval       int
+	Watchlist             string
+	Separate              bool
+	ExtraInfoExchange     bool
+	ExtraInfoFundamentals bool
+	ShowSummary           bool
+	Proxy                 string
+	Sort                  string
 }
 
 func Run(uiStartFn func() error) func(*cobra.Command, []string) {
@@ -55,33 +39,55 @@ func Run(uiStartFn func() error) func(*cobra.Command, []string) {
 	}
 }
 
-func Validate(config *Config, fs afero.Fs, options Options, prevErr error) func(*cobra.Command, []string) error {
+func Validate(dep Dependencies, ctx *Context, options *Options, prevErr error) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 
 		if prevErr != nil {
 			return prevErr
 		}
 
-		if len(config.Watchlist) == 0 && len(*options.Watchlist) == 0 && len(config.Lots) == 0 {
+		if len(ctx.Config.Watchlist) == 0 && len(options.Watchlist) == 0 && len(ctx.Config.Lots) == 0 {
 			return errors.New("Invalid config: No watchlist provided")
 		}
-
-		if len(*options.Watchlist) != 0 {
-			config.Watchlist = strings.Split(strings.ReplaceAll(*options.Watchlist, " ", ""), ",")
-		}
-
-		*config = mergeConfig(*config, options)
 
 		return nil
 	}
 }
 
-func ReadConfig(fs afero.Fs, configPathOption string) (Config, error) {
+func GetContext(d Dependencies, options Options, configPath string) (Context, error) {
+	var (
+		reference Reference
+		config    Config
+		err       error
+	)
+
+	config, err = readConfig(d.Fs, configPath)
+
+	if err != nil {
+		return Context{}, err
+	}
+
+	config = getConfig(config, options, *d.HttpClient)
+	reference, err = getReference(config, *d.HttpClient)
+
+	if err != nil {
+		return Context{}, err
+	}
+
+	context := Context{
+		Reference: reference,
+		Config:    config,
+	}
+
+	return context, nil
+}
+
+func readConfig(fs afero.Fs, configPathOption string) (Config, error) {
 	var config Config
 	configPath, err := getConfigPath(fs, configPathOption)
 
 	if err != nil {
-		return config, err
+		return config, nil
 	}
 	handle, err := fs.Open(configPath)
 
@@ -99,12 +105,12 @@ func ReadConfig(fs afero.Fs, configPathOption string) (Config, error) {
 	return config, nil
 }
 
-func GetReference(config Config, client *resty.Client) (Reference, error) {
+func getReference(config Config, client resty.Client) (Reference, error) {
 
 	aggregatedLots := position.GetLots(config.Lots)
 	symbols := position.GetSymbols(config.Watchlist, aggregatedLots)
 
-	currencyRates := currency.GetCurrencyRates(*client, symbols, config.Currency)
+	currencyRates := currency.GetCurrencyRates(client, symbols, config.Currency)
 
 	return Reference{
 		CurrencyRates: currencyRates,
@@ -112,14 +118,23 @@ func GetReference(config Config, client *resty.Client) (Reference, error) {
 
 }
 
-func mergeConfig(config Config, options Options) Config {
-	config.RefreshInterval = getRefreshInterval(*options.RefreshInterval, config.RefreshInterval)
-	config.Separate = getBoolOption(*options.Separate, config.Separate)
-	config.ExtraInfoExchange = getBoolOption(*options.ExtraInfoExchange, config.ExtraInfoExchange)
-	config.ExtraInfoFundamentals = getBoolOption(*options.ExtraInfoFundamentals, config.ExtraInfoFundamentals)
-	config.ShowSummary = getBoolOption(*options.ShowSummary, config.ShowSummary)
-	config.Proxy = getProxy(*options.Proxy, config.Proxy)
-	config.Sort = getStringOption(*options.Sort, config.Sort)
+func getConfig(config Config, options Options, client resty.Client) Config {
+
+	if len(options.Watchlist) != 0 {
+		config.Watchlist = strings.Split(strings.ReplaceAll(options.Watchlist, " ", ""), ",")
+	}
+
+	if len(config.Proxy) > 0 {
+		client.SetProxy(config.Proxy)
+	}
+
+	config.RefreshInterval = getRefreshInterval(options.RefreshInterval, config.RefreshInterval)
+	config.Separate = getBoolOption(options.Separate, config.Separate)
+	config.ExtraInfoExchange = getBoolOption(options.ExtraInfoExchange, config.ExtraInfoExchange)
+	config.ExtraInfoFundamentals = getBoolOption(options.ExtraInfoFundamentals, config.ExtraInfoFundamentals)
+	config.ShowSummary = getBoolOption(options.ShowSummary, config.ShowSummary)
+	config.Proxy = getStringOption(options.Proxy, config.Proxy)
+	config.Sort = getStringOption(options.Sort, config.Sort)
 
 	return config
 }
@@ -160,19 +175,6 @@ func getRefreshInterval(optionsRefreshInterval int, configRefreshInterval int) i
 	}
 
 	return 5
-}
-
-func getProxy(optionsProxy string, configProxy string) string {
-
-	if len(optionsProxy) > 0 {
-		return optionsProxy
-	}
-
-	if len(configProxy) > 0 {
-		return configProxy
-	}
-
-	return ""
 }
 
 func getBoolOption(cliValue bool, configValue bool) bool {

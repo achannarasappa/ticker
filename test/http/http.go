@@ -38,3 +38,24 @@ func MockResponse(responseParameters ResponseParameters) {
 		return resp, nil
 	})
 }
+
+func MockResponseCurrency() {
+	response := `{
+		"quoteResponse": {
+			"result": [
+				{
+					"regularMarketPrice": 123.45,
+					"currency": "USD",
+					"symbol": "NET"
+				}
+			],
+			"error": null
+		}
+	}`
+	responseUrl := `https://query1.finance.yahoo.com/v7/finance/quote`
+	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, response)
+		resp.Header.Set("Content-Type", "application/json")
+		return resp, nil
+	})
+}

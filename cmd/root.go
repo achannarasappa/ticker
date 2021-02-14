@@ -9,42 +9,21 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/achannarasappa/ticker/internal/cli"
+	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/ui"
 )
 
 var (
-	configPath            string
-	client                resty.Client
-	config                cli.Config
-	reference             cli.Reference
-	watchlist             string
-	refreshInterval       int
-	separate              bool
-	extraInfoExchange     bool
-	extraInfoFundamentals bool
-	proxy                 string
-	showSummary           bool
-	sort                  string
-	err                   error
-	rootCmd               = &cobra.Command{
+	configPath string
+	dep        c.Dependencies
+	ctx        c.Context
+	options    cli.Options
+	err        error
+	rootCmd    = &cobra.Command{
 		Use:   "ticker",
 		Short: "Terminal stock ticker and stock gain/loss tracker",
-		Args: cli.Validate(
-			&config,
-			afero.NewOsFs(),
-			cli.Options{
-				RefreshInterval:       &refreshInterval,
-				Watchlist:             &watchlist,
-				Separate:              &separate,
-				ExtraInfoExchange:     &extraInfoExchange,
-				ExtraInfoFundamentals: &extraInfoFundamentals,
-				ShowSummary:           &showSummary,
-				Proxy:                 &proxy,
-				Sort:                  &sort,
-			},
-			err,
-		),
-		Run: cli.Run(ui.Start(&client, &config, reference)),
+		Args:  cli.Validate(dep, &ctx, &options, err),
+		Run:   cli.Run(ui.Start(&dep, &ctx)),
 	}
 )
 
@@ -58,22 +37,21 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.Flags().StringVar(&configPath, "config", "", "config file (default is $HOME/.ticker.yaml)")
-	rootCmd.Flags().StringVarP(&watchlist, "watchlist", "w", "", "comma separated list of symbols to watch")
-	rootCmd.Flags().IntVarP(&refreshInterval, "interval", "i", 0, "refresh interval in seconds")
-	rootCmd.Flags().BoolVar(&separate, "show-separator", false, "layout with separators between each quote")
-	rootCmd.Flags().BoolVar(&extraInfoExchange, "show-tags", false, "display currency, exchange name, and quote delay for each quote")
-	rootCmd.Flags().BoolVar(&extraInfoFundamentals, "show-fundamentals", false, "display open price, high, low, and volume for each quote")
-	rootCmd.Flags().BoolVar(&showSummary, "show-summary", false, "display summary of total gain and loss for positions")
-	rootCmd.Flags().StringVar(&proxy, "proxy", "", "proxy URL for requests (default is none)")
-	rootCmd.Flags().StringVar(&sort, "sort", "", "sort quotes on the UI. Set \"alpha\" to sort by ticker name. Set \"value\" to sort by position value. Keep empty to sort according to change percent")
+	rootCmd.Flags().StringVarP(&options.Watchlist, "watchlist", "w", "", "comma separated list of symbols to watch")
+	rootCmd.Flags().IntVarP(&options.RefreshInterval, "interval", "i", 0, "refresh interval in seconds")
+	rootCmd.Flags().BoolVar(&options.Separate, "show-separator", false, "layout with separators between each quote")
+	rootCmd.Flags().BoolVar(&options.ExtraInfoExchange, "show-tags", false, "display currency, exchange name, and quote delay for each quote")
+	rootCmd.Flags().BoolVar(&options.ExtraInfoFundamentals, "show-fundamentals", false, "display open price, high, low, and volume for each quote")
+	rootCmd.Flags().BoolVar(&options.ShowSummary, "show-summary", false, "display summary of total gain and loss for positions")
+	rootCmd.Flags().StringVar(&options.Proxy, "proxy", "", "proxy URL for requests (default is none)")
+	rootCmd.Flags().StringVar(&options.Sort, "sort", "", "sort quotes on the UI. Set \"alpha\" to sort by ticker name. Set \"value\" to sort by position value. Keep empty to sort according to change percent")
 }
 
 func initConfig() {
-	client = *resty.New()
-	if len(config.Proxy) > 0 {
-		client.SetProxy(config.Proxy)
+	dep = c.Dependencies{
+		Fs:         afero.NewOsFs(),
+		HttpClient: resty.New(),
 	}
-	config, err = cli.ReadConfig(afero.NewOsFs(), configPath)
-	reference, err = cli.GetReference(config, &client)
+	ctx, err = cli.GetContext(dep, options, configPath)
 
 }

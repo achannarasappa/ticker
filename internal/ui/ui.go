@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/achannarasappa/ticker/internal/cli"
+	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/position"
 	"github.com/achannarasappa/ticker/internal/quote"
 	"github.com/achannarasappa/ticker/internal/ui/component/summary"
@@ -16,7 +16,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/go-resty/resty/v2"
 )
 
 var (
@@ -54,18 +53,18 @@ func (m Model) updateQuotes() tea.Cmd {
 	})
 }
 
-func NewModel(config cli.Config, client *resty.Client, reference cli.Reference) Model {
+func NewModel(dep c.Dependencies, context c.Context) Model {
 
-	aggregatedLots := position.GetLots(config.Lots)
-	symbols := position.GetSymbols(config.Watchlist, aggregatedLots)
+	aggregatedLots := position.GetLots(context.Config.Lots)
+	symbols := position.GetSymbols(context.Config.Watchlist, aggregatedLots)
 
 	return Model{
-		headerHeight:    getVerticalMargin(config),
+		headerHeight:    getVerticalMargin(context.Config),
 		ready:           false,
-		requestInterval: config.RefreshInterval,
-		getQuotes:       quote.GetQuotes(*client, symbols),
+		requestInterval: context.Config.RefreshInterval,
+		getQuotes:       quote.GetQuotes(*dep.HttpClient, symbols),
 		getPositions:    position.GetPositions(aggregatedLots),
-		watchlist:       watchlist.NewModel(config.Separate, config.ExtraInfoExchange, config.ExtraInfoFundamentals, config.Sort),
+		watchlist:       watchlist.NewModel(context.Config.Separate, context.Config.ExtraInfoExchange, context.Config.ExtraInfoFundamentals, context.Config.Sort),
 		summary:         summary.NewModel(),
 	}
 }
@@ -170,7 +169,7 @@ func footer(width int, time string) string {
 
 }
 
-func getVerticalMargin(config cli.Config) int {
+func getVerticalMargin(config c.Config) int {
 	if config.ShowSummary {
 		return 2
 	}

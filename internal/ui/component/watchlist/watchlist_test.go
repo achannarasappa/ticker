@@ -70,7 +70,7 @@ var _ = Describe("Watchlist", func() {
 			0.05,
 			Position{},
 			strings.Join([]string{
-				"AAPL                       ⦿                                                1.05",
+				"AAPL                       ●                                                1.05",
 				"Apple Inc.                                                       ↑ 0.05  (0.05%)",
 			}, "\n"),
 		),
@@ -81,7 +81,7 @@ var _ = Describe("Watchlist", func() {
 			-0.05,
 			Position{},
 			strings.Join([]string{
-				"AAPL                       ⦿                                                0.95",
+				"AAPL                       ●                                                0.95",
 				"Apple Inc.                                                      ↓ -0.05 (-0.05%)",
 			}, "\n"),
 		),
@@ -92,7 +92,7 @@ var _ = Describe("Watchlist", func() {
 			0.05,
 			Position{},
 			strings.Join([]string{
-				"AAPL                       ⦾                                                1.05",
+				"AAPL                       ○                                                1.05",
 				"Apple Inc.                                                       ↑ 0.05  (0.05%)",
 			}, "\n"),
 		),
@@ -114,7 +114,7 @@ var _ = Describe("Watchlist", func() {
 				TotalChangePercent: 110.0,
 			},
 			strings.Join([]string{
-				"AAPL                       ⦿                     105.00                     1.05",
+				"AAPL                       ●                     105.00                     1.05",
 				"Apple Inc.                           ↑ 55.00  (110.00%)          ↑ 0.05  (0.05%)",
 			}, "\n"),
 		),
@@ -136,7 +136,7 @@ var _ = Describe("Watchlist", func() {
 				TotalChangePercent: -30.0,
 			},
 			strings.Join([]string{
-				"AAPL                       ⦿                     105.00                     1.05",
+				"AAPL                       ●                     105.00                     1.05",
 				"Apple Inc.                           ↓ -45.00 (-30.00%)          ↑ 0.05  (0.05%)",
 			}, "\n"),
 		),
@@ -158,7 +158,7 @@ var _ = Describe("Watchlist", func() {
 				TotalChangePercent: 90.0,
 			},
 			strings.Join([]string{
-				"AAPL                       ⦿                      95.00                     0.95",
+				"AAPL                       ●                      95.00                     0.95",
 				"Apple Inc.                            ↑ 45.00  (90.00%)         ↓ -0.05 (-0.05%)",
 			}, "\n"),
 		),
@@ -180,7 +180,7 @@ var _ = Describe("Watchlist", func() {
 				TotalChangePercent: -36.67,
 			},
 			strings.Join([]string{
-				"AAPL                       ⦿                      95.00                     0.95",
+				"AAPL                       ●                      95.00                     0.95",
 				"Apple Inc.                           ↓ -55.00 (-36.67%)         ↓ -0.05 (-0.05%)",
 			}, "\n"),
 		),
@@ -265,11 +265,11 @@ var _ = Describe("Watchlist", func() {
 				},
 			}
 			expected := strings.Join([]string{
-				"BTC-USD                    ⦿                                            50000.00",
+				"BTC-USD                    ●                                            50000.00",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-				"TW                         ⦾                                              109.04",
+				"TW                         ○                                              109.04",
 				"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
-				"GOOG                       ⦾                                             2523.53",
+				"GOOG                       ○                                             2523.53",
 				"Google Inc.                                                    ↓ -32.02 (-1.35%)",
 				"AAPL                                                                        1.05",
 				"Apple Inc.                                                         0.00  (0.00%)",
@@ -324,13 +324,13 @@ var _ = Describe("Watchlist", func() {
 					},
 				}
 				expected := strings.Join([]string{
-					"BTC-USD                    ⦿                                            50000.00",
+					"BTC-USD                    ●                                            50000.00",
 					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-					"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
-					"TW                         ⦾                                              109.04",
+					"────────────────────────────────────────────────────────────────────────────────",
+					"TW                         ○                                              109.04",
 					"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
-					"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
-					"GOOG                       ⦾                                             2523.53",
+					"────────────────────────────────────────────────────────────────────────────────",
+					"GOOG                       ○                                             2523.53",
 					"Google Inc.                                                    ↓ -32.02 (-1.35%)",
 				}, "\n")
 				Expect(removeFormatting(m.View())).To(Equal(expected))
@@ -365,7 +365,7 @@ var _ = Describe("Watchlist", func() {
 				},
 			}
 			expected := strings.Join([]string{
-				"BTC-USD                    ⦿                                            50000.00",
+				"BTC-USD                    ●                                            50000.00",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
 				" USD   Real-Time   Cryptocurrency                                               ",
 			}, "\n")
@@ -399,7 +399,7 @@ var _ = Describe("Watchlist", func() {
 					},
 				}
 				expected := strings.Join([]string{
-					"BTC-USD                    ⦿                                            50000.00",
+					"BTC-USD                    ●                                            50000.00",
 					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
 					" USD   Delayed 15min   Cryptocurrency                                           ",
 				}, "\n")
@@ -433,7 +433,7 @@ var _ = Describe("Watchlist", func() {
 				}
 				m.Context.Config.Currency = "EUR"
 				expected := strings.Join([]string{
-					"APPL                       ⦿                                             5000.00",
+					"APPL                       ●                                             5000.00",
 					"Apple, Inc                                                   ↑ 1000.00  (20.00%)",
 					" USD → EUR   Real-Time   NASDAQ                                                 ",
 				}, "\n")
@@ -470,7 +470,7 @@ var _ = Describe("Watchlist", func() {
 				},
 			}
 			expected := strings.Join([]string{
-				"BTC-USD                    ⦿                                            50000.00",
+				"BTC-USD                    ●                                            50000.00",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
 				"Prev Close: 10000.00     Open: 10000.00      Day Range: 10000 - 10000           ",
 			}, "\n")
@@ -503,7 +503,7 @@ var _ = Describe("Watchlist", func() {
 					},
 				}
 				expected := strings.Join([]string{
-					"BTC-USD                    ⦿                                            50000.00",
+					"BTC-USD                    ●                                            50000.00",
 					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
 					"Prev Close: 10000.00     Open: 10000.00                                         ",
 				}, "\n")
@@ -561,13 +561,13 @@ var _ = Describe("Watchlist", func() {
 				},
 			}
 			expected := strings.Join([]string{
-				"BTC-USD                    ⦿                                            50000.00",
+				"BTC-USD                    ●                                            50000.00",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
-				"GOOG                       ⦾                                             2523.53",
+				"────────────────────────────────────────────────────────────────────────────────",
+				"GOOG                       ○                                             2523.53",
 				"Google Inc.                                                    ↓ -32.02 (-1.35%)",
-				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
-				"TW                         ⦾                                              109.04",
+				"────────────────────────────────────────────────────────────────────────────────",
+				"TW                         ○                                              109.04",
 				"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
 			}, "\n")
 			Expect(removeFormatting(m.View())).To(Equal(expected))
@@ -667,15 +667,15 @@ var _ = Describe("Watchlist", func() {
 				},
 			}
 			expected := strings.Join([]string{
-				"BTC-USD                    ⦿                   50000.00                 50000.00",
+				"BTC-USD                    ●                   50000.00                 50000.00",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
-				"GOOG                       ⦾                    2523.53                  2523.53",
+				"────────────────────────────────────────────────────────────────────────────────",
+				"GOOG                       ○                    2523.53                  2523.53",
 				"Google Inc.                                                    ↓ -32.02 (-1.35%)",
-				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
-				"TW                         ⦾                                              109.04",
+				"────────────────────────────────────────────────────────────────────────────────",
+				"TW                         ○                                              109.04",
 				"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
-				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
+				"────────────────────────────────────────────────────────────────────────────────",
 				"MSFT                                             242.01                   242.01",
 				"Microsoft Corporation                                           ↓ -0.99 (-0.41%)",
 			}, "\n")
@@ -732,13 +732,13 @@ var _ = Describe("Watchlist", func() {
 				},
 			}
 			expected := strings.Join([]string{
-				"BTC-USD                    ⦿                                            50000.00",
+				"BTC-USD                    ●                                            50000.00",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
-				"TW                         ⦾                                              109.04",
+				"────────────────────────────────────────────────────────────────────────────────",
+				"TW                         ○                                              109.04",
 				"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
-				"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯",
-				"GOOG                       ⦾                                             2523.53",
+				"────────────────────────────────────────────────────────────────────────────────",
+				"GOOG                       ○                                             2523.53",
 				"Google Inc.                                                    ↓ -32.02 (-1.35%)",
 			}, "\n")
 			Expect(removeFormatting(m.View())).To(Equal(expected))

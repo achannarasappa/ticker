@@ -64,8 +64,8 @@ func NewModel(dep c.Dependencies, ctx c.Context) Model {
 		headerHeight:    getVerticalMargin(ctx.Config),
 		ready:           false,
 		requestInterval: ctx.Config.RefreshInterval,
-		getQuotes:       quote.GetQuotes(*dep.HttpClient, symbols),
-		getPositions:    position.GetPositions(aggregatedLots),
+		getQuotes:       quote.GetQuotes(ctx, *dep.HttpClient, symbols),
+		getPositions:    position.GetPositions(ctx, aggregatedLots),
 		watchlist:       watchlist.NewModel(ctx),
 		summary:         summary.NewModel(),
 	}

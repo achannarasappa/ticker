@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	c "github.com/achannarasappa/ticker/internal/common"
 	. "github.com/achannarasappa/ticker/internal/quote"
 )
 
@@ -37,7 +38,8 @@ var _ = Describe("Quote", func() {
 				return resp, nil
 			})
 
-			output := GetQuotes(*client, []string{"NET"})()
+			inputCtx := c.Context{}
+			output := GetQuotes(inputCtx, *client, []string{"NET"})()
 			expected := []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -88,7 +90,8 @@ var _ = Describe("Quote", func() {
 					return resp, nil
 				})
 
-				output := GetQuotes(*client, []string{"NET"})()
+				inputCtx := c.Context{}
+				output := GetQuotes(inputCtx, *client, []string{"NET"})()
 				expected := []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -139,7 +142,8 @@ var _ = Describe("Quote", func() {
 						return resp, nil
 					})
 
-					output := GetQuotes(*client, []string{"NET"})()
+					inputCtx := c.Context{}
+					output := GetQuotes(inputCtx, *client, []string{"NET"})()
 					Expect(output[0].Price).To(Equal(84.98))
 					Expect(output[0].Change).To(Equal(3.0800018))
 					Expect(output[0].ChangePercent).To(Equal(3.7606857))
@@ -178,7 +182,8 @@ var _ = Describe("Quote", func() {
 					return resp, nil
 				})
 
-				output := GetQuotes(*client, []string{"NET"})()
+				inputCtx := c.Context{}
+				output := GetQuotes(inputCtx, *client, []string{"NET"})()
 				expected := []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -229,7 +234,8 @@ var _ = Describe("Quote", func() {
 						return resp, nil
 					})
 
-					output := GetQuotes(*client, []string{"NET"})()
+					inputCtx := c.Context{}
+					output := GetQuotes(inputCtx, *client, []string{"NET"})()
 					expectedPrice := 84.98
 					expectedChange := 3.0800018
 					expectedChangePercent := 3.7606857
@@ -266,7 +272,8 @@ var _ = Describe("Quote", func() {
 					return resp, nil
 				})
 
-				output := GetQuotes(*client, []string{"NET"})()
+				inputCtx := c.Context{}
+				output := GetQuotes(inputCtx, *client, []string{"NET"})()
 				Expect(output[0].Price).To(Equal(84.98))
 				Expect(output[0].Change).To(Equal(3.0800018))
 				Expect(output[0].ChangePercent).To(Equal(3.7606857))
@@ -303,7 +310,8 @@ var _ = Describe("Quote", func() {
 						return resp, nil
 					})
 
-					output := GetQuotes(*client, []string{"NET"})()
+					inputCtx := c.Context{}
+					output := GetQuotes(inputCtx, *client, []string{"NET"})()
 					Expect(output[0].Price).To(Equal(86.02))
 					Expect(output[0].Change).To(Equal(4.1199951))
 					Expect(output[0].ChangePercent).To(Equal(4.9844951))

@@ -77,7 +77,8 @@ var _ = Describe("Position", func() {
 					Change: 0.0,
 				},
 			}
-			output := GetPositions(inputAggregatedLots)(inputQuotes)
+			inputCtx := c.Context{}
+			output := GetPositions(inputCtx, inputAggregatedLots)(inputQuotes)
 			expected := map[string]Position{
 				"ARKW": {
 					AggregatedLot: AggregatedLot{
@@ -87,7 +88,6 @@ var _ = Describe("Position", func() {
 					},
 					Value:              8000,
 					DayChange:          2000,
-					DayChangePercent:   50,
 					TotalChange:        4000,
 					TotalChangePercent: 100,
 				},

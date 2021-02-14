@@ -2,6 +2,7 @@ package position
 
 import (
 	c "github.com/achannarasappa/ticker/internal/common"
+	"github.com/achannarasappa/ticker/internal/currency"
 	. "github.com/achannarasappa/ticker/internal/quote"
 
 	"github.com/novalagung/gubrak/v2"
@@ -15,6 +16,7 @@ type Position struct {
 	TotalChange        float64
 	TotalChangePercent float64
 	Currency           string
+	CurrencyConverted  string
 }
 
 type PositionSummary struct {
@@ -79,24 +81,24 @@ func GetSymbols(symbols []string, aggregatedLots map[string]AggregatedLot) []str
 
 }
 
-func GetPositions(aggregatedLots map[string]AggregatedLot) func([]Quote) map[string]Position {
+func GetPositions(ctx c.Context, aggregatedLots map[string]AggregatedLot) func([]Quote) map[string]Position {
 	return func(quotes []Quote) map[string]Position {
 
 		positions := gubrak.
 			From(quotes).
 			Reduce(func(acc []Position, quote Quote) []Position {
 				if aggLot, ok := aggregatedLots[quote.Symbol]; ok {
-					dayChange := quote.Change * aggLot.Quantity
-					totalChange := (quote.Price * aggLot.Quantity) - aggLot.Cost
-					valuePreviousClose := quote.RegularMarketPreviousClose * aggLot.Quantity
+					currencyRate, currencyCode := currency.GetCurrencyRateFromContext(ctx, quote.Currency)
+					totalChange := (quote.Price * aggLot.Quantity) - (aggLot.Cost * currencyRate)
 					return append(acc, Position{
 						AggregatedLot:      aggLot,
 						Value:              quote.Price * aggLot.Quantity,
-						DayChange:          dayChange,
-						DayChangePercent:   (dayChange / valuePreviousClose) * 100,
+						DayChange:          quote.Change * aggLot.Quantity,
+						DayChangePercent:   quote.ChangePercent,
 						TotalChange:        totalChange,
-						TotalChangePercent: (totalChange / aggLot.Cost) * 100,
+						TotalChangePercent: (totalChange / (aggLot.Cost * currencyRate)) * 100,
 						Currency:           quote.Currency,
+						CurrencyConverted:  currencyCode,
 					})
 				}
 				return acc
@@ -114,15 +116,13 @@ func GetPositionSummary(ctx c.Context, positions map[string]Position) PositionSu
 
 	positionValueCost := gubrak.From(positions).
 		Reduce(func(acc PositionSummary, position Position, key string) PositionSummary {
-			if currencyRate, ok := ctx.Reference.CurrencyRates[position.Currency]; ok {
-				acc.Value += (position.Value * currencyRate.Rate)
-				acc.Cost += (position.Cost * currencyRate.Rate)
-				acc.DayChange += (position.DayChange * currencyRate.Rate)
-				return acc
+			currencyRate := 1.0
+			if ctx.Config.Currency == "" {
+				currencyRate, _ = currency.GetCurrencyRateFromContext(ctx, position.Currency)
 			}
-			acc.Value += position.Value
-			acc.Cost += position.Cost
-			acc.DayChange += position.DayChange
+			acc.Value += (position.Value * currencyRate)
+			acc.Cost += (position.Cost * currencyRate)
+			acc.DayChange += (position.DayChange * currencyRate)
 			return acc
 		}, PositionSummary{}).
 		Result()

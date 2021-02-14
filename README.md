@@ -57,7 +57,7 @@ ticker -w NET,AAPL,TSLA
 |-i|--interval|`5`|Refresh interval in seconds|
 |-w|--watchlist||comma separated list of symbols to watch|
 |  |--show-tags||display currency, exchange name, and quote delay for each quote |
-|  |--show-fundamentals||display open price, previous close, and day range |iod 6: 12:37 – 1:09
+|  |--show-fundamentals||display open price, previous close, and day range |
 |  |--show-separator||layout with separators between each quote|
 |  |--show-summary||show total day change, total value, and total value change|
 |  |--sort||sort quotes on the UI. Set `alpha` to sort by ticker name. Set `value` to sort by position value. Default is sort by change percent|

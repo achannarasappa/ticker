@@ -28,6 +28,7 @@ const (
 )
 
 type Model struct {
+	ctx             c.Context
 	ready           bool
 	headerHeight    int
 	getQuotes       func() []quote.Quote
@@ -53,18 +54,19 @@ func (m Model) updateQuotes() tea.Cmd {
 	})
 }
 
-func NewModel(dep c.Dependencies, context c.Context) Model {
+func NewModel(dep c.Dependencies, ctx c.Context) Model {
 
-	aggregatedLots := position.GetLots(context.Config.Lots)
-	symbols := position.GetSymbols(context.Config.Watchlist, aggregatedLots)
+	aggregatedLots := position.GetLots(ctx.Config.Lots)
+	symbols := position.GetSymbols(ctx.Config.Watchlist, aggregatedLots)
 
 	return Model{
-		headerHeight:    getVerticalMargin(context.Config),
+		ctx:             ctx,
+		headerHeight:    getVerticalMargin(ctx.Config),
 		ready:           false,
-		requestInterval: context.Config.RefreshInterval,
+		requestInterval: ctx.Config.RefreshInterval,
 		getQuotes:       quote.GetQuotes(*dep.HttpClient, symbols),
 		getPositions:    position.GetPositions(aggregatedLots),
-		watchlist:       watchlist.NewModel(context.Config.Separate, context.Config.ExtraInfoExchange, context.Config.ExtraInfoFundamentals, context.Config.Sort),
+		watchlist:       watchlist.NewModel(ctx.Config.Separate, ctx.Config.ExtraInfoExchange, ctx.Config.ExtraInfoFundamentals, ctx.Config.Sort),
 		summary:         summary.NewModel(),
 	}
 }
@@ -116,7 +118,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		positions := m.getPositions(msg.quotes)
 		m.watchlist.Quotes = msg.quotes
 		m.watchlist.Positions = positions
-		m.summary.Summary = position.GetPositionSummary(positions)
+		m.summary.Summary = position.GetPositionSummary(m.ctx, positions)
 		m.lastUpdateTime = msg.time
 		if m.ready {
 			m.viewport.SetContent(m.watchlist.View())

@@ -17,8 +17,6 @@ import (
 	"github.com/achannarasappa/ticker/internal/cli"
 	. "github.com/achannarasappa/ticker/internal/cli"
 	c "github.com/achannarasappa/ticker/internal/common"
-	_ "github.com/achannarasappa/ticker/internal/currency"
-	. "github.com/achannarasappa/ticker/internal/position"
 	"github.com/achannarasappa/ticker/test/http"
 	_ "github.com/achannarasappa/ticker/test/http"
 )
@@ -403,7 +401,7 @@ var _ = Describe("Cli", func() {
 					It("should not return an error", func() {
 						options.Watchlist = ""
 						ctx.Config = c.Config{
-							Lots: []Lot{
+							Lots: []c.Lot{
 								{
 									Symbol:   "SYM",
 									UnitCost: 1.0,

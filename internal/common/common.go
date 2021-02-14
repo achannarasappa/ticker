@@ -2,7 +2,6 @@ package common
 
 import (
 	. "github.com/achannarasappa/ticker/internal/currency"
-	. "github.com/achannarasappa/ticker/internal/position"
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/afero"
 )
@@ -32,4 +31,10 @@ type Reference struct {
 type Dependencies struct {
 	Fs         afero.Fs
 	HttpClient *resty.Client
+}
+
+type Lot struct {
+	Symbol   string  `yaml:"symbol"`
+	UnitCost float64 `yaml:"unit_cost"`
+	Quantity float64 `yaml:"quantity"`
 }

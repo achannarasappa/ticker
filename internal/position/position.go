@@ -29,9 +29,10 @@ type PositionSummary struct {
 }
 
 type AggregatedLot struct {
-	Symbol   string
-	Cost     float64
-	Quantity float64
+	Symbol     string
+	Cost       float64
+	Quantity   float64
+	OrderIndex int
 }
 
 func GetLots(lots []c.Lot) map[string]AggregatedLot {
@@ -42,14 +43,15 @@ func GetLots(lots []c.Lot) map[string]AggregatedLot {
 
 	aggregatedLots := gubrak.
 		From(lots).
-		Reduce(func(acc map[string]AggregatedLot, lot c.Lot) map[string]AggregatedLot {
+		Reduce(func(acc map[string]AggregatedLot, lot c.Lot, i int) map[string]AggregatedLot {
 
 			aggregatedLot, ok := acc[lot.Symbol]
 			if !ok {
 				acc[lot.Symbol] = AggregatedLot{
-					Symbol:   lot.Symbol,
-					Cost:     lot.UnitCost * lot.Quantity,
-					Quantity: lot.Quantity,
+					Symbol:     lot.Symbol,
+					Cost:       lot.UnitCost * lot.Quantity,
+					Quantity:   lot.Quantity,
+					OrderIndex: i,
 				}
 				return acc
 			}

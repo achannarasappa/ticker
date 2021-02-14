@@ -74,7 +74,7 @@ ticker -w NET,AAPL,TSLA
 |  |--show-fundamentals||display open price, previous close, and day range |
 |  |--show-separator||layout with separators between each quote|
 |  |--show-summary||show total day change, total value, and total value change|
-|  |--sort||sort quotes on the UI. Set `alpha` to sort by ticker name. Set `value` to sort by position value. Default is sort by change percent|
+|  |--sort||sort quotes on the UI - options are change percent (default), `alpha`, `value`, and `user`|
 |  |--proxy||proxy URL for requests (default is none)|
 
 ## Configuration
@@ -115,6 +115,15 @@ lots:
 With  `--show-summary`, `--show-tags`, `--show-fundamentals`, and `--show-separator` options set, the layout and information displayed expands:
 
 <img src="./docs/ticker-all-options.png" />
+
+### Sorting
+
+It's possible to set a custom sort order with the `--sort` flag or `sort:` config option with these options:
+
+* Default - change percent with closed markets at the end
+* `alpha` to sort alphabetically by symbol
+* `value` to sort by position value
+* `user` to sort by the order defined in configuration with positions on top then lots
 
 ### Currency Conversion
 

@@ -20,8 +20,8 @@ var _ = Describe("Position", func() {
 			}
 			output := GetLots(input)
 			expected := map[string]AggregatedLot{
-				"ABNB": {Symbol: "ABNB", Cost: 5110, Quantity: 35},
-				"ARKW": {Symbol: "ARKW", Cost: 6090, Quantity: 40},
+				"ABNB": {Symbol: "ABNB", Cost: 5110, Quantity: 35, OrderIndex: 0},
+				"ARKW": {Symbol: "ARKW", Cost: 6090, Quantity: 40, OrderIndex: 1},
 			}
 			Expect(output).To(Equal(expected))
 		})

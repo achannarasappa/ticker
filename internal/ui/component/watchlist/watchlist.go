@@ -133,7 +133,8 @@ func extraInfoExchange(show bool, q Quote, targetCurrency string, width int) str
 	return "\n" + Line(
 		width,
 		Cell{
-			Text: tagText(currencyText) + " " + tagText(exchangeDelayText(q.ExchangeDelay)) + " " + tagText(q.ExchangeName),
+			Align: RightAlign,
+			Text:  tagText(currencyText) + " " + tagText(exchangeDelayText(q.ExchangeDelay)) + " " + tagText(q.ExchangeName),
 		},
 	)
 }
@@ -146,15 +147,28 @@ func extraInfoFundamentals(show bool, q Quote, width int) string {
 	return "\n" + Line(
 		width,
 		Cell{
-			Width: 25,
-			Text:  StyleNeutralFaded("Prev Close: ") + StyleNeutral(ConvertFloatToString(q.RegularMarketPreviousClose)),
+			Text:  dayRangeText(q.RegularMarketDayRange),
+			Align: RightAlign,
 		},
 		Cell{
-			Width: 20,
-			Text:  StyleNeutralFaded("Open: ") + StyleNeutral(ConvertFloatToString(q.RegularMarketOpen)),
+			Width: 15,
+			Text:  StyleNeutralFaded("Prev Close: "),
+			Align: RightAlign,
 		},
 		Cell{
-			Text: dayRangeText(q.RegularMarketDayRange),
+			Width: 10,
+			Text:  StyleNeutral(ConvertFloatToString(q.RegularMarketPreviousClose)),
+			Align: RightAlign,
+		},
+		Cell{
+			Width: 15,
+			Text:  StyleNeutralFaded("Open: "),
+			Align: RightAlign,
+		},
+		Cell{
+			Width: 10,
+			Text:  StyleNeutral(ConvertFloatToString(q.RegularMarketOpen)),
+			Align: RightAlign,
 		},
 	)
 }
@@ -167,21 +181,32 @@ func extraInfoHoldings(show bool, p Position, width int) string {
 	return "\n" + Line(
 		width,
 		Cell{
-			Text: "",
-		},
-		Cell{
-			Width: 25,
-			Text:  StyleNeutralFaded("Weight: ") + StyleNeutral(ConvertFloatToString(p.Weight)) + "%",
+			Text:  StyleNeutralFaded("Weight: "),
 			Align: RightAlign,
 		},
 		Cell{
-			Width: 25,
-			Text:  StyleNeutralFaded("Avg. Cost: ") + StyleNeutral(ConvertFloatToString(p.AverageCost)),
+			Width: 7,
+			Text:  StyleNeutral(ConvertFloatToString(p.Weight)) + "%",
 			Align: RightAlign,
 		},
 		Cell{
-			Width: 25,
-			Text:  StyleNeutralFaded("Quantity: ") + StyleNeutral(ConvertFloatToString(p.Quantity)),
+			Width: 15,
+			Text:  StyleNeutralFaded("Avg. Cost: "),
+			Align: RightAlign,
+		},
+		Cell{
+			Width: 10,
+			Text:  StyleNeutral(ConvertFloatToString(p.AverageCost)),
+			Align: RightAlign,
+		},
+		Cell{
+			Width: 15,
+			Text:  StyleNeutralFaded("Quantity: "),
+			Align: RightAlign,
+		},
+		Cell{
+			Width: 10,
+			Text:  StyleNeutral(ConvertFloatToString(p.Quantity)),
 			Align: RightAlign,
 		},
 	)

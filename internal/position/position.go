@@ -96,6 +96,7 @@ func GetPositions(aggregatedLots map[string]AggregatedLot) func([]Quote) map[str
 						DayChangePercent:   (dayChange / valuePreviousClose) * 100,
 						TotalChange:        totalChange,
 						TotalChangePercent: (totalChange / aggLot.Cost) * 100,
+						Currency:           quote.Currency,
 					})
 				}
 				return acc

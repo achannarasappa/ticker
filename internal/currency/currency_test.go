@@ -4,6 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	c "github.com/achannarasappa/ticker/internal/common"
 	. "github.com/achannarasappa/ticker/internal/currency"
 	. "github.com/achannarasappa/ticker/test/http"
 )
@@ -15,8 +16,8 @@ var _ = Describe("Currency", func() {
 			MockResponse(ResponseParameters{Symbol: "VOW3.DE", Currency: "EUR", Price: 0.0})
 			MockResponse(ResponseParameters{Symbol: "EURUSD=X", Currency: "USD", Price: 1.2})
 			output := GetCurrencyRates(*client, []string{"VOW3.DE"}, "USD")
-			Expect(output).To(Equal(CurrencyRates{
-				"EUR": CurrencyRate{
+			Expect(output).To(Equal(c.CurrencyRates{
+				"EUR": c.CurrencyRate{
 					FromCurrency: "EUR",
 					ToCurrency:   "USD",
 					Rate:         1.2,
@@ -31,8 +32,8 @@ var _ = Describe("Currency", func() {
 				MockResponse(ResponseParameters{Symbol: "VOW3.DE", Currency: "EUR", Price: 0.0})
 				MockResponse(ResponseParameters{Symbol: "EURUSD=X", Currency: "USD", Price: 1.2})
 				output := GetCurrencyRates(*client, []string{"VOW3.DE"}, "")
-				Expect(output).To(Equal(CurrencyRates{
-					"EUR": CurrencyRate{
+				Expect(output).To(Equal(c.CurrencyRates{
+					"EUR": c.CurrencyRate{
 						FromCurrency: "EUR",
 						ToCurrency:   "USD",
 						Rate:         1.2,
@@ -47,7 +48,7 @@ var _ = Describe("Currency", func() {
 
 				MockResponse(ResponseParameters{Symbol: "VOW3.DE", Currency: "EUR", Price: 0.0})
 				output := GetCurrencyRates(*client, []string{"VOW3.DE"}, "EUR")
-				Expect(output).To(Equal(CurrencyRates{}))
+				Expect(output).To(Equal(c.CurrencyRates{}))
 
 			})
 		})

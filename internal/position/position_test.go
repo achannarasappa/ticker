@@ -2,7 +2,6 @@ package position_test
 
 import (
 	c "github.com/achannarasappa/ticker/internal/common"
-	"github.com/achannarasappa/ticker/internal/currency"
 	. "github.com/achannarasappa/ticker/internal/position"
 	. "github.com/achannarasappa/ticker/internal/quote"
 
@@ -131,8 +130,8 @@ var _ = Describe("Position", func() {
 			}
 			inputCtx := c.Context{
 				Reference: c.Reference{
-					CurrencyRates: currency.CurrencyRates{
-						"EUR": currency.CurrencyRate{
+					CurrencyRates: c.CurrencyRates{
+						"EUR": c.CurrencyRate{
 							FromCurrency: "EUR",
 							ToCurrency:   "USD",
 							Rate:         1.5,

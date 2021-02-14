@@ -1,7 +1,6 @@
 package common
 
 import (
-	. "github.com/achannarasappa/ticker/internal/currency"
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/afero"
 )
@@ -37,4 +36,12 @@ type Lot struct {
 	Symbol   string  `yaml:"symbol"`
 	UnitCost float64 `yaml:"unit_cost"`
 	Quantity float64 `yaml:"quantity"`
+}
+
+type CurrencyRates map[string]CurrencyRate
+
+type CurrencyRate struct {
+	FromCurrency string
+	ToCurrency   string
+	Rate         float64
 }

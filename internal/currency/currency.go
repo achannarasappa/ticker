@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/go-resty/resty/v2"
 	. "github.com/novalagung/gubrak/v2"
 )
@@ -12,14 +13,6 @@ type ResponseQuote struct {
 	Symbol             string  `json:"symbol"`
 	Currency           string  `json:"currency"`
 	RegularMarketPrice float64 `json:"regularMarketPrice"`
-}
-
-type CurrencyRates map[string]CurrencyRate
-
-type CurrencyRate struct {
-	FromCurrency string
-	ToCurrency   string
-	Rate         float64
 }
 
 type Response struct {
@@ -33,11 +26,11 @@ func getCurrencyPair(pair string) (string, string) {
 	return pair[:3], pair[3:6]
 }
 
-func transformResponseCurrency(responseQuote ResponseQuote) CurrencyRate {
+func transformResponseCurrency(responseQuote ResponseQuote) c.CurrencyRate {
 
 	fromCurrency, toCurrency := getCurrencyPair(responseQuote.Symbol)
 
-	return CurrencyRate{
+	return c.CurrencyRate{
 		FromCurrency: fromCurrency,
 		ToCurrency:   toCurrency,
 		Rate:         responseQuote.RegularMarketPrice,
@@ -45,19 +38,19 @@ func transformResponseCurrency(responseQuote ResponseQuote) CurrencyRate {
 
 }
 
-func transformResponseCurrencies(responseQuotes []ResponseQuote) CurrencyRates {
+func transformResponseCurrencies(responseQuotes []ResponseQuote) c.CurrencyRates {
 
-	currencyRates := From(responseQuotes).Reduce(func(acc CurrencyRates, responseQuote ResponseQuote) CurrencyRates {
+	currencyRates := From(responseQuotes).Reduce(func(acc c.CurrencyRates, responseQuote ResponseQuote) c.CurrencyRates {
 		currencyRate := transformResponseCurrency(responseQuote)
 		acc[currencyRate.FromCurrency] = currencyRate
 		return acc
-	}, CurrencyRates{}).Result()
+	}, c.CurrencyRates{}).Result()
 
-	return (currencyRates).(CurrencyRates)
+	return (currencyRates).(c.CurrencyRates)
 
 }
 
-func getCurrencyRatesFromCurrencyPairSymbols(client resty.Client, currencyPairSymbols []string) CurrencyRates {
+func getCurrencyRatesFromCurrencyPairSymbols(client resty.Client, currencyPairSymbols []string) c.CurrencyRates {
 
 	symbolsString := strings.Join(currencyPairSymbols, ",")
 	url := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=%s", symbolsString)
@@ -96,7 +89,7 @@ func getCurrencyPairSymbols(client resty.Client, symbols []string, targetCurrenc
 	return transformResponseCurrencyPairs((res.Result().(*Response)).QuoteResponse.Quotes, targetCurrency)
 }
 
-func GetCurrencyRates(client resty.Client, symbols []string, targetCurrency string) CurrencyRates {
+func GetCurrencyRates(client resty.Client, symbols []string, targetCurrency string) c.CurrencyRates {
 
 	if targetCurrency == "" {
 		targetCurrency = "USD"
@@ -105,7 +98,7 @@ func GetCurrencyRates(client resty.Client, symbols []string, targetCurrency stri
 	currencyPairSymbols := getCurrencyPairSymbols(client, symbols, targetCurrency)
 
 	if len(currencyPairSymbols) <= 0 {
-		return CurrencyRates{}
+		return c.CurrencyRates{}
 	}
 
 	return getCurrencyRatesFromCurrencyPairSymbols(client, currencyPairSymbols)

@@ -88,6 +88,7 @@ show-tags: true
 show-fundamentals: true
 show-separator: true
 interval: 5
+currency: USD
 watchlist:
   - NET
   - TEAM
@@ -114,6 +115,17 @@ lots:
 With  `--show-summary`, `--show-tags`, `--show-fundamentals`, and `--show-separator` options set, the layout and information displayed expands:
 
 <img src="./docs/ticker-all-options.png" />
+
+### Currency Conversion
+
+`ticker` supports converting from the exchange's currency to a local currency. This can be set by setting the `currency` property in `.ticker.yaml` to a [ISO 4217 3-digit currency code](https://docs.1010data.com/1010dataReferenceManual/DataTypesAndFormats/currencyUnitCodes.html).
+
+<img src="./docs/ticker-currency.png" />
+
+* When a `currency` is defined, all values are converted including summary, quote, and position
+* Add cost basis lots in the currency of the exchange - these will be converted automatically when `currency` is defined
+* If a `currency` is not set (default behavior) and the `show-summary` option is enabled, the summary will be calculated in USD regardless of the exchange currency to avoid mixing currencies
+* Currencies are retrieved only once at start time - currency exchange rates do fluctuate over time and thus converted values may vary depending on when ticker is started 
 
 ## Notes
 

@@ -406,6 +406,41 @@ var _ = Describe("Watchlist", func() {
 				Expect(removeFormatting(m.View())).To(Equal(expected))
 			})
 		})
+
+		When("the currency is being converted", func() {
+			It("should show an indicator with the to and  from currency codes", func() {
+				m := NewModel(c.Context{
+					Config: c.Config{
+						ExtraInfoExchange: true,
+						Currency:          "EUR",
+					},
+				})
+				m.Quotes = []Quote{
+					{
+						ResponseQuote: ResponseQuote{
+							Symbol:        "APPL",
+							ShortName:     "Apple, Inc",
+							Currency:      "USD",
+							ExchangeName:  "NASDAQ",
+							ExchangeDelay: 0,
+						},
+						Price:                   5000.0,
+						Change:                  1000.0,
+						ChangePercent:           20.0,
+						IsActive:                true,
+						IsRegularTradingSession: true,
+					},
+				}
+				m.Context.Config.Currency = "EUR"
+				expected := strings.Join([]string{
+					"APPL                       ⦿                                             5000.00",
+					"Apple, Inc                                                   ↑ 1000.00  (20.00%)",
+					" USD → EUR   Real-Time   NASDAQ                                                 ",
+				}, "\n")
+				Expect(removeFormatting(m.View())).To(Equal(expected))
+			})
+
+		})
 	})
 
 	When("the option for extra fundamental information is set", func() {

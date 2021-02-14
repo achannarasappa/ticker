@@ -22,12 +22,14 @@ type Model struct {
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
 	Sorter                Sorter
+	Context               c.Context
 }
 
 // NewModel returns a model with default values.
 func NewModel(ctx c.Context) Model {
 	return Model{
 		Width:                 80,
+		Context:               ctx,
 		Separate:              ctx.Config.Separate,
 		ExtraInfoExchange:     ctx.Config.ExtraInfoExchange,
 		ExtraInfoFundamentals: ctx.Config.ExtraInfoFundamentals,
@@ -50,7 +52,7 @@ func (m Model) View() string {
 				[]string{
 					item(quote, m.Positions[quote.Symbol], m.Width),
 					extraInfoFundamentals(m.ExtraInfoFundamentals, quote, m.Width),
-					extraInfoExchange(m.ExtraInfoExchange, quote, m.Width),
+					extraInfoExchange(m.ExtraInfoExchange, quote, m.Context.Config.Currency, m.Width),
 				},
 				"",
 			),
@@ -116,14 +118,21 @@ func item(q Quote, p Position, width int) string {
 	)
 }
 
-func extraInfoExchange(show bool, q Quote, width int) string {
+func extraInfoExchange(show bool, q Quote, targetCurrency string, width int) string {
 	if !show {
 		return ""
 	}
+
+	currencyText := q.Currency
+
+	if targetCurrency != "" && targetCurrency != q.Currency {
+		currencyText = q.Currency + " → " + targetCurrency
+	}
+
 	return "\n" + Line(
 		width,
 		Cell{
-			Text: tagText(q.Currency) + " " + tagText(exchangeDelayText(q.ExchangeDelay)) + " " + tagText(q.ExchangeName),
+			Text: tagText(currencyText) + " " + tagText(exchangeDelayText(q.ExchangeDelay)) + " " + tagText(q.ExchangeName),
 		},
 	)
 }

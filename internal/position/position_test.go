@@ -128,28 +128,82 @@ var _ = Describe("Position", func() {
 					Currency:  "EUR",
 				},
 			}
-			inputCtx := c.Context{
-				Reference: c.Reference{
-					CurrencyRates: c.CurrencyRates{
-						"EUR": c.CurrencyRate{
-							FromCurrency: "EUR",
-							ToCurrency:   "USD",
-							Rate:         1.5,
-						},
-					},
-				},
-			}
+			inputCtx := c.Context{}
 			output := GetPositionSummary(inputCtx, inputPositions)
 			expected := PositionSummary{
-				Value:            7000,
-				Cost:             3500,
-				Change:           3500,
-				DayChange:        700,
+				Value:            6000,
+				Cost:             3000,
+				Change:           3000,
+				DayChange:        600,
 				ChangePercent:    200,
 				DayChangePercent: 10,
 			}
 
 			Expect(output).To(Equal(expected))
+		})
+
+		When("a target currency is set", func() {
+			It("converts all positions to that currency", func() {
+				inputPositions := map[string]Position{
+					"ARKW": {
+						AggregatedLot: AggregatedLot{
+							Symbol:   "ARKW",
+							Cost:     1000,
+							Quantity: 10,
+						},
+						Value:     2000,
+						DayChange: 200,
+						Currency:  "USD",
+					},
+					"RBLX": {
+						AggregatedLot: AggregatedLot{
+							Symbol:   "RBLX",
+							Cost:     1000,
+							Quantity: 10,
+						},
+						Value:     2000,
+						DayChange: 200,
+						Currency:  "GBP",
+					},
+					"ANI": {
+						AggregatedLot: AggregatedLot{
+							Symbol:   "ANI",
+							Cost:     1000,
+							Quantity: 10,
+						},
+						Value:     2000,
+						DayChange: 200,
+						Currency:  "EUR",
+					},
+				}
+				inputCtx := c.Context{
+					Reference: c.Reference{
+						CurrencyRates: c.CurrencyRates{
+							"USD": c.CurrencyRate{
+								FromCurrency: "USD",
+								ToCurrency:   "EUR",
+								Rate:         4,
+							},
+							"GBP": c.CurrencyRate{
+								FromCurrency: "GBP",
+								ToCurrency:   "EUR",
+								Rate:         2,
+							},
+						},
+					},
+				}
+				output := GetPositionSummary(inputCtx, inputPositions)
+				expected := PositionSummary{
+					Value:            14000,
+					Cost:             7000,
+					Change:           7000,
+					DayChange:        1400,
+					ChangePercent:    200,
+					DayChangePercent: 10,
+				}
+
+				Expect(output).To(Equal(expected))
+			})
 		})
 	})
 })

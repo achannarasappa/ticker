@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
+	c "github.com/achannarasappa/ticker/internal/common"
 	. "github.com/achannarasappa/ticker/internal/position"
 	. "github.com/achannarasappa/ticker/internal/quote"
 	. "github.com/achannarasappa/ticker/internal/ui/component/watchlist"
@@ -37,7 +38,14 @@ var _ = Describe("Watchlist", func() {
 				}
 			}
 
-			m := NewModel(false, false, false, "")
+			m := NewModel(c.Context{
+				Config: c.Config{
+					Separate:              false,
+					ExtraInfoExchange:     false,
+					ExtraInfoFundamentals: false,
+					Sort:                  "",
+				},
+			})
 			m.Width = 80
 			m.Positions = positionMap
 			m.Quotes = []Quote{
@@ -201,7 +209,14 @@ var _ = Describe("Watchlist", func() {
 	When("there are more than one symbols on the watchlist", func() {
 		It("should render a watchlist with each symbol", func() {
 
-			m := NewModel(false, false, false, "")
+			m := NewModel(c.Context{
+				Config: c.Config{
+					Separate:              false,
+					ExtraInfoExchange:     false,
+					ExtraInfoFundamentals: false,
+					Sort:                  "",
+				},
+			})
 			m.Width = 80
 			m.Quotes = []Quote{
 				{
@@ -265,7 +280,14 @@ var _ = Describe("Watchlist", func() {
 		When("the show-separator layout flag is set", func() {
 			It("should render a watchlist with separators", func() {
 
-				m := NewModel(true, false, false, "")
+				m := NewModel(c.Context{
+					Config: c.Config{
+						Separate:              true,
+						ExtraInfoExchange:     false,
+						ExtraInfoFundamentals: false,
+						Sort:                  "",
+					},
+				})
 				m.Quotes = []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -318,7 +340,14 @@ var _ = Describe("Watchlist", func() {
 
 	When("the option for extra exchange information is set", func() {
 		It("should render extra exchange information", func() {
-			m := NewModel(true, true, false, "")
+			m := NewModel(c.Context{
+				Config: c.Config{
+					Separate:              true,
+					ExtraInfoExchange:     true,
+					ExtraInfoFundamentals: false,
+					Sort:                  "",
+				},
+			})
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -345,7 +374,14 @@ var _ = Describe("Watchlist", func() {
 
 		When("the exchange has a delay", func() {
 			It("should render extra exchange information with the delay amount", func() {
-				m := NewModel(true, true, false, "")
+				m := NewModel(c.Context{
+					Config: c.Config{
+						Separate:              true,
+						ExtraInfoExchange:     true,
+						ExtraInfoFundamentals: false,
+						Sort:                  "",
+					},
+				})
 				m.Quotes = []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -374,7 +410,14 @@ var _ = Describe("Watchlist", func() {
 
 	When("the option for extra fundamental information is set", func() {
 		It("should render extra fundamental information", func() {
-			m := NewModel(true, false, true, "")
+			m := NewModel(c.Context{
+				Config: c.Config{
+					Separate:              true,
+					ExtraInfoExchange:     false,
+					ExtraInfoFundamentals: true,
+					Sort:                  "",
+				},
+			})
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -401,7 +444,14 @@ var _ = Describe("Watchlist", func() {
 
 		When("there is no day range", func() {
 			It("should not render the day range field", func() {
-				m := NewModel(true, false, true, "")
+				m := NewModel(c.Context{
+					Config: c.Config{
+						Separate:              true,
+						ExtraInfoExchange:     false,
+						ExtraInfoFundamentals: true,
+						Sort:                  "",
+					},
+				})
 				m.Quotes = []Quote{
 					{
 						ResponseQuote: ResponseQuote{
@@ -429,7 +479,14 @@ var _ = Describe("Watchlist", func() {
 
 	When("the option for sort is set to 'alpha'", func() {
 		It("should render quotes alphabetically", func() {
-			m := NewModel(true, false, false, "alpha")
+			m := NewModel(c.Context{
+				Config: c.Config{
+					Separate:              true,
+					ExtraInfoExchange:     false,
+					ExtraInfoFundamentals: false,
+					Sort:                  "alpha",
+				},
+			})
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -484,7 +541,14 @@ var _ = Describe("Watchlist", func() {
 
 	When("the option for sort is set to 'value'", func() {
 		It("should render quotes by position value, with inactive quotes last", func() {
-			m := NewModel(true, false, false, "value")
+			m := NewModel(c.Context{
+				Config: c.Config{
+					Separate:              true,
+					ExtraInfoExchange:     false,
+					ExtraInfoFundamentals: false,
+					Sort:                  "value",
+				},
+			})
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -586,7 +650,14 @@ var _ = Describe("Watchlist", func() {
 
 	When("the sort option isn't set", func() {
 		It("should render quotes by change percent", func() {
-			m := NewModel(true, false, false, "")
+			m := NewModel(c.Context{
+				Config: c.Config{
+					Separate:              true,
+					ExtraInfoExchange:     false,
+					ExtraInfoFundamentals: false,
+					Sort:                  "",
+				},
+			})
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -641,14 +712,28 @@ var _ = Describe("Watchlist", func() {
 
 	When("no quotes are set", func() {
 		It("should render an empty watchlist", func() {
-			m := NewModel(false, false, false, "")
+			m := NewModel(c.Context{
+				Config: c.Config{
+					Separate:              false,
+					ExtraInfoExchange:     false,
+					ExtraInfoFundamentals: false,
+					Sort:                  "",
+				},
+			})
 			Expect(m.View()).To(Equal(""))
 		})
 	})
 
 	When("the window width is less than the minimum", func() {
 		It("should render an empty watchlist", func() {
-			m := NewModel(false, false, false, "")
+			m := NewModel(c.Context{
+				Config: c.Config{
+					Separate:              false,
+					ExtraInfoExchange:     false,
+					ExtraInfoFundamentals: false,
+					Sort:                  "",
+				},
+			})
 			m.Width = 70
 			Expect(m.View()).To(Equal("Terminal window too narrow to render content\nResize to fix (70/80)"))
 		})

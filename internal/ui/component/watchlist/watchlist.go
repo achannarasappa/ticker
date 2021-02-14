@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	c "github.com/achannarasappa/ticker/internal/common"
 	. "github.com/achannarasappa/ticker/internal/position"
 	. "github.com/achannarasappa/ticker/internal/quote"
 	. "github.com/achannarasappa/ticker/internal/sorter"
@@ -24,13 +25,13 @@ type Model struct {
 }
 
 // NewModel returns a model with default values.
-func NewModel(separate bool, extraInfoExchange bool, extraInfoFundamentals bool, sort string) Model {
+func NewModel(ctx c.Context) Model {
 	return Model{
 		Width:                 80,
-		Separate:              separate,
-		ExtraInfoExchange:     extraInfoExchange,
-		ExtraInfoFundamentals: extraInfoFundamentals,
-		Sorter:                NewSorter(sort),
+		Separate:              ctx.Config.Separate,
+		ExtraInfoExchange:     ctx.Config.ExtraInfoExchange,
+		ExtraInfoFundamentals: ctx.Config.ExtraInfoFundamentals,
+		Sorter:                NewSorter(ctx.Config.Sort),
 	}
 }
 

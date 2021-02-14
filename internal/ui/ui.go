@@ -66,7 +66,7 @@ func NewModel(dep c.Dependencies, ctx c.Context) Model {
 		requestInterval: ctx.Config.RefreshInterval,
 		getQuotes:       quote.GetQuotes(*dep.HttpClient, symbols),
 		getPositions:    position.GetPositions(aggregatedLots),
-		watchlist:       watchlist.NewModel(ctx.Config.Separate, ctx.Config.ExtraInfoExchange, ctx.Config.ExtraInfoFundamentals, ctx.Config.Sort),
+		watchlist:       watchlist.NewModel(ctx),
 		summary:         summary.NewModel(),
 	}
 }

@@ -67,7 +67,7 @@ var _ = Describe("Cli", func() {
 		}
 		dep = c.Dependencies{
 			Fs:         afero.NewMemMapFs(),
-			HttpClient: *client,
+			HttpClient: client,
 		}
 		ctx = c.Context{}
 
@@ -285,7 +285,7 @@ var _ = Describe("Cli", func() {
 			BeforeEach(func() {
 				depLocal = c.Dependencies{
 					Fs:         afero.NewMemMapFs(),
-					HttpClient: *client,
+					HttpClient: client,
 				}
 				afero.WriteFile(depLocal.Fs, ".ticker.yaml", []byte("watchlist:\n  - NOK"), 0644)
 			})

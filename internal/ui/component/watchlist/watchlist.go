@@ -67,7 +67,7 @@ func separator(isSeparated bool, width int) string {
 		return "\n" + Line(
 			width,
 			Cell{
-				Text: StyleLine(strings.Repeat("⎯", width)),
+				Text: StyleLine(strings.Repeat("─", width)),
 			},
 		) + "\n"
 	}
@@ -179,11 +179,11 @@ func tagText(text string) string {
 
 func marketStateText(q Quote) string {
 	if q.IsRegularTradingSession {
-		return StyleNeutralFaded(" ⦿  ")
+		return StyleNeutralFaded(" ●  ")
 	}
 
 	if !q.IsRegularTradingSession && q.IsActive {
-		return StyleNeutralFaded(" ⦾  ")
+		return StyleNeutralFaded(" ○  ")
 	}
 
 	return ""

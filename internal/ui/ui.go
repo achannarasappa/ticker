@@ -164,7 +164,7 @@ func footer(width int, time string) string {
 			Text:  styleHelp("q: exit ↑: scroll up ↓: scroll down"),
 		},
 		Cell{
-			Text:  styleHelp("⟳  " + time),
+			Text:  styleHelp("↻  " + time),
 			Align: RightAlign,
 		},
 	)

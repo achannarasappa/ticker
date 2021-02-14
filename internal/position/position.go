@@ -35,6 +35,17 @@ type AggregatedLot struct {
 	OrderIndex int
 }
 
+type positionSummaryBase struct {
+	value     float64
+	cost      float64
+	dayChange float64
+}
+
+type positionAcc struct {
+	positionSummaryBase positionSummaryBase
+	positions           []Position
+}
+
 func GetLots(lots []c.Lot) map[string]AggregatedLot {
 
 	if lots == nil {
@@ -83,58 +94,63 @@ func GetSymbols(symbols []string, aggregatedLots map[string]AggregatedLot) []str
 
 }
 
-func GetPositions(ctx c.Context, aggregatedLots map[string]AggregatedLot) func([]Quote) map[string]Position {
-	return func(quotes []Quote) map[string]Position {
+func GetPositions(ctx c.Context, aggregatedLots map[string]AggregatedLot) func([]Quote) (map[string]Position, PositionSummary) {
+	return func(quotes []Quote) (map[string]Position, PositionSummary) {
 
-		positions := gubrak.
+		positionsReduced := (gubrak.
 			From(quotes).
-			Reduce(func(acc []Position, quote Quote) []Position {
+			Reduce(func(acc positionAcc, quote Quote) positionAcc {
+
 				if aggLot, ok := aggregatedLots[quote.Symbol]; ok {
-					currencyRate, currencyCode := currency.GetCurrencyRateFromContext(ctx, quote.Currency)
+
+					currencyRate, currencyRateDefault, currencyCode := currency.GetCurrencyRateFromContext(ctx, quote.Currency)
+
 					totalChange := (quote.Price * aggLot.Quantity) - (aggLot.Cost * currencyRate)
-					return append(acc, Position{
+					totalChangePercant := (totalChange / (aggLot.Cost * currencyRate)) * 100
+
+					position := Position{
 						AggregatedLot:      aggLot,
 						Value:              quote.Price * aggLot.Quantity,
 						DayChange:          quote.Change * aggLot.Quantity,
 						DayChangePercent:   quote.ChangePercent,
 						TotalChange:        totalChange,
-						TotalChangePercent: (totalChange / (aggLot.Cost * currencyRate)) * 100,
+						TotalChangePercent: totalChangePercant,
 						Currency:           quote.Currency,
 						CurrencyConverted:  currencyCode,
-					})
+					}
+
+					acc.positions = append(acc.positions, position)
+					acc.positionSummaryBase = getPositionSummaryBase(position, acc.positionSummaryBase, currencyRateDefault)
+
 				}
+
 				return acc
-			}, make([]Position, 0)).
+
+			}, positionAcc{}).
+			Result()).(positionAcc)
+
+		positionSummary := PositionSummary{
+			Value:            positionsReduced.positionSummaryBase.value,
+			Cost:             positionsReduced.positionSummaryBase.cost,
+			Change:           positionsReduced.positionSummaryBase.value - positionsReduced.positionSummaryBase.cost,
+			DayChange:        positionsReduced.positionSummaryBase.cost,
+			ChangePercent:    (positionsReduced.positionSummaryBase.value / positionsReduced.positionSummaryBase.cost) * 100,
+			DayChangePercent: (positionsReduced.positionSummaryBase.dayChange / positionsReduced.positionSummaryBase.value) * 100,
+		}
+
+		positions := gubrak.From(positionsReduced.positions).
 			KeyBy(func(position Position) string {
 				return position.Symbol
 			}).
 			Result()
 
-		return (positions).(map[string]Position)
+		return (positions).(map[string]Position), positionSummary
 	}
 }
 
-func GetPositionSummary(ctx c.Context, positions map[string]Position) PositionSummary {
-
-	positionValueCost := gubrak.From(positions).
-		Reduce(func(acc PositionSummary, position Position, key string) PositionSummary {
-			currencyRate := 1.0
-			if ctx.Config.Currency == "" {
-				currencyRate, _ = currency.GetCurrencyRateFromContext(ctx, position.Currency)
-			}
-			acc.Value += (position.Value * currencyRate)
-			acc.Cost += (position.Cost * currencyRate)
-			acc.DayChange += (position.DayChange * currencyRate)
-			return acc
-		}, PositionSummary{}).
-		Result()
-
-	positionSummary := (positionValueCost).(PositionSummary)
-
-	positionSummary.Change = positionSummary.Value - positionSummary.Cost
-	positionSummary.ChangePercent = (positionSummary.Value / positionSummary.Cost) * 100
-	positionSummary.DayChangePercent = (positionSummary.DayChange / positionSummary.Value) * 100
-
-	return positionSummary
-
+func getPositionSummaryBase(position Position, acc positionSummaryBase, currencyRateDefault float64) positionSummaryBase {
+	acc.value += (position.Value * currencyRateDefault)
+	acc.cost += (position.Cost * currencyRateDefault)
+	acc.dayChange += (position.DayChange * currencyRateDefault)
+	return acc
 }

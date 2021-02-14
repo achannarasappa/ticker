@@ -49,7 +49,7 @@ type Response struct {
 
 func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 
-	currencyRate, currencyCode := currency.GetCurrencyRateFromContext(ctx, responseQuote.Currency)
+	currencyRate, _, currencyCode := currency.GetCurrencyRateFromContext(ctx, responseQuote.Currency)
 
 	if responseQuote.MarketState == "REGULAR" {
 		return Quote{

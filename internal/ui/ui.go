@@ -32,7 +32,7 @@ type Model struct {
 	ready           bool
 	headerHeight    int
 	getQuotes       func() []quote.Quote
-	getPositions    func([]quote.Quote) map[string]position.Position
+	getPositions    func([]quote.Quote) (map[string]position.Position, position.PositionSummary)
 	requestInterval int
 	viewport        viewport.Model
 	watchlist       watchlist.Model
@@ -115,10 +115,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetContent(m.watchlist.View())
 
 	case QuoteMsg:
-		positions := m.getPositions(msg.quotes)
+		positions, positionSummary := m.getPositions(msg.quotes)
 		m.watchlist.Quotes = msg.quotes
 		m.watchlist.Positions = positions
-		m.summary.Summary = position.GetPositionSummary(m.ctx, positions)
+		m.summary.Summary = positionSummary
 		m.lastUpdateTime = msg.time
 		if m.ready {
 			m.viewport.SetContent(m.watchlist.View())

@@ -55,7 +55,7 @@ var _ = Describe("Currency", func() {
 	})
 
 	Describe("GetCurrencyRateFromContext", func() {
-		It("should return identity currency information when a rate is not found in reference data", func() {
+		It("should return default currency information when a rate is not found in reference data", func() {
 			inputCtx := c.Context{
 				Reference: c.Reference{
 					CurrencyRates: c.CurrencyRates{
@@ -72,15 +72,19 @@ var _ = Describe("Currency", func() {
 					},
 				},
 			}
-			outputRate, outputCurrencyCode := GetCurrencyRateFromContext(inputCtx, "EUR")
+			outputRate, outputDefaultRate, outputCurrencyCode := GetCurrencyRateFromContext(inputCtx, "EUR")
 			Expect(outputRate).To(Equal(1.0))
+			Expect(outputDefaultRate).To(Equal(1.0))
 			Expect(outputCurrencyCode).To(Equal("EUR"))
 		})
 	})
 
 	When("there is a matching currency in reference data", func() {
-		It("should return information needed to convert currency", func() {
+		It("should return rate to convert", func() {
 			inputCtx := c.Context{
+				Config: c.Config{
+					Currency: "EUR",
+				},
 				Reference: c.Reference{
 					CurrencyRates: c.CurrencyRates{
 						"USD": c.CurrencyRate{
@@ -96,8 +100,37 @@ var _ = Describe("Currency", func() {
 					},
 				},
 			}
-			outputRate, outputCurrencyCode := GetCurrencyRateFromContext(inputCtx, "USD")
+			outputRate, outputDefaultRate, outputCurrencyCode := GetCurrencyRateFromContext(inputCtx, "USD")
 			Expect(outputRate).To(Equal(1.25))
+			Expect(outputDefaultRate).To(Equal(1.25))
+			Expect(outputCurrencyCode).To(Equal("EUR"))
+		})
+	})
+
+	When("the currency is not set", func() {
+		It("should return rate to convert", func() {
+			inputCtx := c.Context{
+				Config: c.Config{
+					Currency: "",
+				},
+				Reference: c.Reference{
+					CurrencyRates: c.CurrencyRates{
+						"USD": c.CurrencyRate{
+							FromCurrency: "USD",
+							ToCurrency:   "EUR",
+							Rate:         1.25,
+						},
+						"GBP": c.CurrencyRate{
+							FromCurrency: "GBP",
+							ToCurrency:   "EUR",
+							Rate:         2,
+						},
+					},
+				},
+			}
+			outputRate, outputDefaultRate, outputCurrencyCode := GetCurrencyRateFromContext(inputCtx, "USD")
+			Expect(outputRate).To(Equal(1.0))
+			Expect(outputDefaultRate).To(Equal(1.25))
 			Expect(outputCurrencyCode).To(Equal("EUR"))
 		})
 	})

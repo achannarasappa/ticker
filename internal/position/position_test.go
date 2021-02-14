@@ -57,7 +57,9 @@ var _ = Describe("Position", func() {
 		It("should return a map of positions", func() {
 			inputAggregatedLots := map[string]AggregatedLot{
 				"ABNB": {Symbol: "ABNB", Cost: 5110, Quantity: 35},
-				"ARKW": {Symbol: "ARKW", Cost: 4000, Quantity: 40},
+				"ARKW": {Symbol: "ARKW", Cost: 1000, Quantity: 10},
+				"ANI":  {Symbol: "ANI", Cost: 1000, Quantity: 10},
+				"TW":   {Symbol: "TW", Cost: 2000, Quantity: 20},
 			}
 			inputQuotes := []Quote{
 				{
@@ -65,8 +67,24 @@ var _ = Describe("Position", func() {
 						Symbol:                     "ARKW",
 						RegularMarketPreviousClose: 100,
 					},
+					Price:  120.0,
+					Change: 20.0,
+				},
+				{
+					ResponseQuote: ResponseQuote{
+						Symbol:                     "TW",
+						RegularMarketPreviousClose: 200,
+					},
 					Price:  200.0,
-					Change: 50.0,
+					Change: 20.0,
+				},
+				{
+					ResponseQuote: ResponseQuote{
+						Symbol:                     "ANI",
+						RegularMarketPreviousClose: 25,
+					},
+					Price:  25.0,
+					Change: 2.5,
 				},
 				{
 					ResponseQuote: ResponseQuote{
@@ -78,44 +96,34 @@ var _ = Describe("Position", func() {
 				},
 			}
 			inputCtx := c.Context{}
-			output := GetPositions(inputCtx, inputAggregatedLots)(inputQuotes)
-			expected := map[string]Position{
+			outputPositions, outputPositionSummary := GetPositions(inputCtx, inputAggregatedLots)(inputQuotes)
+			expectedPosition := map[string]Position{
 				"ARKW": {
 					AggregatedLot: AggregatedLot{
 						Symbol:   "ARKW",
-						Cost:     4000,
-						Quantity: 40,
+						Cost:     1000,
+						Quantity: 10,
 					},
-					Value:              8000,
-					DayChange:          2000,
-					TotalChange:        4000,
+					Value:              1200,
+					DayChange:          200,
+					TotalChange:        200,
+					TotalChangePercent: 20,
+				},
+				"TW": {
+					AggregatedLot: AggregatedLot{
+						Symbol:     "TW",
+						Cost:       2000,
+						Quantity:   20,
+						OrderIndex: 0,
+					},
+					Value:              4000,
+					DayChange:          400,
+					DayChangePercent:   0,
+					TotalChange:        2000,
 					TotalChangePercent: 100,
-				},
-			}
-			Expect(output).To(Equal(expected))
-		})
-	})
-
-	Describe("GetPositionSummary", func() {
-		It("should return a summary of positions", func() {
-			inputPositions := map[string]Position{
-				"ARKW": {
-					AggregatedLot: AggregatedLot{
-						Symbol:   "ARKW",
-						Cost:     1000,
-						Quantity: 10,
-					},
-					Value:     2000,
-					DayChange: 200,
-				},
-				"RBLX": {
-					AggregatedLot: AggregatedLot{
-						Symbol:   "RBLX",
-						Cost:     1000,
-						Quantity: 10,
-					},
-					Value:     2000,
-					DayChange: 200,
+					Currency:           "",
+					CurrencyConverted:  "",
+					Weight:             0,
 				},
 				"ANI": {
 					AggregatedLot: AggregatedLot{
@@ -123,87 +131,22 @@ var _ = Describe("Position", func() {
 						Cost:     1000,
 						Quantity: 10,
 					},
-					Value:     2000,
-					DayChange: 200,
-					Currency:  "EUR",
+					Value:              250,
+					DayChange:          25,
+					TotalChange:        -750,
+					TotalChangePercent: -75,
 				},
 			}
-			inputCtx := c.Context{}
-			output := GetPositionSummary(inputCtx, inputPositions)
-			expected := PositionSummary{
-				Value:            6000,
-				Cost:             3000,
-				Change:           3000,
-				DayChange:        600,
-				ChangePercent:    200,
-				DayChangePercent: 10,
+			expectedPositionSummary := PositionSummary{
+				Value:            5450,
+				Cost:             4000,
+				Change:           1450,
+				DayChange:        4000,
+				ChangePercent:    136.25,
+				DayChangePercent: 11.46788990825688,
 			}
-
-			Expect(output).To(Equal(expected))
-		})
-
-		When("a target currency is set", func() {
-			It("converts all positions to that currency", func() {
-				inputPositions := map[string]Position{
-					"ARKW": {
-						AggregatedLot: AggregatedLot{
-							Symbol:   "ARKW",
-							Cost:     1000,
-							Quantity: 10,
-						},
-						Value:     2000,
-						DayChange: 200,
-						Currency:  "USD",
-					},
-					"RBLX": {
-						AggregatedLot: AggregatedLot{
-							Symbol:   "RBLX",
-							Cost:     1000,
-							Quantity: 10,
-						},
-						Value:     2000,
-						DayChange: 200,
-						Currency:  "GBP",
-					},
-					"ANI": {
-						AggregatedLot: AggregatedLot{
-							Symbol:   "ANI",
-							Cost:     1000,
-							Quantity: 10,
-						},
-						Value:     2000,
-						DayChange: 200,
-						Currency:  "EUR",
-					},
-				}
-				inputCtx := c.Context{
-					Reference: c.Reference{
-						CurrencyRates: c.CurrencyRates{
-							"USD": c.CurrencyRate{
-								FromCurrency: "USD",
-								ToCurrency:   "EUR",
-								Rate:         4,
-							},
-							"GBP": c.CurrencyRate{
-								FromCurrency: "GBP",
-								ToCurrency:   "EUR",
-								Rate:         2,
-							},
-						},
-					},
-				}
-				output := GetPositionSummary(inputCtx, inputPositions)
-				expected := PositionSummary{
-					Value:            14000,
-					Cost:             7000,
-					Change:           7000,
-					DayChange:        1400,
-					ChangePercent:    200,
-					DayChangePercent: 10,
-				}
-
-				Expect(output).To(Equal(expected))
-			})
+			Expect(outputPositions).To(Equal(expectedPosition))
+			Expect(outputPositionSummary).To(Equal(expectedPositionSummary))
 		})
 	})
 })

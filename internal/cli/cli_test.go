@@ -60,6 +60,7 @@ var _ = Describe("Cli", func() {
 			ExtraInfoExchange:     false,
 			ExtraInfoFundamentals: false,
 			ShowSummary:           false,
+			ShowHoldings:          false,
 			Proxy:                 "",
 			Sort:                  "",
 		}
@@ -238,7 +239,7 @@ var _ = Describe("Cli", func() {
 					}),
 				}),
 
-				// option: boolean (separator, summary, fundamentals, tags)
+				// option: boolean (separator, summary, fundamentals, tags, holdings)
 				Entry("when show-separator is set in config file", Case{
 					InputOptions:            cli.Options{},
 					InputConfigFileContents: "show-separator: true",

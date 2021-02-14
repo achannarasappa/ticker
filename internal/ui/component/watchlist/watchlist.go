@@ -51,6 +51,7 @@ func (m Model) View() string {
 			strings.Join(
 				[]string{
 					item(quote, m.Positions[quote.Symbol], m.Width),
+					extraInfoHoldings(m.Context.Config.ShowHoldings, m.Positions[quote.Symbol], m.Width),
 					extraInfoFundamentals(m.ExtraInfoFundamentals, quote, m.Width),
 					extraInfoExchange(m.ExtraInfoExchange, quote, m.Context.Config.Currency, m.Width),
 				},
@@ -154,6 +155,34 @@ func extraInfoFundamentals(show bool, q Quote, width int) string {
 		},
 		Cell{
 			Text: dayRangeText(q.RegularMarketDayRange),
+		},
+	)
+}
+
+func extraInfoHoldings(show bool, p Position, width int) string {
+	if (p == Position{} || !show) {
+		return ""
+	}
+
+	return "\n" + Line(
+		width,
+		Cell{
+			Text: "",
+		},
+		Cell{
+			Width: 25,
+			Text:  StyleNeutralFaded("Weight: ") + StyleNeutral(ConvertFloatToString(p.Weight)) + "%",
+			Align: RightAlign,
+		},
+		Cell{
+			Width: 25,
+			Text:  StyleNeutralFaded("Avg. Cost: ") + StyleNeutral(ConvertFloatToString(p.AverageCost)),
+			Align: RightAlign,
+		},
+		Cell{
+			Width: 25,
+			Text:  StyleNeutralFaded("Quantity: ") + StyleNeutral(ConvertFloatToString(p.Quantity)),
+			Align: RightAlign,
 		},
 	)
 }

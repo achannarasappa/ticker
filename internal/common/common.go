@@ -18,6 +18,7 @@ type Config struct {
 	ExtraInfoExchange     bool     `yaml:"show-tags"`
 	ExtraInfoFundamentals bool     `yaml:"show-fundamentals"`
 	ShowSummary           bool     `yaml:"show-summary"`
+	ShowHoldings          bool     `yaml:"show-holdings"`
 	Proxy                 string   `yaml:"proxy"`
 	Sort                  string   `yaml:"sort"`
 	Currency              string   `yaml:"currency"`

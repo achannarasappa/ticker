@@ -97,46 +97,6 @@ var _ = Describe("Position", func() {
 			}
 			inputCtx := c.Context{}
 			outputPositions, outputPositionSummary := GetPositions(inputCtx, inputAggregatedLots)(inputQuotes)
-			expectedPosition := map[string]Position{
-				"ARKW": {
-					AggregatedLot: AggregatedLot{
-						Symbol:   "ARKW",
-						Cost:     1000,
-						Quantity: 10,
-					},
-					Value:              1200,
-					DayChange:          200,
-					TotalChange:        200,
-					TotalChangePercent: 20,
-				},
-				"TW": {
-					AggregatedLot: AggregatedLot{
-						Symbol:     "TW",
-						Cost:       2000,
-						Quantity:   20,
-						OrderIndex: 0,
-					},
-					Value:              4000,
-					DayChange:          400,
-					DayChangePercent:   0,
-					TotalChange:        2000,
-					TotalChangePercent: 100,
-					Currency:           "",
-					CurrencyConverted:  "",
-					Weight:             0,
-				},
-				"ANI": {
-					AggregatedLot: AggregatedLot{
-						Symbol:   "ANI",
-						Cost:     1000,
-						Quantity: 10,
-					},
-					Value:              250,
-					DayChange:          25,
-					TotalChange:        -750,
-					TotalChangePercent: -75,
-				},
-			}
 			expectedPositionSummary := PositionSummary{
 				Value:            5450,
 				Cost:             4000,
@@ -145,7 +105,47 @@ var _ = Describe("Position", func() {
 				ChangePercent:    136.25,
 				DayChangePercent: 11.46788990825688,
 			}
-			Expect(outputPositions).To(Equal(expectedPosition))
+			Expect(outputPositions["ARKW"]).To(Equal(Position{
+				AggregatedLot: AggregatedLot{
+					Symbol:   "ARKW",
+					Cost:     1000,
+					Quantity: 10,
+				},
+				Value:              1200,
+				DayChange:          200,
+				TotalChange:        200,
+				TotalChangePercent: 20,
+				AverageCost:        100,
+				Weight:             22.018348623853214,
+			}))
+			Expect(outputPositions["TW"]).To(Equal(Position{
+				AggregatedLot: AggregatedLot{
+					Symbol:     "TW",
+					Cost:       2000,
+					Quantity:   20,
+					OrderIndex: 0,
+				},
+				Value:              4000,
+				DayChange:          400,
+				DayChangePercent:   0,
+				TotalChange:        2000,
+				TotalChangePercent: 100,
+				AverageCost:        100,
+				Weight:             73.39449541284404,
+			}))
+			Expect(outputPositions["ANI"]).To(Equal(Position{
+				AggregatedLot: AggregatedLot{
+					Symbol:   "ANI",
+					Cost:     1000,
+					Quantity: 10,
+				},
+				Value:              250,
+				DayChange:          25,
+				TotalChange:        -750,
+				TotalChangePercent: -75,
+				AverageCost:        100,
+				Weight:             4.587155963302752,
+			}))
 			Expect(outputPositionSummary).To(Equal(expectedPositionSummary))
 		})
 	})

@@ -17,6 +17,8 @@ type Position struct {
 	TotalChangePercent float64
 	Currency           string
 	CurrencyConverted  string
+	AverageCost        float64
+	Weight             float64
 }
 
 type PositionSummary struct {
@@ -105,16 +107,19 @@ func GetPositions(ctx c.Context, aggregatedLots map[string]AggregatedLot) func([
 
 					currencyRate, currencyRateDefault, currencyCode := currency.GetCurrencyRateFromContext(ctx, quote.Currency)
 
-					totalChange := (quote.Price * aggLot.Quantity) - (aggLot.Cost * currencyRate)
-					totalChangePercant := (totalChange / (aggLot.Cost * currencyRate)) * 100
+					cost := aggLot.Cost * currencyRate
+					value := quote.Price * aggLot.Quantity
+					totalChange := value - cost
+					totalChangePercant := (totalChange / cost) * 100
 
 					position := Position{
 						AggregatedLot:      aggLot,
-						Value:              quote.Price * aggLot.Quantity,
+						Value:              value,
 						DayChange:          quote.Change * aggLot.Quantity,
 						DayChangePercent:   quote.ChangePercent,
 						TotalChange:        totalChange,
 						TotalChangePercent: totalChangePercant,
+						AverageCost:        cost / aggLot.Quantity,
 						Currency:           quote.Currency,
 						CurrencyConverted:  currencyCode,
 					}
@@ -139,6 +144,10 @@ func GetPositions(ctx c.Context, aggregatedLots map[string]AggregatedLot) func([
 		}
 
 		positions := gubrak.From(positionsReduced.positions).
+			Map(func(v Position) Position {
+				v.Weight = (v.Value / positionSummary.Value) * 100
+				return v
+			}).
 			KeyBy(func(position Position) string {
 				return position.Symbol
 			}).

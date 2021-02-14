@@ -512,6 +512,50 @@ var _ = Describe("Watchlist", func() {
 		})
 	})
 
+	When("the option for extra holding information is set", func() {
+		It("should render extra holding information", func() {
+			m := NewModel(c.Context{
+				Config: c.Config{
+					ShowHoldings: true,
+				},
+			})
+			m.Quotes = []Quote{
+				{
+					ResponseQuote: ResponseQuote{
+						Symbol:             "PTON",
+						ShortName:          "Peloton",
+						RegularMarketPrice: 100.0,
+					},
+					Price:                   100.0,
+					Change:                  10.0,
+					ChangePercent:           10.0,
+					IsActive:                true,
+					IsRegularTradingSession: true,
+				},
+			}
+			m.Positions = map[string]Position{
+				"PTON": {
+					AggregatedLot: AggregatedLot{
+						Symbol:   "PTON",
+						Quantity: 100.0,
+						Cost:     50.0,
+					},
+					Value:              105.0,
+					DayChange:          5.0,
+					DayChangePercent:   5.0,
+					TotalChange:        55.0,
+					TotalChangePercent: 110.0,
+				},
+			}
+			expected := strings.Join([]string{
+				"PTON                       ●                     105.00                   100.00",
+				"Peloton                              ↑ 55.00  (110.00%)        ↑ 10.00  (10.00%)",
+				"                 Weight: 0.00%          Avg. Cost: 0.00         Quantity: 100.00",
+			}, "\n")
+			Expect(removeFormatting(m.View())).To(Equal(expected))
+		})
+	})
+
 	When("no quotes are set", func() {
 		It("should render an empty watchlist", func() {
 			m := NewModel(c.Context{

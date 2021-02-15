@@ -147,7 +147,7 @@ func extraInfoFundamentals(show bool, q Quote, width int) string {
 	return "\n" + Line(
 		width,
 		Cell{
-			Text:  dayRangeText(q.RegularMarketDayRange),
+			Text:  dayRangeText(q.PriceDayHigh, q.PriceDayLow),
 			Align: RightAlign,
 		},
 		Cell{
@@ -157,7 +157,7 @@ func extraInfoFundamentals(show bool, q Quote, width int) string {
 		},
 		Cell{
 			Width: 10,
-			Text:  StyleNeutral(ConvertFloatToString(q.RegularMarketPreviousClose)),
+			Text:  StyleNeutral(ConvertFloatToString(q.PricePrevClose)),
 			Align: RightAlign,
 		},
 		Cell{
@@ -167,7 +167,7 @@ func extraInfoFundamentals(show bool, q Quote, width int) string {
 		},
 		Cell{
 			Width: 10,
-			Text:  StyleNeutral(ConvertFloatToString(q.RegularMarketOpen)),
+			Text:  StyleNeutral(ConvertFloatToString(q.PriceOpen)),
 			Align: RightAlign,
 		},
 	)
@@ -212,11 +212,11 @@ func extraInfoHoldings(show bool, p Position, width int) string {
 	)
 }
 
-func dayRangeText(dayRange string) string {
-	if len(dayRange) <= 0 {
+func dayRangeText(high float64, low float64) string {
+	if high == 0.0 || low == 0.0 {
 		return ""
 	}
-	return StyleNeutralFaded("Day Range: ") + StyleNeutral(dayRange)
+	return StyleNeutralFaded("Day Range: ") + StyleNeutral(ConvertFloatToString(high)+" - "+ConvertFloatToString(low))
 }
 
 func exchangeDelayText(delay float64) string {

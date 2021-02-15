@@ -20,11 +20,19 @@ var _ = Describe("Quote", func() {
 						{
 							"marketState": "REGULAR",
 							"shortName": "Cloudflare, Inc.",
+							"preMarketChange": 1.0399933,
+							"preMarketChangePercent": 1.2238094,
+							"preMarketPrice": 86.03,
 							"regularMarketChange": 3.0800018,
 							"regularMarketChangePercent": 3.7606857,
-							"regularMarketTime": 1608832801,
 							"regularMarketPrice": 84.98,
-							"regularMarketPreviousClose": 81.9,
+							"regularMarketPreviousClose": 84.00,
+							"regularMarketOpen": 85.22,
+							"regularMarketDayHigh": 90.00,
+							"regularMarketDayLow": 80.00,
+							"postMarketChange": 1.37627,
+							"postMarketChangePercent": 1.35735,
+							"postMarketPrice": 86.56,
 							"symbol": "NET"
 						}
 					],
@@ -40,25 +48,15 @@ var _ = Describe("Quote", func() {
 
 			inputCtx := c.Context{}
 			output := GetQuotes(inputCtx, *client, []string{"NET"})()
-			expected := []Quote{
-				{
-					ResponseQuote: ResponseQuote{
-						ShortName:                  "Cloudflare, Inc.",
-						Symbol:                     "NET",
-						MarketState:                "REGULAR",
-						RegularMarketChange:        3.0800018,
-						RegularMarketChangePercent: 3.7606857,
-						RegularMarketPrice:         84.98,
-						RegularMarketPreviousClose: 81.9,
-					},
-					Price:                   84.98,
-					Change:                  3.0800018,
-					ChangePercent:           3.7606857,
-					IsActive:                true,
-					IsRegularTradingSession: true,
-				},
-			}
-			Expect(output).To(Equal(expected))
+			Expect(output[0].Price).To(Equal(84.98))
+			Expect(output[0].PricePrevClose).To(Equal(84.00))
+			Expect(output[0].PriceOpen).To(Equal(85.22))
+			Expect(output[0].PriceDayHigh).To(Equal(90.00))
+			Expect(output[0].PriceDayLow).To(Equal(80.00))
+			Expect(output[0].Change).To(Equal(3.0800018))
+			Expect(output[0].ChangePercent).To(Equal(3.7606857))
+			Expect(output[0].IsActive).To(BeTrue())
+			Expect(output[0].IsRegularTradingSession).To(BeTrue())
 		})
 
 		When("the market is in a pre-market trading session", func() {
@@ -71,12 +69,10 @@ var _ = Describe("Quote", func() {
 								"shortName": "Cloudflare, Inc.",
 								"preMarketChange": 1.0399933,
 								"preMarketChangePercent": 1.2238094,
-								"preMarketPrice": 86.02,
+								"preMarketPrice": 86.03,
 								"regularMarketChange": 3.0800018,
 								"regularMarketChangePercent": 3.7606857,
-								"regularMarketTime": 1608832801,
 								"regularMarketPrice": 84.98,
-								"regularMarketPreviousClose": 81.9,
 								"symbol": "NET"
 							}
 						],
@@ -92,28 +88,11 @@ var _ = Describe("Quote", func() {
 
 				inputCtx := c.Context{}
 				output := GetQuotes(inputCtx, *client, []string{"NET"})()
-				expected := []Quote{
-					{
-						ResponseQuote: ResponseQuote{
-							ShortName:                  "Cloudflare, Inc.",
-							Symbol:                     "NET",
-							MarketState:                "PRE",
-							RegularMarketChange:        3.0800018,
-							RegularMarketChangePercent: 3.7606857,
-							RegularMarketPrice:         84.98,
-							RegularMarketPreviousClose: 81.9,
-							PreMarketChange:            1.0399933,
-							PreMarketChangePercent:     1.2238094,
-							PreMarketPrice:             86.02,
-						},
-						Price:                   86.02,
-						Change:                  1.0399933,
-						ChangePercent:           1.2238094,
-						IsActive:                true,
-						IsRegularTradingSession: false,
-					},
-				}
-				Expect(output).To(Equal(expected))
+				Expect(output[0].Price).To(Equal(86.03))
+				Expect(output[0].Change).To(Equal(1.0399933))
+				Expect(output[0].ChangePercent).To(Equal(1.2238094))
+				Expect(output[0].IsActive).To(BeTrue())
+				Expect(output[0].IsRegularTradingSession).To(BeFalse())
 			})
 
 			When("there is no pre-market price", func() {
@@ -126,9 +105,7 @@ var _ = Describe("Quote", func() {
 									"shortName": "Cloudflare, Inc.",
 									"regularMarketChange": 3.0800018,
 									"regularMarketChangePercent": 3.7606857,
-									"regularMarketTime": 1608832801,
 									"regularMarketPrice": 84.98,
-									"regularMarketPreviousClose": 81.9,
 									"symbol": "NET"
 								}
 							],
@@ -166,9 +143,7 @@ var _ = Describe("Quote", func() {
 								"postMarketPrice": 86.02,
 								"regularMarketChange": 3.0800018,
 								"regularMarketChangePercent": 3.7606857,
-								"regularMarketTime": 1608832801,
 								"regularMarketPrice": 84.98,
-								"regularMarketPreviousClose": 81.9,
 								"symbol": "NET"
 							}
 						],
@@ -184,28 +159,11 @@ var _ = Describe("Quote", func() {
 
 				inputCtx := c.Context{}
 				output := GetQuotes(inputCtx, *client, []string{"NET"})()
-				expected := []Quote{
-					{
-						ResponseQuote: ResponseQuote{
-							ShortName:                  "Cloudflare, Inc.",
-							Symbol:                     "NET",
-							MarketState:                "POST",
-							RegularMarketChange:        3.0800018,
-							RegularMarketChangePercent: 3.7606857,
-							RegularMarketPrice:         84.98,
-							RegularMarketPreviousClose: 81.9,
-							PostMarketChange:           1.0399933,
-							PostMarketChangePercent:    1.2238094,
-							PostMarketPrice:            86.02,
-						},
-						Price:                   86.02,
-						Change:                  4.1199951,
-						ChangePercent:           4.9844951,
-						IsActive:                true,
-						IsRegularTradingSession: false,
-					},
-				}
-				Expect(output).To(Equal(expected))
+				Expect(output[0].Price).To(Equal(86.02))
+				Expect(output[0].Change).To(Equal(4.1199951))
+				Expect(output[0].ChangePercent).To(Equal(4.9844951))
+				Expect(output[0].IsActive).To(BeTrue())
+				Expect(output[0].IsRegularTradingSession).To(BeFalse())
 			})
 
 			When("there is no post-market price", func() {

@@ -22,6 +22,8 @@ type ResponseQuote struct {
 	RegularMarketPreviousClose float64 `json:"regularMarketPreviousClose"`
 	RegularMarketOpen          float64 `json:"regularMarketOpen"`
 	RegularMarketDayRange      string  `json:"regularMarketDayRange"`
+	RegularMarketDayHigh       float64 `json:"regularMarketDayHigh"`
+	RegularMarketDayLow        float64 `json:"regularMarketDayLow"`
 	PostMarketChange           float64 `json:"postMarketChange"`
 	PostMarketChangePercent    float64 `json:"postMarketChangePercent"`
 	PostMarketPrice            float64 `json:"postMarketPrice"`
@@ -33,6 +35,10 @@ type ResponseQuote struct {
 type Quote struct {
 	ResponseQuote
 	Price                   float64
+	PricePrevClose          float64
+	PriceOpen               float64
+	PriceDayHigh            float64
+	PriceDayLow             float64
 	Change                  float64
 	ChangePercent           float64
 	IsActive                bool
@@ -55,6 +61,10 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 		return Quote{
 			ResponseQuote:           responseQuote,
 			Price:                   responseQuote.RegularMarketPrice * currencyRate,
+			PricePrevClose:          responseQuote.RegularMarketPreviousClose * currencyRate,
+			PriceOpen:               responseQuote.RegularMarketOpen * currencyRate,
+			PriceDayHigh:            responseQuote.RegularMarketDayHigh * currencyRate,
+			PriceDayLow:             responseQuote.RegularMarketDayLow * currencyRate,
 			Change:                  (responseQuote.RegularMarketChange) * currencyRate,
 			ChangePercent:           responseQuote.RegularMarketChangePercent,
 			IsActive:                true,
@@ -67,6 +77,10 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 		return Quote{
 			ResponseQuote:           responseQuote,
 			Price:                   responseQuote.RegularMarketPrice * currencyRate,
+			PricePrevClose:          responseQuote.RegularMarketPreviousClose * currencyRate,
+			PriceOpen:               responseQuote.RegularMarketOpen * currencyRate,
+			PriceDayHigh:            responseQuote.RegularMarketDayHigh * currencyRate,
+			PriceDayLow:             responseQuote.RegularMarketDayLow * currencyRate,
 			Change:                  (responseQuote.RegularMarketChange) * currencyRate,
 			ChangePercent:           responseQuote.RegularMarketChangePercent,
 			IsActive:                true,
@@ -79,6 +93,10 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 		return Quote{
 			ResponseQuote:           responseQuote,
 			Price:                   responseQuote.RegularMarketPrice * currencyRate,
+			PricePrevClose:          responseQuote.RegularMarketPreviousClose * currencyRate,
+			PriceOpen:               responseQuote.RegularMarketOpen * currencyRate,
+			PriceDayHigh:            responseQuote.RegularMarketDayHigh * currencyRate,
+			PriceDayLow:             responseQuote.RegularMarketDayLow * currencyRate,
 			Change:                  (responseQuote.RegularMarketChange) * currencyRate,
 			ChangePercent:           responseQuote.RegularMarketChangePercent,
 			IsActive:                false,
@@ -91,6 +109,10 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 		return Quote{
 			ResponseQuote:           responseQuote,
 			Price:                   responseQuote.PostMarketPrice * currencyRate,
+			PricePrevClose:          responseQuote.RegularMarketPreviousClose * currencyRate,
+			PriceOpen:               responseQuote.RegularMarketOpen * currencyRate,
+			PriceDayHigh:            responseQuote.RegularMarketDayHigh * currencyRate,
+			PriceDayLow:             responseQuote.RegularMarketDayLow * currencyRate,
 			Change:                  (responseQuote.PostMarketChange + responseQuote.RegularMarketChange) * currencyRate,
 			ChangePercent:           responseQuote.PostMarketChangePercent + responseQuote.RegularMarketChangePercent,
 			IsActive:                true,
@@ -103,6 +125,10 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 		return Quote{
 			ResponseQuote:           responseQuote,
 			Price:                   responseQuote.PreMarketPrice * currencyRate,
+			PricePrevClose:          responseQuote.RegularMarketPreviousClose * currencyRate,
+			PriceOpen:               responseQuote.RegularMarketOpen * currencyRate,
+			PriceDayHigh:            responseQuote.RegularMarketDayHigh * currencyRate,
+			PriceDayLow:             responseQuote.RegularMarketDayLow * currencyRate,
 			Change:                  (responseQuote.PreMarketChange) * currencyRate,
 			ChangePercent:           responseQuote.PreMarketChangePercent,
 			IsActive:                true,
@@ -115,6 +141,10 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 		return Quote{
 			ResponseQuote:           responseQuote,
 			Price:                   responseQuote.PostMarketPrice * currencyRate,
+			PricePrevClose:          responseQuote.RegularMarketPreviousClose * currencyRate,
+			PriceOpen:               responseQuote.RegularMarketOpen * currencyRate,
+			PriceDayHigh:            responseQuote.RegularMarketDayHigh * currencyRate,
+			PriceDayLow:             responseQuote.RegularMarketDayLow * currencyRate,
 			Change:                  (responseQuote.PostMarketChange + responseQuote.RegularMarketChange) * currencyRate,
 			ChangePercent:           responseQuote.PostMarketChangePercent + responseQuote.RegularMarketChangePercent,
 			IsActive:                false,
@@ -126,6 +156,10 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 	return Quote{
 		ResponseQuote:           responseQuote,
 		Price:                   responseQuote.RegularMarketPrice * currencyRate,
+		PricePrevClose:          responseQuote.RegularMarketPreviousClose * currencyRate,
+		PriceOpen:               responseQuote.RegularMarketOpen * currencyRate,
+		PriceDayHigh:            responseQuote.RegularMarketDayHigh * currencyRate,
+		PriceDayLow:             responseQuote.RegularMarketDayLow * currencyRate,
 		Change:                  (responseQuote.RegularMarketChange) * currencyRate,
 		ChangePercent:           responseQuote.RegularMarketChangePercent,
 		IsActive:                false,

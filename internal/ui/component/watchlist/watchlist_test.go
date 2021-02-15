@@ -463,6 +463,10 @@ var _ = Describe("Watchlist", func() {
 						RegularMarketDayRange:      "10000 - 10000",
 					},
 					Price:                   50000.0,
+					PricePrevClose:          10000.0,
+					PriceOpen:               10000.0,
+					PriceDayHigh:            10000.0,
+					PriceDayLow:             10000.0,
 					Change:                  10000.0,
 					ChangePercent:           20.0,
 					IsActive:                true,
@@ -472,7 +476,7 @@ var _ = Describe("Watchlist", func() {
 			expected := strings.Join([]string{
 				"BTC-USD                    ●                                            50000.00",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-				"      Day Range: 10000 - 10000   Prev Close:   10000.00         Open:   10000.00",
+				"Day Range: 10000.00 - 10000.00   Prev Close:   10000.00         Open:   10000.00",
 			}, "\n")
 			Expect(removeFormatting(m.View())).To(Equal(expected))
 		})
@@ -496,6 +500,8 @@ var _ = Describe("Watchlist", func() {
 							RegularMarketOpen:          10000.0,
 						},
 						Price:                   50000.0,
+						PricePrevClose:          10000.0,
+						PriceOpen:               10000.0,
 						Change:                  10000.0,
 						ChangePercent:           20.0,
 						IsActive:                true,

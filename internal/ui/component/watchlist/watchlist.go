@@ -60,7 +60,7 @@ func (m Model) View() string {
 		)
 	}
 
-	return strings.Join(items, separator(m.Separate, m.Width))
+	return strings.Join(items, separator(m.Separate, m.Width)) + "\n"
 }
 
 func separator(isSeparated bool, width int) string {

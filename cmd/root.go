@@ -20,7 +20,7 @@ var (
 	options    cli.Options
 	err        error
 	rootCmd    = &cobra.Command{
-		Version: "v3.1.2",
+		Version: "v3.1.3",
 		Use:     "ticker",
 		Short:   "Terminal stock ticker and stock gain/loss tracker",
 		Args:    cli.Validate(&ctx, &options, &err),

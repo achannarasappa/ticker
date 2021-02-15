@@ -72,6 +72,7 @@ var _ = Describe("Watchlist", func() {
 			strings.Join([]string{
 				"AAPL                       ●                                                1.05",
 				"Apple Inc.                                                       ↑ 0.05  (0.05%)",
+				"",
 			}, "\n"),
 		),
 		Entry(
@@ -83,6 +84,7 @@ var _ = Describe("Watchlist", func() {
 			strings.Join([]string{
 				"AAPL                       ●                                                0.95",
 				"Apple Inc.                                                      ↓ -0.05 (-0.05%)",
+				"",
 			}, "\n"),
 		),
 		Entry(
@@ -94,6 +96,7 @@ var _ = Describe("Watchlist", func() {
 			strings.Join([]string{
 				"AAPL                       ○                                                1.05",
 				"Apple Inc.                                                       ↑ 0.05  (0.05%)",
+				"",
 			}, "\n"),
 		),
 		Entry(
@@ -116,6 +119,7 @@ var _ = Describe("Watchlist", func() {
 			strings.Join([]string{
 				"AAPL                       ●                     105.00                     1.05",
 				"Apple Inc.                           ↑ 55.00  (110.00%)          ↑ 0.05  (0.05%)",
+				"",
 			}, "\n"),
 		),
 		Entry(
@@ -138,6 +142,7 @@ var _ = Describe("Watchlist", func() {
 			strings.Join([]string{
 				"AAPL                       ●                     105.00                     1.05",
 				"Apple Inc.                           ↓ -45.00 (-30.00%)          ↑ 0.05  (0.05%)",
+				"",
 			}, "\n"),
 		),
 		Entry(
@@ -160,6 +165,7 @@ var _ = Describe("Watchlist", func() {
 			strings.Join([]string{
 				"AAPL                       ●                      95.00                     0.95",
 				"Apple Inc.                            ↑ 45.00  (90.00%)         ↓ -0.05 (-0.05%)",
+				"",
 			}, "\n"),
 		),
 		Entry(
@@ -182,6 +188,7 @@ var _ = Describe("Watchlist", func() {
 			strings.Join([]string{
 				"AAPL                       ●                      95.00                     0.95",
 				"Apple Inc.                           ↓ -55.00 (-36.67%)         ↓ -0.05 (-0.05%)",
+				"",
 			}, "\n"),
 		),
 		Entry(
@@ -202,6 +209,7 @@ var _ = Describe("Watchlist", func() {
 			strings.Join([]string{
 				"AAPL                                              95.00                     1.00",
 				"Apple Inc.                                                         0.00  (0.00%)",
+				"",
 			}, "\n"),
 		),
 	)
@@ -273,6 +281,7 @@ var _ = Describe("Watchlist", func() {
 				"Google Inc.                                                    ↓ -32.02 (-1.35%)",
 				"AAPL                                                                        1.05",
 				"Apple Inc.                                                         0.00  (0.00%)",
+				"",
 			}, "\n")
 			Expect(removeFormatting(m.View())).To(Equal(expected))
 		})
@@ -332,6 +341,7 @@ var _ = Describe("Watchlist", func() {
 					"────────────────────────────────────────────────────────────────────────────────",
 					"GOOG                       ○                                             2523.53",
 					"Google Inc.                                                    ↓ -32.02 (-1.35%)",
+					"",
 				}, "\n")
 				Expect(removeFormatting(m.View())).To(Equal(expected))
 			})
@@ -368,6 +378,7 @@ var _ = Describe("Watchlist", func() {
 				"BTC-USD                    ●                                            50000.00",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
 				"                                               USD   Real-Time   Cryptocurrency ",
+				"",
 			}, "\n")
 			Expect(removeFormatting(m.View())).To(Equal(expected))
 		})
@@ -402,6 +413,7 @@ var _ = Describe("Watchlist", func() {
 					"BTC-USD                    ●                                            50000.00",
 					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
 					"                                           USD   Delayed 15min   Cryptocurrency ",
+					"",
 				}, "\n")
 				Expect(removeFormatting(m.View())).To(Equal(expected))
 			})
@@ -436,6 +448,7 @@ var _ = Describe("Watchlist", func() {
 					"APPL                       ●                                             5000.00",
 					"Apple, Inc                                                   ↑ 1000.00  (20.00%)",
 					"                                                 USD → EUR   Real-Time   NASDAQ ",
+					"",
 				}, "\n")
 				Expect(removeFormatting(m.View())).To(Equal(expected))
 			})
@@ -477,6 +490,7 @@ var _ = Describe("Watchlist", func() {
 				"BTC-USD                    ●                                            50000.00",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
 				"Day Range: 10000.00 - 10000.00   Prev Close:   10000.00         Open:   10000.00",
+				"",
 			}, "\n")
 			Expect(removeFormatting(m.View())).To(Equal(expected))
 		})
@@ -512,6 +526,7 @@ var _ = Describe("Watchlist", func() {
 					"BTC-USD                    ●                                            50000.00",
 					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
 					"                                 Prev Close:   10000.00         Open:   10000.00",
+					"",
 				}, "\n")
 				Expect(removeFormatting(m.View())).To(Equal(expected))
 			})
@@ -557,6 +572,7 @@ var _ = Describe("Watchlist", func() {
 				"PTON                       ●                     105.00                   100.00",
 				"Peloton                              ↑ 55.00  (110.00%)        ↑ 10.00  (10.00%)",
 				"               Weight:   0.00%    Avg. Cost:       0.00     Quantity:     100.00",
+				"",
 			}, "\n")
 			Expect(removeFormatting(m.View())).To(Equal(expected))
 		})
@@ -572,7 +588,7 @@ var _ = Describe("Watchlist", func() {
 					Sort:                  "",
 				},
 			})
-			Expect(m.View()).To(Equal(""))
+			Expect(m.View()).To(Equal("\n"))
 		})
 	})
 

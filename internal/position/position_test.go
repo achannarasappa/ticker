@@ -101,7 +101,7 @@ var _ = Describe("Position", func() {
 				Value:            5450,
 				Cost:             4000,
 				Change:           1450,
-				DayChange:        4000,
+				DayChange:        625,
 				ChangePercent:    136.25,
 				DayChangePercent: 11.46788990825688,
 			}

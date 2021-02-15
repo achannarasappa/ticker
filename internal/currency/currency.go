@@ -107,7 +107,7 @@ func GetCurrencyRates(client resty.Client, symbols []string, targetCurrency stri
 func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) (float64, float64, string) {
 	if currencyRate, ok := ctx.Reference.CurrencyRates[fromCurrency]; ok {
 		if ctx.Config.Currency != "" {
-			return currencyRate.Rate, currencyRate.Rate, currencyRate.ToCurrency
+			return currencyRate.Rate, 1.0, currencyRate.ToCurrency
 		}
 
 		return 1.0, currencyRate.Rate, currencyRate.ToCurrency

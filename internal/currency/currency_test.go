@@ -102,7 +102,7 @@ var _ = Describe("Currency", func() {
 			}
 			outputRate, outputDefaultRate, outputCurrencyCode := GetCurrencyRateFromContext(inputCtx, "USD")
 			Expect(outputRate).To(Equal(1.25))
-			Expect(outputDefaultRate).To(Equal(1.25))
+			Expect(outputDefaultRate).To(Equal(1.0))
 			Expect(outputCurrencyCode).To(Equal("EUR"))
 		})
 	})

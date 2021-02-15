@@ -11,6 +11,7 @@ import (
 type Position struct {
 	AggregatedLot
 	Value              float64
+	Cost               float64
 	DayChange          float64
 	DayChangePercent   float64
 	TotalChange        float64
@@ -115,6 +116,7 @@ func GetPositions(ctx c.Context, aggregatedLots map[string]AggregatedLot) func([
 					position := Position{
 						AggregatedLot:      aggLot,
 						Value:              value,
+						Cost:               cost,
 						DayChange:          quote.Change * aggLot.Quantity,
 						DayChangePercent:   quote.ChangePercent,
 						TotalChange:        totalChange,

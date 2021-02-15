@@ -74,6 +74,7 @@ ticker -w NET,AAPL,TSLA
 |  |--show-fundamentals||display open price, previous close, and day range |
 |  |--show-separator||layout with separators between each quote|
 |  |--show-summary||show total day change, total value, and total value change|
+|  |--show-holdings||show holdings including weight, average cost, and quantity|
 |  |--sort||sort quotes on the UI - options are change percent (default), `alpha`, `value`, and `user`|
 |  |--proxy||proxy URL for requests (default is none)|
 |  |--version||print the current version number|
@@ -88,6 +89,7 @@ show-summary: true
 show-tags: true
 show-fundamentals: true
 show-separator: true
+show-holdings: true
 interval: 5
 currency: USD
 watchlist:
@@ -113,7 +115,7 @@ lots:
 
 ### Display Options
 
-With  `--show-summary`, `--show-tags`, `--show-fundamentals`, and `--show-separator` options set, the layout and information displayed expands:
+With  `--show-summary`, `--show-tags`, `--show-fundamentals`, `--show-holdings`, and `--show-separator` options set, the layout and information displayed expands:
 
 <img src="./docs/ticker-all-options.png" />
 

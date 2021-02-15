@@ -76,6 +76,7 @@ ticker -w NET,AAPL,TSLA
 |  |--show-summary||show total day change, total value, and total value change|
 |  |--sort||sort quotes on the UI - options are change percent (default), `alpha`, `value`, and `user`|
 |  |--proxy||proxy URL for requests (default is none)|
+|  |--version||print the current version number|
 
 ## Configuration
 

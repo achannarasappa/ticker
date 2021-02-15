@@ -151,5 +151,26 @@ var _ = Describe("Position", func() {
 			}))
 			Expect(outputPositionSummary).To(Equal(expectedPositionSummary))
 		})
+
+		When("no aggregated lots are set", func() {
+			It("should return an empty positions and position summary", func() {
+				inputAggregatedLots := map[string]AggregatedLot{}
+				inputQuotes := []Quote{
+					{
+						ResponseQuote: ResponseQuote{
+							Symbol:                     "ARKW",
+							RegularMarketPreviousClose: 100,
+						},
+						Price:  120.0,
+						Change: 20.0,
+					},
+				}
+				inputCtx := c.Context{}
+				outputPositions, outputPositionSummary := GetPositions(inputCtx, inputAggregatedLots)(inputQuotes)
+				expectedPositionSummary := PositionSummary{}
+				Expect(outputPositions).To(Equal(map[string]Position{}))
+				Expect(outputPositionSummary).To(Equal(expectedPositionSummary))
+			})
+		})
 	})
 })

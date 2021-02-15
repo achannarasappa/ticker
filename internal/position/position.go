@@ -100,6 +100,10 @@ func GetSymbols(symbols []string, aggregatedLots map[string]AggregatedLot) []str
 func GetPositions(ctx c.Context, aggregatedLots map[string]AggregatedLot) func([]Quote) (map[string]Position, PositionSummary) {
 	return func(quotes []Quote) (map[string]Position, PositionSummary) {
 
+		if len(aggregatedLots) <= 0 {
+			return map[string]Position{}, PositionSummary{}
+		}
+
 		positionsReduced := (gubrak.
 			From(quotes).
 			Reduce(func(acc positionAcc, quote Quote) positionAcc {

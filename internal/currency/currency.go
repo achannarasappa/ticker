@@ -50,15 +50,20 @@ func transformResponseCurrencies(responseQuotes []ResponseQuote) c.CurrencyRates
 
 }
 
-func getCurrencyRatesFromCurrencyPairSymbols(client resty.Client, currencyPairSymbols []string) c.CurrencyRates {
+func getCurrencyRatesFromCurrencyPairSymbols(client resty.Client, currencyPairSymbols []string) (c.CurrencyRates, error) {
 
 	symbolsString := strings.Join(currencyPairSymbols, ",")
 	url := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=%s", symbolsString)
-	res, _ := client.R().
+
+	res, err := client.R().
 		SetResult(Response{}).
 		Get(url)
 
-	return transformResponseCurrencies((res.Result().(*Response)).QuoteResponse.Quotes)
+	if err != nil {
+		return c.CurrencyRates{}, err
+	}
+
+	return transformResponseCurrencies((res.Result().(*Response)).QuoteResponse.Quotes), nil
 }
 
 func transformResponseCurrencyPairs(responseQuotes []ResponseQuote, targetCurrency string) []string {
@@ -79,29 +84,44 @@ func transformResponseCurrencyPairs(responseQuotes []ResponseQuote, targetCurren
 
 }
 
-func getCurrencyPairSymbols(client resty.Client, symbols []string, targetCurrency string) []string {
+func getCurrencyPairSymbols(client resty.Client, symbols []string, targetCurrency string) ([]string, error) {
+
 	symbolsString := strings.Join(symbols, ",")
 	url := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=%s", symbolsString)
-	res, _ := client.R().
+	res, err := client.R().
 		SetResult(Response{}).
 		Get(url)
 
-	return transformResponseCurrencyPairs((res.Result().(*Response)).QuoteResponse.Quotes, targetCurrency)
+	if err != nil {
+		return []string{}, err
+	}
+
+	return transformResponseCurrencyPairs((res.Result().(*Response)).QuoteResponse.Quotes, targetCurrency), nil
 }
 
-func GetCurrencyRates(client resty.Client, symbols []string, targetCurrency string) c.CurrencyRates {
+func GetCurrencyRates(client resty.Client, symbols []string, targetCurrency string) (c.CurrencyRates, error) {
 
 	if targetCurrency == "" {
 		targetCurrency = "USD"
 	}
 
-	currencyPairSymbols := getCurrencyPairSymbols(client, symbols, targetCurrency)
+	currencyPairSymbols, err := getCurrencyPairSymbols(client, symbols, targetCurrency)
 
-	if len(currencyPairSymbols) <= 0 {
-		return c.CurrencyRates{}
+	if err != nil {
+		return c.CurrencyRates{}, err
 	}
 
-	return getCurrencyRatesFromCurrencyPairSymbols(client, currencyPairSymbols)
+	if len(currencyPairSymbols) <= 0 {
+		return c.CurrencyRates{}, nil
+	}
+
+	currencyRates, err := getCurrencyRatesFromCurrencyPairSymbols(client, currencyPairSymbols)
+
+	if err != nil {
+		return c.CurrencyRates{}, err
+	}
+
+	return currencyRates, nil
 }
 
 func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) (float64, float64, string) {

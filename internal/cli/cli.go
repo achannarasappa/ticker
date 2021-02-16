@@ -111,11 +111,11 @@ func getReference(config Config, client resty.Client) (Reference, error) {
 	aggregatedLots := position.GetLots(config.Lots)
 	symbols := position.GetSymbols(config.Watchlist, aggregatedLots)
 
-	currencyRates := currency.GetCurrencyRates(client, symbols, config.Currency)
+	currencyRates, err := currency.GetCurrencyRates(client, symbols, config.Currency)
 
 	return Reference{
 		CurrencyRates: currencyRates,
-	}, nil
+	}, err
 
 }
 

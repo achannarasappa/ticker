@@ -1,6 +1,9 @@
 package currency_test
 
 import (
+	"net/http"
+
+	"github.com/jarcoal/httpmock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -15,7 +18,8 @@ var _ = Describe("Currency", func() {
 
 			MockResponse(ResponseParameters{Symbol: "VOW3.DE", Currency: "EUR", Price: 0.0})
 			MockResponse(ResponseParameters{Symbol: "EURUSD=X", Currency: "USD", Price: 1.2})
-			output := GetCurrencyRates(*client, []string{"VOW3.DE"}, "USD")
+			output, err := GetCurrencyRates(*client, []string{"VOW3.DE"}, "USD")
+			Expect(err).ToNot(HaveOccurred())
 			Expect(output).To(Equal(c.CurrencyRates{
 				"EUR": c.CurrencyRate{
 					FromCurrency: "EUR",
@@ -31,7 +35,8 @@ var _ = Describe("Currency", func() {
 
 				MockResponse(ResponseParameters{Symbol: "VOW3.DE", Currency: "EUR", Price: 0.0})
 				MockResponse(ResponseParameters{Symbol: "EURUSD=X", Currency: "USD", Price: 1.2})
-				output := GetCurrencyRates(*client, []string{"VOW3.DE"}, "")
+				output, err := GetCurrencyRates(*client, []string{"VOW3.DE"}, "")
+				Expect(err).ToNot(HaveOccurred())
 				Expect(output).To(Equal(c.CurrencyRates{
 					"EUR": c.CurrencyRate{
 						FromCurrency: "EUR",
@@ -47,7 +52,64 @@ var _ = Describe("Currency", func() {
 			It("returns an empty currency exchange rate list", func() {
 
 				MockResponse(ResponseParameters{Symbol: "VOW3.DE", Currency: "EUR", Price: 0.0})
-				output := GetCurrencyRates(*client, []string{"VOW3.DE"}, "EUR")
+				output, err := GetCurrencyRates(*client, []string{"VOW3.DE"}, "EUR")
+				Expect(err).ToNot(HaveOccurred())
+				Expect(output).To(Equal(c.CurrencyRates{}))
+
+			})
+		})
+
+		When("the request to get the currencies of each symbol fails", func() {
+			It("returns error", func() {
+
+				responseText := `{
+					"quoteResponse": {
+						"result": [
+							{
+								"regularMarketPrice": 1.2,
+								"currency": "EUR",
+								"symbol": "EURUSD=X"
+							}
+						],
+						"error": null
+					}
+				}`
+				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=EURUSD=X"
+				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+					resp := httpmock.NewStringResponse(200, responseText)
+					resp.Header.Set("Content-Type", "application/json")
+					return resp, nil
+				})
+				output, err := GetCurrencyRates(*client, []string{"VOW3.DE"}, "EUR")
+				Expect(err).To(HaveOccurred())
+				Expect(output).To(Equal(c.CurrencyRates{}))
+
+			})
+		})
+
+		When("the request to the exchange rate", func() {
+			It("returns error", func() {
+
+				responseText := `{
+					"quoteResponse": {
+						"result": [
+							{
+								"regularMarketPrice": 160.0,
+								"currency": "EUR",
+								"symbol": "VOW3.DE"
+							}
+						],
+						"error": null
+					}
+				}`
+				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=VOW3.DE"
+				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+					resp := httpmock.NewStringResponse(200, responseText)
+					resp.Header.Set("Content-Type", "application/json")
+					return resp, nil
+				})
+				output, err := GetCurrencyRates(*client, []string{"VOW3.DE"}, "USD")
+				Expect(err).To(HaveOccurred())
 				Expect(output).To(Equal(c.CurrencyRates{}))
 
 			})

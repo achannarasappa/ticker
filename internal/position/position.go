@@ -104,41 +104,7 @@ func GetPositions(ctx c.Context, aggregatedLots map[string]AggregatedLot) func([
 			return map[string]Position{}, PositionSummary{}
 		}
 
-		positionsReduced := (gubrak.
-			From(quotes).
-			Reduce(func(acc positionAcc, quote Quote) positionAcc {
-
-				if aggLot, ok := aggregatedLots[quote.Symbol]; ok {
-
-					currencyRate, currencyRateDefault, currencyCode := currency.GetCurrencyRateFromContext(ctx, quote.Currency)
-
-					cost := aggLot.Cost * currencyRate
-					value := quote.Price * aggLot.Quantity
-					totalChange := value - cost
-					totalChangePercant := (totalChange / cost) * 100
-
-					position := Position{
-						AggregatedLot:      aggLot,
-						Value:              value,
-						Cost:               cost,
-						DayChange:          quote.Change * aggLot.Quantity,
-						DayChangePercent:   quote.ChangePercent,
-						TotalChange:        totalChange,
-						TotalChangePercent: totalChangePercant,
-						AverageCost:        cost / aggLot.Quantity,
-						Currency:           quote.Currency,
-						CurrencyConverted:  currencyCode,
-					}
-
-					acc.positions = append(acc.positions, position)
-					acc.positionSummaryBase = getPositionSummaryBase(position, acc.positionSummaryBase, currencyRateDefault)
-
-				}
-
-				return acc
-
-			}, positionAcc{}).
-			Result()).(positionAcc)
+		positionsReduced := getPositionsReduced(ctx, aggregatedLots, quotes)
 
 		positionSummary := PositionSummary{
 			Value:            positionsReduced.positionSummaryBase.value,
@@ -149,18 +115,52 @@ func GetPositions(ctx c.Context, aggregatedLots map[string]AggregatedLot) func([
 			DayChangePercent: (positionsReduced.positionSummaryBase.dayChange / positionsReduced.positionSummaryBase.value) * 100,
 		}
 
-		positions := gubrak.From(positionsReduced.positions).
-			Map(func(v Position) Position {
-				v.Weight = (v.Value / positionSummary.Value) * 100
-				return v
-			}).
-			KeyBy(func(position Position) string {
-				return position.Symbol
-			}).
-			Result()
+		positions := getPositionMapFromPositionsReduced(positionsReduced.positions, positionSummary.Value)
 
-		return (positions).(map[string]Position), positionSummary
+		return positions, positionSummary
 	}
+}
+
+func getPositionsReduced(ctx c.Context, aggregatedLots map[string]AggregatedLot, quotes []Quote) positionAcc {
+
+	acc := positionAcc{}
+	for _, quote := range quotes {
+		if aggregatedLot, ok := aggregatedLots[quote.Symbol]; ok {
+			currencyRate, currencyRateDefault, currencyCode := currency.GetCurrencyRateFromContext(ctx, quote.Currency)
+
+			cost := aggregatedLot.Cost * currencyRate
+			value := quote.Price * aggregatedLot.Quantity
+			totalChange := value - cost
+			totalChangePercant := (totalChange / cost) * 100
+
+			position := Position{
+				AggregatedLot:      aggregatedLot,
+				Value:              value,
+				Cost:               cost,
+				DayChange:          quote.Change * aggregatedLot.Quantity,
+				DayChangePercent:   quote.ChangePercent,
+				TotalChange:        totalChange,
+				TotalChangePercent: totalChangePercant,
+				AverageCost:        cost / aggregatedLot.Quantity,
+				Currency:           quote.Currency,
+				CurrencyConverted:  currencyCode,
+			}
+
+			acc.positions = append(acc.positions, position)
+			acc.positionSummaryBase = getPositionSummaryBase(position, acc.positionSummaryBase, currencyRateDefault)
+		}
+	}
+
+	return acc
+}
+
+func getPositionMapFromPositionsReduced(p []Position, totalValue float64) map[string]Position {
+	positions := map[string]Position{}
+	for _, v := range p {
+		v.Weight = (v.Value / totalValue) * 100
+		positions[v.Symbol] = v
+	}
+	return positions
 }
 
 func getPositionSummaryBase(position Position, acc positionSummaryBase, currencyRateDefault float64) positionSummaryBase {

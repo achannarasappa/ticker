@@ -1,8 +1,10 @@
 package cli
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	. "github.com/achannarasappa/ticker/internal/common"
@@ -119,6 +121,63 @@ func getReference(config Config, client resty.Client) (Reference, error) {
 
 }
 
+type TDPosition struct {
+	AveragePrice float64 `json:"averagePrice"`
+	Instrument struct {
+		AssetType string `json:"assetType"`
+		Cusip     string `json:"cusip"`
+		Symbol    string `json:"symbol"`
+	} `json:"instrument"`
+	LongQuantity float64 `json:"longQuantity"`
+}
+
+func (p *TDPosition) ToLot() Lot {
+	return Lot{
+		Symbol: p.Instrument.Symbol,
+		UnitCost: p.AveragePrice,
+		Quantity: p.LongQuantity,
+	}
+}
+
+type TDSecuritiesAccount struct {
+	Positions []TDPosition `json:"positions"`
+}
+
+type TDAccount struct {
+	SecuritiesAccount TDSecuritiesAccount `json:"securitiesAccount"`
+}
+
+func getTDLots(config Config, client resty.Client) []Lot {
+	accessToken := config.BrokerPositionsSync.TD.AccessToken
+	url := "https://api.tdameritrade.com/v1/accounts?fields=positions"
+	res, _ := client.R().
+		SetHeader("Authorization", fmt.Sprintf("Bearer %s", accessToken)).
+		SetDoNotParseResponse(true).
+		Get(url)
+	if res.StatusCode() != 200 {
+		fmt.Println("Syncing TD positions failed:", res)
+		return nil
+	}
+	// the API returns a top-level array so resty's auto-unmarshalling
+	// doesn't seem to work :(
+	rawBody := res.RawBody()
+	defer rawBody.Close()
+	body, err := ioutil.ReadAll(res.RawBody())
+	if err != nil {
+		fmt.Println("Syncint TD positions failed:", err)
+		return nil
+	}
+	accounts := make([]TDAccount, 0)
+	json.Unmarshal(body, &accounts)
+	lots := make([]Lot, 0)
+	for _, account := range accounts {
+		for _, position := range account.SecuritiesAccount.Positions {
+			lots = append(lots, position.ToLot())
+		}
+	}
+	return lots
+}
+
 func getConfig(config Config, options Options, client resty.Client) Config {
 
 	if len(options.Watchlist) != 0 {
@@ -137,6 +196,10 @@ func getConfig(config Config, options Options, client resty.Client) Config {
 	config.ShowHoldings = getBoolOption(options.ShowHoldings, config.ShowHoldings)
 	config.Proxy = getStringOption(options.Proxy, config.Proxy)
 	config.Sort = getStringOption(options.Sort, config.Sort)
+
+	if config.BrokerPositionsSync.TD.AccessToken != "" {
+		config.Lots = getTDLots(config, client)
+	}
 
 	return config
 }

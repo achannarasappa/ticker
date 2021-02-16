@@ -11,17 +11,18 @@ type Context struct {
 }
 
 type Config struct {
-	RefreshInterval       int      `yaml:"interval"`
-	Watchlist             []string `yaml:"watchlist"`
-	Lots                  []Lot    `yaml:"lots"`
-	Separate              bool     `yaml:"show-separator"`
-	ExtraInfoExchange     bool     `yaml:"show-tags"`
-	ExtraInfoFundamentals bool     `yaml:"show-fundamentals"`
-	ShowSummary           bool     `yaml:"show-summary"`
-	ShowHoldings          bool     `yaml:"show-holdings"`
-	Proxy                 string   `yaml:"proxy"`
-	Sort                  string   `yaml:"sort"`
-	Currency              string   `yaml:"currency"`
+	RefreshInterval       int        `yaml:"interval"`
+	Watchlist             []string   `yaml:"watchlist"`
+	Lots                  []Lot      `yaml:"lots"`
+	Separate              bool       `yaml:"show-separator"`
+	ExtraInfoExchange     bool       `yaml:"show-tags"`
+	ExtraInfoFundamentals bool       `yaml:"show-fundamentals"`
+	ShowSummary           bool       `yaml:"show-summary"`
+	ShowHoldings          bool       `yaml:"show-holdings"`
+	Proxy                 string     `yaml:"proxy"`
+	Sort                  string     `yaml:"sort"`
+	Currency              string     `yaml:"currency"`
+	BrokerPositionsSync   BrokerSync `yaml:"broker-positions-sync"`
 }
 
 type Reference struct {
@@ -37,6 +38,14 @@ type Lot struct {
 	Symbol   string  `yaml:"symbol"`
 	UnitCost float64 `yaml:"unit_cost"`
 	Quantity float64 `yaml:"quantity"`
+}
+
+type BrokerSync struct {
+	TD BrokerTD `yaml:"td"`
+}
+
+type BrokerTD struct {
+	AccessToken string `yaml:"access-token"`
 }
 
 type CurrencyRates map[string]CurrencyRate

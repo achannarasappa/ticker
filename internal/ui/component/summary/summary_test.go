@@ -29,7 +29,7 @@ var _ = Describe("Summary", func() {
 				DayChangePercent: 10.0,
 			}
 			Expect(removeFormatting(m.View())).To(Equal(strings.Join([]string{
-				"Day: ↑ 100.00 (10.00%) • Change: ↑ 9000.00 (1000.00%) • Value: 10000.00",
+				"Day: ↑ 100.00 (10.000%) • Change: ↑ 9000.00 (1000.00%) • Value: 10000.00",
 				"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
 			}, "\n")))
 		})
@@ -47,7 +47,7 @@ var _ = Describe("Summary", func() {
 				DayChangePercent: -10.0,
 			}
 			Expect(removeFormatting(m.View())).To(Equal(strings.Join([]string{
-				"Day: ↓ -100.00 (-10.00%) • Change: ↓ -9000.00 (-1000.00%) • Value: 1000.00",
+				"Day: ↓ -100.00 (-10.000%) • Change: ↓ -9000.00 (-1000.00%) • Value: 1000.00",
 				"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
 			}, "\n")))
 		})
@@ -57,7 +57,7 @@ var _ = Describe("Summary", func() {
 		It("should render an empty summary", func() {
 			m := NewModel()
 			Expect(removeFormatting(m.View())).To(Equal(strings.Join([]string{
-				"Day: 0.00 (0.00%) • Change: 0.00 (0.00%) • Value: ",
+				"Day: 0.0000 (0.0000%) • Change: 0.0000 (0.0000%) • Value: ",
 				"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
 			}, "\n")))
 		})

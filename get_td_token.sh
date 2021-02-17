@@ -27,7 +27,7 @@ uridecode() {
 }
 
 get_new_auth() {
-    xdg-open "https://auth.tdameritrade.com/auth?response_type=code&redirect_uri=$(uriencode $TD_REDIRECT_URI)&client_id=$(uriencode $TD_CONSUMER_KEY)%40AMER.OAUTHAP"
+    xdg-open "https://auth.tdameritrade.com/auth?response_type=code&redirect_uri=$(uriencode $TD_REDIRECT_URI)&client_id=$(uriencode $TD_CONSUMER_KEY)%40AMER.OAUTHAP&scope=AccountAccess"
     echo "After authorizing the app, grab the \`code\` parameter and slam it in here:"
     echo -n " -> "
     read tdcode

@@ -155,7 +155,7 @@ func getTDLots(config Config, client resty.Client) []Lot {
 		SetDoNotParseResponse(true).
 		Get(url)
 	if res.StatusCode() != 200 {
-		fmt.Println("Syncing TD positions failed:", res)
+		fmt.Println("Syncing TD positions failed during API request:", res)
 		return nil
 	}
 	// the API returns a top-level array so resty's auto-unmarshalling
@@ -164,11 +164,15 @@ func getTDLots(config Config, client resty.Client) []Lot {
 	defer rawBody.Close()
 	body, err := ioutil.ReadAll(res.RawBody())
 	if err != nil {
-		fmt.Println("Syncint TD positions failed:", err)
+		fmt.Println("Syncint TD positions failed while reading API response:", err)
 		return nil
 	}
 	accounts := make([]TDAccount, 0)
-	json.Unmarshal(body, &accounts)
+	err = json.Unmarshal(body, &accounts)
+	if err != nil {
+		fmt.Println("Syncing TD positions failed while parsing API response:", err)
+		return nil
+	}
 	lots := make([]Lot, 0)
 	for _, account := range accounts {
 		for _, position := range account.SecuritiesAccount.Positions {

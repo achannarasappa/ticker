@@ -87,7 +87,34 @@ var _ = Describe("Currency", func() {
 			})
 		})
 
-		When("the request to the exchange rate", func() {
+		When("the request to get the currencies of each symbol does not include a currency", func() {
+			It("should return an empty currency rate", func() {
+
+				responseText := `{
+					"quoteResponse": {
+						"result": [
+							{
+								"regularMarketPrice": 160.0,
+								"symbol": "VOW3.DE"
+							}
+						],
+						"error": null
+					}
+				}`
+				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=VOW3.DE"
+				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+					resp := httpmock.NewStringResponse(200, responseText)
+					resp.Header.Set("Content-Type", "application/json")
+					return resp, nil
+				})
+				output, err := GetCurrencyRates(*client, []string{"VOW3.DE"}, "EUR")
+				Expect(err).ToNot(HaveOccurred())
+				Expect(output).To(Equal(c.CurrencyRates{}))
+
+			})
+		})
+
+		When("the request to the exchange rate fails", func() {
 			It("returns error", func() {
 
 				responseText := `{

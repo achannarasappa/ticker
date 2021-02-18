@@ -76,7 +76,7 @@ func transformResponseCurrencyPairs(responseQuotes []ResponseQuote, targetCurren
 		}).
 		Uniq().
 		Reject(func(v string) bool {
-			return v == targetCurrencyPair
+			return v == targetCurrencyPair || v == targetCurrency+"=X"
 		}).
 		Result()
 

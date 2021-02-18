@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	Version    string = "v3.1.5"
+	Version    string = "v3.1.6"
 	configPath string
 	dep        c.Dependencies
 	ctx        c.Context

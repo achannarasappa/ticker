@@ -70,17 +70,18 @@ func transformResponseCurrencyPairs(responseQuotes []ResponseQuote, targetCurren
 
 	targetCurrencyPair := targetCurrency + targetCurrency + "=X"
 
-	currencyPairSymbols := From(responseQuotes).
-		Map(func(v ResponseQuote) string {
-			return v.Currency + targetCurrency + "=X"
-		}).
-		Uniq().
-		Reject(func(v string) bool {
-			return v == targetCurrencyPair || v == targetCurrency+"=X"
-		}).
-		Result()
+	keys := make(map[string]bool)
+	currencyPairSymbols := make([]string, 0)
 
-	return (currencyPairSymbols).([]string)
+	for _, responseQuote := range responseQuotes {
+		pair := responseQuote.Currency + targetCurrency + "=X"
+		if _, exists := keys[pair]; !exists && pair != targetCurrencyPair && pair != targetCurrency+"=X" {
+			keys[pair] = true
+			currencyPairSymbols = append(currencyPairSymbols, pair)
+		}
+	}
+
+	return currencyPairSymbols
 
 }
 

@@ -9,9 +9,17 @@ import (
 
 var _ = Describe("Util", func() {
 	Describe("ConvertFloatToString", func() {
-		It("should convert a float to a string with a precision of two", func() {
+		It("should convert a float that smaller than 10 to a string with a precision of four", func() {
+			output := ConvertFloatToString(0.563412)
+			Expect(output).To(Equal("0.5634"))
+		})
+		It("should convert a float that between 10 and 100 to a string with a precision of three", func() {
 			output := ConvertFloatToString(12.5634)
-			Expect(output).To(Equal("12.56"))
+			Expect(output).To(Equal("12.563"))
+		})
+		It("should convert a float that greater than 100 to a string with a precision of two", func() {
+			output := ConvertFloatToString(204.4325)
+			Expect(output).To(Equal("204.43"))
 		})
 	})
 	Describe("ValueText", func() {

@@ -51,7 +51,7 @@ func (m Model) View() string {
 			strings.Join(
 				[]string{
 					item(quote, m.Positions[quote.Symbol], m.Width),
-					extraInfoHoldings(m.Context.Config.ShowHoldings, m.Positions[quote.Symbol], m.Width),
+					extraInfoHoldings(m.Context.Config.ShowHoldings, quote, m.Positions[quote.Symbol], m.Width),
 					extraInfoFundamentals(m.ExtraInfoFundamentals, quote, m.Width),
 					extraInfoExchange(m.ExtraInfoExchange, quote, m.Context.Config.Currency, m.Width),
 				},
@@ -96,7 +96,7 @@ func item(q Quote, p Position, width int) string {
 			},
 			Cell{
 				Width: 25,
-				Text:  StyleNeutral(ConvertFloatToString(q.Price)),
+				Text:  StyleNeutral(ConvertFloatToString(q.Price, q.IsVariablePrecision)),
 				Align: RightAlign,
 			},
 		),
@@ -107,12 +107,12 @@ func item(q Quote, p Position, width int) string {
 			},
 			Cell{
 				Width: 25,
-				Text:  valueChangeText(p.TotalChange, p.TotalChangePercent),
+				Text:  valueChangeText(p.TotalChange, p.TotalChangePercent, q.IsVariablePrecision),
 				Align: RightAlign,
 			},
 			Cell{
 				Width: 25,
-				Text:  quoteChangeText(q.Change, q.ChangePercent),
+				Text:  quoteChangeText(q.Change, q.ChangePercent, q.IsVariablePrecision),
 				Align: RightAlign,
 			},
 		),
@@ -147,7 +147,7 @@ func extraInfoFundamentals(show bool, q Quote, width int) string {
 	return "\n" + Line(
 		width,
 		Cell{
-			Text:  dayRangeText(q.PriceDayHigh, q.PriceDayLow),
+			Text:  dayRangeText(q.PriceDayHigh, q.PriceDayLow, q.IsVariablePrecision),
 			Align: RightAlign,
 		},
 		Cell{
@@ -157,7 +157,7 @@ func extraInfoFundamentals(show bool, q Quote, width int) string {
 		},
 		Cell{
 			Width: 10,
-			Text:  StyleNeutral(ConvertFloatToString(q.PricePrevClose)),
+			Text:  StyleNeutral(ConvertFloatToString(q.PricePrevClose, q.IsVariablePrecision)),
 			Align: RightAlign,
 		},
 		Cell{
@@ -167,13 +167,13 @@ func extraInfoFundamentals(show bool, q Quote, width int) string {
 		},
 		Cell{
 			Width: 10,
-			Text:  StyleNeutral(ConvertFloatToString(q.PriceOpen)),
+			Text:  StyleNeutral(ConvertFloatToString(q.PriceOpen, q.IsVariablePrecision)),
 			Align: RightAlign,
 		},
 	)
 }
 
-func extraInfoHoldings(show bool, p Position, width int) string {
+func extraInfoHoldings(show bool, q Quote, p Position, width int) string {
 	if (p == Position{} || !show) {
 		return ""
 	}
@@ -186,7 +186,7 @@ func extraInfoHoldings(show bool, p Position, width int) string {
 		},
 		Cell{
 			Width: 7,
-			Text:  StyleNeutral(ConvertFloatToString(p.Weight)) + "%",
+			Text:  StyleNeutral(ConvertFloatToString(p.Weight, q.IsVariablePrecision)) + "%",
 			Align: RightAlign,
 		},
 		Cell{
@@ -196,7 +196,7 @@ func extraInfoHoldings(show bool, p Position, width int) string {
 		},
 		Cell{
 			Width: 10,
-			Text:  StyleNeutral(ConvertFloatToString(p.AverageCost)),
+			Text:  StyleNeutral(ConvertFloatToString(p.AverageCost, q.IsVariablePrecision)),
 			Align: RightAlign,
 		},
 		Cell{
@@ -206,17 +206,17 @@ func extraInfoHoldings(show bool, p Position, width int) string {
 		},
 		Cell{
 			Width: 10,
-			Text:  StyleNeutral(ConvertFloatToString(p.Quantity)),
+			Text:  StyleNeutral(ConvertFloatToString(p.Quantity, q.IsVariablePrecision)),
 			Align: RightAlign,
 		},
 	)
 }
 
-func dayRangeText(high float64, low float64) string {
+func dayRangeText(high float64, low float64, isVariablePrecision bool) string {
 	if high == 0.0 || low == 0.0 {
 		return ""
 	}
-	return StyleNeutralFaded("Day Range: ") + StyleNeutral(ConvertFloatToString(high)+" - "+ConvertFloatToString(low))
+	return StyleNeutralFaded("Day Range: ") + StyleNeutral(ConvertFloatToString(high, isVariablePrecision)+" - "+ConvertFloatToString(low, isVariablePrecision))
 }
 
 func exchangeDelayText(delay float64) string {
@@ -243,22 +243,22 @@ func marketStateText(q Quote) string {
 	return ""
 }
 
-func valueChangeText(change float64, changePercent float64) string {
+func valueChangeText(change float64, changePercent float64, isVariablePrecision bool) string {
 	if change == 0.0 {
 		return ""
 	}
 
-	return quoteChangeText(change, changePercent)
+	return quoteChangeText(change, changePercent, isVariablePrecision)
 }
 
-func quoteChangeText(change float64, changePercent float64) string {
+func quoteChangeText(change float64, changePercent float64, isVariablePrecision bool) string {
 	if change == 0.0 {
-		return StyleNeutralFaded("  " + ConvertFloatToString(change) + "  (" + ConvertFloatToString(changePercent) + "%)")
+		return StyleNeutralFaded("  " + ConvertFloatToString(change, isVariablePrecision) + "  (" + ConvertFloatToString(changePercent, false) + "%)")
 	}
 
 	if change > 0.0 {
-		return StylePricePositive(changePercent)("↑ " + ConvertFloatToString(change) + "  (" + ConvertFloatToString(changePercent) + "%)")
+		return StylePricePositive(changePercent)("↑ " + ConvertFloatToString(change, isVariablePrecision) + "  (" + ConvertFloatToString(changePercent, false) + "%)")
 	}
 
-	return StylePriceNegative(changePercent)("↓ " + ConvertFloatToString(change) + " (" + ConvertFloatToString(changePercent) + "%)")
+	return StylePriceNegative(changePercent)("↓ " + ConvertFloatToString(change, isVariablePrecision) + " (" + ConvertFloatToString(changePercent, false) + "%)")
 }

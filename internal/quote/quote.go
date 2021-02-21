@@ -30,6 +30,7 @@ type ResponseQuote struct {
 	PreMarketChange            float64 `json:"preMarketChange"`
 	PreMarketChangePercent     float64 `json:"preMarketChangePercent"`
 	PreMarketPrice             float64 `json:"preMarketPrice"`
+	QuoteType                  string  `json:"quoteType"`
 }
 
 type Quote struct {
@@ -43,6 +44,7 @@ type Quote struct {
 	ChangePercent           float64
 	IsActive                bool
 	IsRegularTradingSession bool
+	IsVariablePrecision     bool
 	CurrencyConverted       string
 }
 
@@ -51,6 +53,10 @@ type Response struct {
 		Quotes []ResponseQuote `json:"result"`
 		Error  interface{}     `json:"error"`
 	} `json:"quoteResponse"`
+}
+
+func isVariablePrecision(responseQuote ResponseQuote) bool {
+	return responseQuote.QuoteType == "CRYPTOCURRENCY"
 }
 
 func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
@@ -69,6 +75,7 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 			ChangePercent:           responseQuote.RegularMarketChangePercent,
 			IsActive:                true,
 			IsRegularTradingSession: true,
+			IsVariablePrecision:     isVariablePrecision(responseQuote),
 			CurrencyConverted:       currencyCode,
 		}
 	}
@@ -85,6 +92,7 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 			ChangePercent:           responseQuote.RegularMarketChangePercent,
 			IsActive:                true,
 			IsRegularTradingSession: false,
+			IsVariablePrecision:     isVariablePrecision(responseQuote),
 			CurrencyConverted:       currencyCode,
 		}
 	}
@@ -101,6 +109,7 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 			ChangePercent:           responseQuote.RegularMarketChangePercent,
 			IsActive:                false,
 			IsRegularTradingSession: false,
+			IsVariablePrecision:     isVariablePrecision(responseQuote),
 			CurrencyConverted:       currencyCode,
 		}
 	}
@@ -117,6 +126,7 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 			ChangePercent:           responseQuote.PostMarketChangePercent + responseQuote.RegularMarketChangePercent,
 			IsActive:                true,
 			IsRegularTradingSession: false,
+			IsVariablePrecision:     isVariablePrecision(responseQuote),
 			CurrencyConverted:       currencyCode,
 		}
 	}
@@ -133,6 +143,7 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 			ChangePercent:           responseQuote.PreMarketChangePercent,
 			IsActive:                true,
 			IsRegularTradingSession: false,
+			IsVariablePrecision:     isVariablePrecision(responseQuote),
 			CurrencyConverted:       currencyCode,
 		}
 	}
@@ -149,6 +160,7 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 			ChangePercent:           responseQuote.PostMarketChangePercent + responseQuote.RegularMarketChangePercent,
 			IsActive:                false,
 			IsRegularTradingSession: false,
+			IsVariablePrecision:     isVariablePrecision(responseQuote),
 			CurrencyConverted:       currencyCode,
 		}
 	}
@@ -164,6 +176,7 @@ func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 		ChangePercent:           responseQuote.RegularMarketChangePercent,
 		IsActive:                false,
 		IsRegularTradingSession: false,
+		IsVariablePrecision:     isVariablePrecision(responseQuote),
 		CurrencyConverted:       currencyCode,
 	}
 

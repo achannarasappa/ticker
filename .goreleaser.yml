@@ -17,6 +17,8 @@ builds:
     hooks:
       post:
         - upx "{{ .Path }}"
+    ldflags:
+      - -s -w -X 'github.com/achannarasappa/ticker/cmd.Version={{.Version}}'
   - id: build
     main: ./main.go
     env:
@@ -24,6 +26,8 @@ builds:
     goos:
       - windows
       - darwin
+    ldflags:
+      - -s -w -X 'github.com/achannarasappa/ticker/cmd.Version={{.Version}}'
 archives:
   - 
     name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}-{{ .Mips }}{{ end }}"

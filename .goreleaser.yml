@@ -3,7 +3,7 @@ before:
   hooks:
     - go mod download
 builds:
-  - id: build-upx
+  - id: build-linux-64
     main: ./main.go
     env:
       - CGO_ENABLED=0
@@ -11,6 +11,18 @@ builds:
       - linux
     goarch:
       - amd64
+    hooks:
+      post:
+        - upx "{{ .Path }}"
+    ldflags:
+      - -s -w -X 'github.com/achannarasappa/ticker/cmd.Version={{.Version}}'
+  - id: build-linux
+    main: ./main.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
       - 386
       - arm
       - arm64
@@ -98,6 +110,18 @@ docker_manifests:
   image_templates:
   - achannarasappa/ticker:{{ .Version }}-amd64
   - achannarasappa/ticker:{{ .Version }}-arm64v8
+nfpms:
+  -
+    file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}-{{ .Mips }}{{ end }}"
+    builds:
+      - build-linux-64
+    homepage: https://github.com/achannarasappa/ticker
+    maintainer: Ani Channarasappa <ticker@ani.dev>
+    description: Terminal stock ticker with live updates and position tracking
+    license: GPLv3
+    formats:
+      - deb
+      - rpm
 snapcrafts:
   -
     id: ticker

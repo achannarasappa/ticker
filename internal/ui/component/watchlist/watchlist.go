@@ -216,7 +216,7 @@ func dayRangeText(high float64, low float64, isVariablePrecision bool) string {
 	if high == 0.0 || low == 0.0 {
 		return ""
 	}
-	return StyleNeutralFaded("Day Range: ") + StyleNeutral(ConvertFloatToString(high, isVariablePrecision)+" - "+ConvertFloatToString(low, isVariablePrecision))
+	return StyleNeutralFaded("Day Range: ") + StyleNeutral(ConvertFloatToString(low, isVariablePrecision)+" - "+ConvertFloatToString(high, isVariablePrecision))
 }
 
 func exchangeDelayText(delay float64) string {

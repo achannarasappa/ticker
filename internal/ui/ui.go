@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/achannarasappa/ticker/internal/cli"
+	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/position"
 	"github.com/achannarasappa/ticker/internal/quote"
 	"github.com/achannarasappa/ticker/internal/ui/component/summary"
@@ -16,11 +16,10 @@ import (
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/go-resty/resty/v2"
 )
 
 var (
-	styleLogo = NewStyle("#ffc27d", "#f37329", true)
+	styleLogo = NewStyle("#ffffd7", "#ff8700", true)
 	styleHelp = NewStyle("#4e4e4e", "", true)
 )
 
@@ -29,10 +28,11 @@ const (
 )
 
 type Model struct {
+	ctx             c.Context
 	ready           bool
 	headerHeight    int
 	getQuotes       func() []quote.Quote
-	getPositions    func([]quote.Quote) map[string]position.Position
+	getPositions    func([]quote.Quote) (map[string]position.Position, position.PositionSummary)
 	requestInterval int
 	viewport        viewport.Model
 	watchlist       watchlist.Model
@@ -54,18 +54,19 @@ func (m Model) updateQuotes() tea.Cmd {
 	})
 }
 
-func NewModel(config cli.Config, client *resty.Client) Model {
+func NewModel(dep c.Dependencies, ctx c.Context) Model {
 
-	aggregatedLots := position.GetLots(config.Lots)
-	symbols := position.GetSymbols(config.Watchlist, aggregatedLots)
+	aggregatedLots := position.GetLots(ctx.Config.Lots)
+	symbols := position.GetSymbols(ctx.Config.Watchlist, aggregatedLots)
 
 	return Model{
-		headerHeight:    getVerticalMargin(config),
+		ctx:             ctx,
+		headerHeight:    getVerticalMargin(ctx.Config),
 		ready:           false,
-		requestInterval: config.RefreshInterval,
-		getQuotes:       quote.GetQuotes(*client, symbols),
-		getPositions:    position.GetPositions(aggregatedLots),
-		watchlist:       watchlist.NewModel(config.Separate, config.ExtraInfoExchange, config.ExtraInfoFundamentals, config.Sort),
+		requestInterval: ctx.Config.RefreshInterval,
+		getQuotes:       quote.GetQuotes(ctx, *dep.HttpClient, symbols),
+		getPositions:    position.GetPositions(ctx, aggregatedLots),
+		watchlist:       watchlist.NewModel(ctx),
 		summary:         summary.NewModel(),
 	}
 }
@@ -114,10 +115,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetContent(m.watchlist.View())
 
 	case QuoteMsg:
-		positions := m.getPositions(msg.quotes)
+		positions, positionSummary := m.getPositions(msg.quotes)
 		m.watchlist.Quotes = msg.quotes
 		m.watchlist.Positions = positions
-		m.summary.Summary = position.GetPositionSummary(positions)
+		m.summary.Summary = positionSummary
 		m.lastUpdateTime = msg.time
 		if m.ready {
 			m.viewport.SetContent(m.watchlist.View())
@@ -163,14 +164,14 @@ func footer(width int, time string) string {
 			Text:  styleHelp("q: exit ↑: scroll up ↓: scroll down"),
 		},
 		Cell{
-			Text:  styleHelp("⟳  " + time),
+			Text:  styleHelp("↻  " + time),
 			Align: RightAlign,
 		},
 	)
 
 }
 
-func getVerticalMargin(config cli.Config) int {
+func getVerticalMargin(config c.Config) int {
 	if config.ShowSummary {
 		return 2
 	}

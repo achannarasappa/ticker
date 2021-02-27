@@ -69,9 +69,15 @@ var _ = Describe("Sorter", func() {
 		positions := map[string]Position{
 			"BTC-USD": {
 				Value: 50000.0,
+				AggregatedLot: AggregatedLot{
+					OrderIndex: 1,
+				},
 			},
 			"GOOG": {
 				Value: 2523.53,
+				AggregatedLot: AggregatedLot{
+					OrderIndex: 0,
+				},
 			},
 		}
 		When("providing no sort parameter", func() {
@@ -119,6 +125,21 @@ var _ = Describe("Sorter", func() {
 				Expect(sortedQuotes).To(Equal(expected))
 			})
 		})
+		When("providing \"user\" as a sort parameter", func() {
+			It("should sort by the user defined order for positions and watchlist", func() {
+				sorter := NewSorter("user")
+
+				sortedQuotes := sorter(quotes, positions)
+				expected := []Quote{
+					googleQuote,
+					bitcoinQuote,
+					twQuote,
+					msftQuote,
+				}
+
+				Expect(sortedQuotes).To(Equal(expected))
+			})
+		})
 		When("providing no quotes", func() {
 			When("default sorter", func() {
 				It("should return no quotes", func() {
@@ -141,6 +162,15 @@ var _ = Describe("Sorter", func() {
 			When("value sorter", func() {
 				It("should return no quotes", func() {
 					sorter := NewSorter("value")
+
+					sortedQuotes := sorter([]Quote{}, map[string]Position{})
+					expected := []Quote{}
+					Expect(sortedQuotes).To(Equal(expected))
+				})
+			})
+			When("user sorter", func() {
+				It("should return no quotes", func() {
+					sorter := NewSorter("user")
 
 					sortedQuotes := sorter([]Quote{}, map[string]Position{})
 					expected := []Quote{}

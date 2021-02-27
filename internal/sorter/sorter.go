@@ -20,6 +20,28 @@ func NewSorter(sort string) Sorter {
 var sortDict = map[string]Sorter{
 	"alpha": sortByTicker,
 	"value": sortByValue,
+	"user":  sortByUser,
+}
+
+func sortByUser(quotes []Quote, positions map[string]Position) []Quote {
+
+	quoteCount := len(quotes)
+
+	if quoteCount <= 0 {
+		return quotes
+	}
+
+	result := gubrak.
+		From(quotes).
+		OrderBy(func(v Quote) int {
+			if p, ok := positions[v.Symbol]; ok {
+				return p.AggregatedLot.OrderIndex
+			}
+			return quoteCount
+		}).
+		Result()
+
+	return (result).([]Quote)
 }
 
 func sortByTicker(quotes []Quote, positions map[string]Position) []Quote {

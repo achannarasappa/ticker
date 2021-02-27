@@ -3,7 +3,7 @@ before:
   hooks:
     - go mod download
 builds:
-  - id: build-upx
+  - id: build-linux-64
     main: ./main.go
     env:
       - CGO_ENABLED=0
@@ -11,12 +11,26 @@ builds:
       - linux
     goarch:
       - amd64
+    hooks:
+      post:
+        - upx "{{ .Path }}"
+    ldflags:
+      - -s -w -X 'github.com/achannarasappa/ticker/cmd.Version={{.Version}}'
+  - id: build-linux
+    main: ./main.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
       - 386
       - arm
       - arm64
     hooks:
       post:
         - upx "{{ .Path }}"
+    ldflags:
+      - -s -w -X 'github.com/achannarasappa/ticker/cmd.Version={{.Version}}'
   - id: build
     main: ./main.go
     env:
@@ -24,6 +38,8 @@ builds:
     goos:
       - windows
       - darwin
+    ldflags:
+      - -s -w -X 'github.com/achannarasappa/ticker/cmd.Version={{.Version}}'
 archives:
   - 
     name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}-{{ .Mips }}{{ end }}"
@@ -50,11 +66,79 @@ brews:
     description: "Terminal stock ticker with live updates and position tracking"
     license: "GPLv3"
 dockers:
+- image_templates: ["achannarasappa/ticker:{{ .Version }}-amd64"]
+  dockerfile: Dockerfile
+  use_buildx: true
+  build_flag_templates:
+  - "--platform=linux/amd64"
+  - "--pull"
+  - "--label=org.opencontainers.image.created={{.Date}}"
+  - "--label=org.opencontainers.image.title={{.ProjectName}}"
+  - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+  - "--label=org.opencontainers.image.version={{.Version}}"
+  - "--label=org.opencontainers.image.source={{.GitURL}}"
+- image_templates: ["achannarasappa/ticker:{{ .Version }}-arm64v8"]
+  goarch: arm64
+  dockerfile: Dockerfile
+  use_buildx: true
+  build_flag_templates:
+  - "--platform=linux/arm64/v8"
+  - "--pull"
+  - "--label=org.opencontainers.image.created={{.Date}}"
+  - "--label=org.opencontainers.image.title={{.ProjectName}}"
+  - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+  - "--label=org.opencontainers.image.version={{.Version}}"
+  - "--label=org.opencontainers.image.source={{.GitURL}}"
+docker_manifests:
+- name_template: achannarasappa/ticker:{{ .Version }}
+  image_templates:
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
+- name_template: achannarasappa/ticker:latest
+  image_templates:
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
+- name_template: achannarasappa/ticker:{{ .Major }}
+  image_templates:
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
+- name_template: achannarasappa/ticker:{{ .Major }}.{{ .Minor }}
+  image_templates:
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
+- name_template: achannarasappa/ticker:{{ .Major }}.{{ .Minor }}.{{ .Patch }}
+  image_templates:
+  - achannarasappa/ticker:{{ .Version }}-amd64
+  - achannarasappa/ticker:{{ .Version }}-arm64v8
+nfpms:
   -
-    goos: linux
-    goarch: amd64
-    image_templates:
-    - "achannarasappa/ticker:{{ .Tag }}"
-    - "achannarasappa/ticker:v{{ .Major }}"
-    - "achannarasappa/ticker:v{{ .Major }}.{{ .Minor }}"
-    - "achannarasappa/ticker:latest"
+    file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}-{{ .Mips }}{{ end }}"
+    builds:
+      - build-linux-64
+    homepage: https://github.com/achannarasappa/ticker
+    maintainer: Ani Channarasappa <ticker@ani.dev>
+    description: Terminal stock ticker with live updates and position tracking
+    license: GPLv3
+    formats:
+      - deb
+      - rpm
+snapcrafts:
+  -
+    id: ticker
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    replacements:
+      darwin: mac
+    publish: true
+    summary: Terminal stock watcher and stock position tracker
+    description: |
+      Features:
+      Live stock price quotes
+      Track value of your stock positions
+      Support for multiple cost basis lots
+      Support for pre and post market price quotes
+
+    grade: stable
+    confinement: strict
+    apps:
+      ticker:
+        plugs: ["network"]

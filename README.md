@@ -44,6 +44,20 @@ curl -Ls https://api.github.com/repos/achannarasappa/ticker/releases/latest \
 docker run -it --rm achannarasappa/ticker
 ```
 
+**snap**
+```sh
+sudo snap install ticker
+```
+
+### Third-party repositories
+These repositories are maintained by a third-party and may not have the latest versions available
+
+**MacPorts**
+```
+sudo port selfupdate
+sudo port install ticker
+```
+
 ## Quick Start
 
 ```sh
@@ -60,8 +74,10 @@ ticker -w NET,AAPL,TSLA
 |  |--show-fundamentals||display open price, previous close, and day range |
 |  |--show-separator||layout with separators between each quote|
 |  |--show-summary||show total day change, total value, and total value change|
-|  |--sort||sort quotes on the UI. Set `alpha` to sort by ticker name. Set `value` to sort by position value. Default is sort by change percent|
+|  |--show-holdings||show holdings including weight, average cost, and quantity|
+|  |--sort||sort quotes on the UI - options are change percent (default), `alpha`, `value`, and `user`|
 |  |--proxy||proxy URL for requests (default is none)|
+|  |--version||print the current version number|
 
 ## Configuration
 
@@ -73,7 +89,9 @@ show-summary: true
 show-tags: true
 show-fundamentals: true
 show-separator: true
+show-holdings: true
 interval: 5
+currency: USD
 watchlist:
   - NET
   - TEAM
@@ -97,9 +115,29 @@ lots:
 
 ### Display Options
 
-With  `--show-summary`, `--show-tags`, `--show-fundamentals`, and `--show-separator` options set, the layout and information displayed expands:
+With  `--show-summary`, `--show-tags`, `--show-fundamentals`, `--show-holdings`, and `--show-separator` options set, the layout and information displayed expands:
 
 <img src="./docs/ticker-all-options.png" />
+
+### Sorting
+
+It's possible to set a custom sort order with the `--sort` flag or `sort:` config option with these options:
+
+* Default - change percent with closed markets at the end
+* `alpha` to sort alphabetically by symbol
+* `value` to sort by position value
+* `user` to sort by the order defined in configuration with positions on top then lots
+
+### Currency Conversion
+
+`ticker` supports converting from the exchange's currency to a local currency. This can be set by setting the `currency` property in `.ticker.yaml` to a [ISO 4217 3-digit currency code](https://docs.1010data.com/1010dataReferenceManual/DataTypesAndFormats/currencyUnitCodes.html).
+
+<img src="./docs/ticker-currency.png" />
+
+* When a `currency` is defined, all values are converted including summary, quote, and position
+* Add cost basis lots in the currency of the exchange - these will be converted automatically when `currency` is defined
+* If a `currency` is not set (default behavior) and the `show-summary` option is enabled, the summary will be calculated in USD regardless of the exchange currency to avoid mixing currencies
+* Currencies are retrieved only once at start time - currency exchange rates do fluctuate over time and thus converted values may vary depending on when ticker is started 
 
 ## Notes
 

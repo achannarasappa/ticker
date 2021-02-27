@@ -40,12 +40,12 @@ func (m Model) View() string {
 
 func quoteChangeText(change float64, changePercent float64) string {
 	if change == 0.0 {
-		return StyleNeutralFaded(ConvertFloatToString(change) + " (" + ConvertFloatToString(changePercent) + "%)")
+		return StyleNeutralFaded(ConvertFloatToString(change, false) + " (" + ConvertFloatToString(changePercent, false) + "%)")
 	}
 
 	if change > 0.0 {
-		return StylePricePositive(changePercent)("↑ " + ConvertFloatToString(change) + " (" + ConvertFloatToString(changePercent) + "%)")
+		return StylePricePositive(changePercent)("↑ " + ConvertFloatToString(change, false) + " (" + ConvertFloatToString(changePercent, false) + "%)")
 	}
 
-	return StylePriceNegative(changePercent)("↓ " + ConvertFloatToString(change) + " (" + ConvertFloatToString(changePercent) + "%)")
+	return StylePriceNegative(changePercent)("↓ " + ConvertFloatToString(change, false) + " (" + ConvertFloatToString(changePercent, false) + "%)")
 }

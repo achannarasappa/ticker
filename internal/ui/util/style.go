@@ -14,6 +14,7 @@ const (
 var (
 	StyleNeutral       = NewStyle("#d0d0d0", "", false)
 	StyleNeutralBold   = NewStyle("#d0d0d0", "", true)
+	StyleNeutralLight  = NewStyle("#8a8a8a", "", false)
 	StyleNeutralFaded  = NewStyle("#626262", "", false)
 	StyleLine          = NewStyle("#3a3a3a", "", false)
 	StyleTag           = NewStyle("#d0d0d0", "#3a3a3a", false)

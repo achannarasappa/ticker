@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
+	github.com/achannarasappa/term-grid v0.2.0
 	github.com/adrg/xdg v0.3.0
 	github.com/charmbracelet/bubbles v0.7.5
 	github.com/charmbracelet/bubbletea v0.12.2
@@ -16,7 +17,7 @@ require (
 	github.com/novalagung/gubrak/v2 v2.0.1
 	github.com/nxadm/tail v1.4.6 // indirect
 	github.com/onsi/ginkgo v1.15.0
-	github.com/onsi/gomega v1.10.1
+	github.com/onsi/gomega v1.10.5
 	github.com/spf13/afero v1.5.1
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.0

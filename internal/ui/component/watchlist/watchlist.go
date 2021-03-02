@@ -97,7 +97,8 @@ func buildCells(quote Quote, position Position, config c.Config) []grid.Cell {
 	}
 
 	cellName := []grid.Cell{
-		{Text: textName(quote)},
+		{Text: textName(quote), Width: 20},
+		{Text: ""},
 		{Text: textMarketState(quote), Width: 5, Align: grid.Right},
 	}
 

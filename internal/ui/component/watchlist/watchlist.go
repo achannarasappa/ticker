@@ -12,7 +12,6 @@ import (
 	. "github.com/achannarasappa/ticker/internal/ui/util"
 
 	grid "github.com/achannarasappa/term-grid"
-	// . "github.com/achannarasappa/ticker/internal/ui/util/text"
 )
 
 type Model struct {
@@ -49,43 +48,26 @@ func (m Model) View() string {
 	for _, quote := range quotes {
 
 		position := m.Positions[quote.Symbol]
-		showHoldings := m.Context.Config.ShowHoldings
 
 		rows = append(
 			rows,
 			grid.Row{
 				Width: m.Width,
-				Cells: []grid.Cell{
-					{Text: textName(quote)},
-					{Text: textMarketState(quote), Width: 5, Align: grid.Right},
-					{Text: textQuoteRangeLabels(quote), Width: 15, Align: grid.Right, VisibleMinWidth: 135},
-					{Text: textQuoteRange(quote), Width: 15, Align: grid.Right, VisibleMinWidth: 120},
-					{Text: textQuoteExtendedLabels(quote), Width: 15, Align: grid.Right, VisibleMinWidth: 105},
-					{Text: textQuoteExtended(quote), Width: 7, Align: grid.Right, VisibleMinWidth: 90},
-					{Text: textPosition(quote, position), Width: 25, Align: grid.Right},
-					{Text: textQuote(quote), Width: 25, Align: grid.Right},
-				},
+				Cells: buildCells(quote, position, m.Context.Config),
 			})
 
-		if showHoldings {
+		if m.Context.Config.ExtraInfoExchange {
 			rows = append(
 				rows,
 				grid.Row{
 					Width: m.Width,
 					Cells: []grid.Cell{
-						{Text: ""},
-						{Text: "", Width: 5, Align: grid.Right},
-						{Text: StyleNeutralFaded("Avg. Cost: "), Width: 15, Align: grid.Right, VisibleMinWidth: 135},
-						{Text: StyleNeutral(ConvertFloatToString(position.AverageCost, quote.IsVariablePrecision)), Width: 15, Align: grid.Right, VisibleMinWidth: 120},
-						{Text: StyleNeutralFaded("Quantity: "), Width: 15, Align: grid.Right, VisibleMinWidth: 105},
-						{Text: StyleNeutral(ConvertFloatToString(position.Quantity, quote.IsVariablePrecision)), Width: 7, Align: grid.Right, VisibleMinWidth: 90},
-						{Text: "", Width: 25, Align: grid.Right},
-						{Text: "", Width: 25, Align: grid.Right},
+						{Text: textTags(quote)},
 					},
 				})
 		}
 
-		if m.Separate {
+		if m.Context.Config.Separate {
 			rows = append(
 				rows,
 				grid.Row{
@@ -99,6 +81,62 @@ func (m Model) View() string {
 	}
 
 	return grid.Render(grid.Grid{Rows: rows, GutterHorizontal: 1})
+}
+
+func buildCells(quote Quote, position Position, config c.Config) []grid.Cell {
+
+	if !config.ExtraInfoFundamentals && !config.ShowHoldings {
+
+		return []grid.Cell{
+			{Text: textName(quote)},
+			{Text: textMarketState(quote), Width: 5, Align: grid.Right},
+			{Text: textPosition(quote, position), Width: 25, Align: grid.Right},
+			{Text: textQuote(quote), Width: 25, Align: grid.Right},
+		}
+
+	}
+
+	cellName := []grid.Cell{
+		{Text: textName(quote)},
+		{Text: textMarketState(quote), Width: 5, Align: grid.Right},
+	}
+
+	widthMinTerm := 90
+	cells := []grid.Cell{
+		{Text: textPosition(quote, position), Width: 25, Align: grid.Right},
+		{Text: textQuote(quote), Width: 25, Align: grid.Right},
+	}
+
+	if config.ShowHoldings {
+		cells = append(
+			[]grid.Cell{
+				{Text: textPositionExtendedLabels(position), Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
+				{Text: textPositionExtended(quote, position), Width: 7, Align: grid.Right, VisibleMinWidth: widthMinTerm},
+			},
+			cells...,
+		)
+		widthMinTerm += 30
+	}
+
+	if config.ExtraInfoFundamentals {
+		cells = append(
+			[]grid.Cell{
+				{Text: textQuoteRangeLabels(quote), Align: grid.Right, VisibleMinWidth: widthMinTerm + 45},
+				{Text: textQuoteRange(quote), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 30},
+				{Text: textQuoteExtendedLabels(quote), Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
+				{Text: textQuoteExtended(quote), Width: 7, Align: grid.Right, VisibleMinWidth: widthMinTerm},
+			},
+			cells...,
+		)
+	}
+
+	cells = append(
+		cellName,
+		cells...,
+	)
+
+	return cells
+
 }
 
 func textName(quote Quote) string {
@@ -143,6 +181,21 @@ func textQuoteExtendedLabels(quote Quote) string {
 		StyleNeutralFaded("Open: ")
 }
 
+func textPositionExtended(quote Quote, position Position) string {
+
+	return StyleNeutral(ConvertFloatToString(position.Quantity, quote.IsVariablePrecision)) +
+		"\n" +
+		StyleNeutral(ConvertFloatToString(position.AverageCost, quote.IsVariablePrecision))
+
+}
+
+func textPositionExtendedLabels(position Position) string {
+
+	return StyleNeutralFaded("Quantity:") +
+		"\n" +
+		StyleNeutralFaded("Avg. Cost:")
+}
+
 func textQuoteRange(quote Quote) string {
 
 	textDayRange := ""
@@ -178,25 +231,16 @@ func textSeparator(width int) string {
 	return StyleLine(strings.Repeat("─", width))
 }
 
-// func extraInfoExchange(show bool, q Quote, targetCurrency string, width int) string {
-// 	if !show {
-// 		return ""
-// 	}
+func textTags(q Quote) string {
 
-// 	currencyText := q.Currency
+	currencyText := q.Currency
 
-// 	if targetCurrency != "" && targetCurrency != q.Currency {
-// 		currencyText = q.Currency + " → " + targetCurrency
-// 	}
+	if q.CurrencyConverted != "" && q.CurrencyConverted != q.Currency {
+		currencyText = q.Currency + " → " + q.CurrencyConverted
+	}
 
-// 	return "\n" + Line(
-// 		width,
-// 		Cell{
-// 			Align: RightAlign,
-// 			Text:  tagText(currencyText) + " " + tagText(exchangeDelayText(q.ExchangeDelay)) + " " + tagText(q.ExchangeName),
-// 		},
-// 	)
-// }
+	return formatTag(currencyText) + " " + formatTag(exchangeDelayText(q.ExchangeDelay)) + " " + formatTag(q.ExchangeName)
+}
 
 func exchangeDelayText(delay float64) string {
 	if delay <= 0 {
@@ -206,7 +250,7 @@ func exchangeDelayText(delay float64) string {
 	return "Delayed " + strconv.FormatFloat(delay, 'f', 0, 64) + "min"
 }
 
-func tagText(text string) string {
+func formatTag(text string) string {
 	return StyleTagEnd(" ") + StyleTag(text) + StyleTagEnd(" ")
 }
 

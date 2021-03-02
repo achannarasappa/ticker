@@ -110,7 +110,7 @@ func buildCells(quote Quote, position Position, config c.Config) []grid.Cell {
 	if config.ShowHoldings {
 		cells = append(
 			[]grid.Cell{
-				{Text: textPositionExtendedLabels(position), Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
+				{Text: textPositionExtendedLabels(position), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
 				{Text: textPositionExtended(quote, position), Width: 7, Align: grid.Right, VisibleMinWidth: widthMinTerm},
 			},
 			cells...,
@@ -121,9 +121,9 @@ func buildCells(quote Quote, position Position, config c.Config) []grid.Cell {
 	if config.ExtraInfoFundamentals {
 		cells = append(
 			[]grid.Cell{
-				{Text: textQuoteRangeLabels(quote), Align: grid.Right, VisibleMinWidth: widthMinTerm + 45},
+				{Text: textQuoteRangeLabels(quote), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 45},
 				{Text: textQuoteRange(quote), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 30},
-				{Text: textQuoteExtendedLabels(quote), Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
+				{Text: textQuoteExtendedLabels(quote), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
 				{Text: textQuoteExtended(quote), Width: 7, Align: grid.Right, VisibleMinWidth: widthMinTerm},
 			},
 			cells...,
@@ -140,6 +140,11 @@ func buildCells(quote Quote, position Position, config c.Config) []grid.Cell {
 }
 
 func textName(quote Quote) string {
+
+	if len(quote.ShortName) > 20 {
+		quote.ShortName = quote.ShortName[:20]
+	}
+
 	return StyleNeutralBold(quote.Symbol) +
 		"\n" +
 		StyleNeutralFaded(quote.ShortName)

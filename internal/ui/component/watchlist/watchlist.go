@@ -159,17 +159,23 @@ func textQuote(quote Quote) string {
 
 func textPosition(quote Quote, position Position) string {
 
-	if position.TotalChange == 0.0 {
-		return ""
+	positionValue := ""
+	positionChange := ""
+
+	if position.Value != 0.0 {
+		positionValue = ValueText(position.Value) +
+			StyleNeutralLight(
+				" ("+
+					ConvertFloatToString(position.Weight, quote.IsVariablePrecision)+"%"+
+					")")
+	}
+	if position.TotalChange != 0.0 {
+		positionChange = quoteChangeText(position.TotalChange, position.TotalChangePercent, quote.IsVariablePrecision)
 	}
 
-	return ValueText(position.Value) +
-		StyleNeutralLight(
-			" ("+
-				ConvertFloatToString(position.Weight, quote.IsVariablePrecision)+"%"+
-				")") +
+	return positionValue +
 		"\n" +
-		quoteChangeText(position.TotalChange, position.TotalChangePercent, quote.IsVariablePrecision)
+		positionChange
 }
 
 func textQuoteExtended(quote Quote) string {

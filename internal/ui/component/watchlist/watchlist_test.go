@@ -61,7 +61,7 @@ var _ = Describe("Watchlist", func() {
 					IsRegularTradingSession: isRegularTradingSession,
 				},
 			}
-			Expect(removeFormatting(m.View())).To(Equal(expected))
+			Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
 		},
 		Entry(
 			describe("gain"),
@@ -70,9 +70,8 @@ var _ = Describe("Watchlist", func() {
 			0.05,
 			Position{},
 			strings.Join([]string{
-				"AAPL                       ●                                                1.05",
+				"AAPL                     ●                                                  1.05",
 				"Apple Inc.                                                       ↑ 0.05  (0.05%)",
-				"",
 			}, "\n"),
 		),
 		Entry(
@@ -82,9 +81,8 @@ var _ = Describe("Watchlist", func() {
 			-0.05,
 			Position{},
 			strings.Join([]string{
-				"AAPL                       ●                                                0.95",
+				"AAPL                     ●                                                  0.95",
 				"Apple Inc.                                                      ↓ -0.05 (-0.05%)",
-				"",
 			}, "\n"),
 		),
 		Entry(
@@ -94,9 +92,8 @@ var _ = Describe("Watchlist", func() {
 			0.05,
 			Position{},
 			strings.Join([]string{
-				"AAPL                       ○                                                1.05",
+				"AAPL                     ○                                                  1.05",
 				"Apple Inc.                                                       ↑ 0.05  (0.05%)",
-				"",
 			}, "\n"),
 		),
 		Entry(
@@ -117,9 +114,8 @@ var _ = Describe("Watchlist", func() {
 				TotalChangePercent: 110.0,
 			},
 			strings.Join([]string{
-				"AAPL                       ●                     105.00                     1.05",
-				"Apple Inc.                           ↑ 55.00  (110.00%)          ↑ 0.05  (0.05%)",
-				"",
+				"AAPL                     ●              105.00 (0.00%)                      1.05",
+				"Apple Inc.                          ↑ 55.00  (110.00%)           ↑ 0.05  (0.05%)",
 			}, "\n"),
 		),
 		Entry(
@@ -140,9 +136,8 @@ var _ = Describe("Watchlist", func() {
 				TotalChangePercent: -30.0,
 			},
 			strings.Join([]string{
-				"AAPL                       ●                     105.00                     1.05",
-				"Apple Inc.                           ↓ -45.00 (-30.00%)          ↑ 0.05  (0.05%)",
-				"",
+				"AAPL                     ●              105.00 (0.00%)                      1.05",
+				"Apple Inc.                          ↓ -45.00 (-30.00%)           ↑ 0.05  (0.05%)",
 			}, "\n"),
 		),
 		Entry(
@@ -163,9 +158,8 @@ var _ = Describe("Watchlist", func() {
 				TotalChangePercent: 90.0,
 			},
 			strings.Join([]string{
-				"AAPL                       ●                      95.00                     0.95",
-				"Apple Inc.                            ↑ 45.00  (90.00%)         ↓ -0.05 (-0.05%)",
-				"",
+				"AAPL                     ●               95.00 (0.00%)                      0.95",
+				"Apple Inc.                           ↑ 45.00  (90.00%)          ↓ -0.05 (-0.05%)",
 			}, "\n"),
 		),
 		Entry(
@@ -186,9 +180,8 @@ var _ = Describe("Watchlist", func() {
 				TotalChangePercent: -36.67,
 			},
 			strings.Join([]string{
-				"AAPL                       ●                      95.00                     0.95",
-				"Apple Inc.                           ↓ -55.00 (-36.67%)         ↓ -0.05 (-0.05%)",
-				"",
+				"AAPL                     ●               95.00 (0.00%)                      0.95",
+				"Apple Inc.                          ↓ -55.00 (-36.67%)          ↓ -0.05 (-0.05%)",
 			}, "\n"),
 		),
 		Entry(
@@ -207,9 +200,8 @@ var _ = Describe("Watchlist", func() {
 				DayChangePercent: 0.0,
 			},
 			strings.Join([]string{
-				"AAPL                                              95.00                     1.00",
+				"AAPL                                     95.00 (0.00%)                      1.00",
 				"Apple Inc.                                                         0.00  (0.00%)",
-				"",
 			}, "\n"),
 		),
 	)
@@ -229,8 +221,8 @@ var _ = Describe("Watchlist", func() {
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
-						Symbol:    "AAPL",
-						ShortName: "Apple Inc.",
+						Symbol:    "MSFT",
+						ShortName: "Microsoft Corporation Inc.",
 					},
 					Price:                   1.05,
 					Change:                  0.00,
@@ -272,18 +264,16 @@ var _ = Describe("Watchlist", func() {
 					IsRegularTradingSession: true,
 				},
 			}
-			expected := strings.Join([]string{
-				"BTC-USD                    ●                                            50000.00",
-				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-				"TW                         ○                                              109.04",
-				"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
-				"GOOG                       ○                                             2523.53",
-				"Google Inc.                                                    ↓ -32.02 (-1.35%)",
-				"AAPL                                                                        1.05",
-				"Apple Inc.                                                         0.00  (0.00%)",
-				"",
-			}, "\n")
-			Expect(removeFormatting(m.View())).To(Equal(expected))
+			expected := `
+BTC-USD                  ●                                              50000.00
+Bitcoin                                                     ↑ 10000.00  (20.00%)
+TW                       ○                                                109.04
+ThoughtWorks                                                     ↑ 3.53  (5.65%)
+GOOG                     ○                                               2523.53
+Google Inc.                                                    ↓ -32.02 (-1.35%)
+MSFT                                                                        1.05
+Microsoft Corporatio                                               0.00  (0.00%)`
+			Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo(expected))
 		})
 
 		When("the show-separator layout flag is set", func() {
@@ -332,18 +322,17 @@ var _ = Describe("Watchlist", func() {
 						IsRegularTradingSession: false,
 					},
 				}
-				expected := strings.Join([]string{
-					"BTC-USD                    ●                                            50000.00",
-					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-					"────────────────────────────────────────────────────────────────────────────────",
-					"TW                         ○                                              109.04",
-					"ThoughtWorks                                                     ↑ 3.53  (5.65%)",
-					"────────────────────────────────────────────────────────────────────────────────",
-					"GOOG                       ○                                             2523.53",
-					"Google Inc.                                                    ↓ -32.02 (-1.35%)",
-					"",
-				}, "\n")
-				Expect(removeFormatting(m.View())).To(Equal(expected))
+				expected := `
+BTC-USD                  ●                                              50000.00
+Bitcoin                                                     ↑ 10000.00  (20.00%)
+────────────────────────────────────────────────────────────────────────────────
+TW                       ○                                                109.04
+ThoughtWorks                                                     ↑ 3.53  (5.65%)
+────────────────────────────────────────────────────────────────────────────────
+GOOG                     ○                                               2523.53
+Google Inc.                                                    ↓ -32.02 (-1.35%)
+────────────────────────────────────────────────────────────────────────────────`
+				Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo(expected))
 			})
 		})
 	})
@@ -352,10 +341,7 @@ var _ = Describe("Watchlist", func() {
 		It("should render extra exchange information", func() {
 			m := NewModel(c.Context{
 				Config: c.Config{
-					Separate:              true,
-					ExtraInfoExchange:     true,
-					ExtraInfoFundamentals: false,
-					Sort:                  "",
+					ExtraInfoExchange: true,
 				},
 			})
 			m.Quotes = []Quote{
@@ -375,22 +361,18 @@ var _ = Describe("Watchlist", func() {
 				},
 			}
 			expected := strings.Join([]string{
-				"BTC-USD                    ●                                            50000.00",
+				"BTC-USD                  ●                                              50000.00",
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-				"                                               USD   Real-Time   Cryptocurrency ",
-				"",
+				" USD   Real-Time   Cryptocurrency                                               ",
 			}, "\n")
-			Expect(removeFormatting(m.View())).To(Equal(expected))
+			Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
 		})
 
 		When("the exchange has a delay", func() {
 			It("should render extra exchange information with the delay amount", func() {
 				m := NewModel(c.Context{
 					Config: c.Config{
-						Separate:              true,
-						ExtraInfoExchange:     true,
-						ExtraInfoFundamentals: false,
-						Sort:                  "",
+						ExtraInfoExchange: true,
 					},
 				})
 				m.Quotes = []Quote{
@@ -410,12 +392,11 @@ var _ = Describe("Watchlist", func() {
 					},
 				}
 				expected := strings.Join([]string{
-					"BTC-USD                    ●                                            50000.00",
+					"BTC-USD                  ●                                              50000.00",
 					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-					"                                           USD   Delayed 15min   Cryptocurrency ",
-					"",
+					" USD   Delayed 15min   Cryptocurrency                                           ",
 				}, "\n")
-				Expect(removeFormatting(m.View())).To(Equal(expected))
+				Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
 			})
 		})
 
@@ -441,16 +422,16 @@ var _ = Describe("Watchlist", func() {
 						ChangePercent:           20.0,
 						IsActive:                true,
 						IsRegularTradingSession: true,
+						CurrencyConverted:       "EUR",
 					},
 				}
 				m.Context.Config.Currency = "EUR"
 				expected := strings.Join([]string{
-					"APPL                       ●                                             5000.00",
+					"APPL                     ●                                               5000.00",
 					"Apple, Inc                                                   ↑ 1000.00  (20.00%)",
-					"                                                 USD → EUR   Real-Time   NASDAQ ",
-					"",
+					" USD → EUR   Real-Time   NASDAQ                                                 ",
 				}, "\n")
-				Expect(removeFormatting(m.View())).To(Equal(expected))
+				Expect(removeFormatting("\n" + m.View())).To(BeIdenticalTo("\n" + expected))
 			})
 
 		})
@@ -460,75 +441,69 @@ var _ = Describe("Watchlist", func() {
 		It("should render extra fundamental information", func() {
 			m := NewModel(c.Context{
 				Config: c.Config{
-					Separate:              true,
-					ExtraInfoExchange:     false,
 					ExtraInfoFundamentals: true,
-					Sort:                  "",
 				},
 			})
+			m.Width = 135
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
 						Symbol:                     "BTC-USD",
 						ShortName:                  "Bitcoin",
-						RegularMarketPreviousClose: 10000.0,
-						RegularMarketOpen:          10000.0,
-						RegularMarketDayRange:      "10000 - 10000",
+						RegularMarketPreviousClose: 1000.0,
+						RegularMarketOpen:          1000.0,
+						RegularMarketDayHigh:       1500.0,
+						RegularMarketDayLow:        500.0,
 					},
-					Price:                   50000.0,
-					PricePrevClose:          10000.0,
-					PriceOpen:               10000.0,
-					PriceDayHigh:            10000.0,
-					PriceDayLow:             10000.0,
-					Change:                  10000.0,
+					Price:                   5000.0,
+					PricePrevClose:          1000.0,
+					PriceOpen:               1000.0,
+					PriceDayHigh:            2000.0,
+					PriceDayLow:             1000.0,
+					Change:                  1000.0,
 					ChangePercent:           20.0,
 					IsActive:                true,
 					IsRegularTradingSession: true,
+					IsVariablePrecision:     false,
 				},
 			}
 			expected := strings.Join([]string{
-				"BTC-USD                    ●                                            50000.00",
-				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-				"Day Range: 10000.00 - 10000.00   Prev Close:   10000.00         Open:   10000.00",
-				"",
+				"BTC-USD                 ●       Day Range:  1000.00   Prev. Close:  1000.00                                             5000.00",
+				"Bitcoin                        52wk Range:  1000.00          Open:  1000.00                                 ↑ 1000.00  (20.00%)",
 			}, "\n")
-			Expect(removeFormatting(m.View())).To(Equal(expected))
+			Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
 		})
 
 		When("there is no day range", func() {
 			It("should not render the day range field", func() {
 				m := NewModel(c.Context{
 					Config: c.Config{
-						Separate:              true,
-						ExtraInfoExchange:     false,
 						ExtraInfoFundamentals: true,
-						Sort:                  "",
 					},
 				})
+				m.Width = 135
 				m.Quotes = []Quote{
 					{
 						ResponseQuote: ResponseQuote{
 							Symbol:                     "BTC-USD",
 							ShortName:                  "Bitcoin",
-							RegularMarketPreviousClose: 10000.0,
-							RegularMarketOpen:          10000.0,
+							RegularMarketPreviousClose: 1000.0,
+							RegularMarketOpen:          1000.0,
 						},
-						Price:                   50000.0,
-						PricePrevClose:          10000.0,
-						PriceOpen:               10000.0,
-						Change:                  10000.0,
+						Price:                   5000.0,
+						PricePrevClose:          1000.0,
+						PriceOpen:               1000.0,
+						Change:                  1000.0,
 						ChangePercent:           20.0,
 						IsActive:                true,
 						IsRegularTradingSession: true,
 					},
 				}
 				expected := strings.Join([]string{
-					"BTC-USD                    ●                                            50000.00",
-					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
-					"                                 Prev Close:   10000.00         Open:   10000.00",
-					"",
+					"BTC-USD                 ●                                     Prev. Close:  1000.00                                             5000.00",
+					"Bitcoin                                                              Open:  1000.00                                 ↑ 1000.00  (20.00%)",
 				}, "\n")
-				Expect(removeFormatting(m.View())).To(Equal(expected))
+				Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
 			})
 		})
 	})
@@ -540,6 +515,7 @@ var _ = Describe("Watchlist", func() {
 					ShowHoldings: true,
 				},
 			})
+			m.Width = 120
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -569,12 +545,10 @@ var _ = Describe("Watchlist", func() {
 				},
 			}
 			expected := strings.Join([]string{
-				"PTON                       ●                     105.00                   100.00",
-				"Peloton                              ↑ 55.00  (110.00%)        ↑ 10.00  (10.00%)",
-				"               Weight:   0.00%    Avg. Cost:       0.00     Quantity:     100.00",
-				"",
+				"PTON                                     ●         Quantity:  100.00            105.00 (0.00%)                    100.00",
+				"Peloton                                           Avg. Cost:    0.00        ↑ 55.00  (110.00%)         ↑ 10.00  (10.00%)",
 			}, "\n")
-			Expect(removeFormatting(m.View())).To(Equal(expected))
+			Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
 		})
 	})
 
@@ -588,7 +562,7 @@ var _ = Describe("Watchlist", func() {
 					Sort:                  "",
 				},
 			})
-			Expect(m.View()).To(Equal("\n"))
+			Expect(m.View()).To(Equal(""))
 		})
 	})
 

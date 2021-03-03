@@ -444,7 +444,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 					ExtraInfoFundamentals: true,
 				},
 			})
-			m.Width = 135
+			m.Width = 165
 			m.Quotes = []Quote{
 				{
 					ResponseQuote: ResponseQuote{
@@ -454,12 +454,14 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 						RegularMarketOpen:          1000.0,
 						RegularMarketDayHigh:       1500.0,
 						RegularMarketDayLow:        500.0,
+						FiftyTwoWeekHigh:           2000.0,
+						FiftyTwoWeekLow:            300.0,
 					},
 					Price:                   5000.0,
 					PricePrevClose:          1000.0,
 					PriceOpen:               1000.0,
-					PriceDayHigh:            2000.0,
-					PriceDayLow:             1000.0,
+					PriceDayHigh:            200.0,
+					PriceDayLow:             100.0,
 					Change:                  1000.0,
 					ChangePercent:           20.0,
 					IsActive:                true,
@@ -468,10 +470,10 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 				},
 			}
 			expected := strings.Join([]string{
-				"BTC-USD                 ●       Day Range:  1000.00   Prev. Close:  1000.00                                             5000.00",
-				"Bitcoin                        52wk Range:  1000.00          Open:  1000.00                                 ↑ 1000.00  (20.00%)",
+				"BTC-USD                                ●       Day Range:  1000.00   Prev. Close:  1000.00                                             5000.00                                             5000.00",
+				"Bitcoin                                       52wk Range:  300.00          Open:  1000.00                                 ↑ 1000.00  (20.00%)                                 ↑ 1000.00  (20.00%)",
 			}, "\n")
-			Expect("\n" + removeFormatting(m.View())).To(Equal("\n" + expected))
+			Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
 		})
 
 		When("there is no day range", func() {

@@ -217,9 +217,9 @@ func textQuoteRange(quote Quote) string {
 			StyleNeutral(" - ") +
 			ConvertFloatToString(quote.PriceDayHigh, quote.IsVariablePrecision) +
 			"\n" +
-			ConvertFloatToString(quote.PriceDayLow, quote.IsVariablePrecision) +
+			ConvertFloatToString(quote.FiftyTwoWeekLow, quote.IsVariablePrecision) +
 			StyleNeutral(" - ") +
-			ConvertFloatToString(quote.PriceDayHigh, quote.IsVariablePrecision)
+			ConvertFloatToString(quote.FiftyTwoWeekHigh, quote.IsVariablePrecision)
 	}
 
 	return textDayRange

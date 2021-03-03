@@ -61,7 +61,7 @@ var _ = Describe("Watchlist", func() {
 					IsRegularTradingSession: isRegularTradingSession,
 				},
 			}
-			Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
+			Expect("\n" + removeFormatting(m.View())).To(Equal("\n" + expected))
 		},
 		Entry(
 			describe("gain"),
@@ -273,7 +273,7 @@ GOOG                     ○                                               2523.
 Google Inc.                                                    ↓ -32.02 (-1.35%)
 MSFT                                                                        1.05
 Microsoft Corporatio                                               0.00  (0.00%)`
-			Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo(expected))
+			Expect("\n" + removeFormatting(m.View())).To(Equal(expected))
 		})
 
 		When("the show-separator layout flag is set", func() {
@@ -332,7 +332,7 @@ ThoughtWorks                                                     ↑ 3.53  (5.65
 GOOG                     ○                                               2523.53
 Google Inc.                                                    ↓ -32.02 (-1.35%)
 ────────────────────────────────────────────────────────────────────────────────`
-				Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo(expected))
+				Expect("\n" + removeFormatting(m.View())).To(Equal(expected))
 			})
 		})
 	})
@@ -365,7 +365,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 				"Bitcoin                                                     ↑ 10000.00  (20.00%)",
 				" USD   Real-Time   Cryptocurrency                                               ",
 			}, "\n")
-			Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
+			Expect("\n" + removeFormatting(m.View())).To(Equal("\n" + expected))
 		})
 
 		When("the exchange has a delay", func() {
@@ -396,7 +396,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 					"Bitcoin                                                     ↑ 10000.00  (20.00%)",
 					" USD   Delayed 15min   Cryptocurrency                                           ",
 				}, "\n")
-				Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
+				Expect("\n" + removeFormatting(m.View())).To(Equal("\n" + expected))
 			})
 		})
 
@@ -431,7 +431,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 					"Apple, Inc                                                   ↑ 1000.00  (20.00%)",
 					" USD → EUR   Real-Time   NASDAQ                                                 ",
 				}, "\n")
-				Expect(removeFormatting("\n" + m.View())).To(BeIdenticalTo("\n" + expected))
+				Expect(removeFormatting("\n" + m.View())).To(Equal("\n" + expected))
 			})
 
 		})
@@ -471,7 +471,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 				"BTC-USD                 ●       Day Range:  1000.00   Prev. Close:  1000.00                                             5000.00",
 				"Bitcoin                        52wk Range:  1000.00          Open:  1000.00                                 ↑ 1000.00  (20.00%)",
 			}, "\n")
-			Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
+			Expect("\n" + removeFormatting(m.View())).To(Equal("\n" + expected))
 		})
 
 		When("there is no day range", func() {
@@ -503,7 +503,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 					"BTC-USD                 ●                                     Prev. Close:  1000.00                                             5000.00",
 					"Bitcoin                                                              Open:  1000.00                                 ↑ 1000.00  (20.00%)",
 				}, "\n")
-				Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
+				Expect("\n" + removeFormatting(m.View())).To(Equal("\n" + expected))
 			})
 		})
 	})
@@ -548,7 +548,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 				"PTON                                     ●         Quantity:  100.00            105.00 (0.00%)                    100.00",
 				"Peloton                                           Avg. Cost:    0.00        ↑ 55.00  (110.00%)         ↑ 10.00  (10.00%)",
 			}, "\n")
-			Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
+			Expect("\n" + removeFormatting(m.View())).To(Equal("\n" + expected))
 		})
 	})
 

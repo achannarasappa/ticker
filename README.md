@@ -81,7 +81,7 @@ ticker -w NET,AAPL,TSLA
 
 ## Configuration
 
-Configuration is not required to watch stock price but is helpful when always watching the same stocks. Configuration can also be used to set cost basis lots which will in turn be used to show daily gain or loss on any position.
+Configuration is not required to watch stock price but is helpful when always watching the same stocks. Configuration can also be used to set cost basis lots which will in turn be used to show total gain or loss on any position.
 
 ```yaml
 # ~/.ticker.yaml
@@ -110,6 +110,7 @@ lots:
 ```
 
 * Symbols not on the watchlist that exists in `lots` will automatically be watched
+* To add multiple (`quantity`, `unit_cost`) to the same `symbol`, write two `symbol` entries - see `ARKW` example above
 * All properties in `.ticker.yaml` are optional
 * `.ticker.yaml` can be set in user home directory, the current directory, or [XDG config home](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
 

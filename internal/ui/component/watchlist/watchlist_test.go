@@ -470,8 +470,8 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 				},
 			}
 			expected := strings.Join([]string{
-				"BTC-USD                                ●       Day Range:  1000.00   Prev. Close:  1000.00                                             5000.00                                             5000.00",
-				"Bitcoin                                       52wk Range:  300.00          Open:  1000.00                                 ↑ 1000.00  (20.00%)                                 ↑ 1000.00  (20.00%)",
+				"BTC-USD                                          ●       Day Range:       100.00 - 200.00   Prev. Close:  1000.00                                             5000.00",
+				"Bitcoin                                                 52wk Range:      300.00 - 2000.00          Open:  1000.00                                 ↑ 1000.00  (20.00%)",
 			}, "\n")
 			Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + expected))
 		})
@@ -502,7 +502,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 					},
 				}
 				expected := strings.Join([]string{
-					"BTC-USD                 ●                                     Prev. Close:  1000.00                                             5000.00",
+					"BTC-USD                            ●                          Prev. Close:  1000.00                                             5000.00",
 					"Bitcoin                                                              Open:  1000.00                                 ↑ 1000.00  (20.00%)",
 				}, "\n")
 				Expect("\n" + removeFormatting(m.View())).To(Equal("\n" + expected))
@@ -551,6 +551,36 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 				"Peloton                                           Avg. Cost:    0.00        ↑ 55.00  (110.00%)         ↑ 10.00  (10.00%)",
 			}, "\n")
 			Expect("\n" + removeFormatting(m.View())).To(Equal("\n" + expected))
+		})
+
+		When("there is no position", func() {
+			It("should not render quantity or average cost", func() {
+				m := NewModel(c.Context{
+					Config: c.Config{
+						ShowHoldings: true,
+					},
+				})
+				m.Width = 120
+				m.Quotes = []Quote{
+					{
+						ResponseQuote: ResponseQuote{
+							Symbol:             "PTON",
+							ShortName:          "Peloton",
+							RegularMarketPrice: 100.0,
+						},
+						Price:                   100.0,
+						Change:                  10.0,
+						ChangePercent:           10.0,
+						IsActive:                true,
+						IsRegularTradingSession: true,
+					},
+				}
+				expected := strings.Join([]string{
+					"PTON                                     ●                                                                        100.00",
+					"Peloton                                                                                                ↑ 10.00  (10.00%)",
+				}, "\n")
+				Expect("\n" + removeFormatting(m.View())).To(Equal("\n" + expected))
+			})
 		})
 	})
 

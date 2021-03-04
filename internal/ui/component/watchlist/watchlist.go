@@ -122,8 +122,8 @@ func buildCells(quote Quote, position Position, config c.Config) []grid.Cell {
 	if config.ExtraInfoFundamentals {
 		cells = append(
 			[]grid.Cell{
-				{Text: textQuoteRangeLabels(quote), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 45},
-				{Text: textQuoteRange(quote), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 30},
+				{Text: textQuoteRangeLabels(quote), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 50},
+				{Text: textQuoteRange(quote), Width: 20, Align: grid.Right, VisibleMinWidth: widthMinTerm + 30},
 				{Text: textQuoteExtendedLabels(quote), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
 				{Text: textQuoteExtended(quote), Width: 7, Align: grid.Right, VisibleMinWidth: widthMinTerm},
 			},
@@ -195,6 +195,10 @@ func textQuoteExtendedLabels(quote Quote) string {
 
 func textPositionExtended(quote Quote, position Position) string {
 
+	if position.Quantity == 0.0 {
+		return ""
+	}
+
 	return StyleNeutral(ConvertFloatToString(position.Quantity, quote.IsVariablePrecision)) +
 		"\n" +
 		StyleNeutral(ConvertFloatToString(position.AverageCost, quote.IsVariablePrecision))
@@ -202,6 +206,10 @@ func textPositionExtended(quote Quote, position Position) string {
 }
 
 func textPositionExtendedLabels(position Position) string {
+
+	if position.Quantity == 0.0 {
+		return ""
+	}
 
 	return StyleNeutralFaded("Quantity:") +
 		"\n" +

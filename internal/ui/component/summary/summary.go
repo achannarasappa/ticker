@@ -3,8 +3,10 @@ package summary
 import (
 	"strings"
 
+	grid "github.com/achannarasappa/term-grid"
 	"github.com/achannarasappa/ticker/internal/position"
 	. "github.com/achannarasappa/ticker/internal/ui/util"
+	"github.com/muesli/reflow/ansi"
 )
 
 type Model struct {
@@ -25,16 +27,47 @@ func (m Model) View() string {
 		return ""
 	}
 
-	return strings.Join([]string{
-		StyleNeutralFaded("Day:"),
-		quoteChangeText(m.Summary.DayChange, m.Summary.DayChangePercent),
-		StyleNeutralFaded("•"),
-		StyleNeutralFaded("Change:"),
-		quoteChangeText(m.Summary.Change, m.Summary.ChangePercent),
-		StyleNeutralFaded("•"),
-		StyleNeutralFaded("Value:"),
-		ValueText(m.Summary.Value),
-	}, " ") + "\n" + StyleLine(strings.Repeat("━", m.Width))
+	textChange := StyleNeutralFaded("Day Change: ") + quoteChangeText(m.Summary.DayChange, m.Summary.DayChangePercent) +
+		StyleNeutralFaded(" • ") +
+		StyleNeutralFaded("Change: ") + quoteChangeText(m.Summary.Change, m.Summary.ChangePercent)
+	widthChange := ansi.PrintableRuneWidth(textChange)
+	textValue := StyleNeutralFaded(" • ") +
+		StyleNeutralFaded("Value: ") + ValueText(m.Summary.Value)
+	widthValue := ansi.PrintableRuneWidth(textValue)
+	textCost := StyleNeutralFaded(" • ") +
+		StyleNeutralFaded("Cost: ") + ValueText(m.Summary.Cost)
+	widthCost := ansi.PrintableRuneWidth(textValue)
+
+	return grid.Render(grid.Grid{
+		Rows: []grid.Row{
+			{
+				Width: m.Width,
+				Cells: []grid.Cell{
+					{
+						Text:  textChange,
+						Width: widthChange,
+					},
+					{
+						Text:            textValue,
+						Width:           widthValue,
+						VisibleMinWidth: widthChange + widthValue,
+					},
+					{
+						Text:            textCost,
+						Width:           widthCost,
+						VisibleMinWidth: widthChange + widthValue + widthCost,
+					},
+				},
+			},
+			{
+				Width: m.Width,
+				Cells: []grid.Cell{
+					{Text: StyleLine(strings.Repeat("━", m.Width))},
+				},
+			},
+		},
+		GutterHorizontal: 1,
+	})
 
 }
 

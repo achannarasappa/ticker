@@ -1,6 +1,8 @@
 package util_test
 
 import (
+	"os"
+
 	"github.com/davecgh/go-spew/spew"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -69,7 +71,6 @@ var _ = Describe("Util", func() {
 			expectedANSI16Color := "\x1b[97;40;1mtest\x1b[0m"
 			expectedANSI256Color := "\x1b[38;5;231;48;5;16;1mtest\x1b[0m"
 			expectedTrueColor := "\x1b[38;2;255;255;255;48;2;0;0;0;1mtest\x1b[0m"
-			spew.Dump(output)
 			Expect(output).To(SatisfyAny(Equal(expectedASCII), Equal(expectedANSI16Color), Equal(expectedANSI256Color), Equal(expectedTrueColor)))
 		})
 	})
@@ -78,10 +79,11 @@ var _ = Describe("Util", func() {
 		When("there is no percent change", func() {
 			It("should color text grey", func() {
 				output := StylePrice(0.0, "$100.00")
-				expectedASCII := "\x1b[;;1mtest\x1b[0m"
+				expectedASCII := "$100.00"
 				expectedANSI16Color := "\x1b[90m$100.00\x1b[0m"
 				expectedANSI256Color := "\x1b[38;5;241m$100.00\x1b[0m"
 				expectedTrueColor := "\x1b[38;5;241m$100.00\x1b[0m"
+				spew.Dump(os.Getenv("TERM"))
 				spew.Dump(output)
 				Expect(output).To(SatisfyAny(Equal(expectedASCII), Equal(expectedANSI16Color), Equal(expectedANSI256Color), Equal(expectedTrueColor)))
 			})
@@ -90,7 +92,7 @@ var _ = Describe("Util", func() {
 		When("there is a percent change over 10%", func() {
 			It("should color text dark green", func() {
 				output := StylePrice(11.0, "$100.00")
-				expectedASCII := "\x1b[;;1mtest\x1b[0m"
+				expectedASCII := "$100.00"
 				expectedANSI16Color := "\x1b[32m$100.00\x1b[0m"
 				expectedANSI256Color := "\x1b[38;5;70m$100.00\x1b[0m"
 				expectedTrueColor := "\x1b[38;2;119;153;40m$100.00\x1b[0m"
@@ -102,7 +104,7 @@ var _ = Describe("Util", func() {
 		When("there is a percent change between 5% and 10%", func() {
 			It("should color text medium green", func() {
 				output := StylePrice(7.0, "$100.00")
-				expectedASCII := "\x1b[;;1mtest\x1b[0m"
+				expectedASCII := "$100.00"
 				expectedANSI16Color := "\x1b[92m$100.00\x1b[0m"
 				expectedANSI256Color := "\x1b[38;5;76m$100.00\x1b[0m"
 				expectedTrueColor := "\x1b[38;2;143;184;48m$100.00\x1b[0m"
@@ -114,7 +116,7 @@ var _ = Describe("Util", func() {
 		When("there is a percent change between 0% and 5%", func() {
 			It("should color text light green", func() {
 				output := StylePrice(3.0, "$100.00")
-				expectedASCII := "\x1b[;;1mtest\x1b[0m"
+				expectedASCII := "$100.00"
 				expectedANSI16Color := "\x1b[92m$100.00\x1b[0m"
 				expectedANSI256Color := "\x1b[38;5;82m$100.00\x1b[0m"
 				expectedTrueColor := "\x1b[38;2;174;224;56m$100.00\x1b[0m"
@@ -126,7 +128,7 @@ var _ = Describe("Util", func() {
 		When("there is a percent change over -10%", func() {
 			It("should color text dark red", func() {
 				output := StylePrice(-11.0, "$100.00")
-				expectedASCII := "\x1b[;;1mtest\x1b[0m"
+				expectedASCII := "$100.00"
 				expectedANSI16Color := "\x1b[31m$100.00\x1b[0m"
 				expectedANSI256Color := "\x1b[38;5;124m$100.00\x1b[0m"
 				expectedTrueColor := "\x1b[38;2;153;73;38m$100.00\x1b[0m"
@@ -138,7 +140,7 @@ var _ = Describe("Util", func() {
 		When("there is a percent change between -5% and -10%", func() {
 			It("should color text medium red", func() {
 				output := StylePrice(-7.0, "$100.00")
-				expectedASCII := "\x1b[;;1mtest\x1b[0m"
+				expectedASCII := "$100.00"
 				expectedANSI16Color := "\x1b[91m$100.00\x1b[0m"
 				expectedANSI256Color := "\x1b[38;5;160m$100.00\x1b[0m"
 				expectedTrueColor := "\x1b[38;2;184;87;46m$100.00\x1b[0m"
@@ -150,7 +152,7 @@ var _ = Describe("Util", func() {
 		When("there is a percent change between 0% and -5%", func() {
 			It("should color text light red", func() {
 				output := StylePrice(-3.0, "$100.00")
-				expectedASCII := "\x1b[;;1mtest\x1b[0m"
+				expectedASCII := "$100.00"
 				expectedANSI16Color := "\x1b[91m$100.00\x1b[0m"
 				expectedANSI256Color := "\x1b[38;5;196m$100.00\x1b[0m"
 				expectedTrueColor := "\x1b[38;2;224;107;56m$100.00\x1b[0m"

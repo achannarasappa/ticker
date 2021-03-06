@@ -77,8 +77,8 @@ func quoteChangeText(change float64, changePercent float64) string {
 	}
 
 	if change > 0.0 {
-		return StylePricePositive(changePercent)("↑ " + ConvertFloatToString(change, false) + " (" + ConvertFloatToString(changePercent, false) + "%)")
+		return StylePrice(changePercent, "↑ "+ConvertFloatToString(change, false)+" ("+ConvertFloatToString(changePercent, false)+"%)")
 	}
 
-	return StylePriceNegative(changePercent)("↓ " + ConvertFloatToString(change, false) + " (" + ConvertFloatToString(changePercent, false) + "%)")
+	return StylePrice(changePercent, "↓ "+ConvertFloatToString(change, false)+" ("+ConvertFloatToString(changePercent, false)+"%)")
 }

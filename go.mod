@@ -8,6 +8,7 @@ require (
 	github.com/adrg/xdg v0.3.0
 	github.com/charmbracelet/bubbles v0.7.5
 	github.com/charmbracelet/bubbletea v0.12.2
+	github.com/davecgh/go-spew v1.1.1
 	github.com/go-resty/resty/v2 v2.3.0
 	github.com/jarcoal/httpmock v1.0.7
 	github.com/lucasb-eyer/go-colorful v1.0.3

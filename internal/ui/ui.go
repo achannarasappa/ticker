@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	c "github.com/achannarasappa/ticker/internal/common"
@@ -118,8 +117,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		positions, positionSummary := m.getPositions(msg.quotes)
 		m.watchlist.Quotes = msg.quotes
 		m.watchlist.Positions = positions
-		m.summary.Summary = positionSummary
 		m.lastUpdateTime = msg.time
+		m.summary.Summary = positionSummary
 		if m.ready {
 			m.viewport.SetContent(m.watchlist.View())
 		}
@@ -137,14 +136,16 @@ func (m Model) View() string {
 		return "\n  Initalizing..."
 	}
 
-	return strings.Join(
-		[]string{
-			m.summary.View(),
-			m.viewport.View(),
-			footer(m.viewport.Width, m.lastUpdateTime),
-		},
-		"\n",
-	)
+	viewSummary := ""
+
+	if m.ctx.Config.ShowSummary {
+		viewSummary += m.summary.View()
+	}
+
+	return viewSummary +
+		m.viewport.View() +
+		footer(m.viewport.Width, m.lastUpdateTime)
+
 }
 
 func footer(width int, time string) string {

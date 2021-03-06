@@ -288,12 +288,12 @@ func textMarketState(q Quote) string {
 
 func quoteChangeText(change float64, changePercent float64, isVariablePrecision bool) string {
 	if change == 0.0 {
-		return StyleNeutralFaded("  " + ConvertFloatToString(change, isVariablePrecision) + "  (" + ConvertFloatToString(changePercent, false) + "%)")
+		return StylePrice(changePercent, "  "+ConvertFloatToString(change, isVariablePrecision)+"  ("+ConvertFloatToString(changePercent, false)+"%)")
 	}
 
 	if change > 0.0 {
-		return StylePricePositive(changePercent)("↑ " + ConvertFloatToString(change, isVariablePrecision) + "  (" + ConvertFloatToString(changePercent, false) + "%)")
+		return StylePrice(changePercent, "↑ "+ConvertFloatToString(change, isVariablePrecision)+"  ("+ConvertFloatToString(changePercent, false)+"%)")
 	}
 
-	return StylePriceNegative(changePercent)("↓ " + ConvertFloatToString(change, isVariablePrecision) + " (" + ConvertFloatToString(changePercent, false) + "%)")
+	return StylePrice(changePercent, "↓ "+ConvertFloatToString(change, isVariablePrecision)+" ("+ConvertFloatToString(changePercent, false)+"%)")
 }

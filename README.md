@@ -171,6 +171,12 @@ colors:
 * **Non-US Symbols, Forex, ETFs** - The names for there may differ from their common name/symbols. Try searching the native name in [Yahoo finance](https://finance.yahoo.com/) to determine the symbol to use in `ticker`
 * **Terminal fonts** - Font with support for the [`HORIZONTAL LINE SEPARATOR` unicode character](https://www.fileformat.info/info/unicode/char/23af/fontsupport.htm) is required to properly render separators (`--show-separator` option)
 
+## Libraries `ticker` uses
+
+* [bubbletea](https://github.com/charmbracelet/bubbletea) - terminal UI framework
+* [termenv](https://github.com/muesli/termenv) - color and styling for the terminal
+* [term-grid](https://github.com/achannarasappa/term-grid) - grid layout library terminal UIs
+
 ## Related Tools
 
 * [tickrs](https://github.com/tarkah/tickrs) - real-time terminal stock ticker with support for graphing, options, and other analysis information

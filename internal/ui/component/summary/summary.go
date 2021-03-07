@@ -4,7 +4,9 @@ import (
 	"strings"
 
 	grid "github.com/achannarasappa/term-grid"
+	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/position"
+
 	. "github.com/achannarasappa/ticker/internal/ui/util"
 	"github.com/muesli/reflow/ansi"
 )
@@ -12,12 +14,15 @@ import (
 type Model struct {
 	Width   int
 	Summary position.PositionSummary
+	Context c.Context
+	styles  c.Styles
 }
 
 // NewModel returns a model with default values.
-func NewModel() Model {
+func NewModel(ctx c.Context) Model {
 	return Model{
-		Width: 80,
+		Width:  80,
+		styles: ctx.Reference.Styles,
 	}
 }
 
@@ -27,15 +32,15 @@ func (m Model) View() string {
 		return ""
 	}
 
-	textChange := StyleNeutralFaded("Day Change: ") + quoteChangeText(m.Summary.DayChange, m.Summary.DayChangePercent) +
-		StyleNeutralFaded(" • ") +
-		StyleNeutralFaded("Change: ") + quoteChangeText(m.Summary.Change, m.Summary.ChangePercent)
+	textChange := m.styles.TextLabel("Day Change: ") + quoteChangeText(m.Summary.DayChange, m.Summary.DayChangePercent, m.styles) +
+		m.styles.TextLabel(" • ") +
+		m.styles.TextLabel("Change: ") + quoteChangeText(m.Summary.Change, m.Summary.ChangePercent, m.styles)
 	widthChange := ansi.PrintableRuneWidth(textChange)
-	textValue := StyleNeutralFaded(" • ") +
-		StyleNeutralFaded("Value: ") + ValueText(m.Summary.Value)
+	textValue := m.styles.TextLabel(" • ") +
+		m.styles.TextLabel("Value: ") + ValueText(m.Summary.Value, m.styles)
 	widthValue := ansi.PrintableRuneWidth(textValue)
-	textCost := StyleNeutralFaded(" • ") +
-		StyleNeutralFaded("Cost: ") + ValueText(m.Summary.Cost)
+	textCost := m.styles.TextLabel(" • ") +
+		m.styles.TextLabel("Cost: ") + ValueText(m.Summary.Cost, m.styles)
 	widthCost := ansi.PrintableRuneWidth(textValue)
 
 	return grid.Render(grid.Grid{
@@ -62,7 +67,7 @@ func (m Model) View() string {
 			{
 				Width: m.Width,
 				Cells: []grid.Cell{
-					{Text: StyleLine(strings.Repeat("━", m.Width))},
+					{Text: m.styles.TextLine(strings.Repeat("━", m.Width))},
 				},
 			},
 		},
@@ -71,14 +76,14 @@ func (m Model) View() string {
 
 }
 
-func quoteChangeText(change float64, changePercent float64) string {
+func quoteChangeText(change float64, changePercent float64, styles c.Styles) string {
 	if change == 0.0 {
-		return StyleNeutralFaded(ConvertFloatToString(change, false) + " (" + ConvertFloatToString(changePercent, false) + "%)")
+		return styles.TextLabel(ConvertFloatToString(change, false) + " (" + ConvertFloatToString(changePercent, false) + "%)")
 	}
 
 	if change > 0.0 {
-		return StylePrice(changePercent, "↑ "+ConvertFloatToString(change, false)+" ("+ConvertFloatToString(changePercent, false)+"%)")
+		return styles.TextPrice(changePercent, "↑ "+ConvertFloatToString(change, false)+" ("+ConvertFloatToString(changePercent, false)+"%)")
 	}
 
-	return StylePrice(changePercent, "↓ "+ConvertFloatToString(change, false)+" ("+ConvertFloatToString(changePercent, false)+"%)")
+	return styles.TextPrice(changePercent, "↓ "+ConvertFloatToString(change, false)+" ("+ConvertFloatToString(changePercent, false)+"%)")
 }

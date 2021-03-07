@@ -3,6 +3,8 @@ package util
 import (
 	"math"
 	"strconv"
+
+	c "github.com/achannarasappa/ticker/internal/common"
 )
 
 func getPrecision(f float64) int {
@@ -39,10 +41,10 @@ func ConvertFloatToString(f float64, isVariablePrecision bool) string {
 	return strconv.FormatFloat(f, 'f', prec, 64)
 }
 
-func ValueText(value float64) string {
+func ValueText(value float64, styles c.Styles) string {
 	if value <= 0.0 {
 		return ""
 	}
 
-	return StyleNeutral(ConvertFloatToString(value, false))
+	return styles.Text(ConvertFloatToString(value, false))
 }

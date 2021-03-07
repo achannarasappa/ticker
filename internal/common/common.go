@@ -11,21 +11,32 @@ type Context struct {
 }
 
 type Config struct {
-	RefreshInterval       int      `yaml:"interval"`
-	Watchlist             []string `yaml:"watchlist"`
-	Lots                  []Lot    `yaml:"lots"`
-	Separate              bool     `yaml:"show-separator"`
-	ExtraInfoExchange     bool     `yaml:"show-tags"`
-	ExtraInfoFundamentals bool     `yaml:"show-fundamentals"`
-	ShowSummary           bool     `yaml:"show-summary"`
-	ShowHoldings          bool     `yaml:"show-holdings"`
-	Proxy                 string   `yaml:"proxy"`
-	Sort                  string   `yaml:"sort"`
-	Currency              string   `yaml:"currency"`
+	RefreshInterval       int               `yaml:"interval"`
+	Watchlist             []string          `yaml:"watchlist"`
+	Lots                  []Lot             `yaml:"lots"`
+	Separate              bool              `yaml:"show-separator"`
+	ExtraInfoExchange     bool              `yaml:"show-tags"`
+	ExtraInfoFundamentals bool              `yaml:"show-fundamentals"`
+	ShowSummary           bool              `yaml:"show-summary"`
+	ShowHoldings          bool              `yaml:"show-holdings"`
+	Proxy                 string            `yaml:"proxy"`
+	Sort                  string            `yaml:"sort"`
+	Currency              string            `yaml:"currency"`
+	ColorScheme           ConfigColorScheme `yaml:"colors"`
+}
+
+type ConfigColorScheme struct {
+	Text          string `yaml:"text"`
+	TextLight     string `yaml:"text-light"`
+	TextLabel     string `yaml:"text-label"`
+	TextLine      string `yaml:"text-line"`
+	TextTag       string `yaml:"text-tag"`
+	BackgroundTag string `yaml:"background-tag"`
 }
 
 type Reference struct {
 	CurrencyRates CurrencyRates
+	Styles        Styles
 }
 
 type Dependencies struct {
@@ -46,3 +57,15 @@ type CurrencyRate struct {
 	ToCurrency   string
 	Rate         float64
 }
+
+type Styles struct {
+	Text      StyleFn
+	TextLight StyleFn
+	TextLabel StyleFn
+	TextBold  StyleFn
+	TextLine  StyleFn
+	TextPrice func(float64, string) string
+	Tag       StyleFn
+}
+
+type StyleFn func(string) string

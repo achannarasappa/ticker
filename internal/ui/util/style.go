@@ -2,7 +2,9 @@ package util
 
 import (
 	"math"
+	"regexp"
 
+	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/lucasb-eyer/go-colorful"
 	te "github.com/muesli/termenv"
 )
@@ -13,13 +15,6 @@ const (
 
 var (
 	p                  = te.ColorProfile()
-	StyleNeutral       = NewStyle("#d0d0d0", "", false)
-	StyleNeutralBold   = NewStyle("#d0d0d0", "", true)
-	StyleNeutralLight  = NewStyle("#8a8a8a", "", false)
-	StyleNeutralFaded  = NewStyle("#626262", "", false)
-	StyleLine          = NewStyle("#3a3a3a", "", false)
-	StyleTag           = NewStyle("#8a8a8a", "#303030", false)
-	StyleTagEnd        = NewStyle("#303030", "#303030", false)
 	stylePricePositive = newStyleFromGradient("#C6FF40", "#779929")
 	stylePriceNegative = newStyleFromGradient("#FF7940", "#994926")
 )
@@ -32,7 +27,7 @@ func NewStyle(fg string, bg string, bold bool) func(string) string {
 	return s.Styled
 }
 
-func StylePrice(percent float64, text string) string {
+func stylePrice(percent float64, text string) string {
 
 	out := te.String(text)
 
@@ -68,11 +63,7 @@ func StylePrice(percent float64, text string) string {
 		return out.Foreground(p.Color("160")).String()
 	}
 
-	if percent < 0.0 {
-		return out.Foreground(p.Color("196")).String()
-	}
-
-	return text
+	return out.Foreground(p.Color("196")).String()
 
 }
 
@@ -98,4 +89,52 @@ func getNormalizedPercentWithMax(percent float64, maxPercent float64) float64 {
 	}
 	return math.Abs(percent / maxPercent)
 
+}
+
+func GetColorScheme(colorScheme c.ConfigColorScheme) c.Styles {
+
+	return c.Styles{
+		Text: NewStyle(
+			getColorOrDefault(colorScheme.Text, "#d0d0d0"),
+			"",
+			false,
+		),
+		TextLight: NewStyle(
+			getColorOrDefault(colorScheme.TextLight, "#8a8a8a"),
+			"",
+			false,
+		),
+		TextBold: NewStyle(
+			getColorOrDefault(colorScheme.Text, "#d0d0d0"),
+			"",
+			true,
+		),
+		TextLabel: NewStyle(
+			getColorOrDefault(colorScheme.TextLabel, "#626262"),
+			"",
+			false,
+		),
+		TextLine: NewStyle(
+			getColorOrDefault(colorScheme.TextLine, "#3a3a3a"),
+			"",
+			false,
+		),
+		TextPrice: stylePrice,
+		Tag: NewStyle(
+			getColorOrDefault(colorScheme.TextTag, "#8a8a8a"),
+			getColorOrDefault(colorScheme.BackgroundTag, "#303030"),
+			false,
+		),
+	}
+
+}
+
+func getColorOrDefault(colorConfig string, colorDefault string) string {
+	re := regexp.MustCompile(`^#(?:[0-9a-fA-F]{3}){1,2}$`)
+
+	if len(re.FindStringIndex(colorConfig)) > 0 {
+		return colorConfig
+	}
+
+	return colorDefault
 }

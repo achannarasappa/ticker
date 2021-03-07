@@ -20,6 +20,17 @@ func removeFormatting(text string) string {
 }
 
 var _ = Describe("Watchlist", func() {
+
+	stylesFixture := c.Styles{
+		Text:      func(v string) string { return v },
+		TextLight: func(v string) string { return v },
+		TextLabel: func(v string) string { return v },
+		TextBold:  func(v string) string { return v },
+		TextLine:  func(v string) string { return v },
+		TextPrice: func(percent float64, text string) string { return text },
+		Tag:       func(v string) string { return v },
+	}
+
 	describe := func(desc string) func(bool, bool, float64, Position, string) string {
 		return func(isActive bool, isRegularTradingSession bool, change float64, position Position, expected string) string {
 			return fmt.Sprintf("%s expected:%s", desc, expected)
@@ -39,6 +50,7 @@ var _ = Describe("Watchlist", func() {
 			}
 
 			m := NewModel(c.Context{
+				Reference: c.Reference{Styles: stylesFixture},
 				Config: c.Config{
 					Separate:              false,
 					ExtraInfoExchange:     false,
@@ -210,6 +222,7 @@ var _ = Describe("Watchlist", func() {
 		It("should render a watchlist with each symbol", func() {
 
 			m := NewModel(c.Context{
+				Reference: c.Reference{Styles: stylesFixture},
 				Config: c.Config{
 					Separate:              false,
 					ExtraInfoExchange:     false,
@@ -280,6 +293,7 @@ Microsoft Corporatio                                               0.00  (0.00%)
 			It("should render a watchlist with separators", func() {
 
 				m := NewModel(c.Context{
+					Reference: c.Reference{Styles: stylesFixture},
 					Config: c.Config{
 						Separate:              true,
 						ExtraInfoExchange:     false,
@@ -340,6 +354,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 	When("the option for extra exchange information is set", func() {
 		It("should render extra exchange information", func() {
 			m := NewModel(c.Context{
+				Reference: c.Reference{Styles: stylesFixture},
 				Config: c.Config{
 					ExtraInfoExchange: true,
 				},
@@ -371,6 +386,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 		When("the exchange has a delay", func() {
 			It("should render extra exchange information with the delay amount", func() {
 				m := NewModel(c.Context{
+					Reference: c.Reference{Styles: stylesFixture},
 					Config: c.Config{
 						ExtraInfoExchange: true,
 					},
@@ -403,6 +419,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 		When("the currency is being converted", func() {
 			It("should show an indicator with the to and  from currency codes", func() {
 				m := NewModel(c.Context{
+					Reference: c.Reference{Styles: stylesFixture},
 					Config: c.Config{
 						ExtraInfoExchange: true,
 						Currency:          "EUR",
@@ -440,6 +457,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 	When("the option for extra fundamental information is set", func() {
 		It("should render extra fundamental information", func() {
 			m := NewModel(c.Context{
+				Reference: c.Reference{Styles: stylesFixture},
 				Config: c.Config{
 					ExtraInfoFundamentals: true,
 				},
@@ -479,6 +497,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 		When("there is no day range", func() {
 			It("should not render the day range field", func() {
 				m := NewModel(c.Context{
+					Reference: c.Reference{Styles: stylesFixture},
 					Config: c.Config{
 						ExtraInfoFundamentals: true,
 					},
@@ -513,6 +532,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 	When("the option for extra holding information is set", func() {
 		It("should render extra holding information", func() {
 			m := NewModel(c.Context{
+				Reference: c.Reference{Styles: stylesFixture},
 				Config: c.Config{
 					ShowHoldings: true,
 				},
@@ -556,6 +576,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 		When("there is no position", func() {
 			It("should not render quantity or average cost", func() {
 				m := NewModel(c.Context{
+					Reference: c.Reference{Styles: stylesFixture},
 					Config: c.Config{
 						ShowHoldings: true,
 					},
@@ -587,6 +608,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 	When("no quotes are set", func() {
 		It("should render an empty watchlist", func() {
 			m := NewModel(c.Context{
+				Reference: c.Reference{Styles: stylesFixture},
 				Config: c.Config{
 					Separate:              false,
 					ExtraInfoExchange:     false,
@@ -601,6 +623,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 	When("the window width is less than the minimum", func() {
 		It("should render an empty watchlist", func() {
 			m := NewModel(c.Context{
+				Reference: c.Reference{Styles: stylesFixture},
 				Config: c.Config{
 					Separate:              false,
 					ExtraInfoExchange:     false,

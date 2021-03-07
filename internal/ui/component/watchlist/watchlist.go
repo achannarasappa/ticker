@@ -23,6 +23,7 @@ type Model struct {
 	ExtraInfoFundamentals bool
 	Sorter                Sorter
 	Context               c.Context
+	styles                c.Styles
 }
 
 // NewModel returns a model with default values.
@@ -34,6 +35,7 @@ func NewModel(ctx c.Context) Model {
 		ExtraInfoExchange:     ctx.Config.ExtraInfoExchange,
 		ExtraInfoFundamentals: ctx.Config.ExtraInfoFundamentals,
 		Sorter:                NewSorter(ctx.Config.Sort),
+		styles:                ctx.Reference.Styles,
 	}
 }
 
@@ -53,7 +55,7 @@ func (m Model) View() string {
 			rows,
 			grid.Row{
 				Width: m.Width,
-				Cells: buildCells(quote, position, m.Context.Config),
+				Cells: buildCells(quote, position, m.Context.Config, m.styles),
 			})
 
 		if m.Context.Config.ExtraInfoExchange {
@@ -62,7 +64,7 @@ func (m Model) View() string {
 				grid.Row{
 					Width: m.Width,
 					Cells: []grid.Cell{
-						{Text: textTags(quote)},
+						{Text: textTags(quote, m.styles)},
 					},
 				})
 		}
@@ -73,7 +75,7 @@ func (m Model) View() string {
 				grid.Row{
 					Width: m.Width,
 					Cells: []grid.Cell{
-						{Text: textSeparator(m.Width)},
+						{Text: textSeparator(m.Width, m.styles)},
 					},
 				})
 		}
@@ -83,36 +85,36 @@ func (m Model) View() string {
 	return grid.Render(grid.Grid{Rows: rows, GutterHorizontal: 1})
 }
 
-func buildCells(quote Quote, position Position, config c.Config) []grid.Cell {
+func buildCells(quote Quote, position Position, config c.Config, styles c.Styles) []grid.Cell {
 
 	if !config.ExtraInfoFundamentals && !config.ShowHoldings {
 
 		return []grid.Cell{
-			{Text: textName(quote)},
-			{Text: textMarketState(quote), Width: 5, Align: grid.Right},
-			{Text: textPosition(quote, position), Width: 25, Align: grid.Right},
-			{Text: textQuote(quote), Width: 25, Align: grid.Right},
+			{Text: textName(quote, styles)},
+			{Text: textMarketState(quote, styles), Width: 5, Align: grid.Right},
+			{Text: textPosition(quote, position, styles), Width: 25, Align: grid.Right},
+			{Text: textQuote(quote, styles), Width: 25, Align: grid.Right},
 		}
 
 	}
 
 	cellName := []grid.Cell{
-		{Text: textName(quote), Width: 20},
+		{Text: textName(quote, styles), Width: 20},
 		{Text: ""},
-		{Text: textMarketState(quote), Width: 5, Align: grid.Right},
+		{Text: textMarketState(quote, styles), Width: 5, Align: grid.Right},
 	}
 
 	widthMinTerm := 90
 	cells := []grid.Cell{
-		{Text: textPosition(quote, position), Width: 25, Align: grid.Right},
-		{Text: textQuote(quote), Width: 25, Align: grid.Right},
+		{Text: textPosition(quote, position, styles), Width: 25, Align: grid.Right},
+		{Text: textQuote(quote, styles), Width: 25, Align: grid.Right},
 	}
 
 	if config.ShowHoldings {
 		cells = append(
 			[]grid.Cell{
-				{Text: textPositionExtendedLabels(position), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
-				{Text: textPositionExtended(quote, position), Width: 7, Align: grid.Right, VisibleMinWidth: widthMinTerm},
+				{Text: textPositionExtendedLabels(position, styles), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
+				{Text: textPositionExtended(quote, position, styles), Width: 7, Align: grid.Right, VisibleMinWidth: widthMinTerm},
 			},
 			cells...,
 		)
@@ -122,10 +124,10 @@ func buildCells(quote Quote, position Position, config c.Config) []grid.Cell {
 	if config.ExtraInfoFundamentals {
 		cells = append(
 			[]grid.Cell{
-				{Text: textQuoteRangeLabels(quote), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 50},
-				{Text: textQuoteRange(quote), Width: 20, Align: grid.Right, VisibleMinWidth: widthMinTerm + 30},
-				{Text: textQuoteExtendedLabels(quote), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
-				{Text: textQuoteExtended(quote), Width: 7, Align: grid.Right, VisibleMinWidth: widthMinTerm},
+				{Text: textQuoteRangeLabels(quote, styles), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 50},
+				{Text: textQuoteRange(quote, styles), Width: 20, Align: grid.Right, VisibleMinWidth: widthMinTerm + 30},
+				{Text: textQuoteExtendedLabels(quote, styles), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
+				{Text: textQuoteExtended(quote, styles), Width: 7, Align: grid.Right, VisibleMinWidth: widthMinTerm},
 			},
 			cells...,
 		)
@@ -140,37 +142,37 @@ func buildCells(quote Quote, position Position, config c.Config) []grid.Cell {
 
 }
 
-func textName(quote Quote) string {
+func textName(quote Quote, styles c.Styles) string {
 
 	if len(quote.ShortName) > 20 {
 		quote.ShortName = quote.ShortName[:20]
 	}
 
-	return StyleNeutralBold(quote.Symbol) +
+	return styles.TextBold(quote.Symbol) +
 		"\n" +
-		StyleNeutralFaded(quote.ShortName)
+		styles.TextLabel(quote.ShortName)
 }
 
-func textQuote(quote Quote) string {
-	return StyleNeutral(ConvertFloatToString(quote.Price, quote.IsVariablePrecision)) +
+func textQuote(quote Quote, styles c.Styles) string {
+	return styles.Text(ConvertFloatToString(quote.Price, quote.IsVariablePrecision)) +
 		"\n" +
-		quoteChangeText(quote.Change, quote.ChangePercent, quote.IsVariablePrecision)
+		quoteChangeText(quote.Change, quote.ChangePercent, quote.IsVariablePrecision, styles)
 }
 
-func textPosition(quote Quote, position Position) string {
+func textPosition(quote Quote, position Position, styles c.Styles) string {
 
 	positionValue := ""
 	positionChange := ""
 
 	if position.Value != 0.0 {
-		positionValue = ValueText(position.Value) +
-			StyleNeutralLight(
+		positionValue = ValueText(position.Value, styles) +
+			styles.TextLight(
 				" ("+
 					ConvertFloatToString(position.Weight, quote.IsVariablePrecision)+"%"+
 					")")
 	}
 	if position.TotalChange != 0.0 {
-		positionChange = quoteChangeText(position.TotalChange, position.TotalChangePercent, quote.IsVariablePrecision)
+		positionChange = quoteChangeText(position.TotalChange, position.TotalChangePercent, quote.IsVariablePrecision, styles)
 	}
 
 	return positionValue +
@@ -178,55 +180,55 @@ func textPosition(quote Quote, position Position) string {
 		positionChange
 }
 
-func textQuoteExtended(quote Quote) string {
+func textQuoteExtended(quote Quote, styles c.Styles) string {
 
-	return StyleNeutral(ConvertFloatToString(quote.PricePrevClose, quote.IsVariablePrecision)) +
+	return styles.Text(ConvertFloatToString(quote.PricePrevClose, quote.IsVariablePrecision)) +
 		"\n" +
-		StyleNeutral(ConvertFloatToString(quote.PriceOpen, quote.IsVariablePrecision))
+		styles.Text(ConvertFloatToString(quote.PriceOpen, quote.IsVariablePrecision))
 
 }
 
-func textQuoteExtendedLabels(quote Quote) string {
+func textQuoteExtendedLabels(quote Quote, styles c.Styles) string {
 
-	return StyleNeutralFaded("Prev. Close: ") +
+	return styles.TextLabel("Prev. Close: ") +
 		"\n" +
-		StyleNeutralFaded("Open: ")
+		styles.TextLabel("Open: ")
 }
 
-func textPositionExtended(quote Quote, position Position) string {
+func textPositionExtended(quote Quote, position Position, styles c.Styles) string {
 
 	if position.Quantity == 0.0 {
 		return ""
 	}
 
-	return StyleNeutral(ConvertFloatToString(position.Quantity, quote.IsVariablePrecision)) +
+	return styles.Text(ConvertFloatToString(position.Quantity, quote.IsVariablePrecision)) +
 		"\n" +
-		StyleNeutral(ConvertFloatToString(position.AverageCost, quote.IsVariablePrecision))
+		styles.Text(ConvertFloatToString(position.AverageCost, quote.IsVariablePrecision))
 
 }
 
-func textPositionExtendedLabels(position Position) string {
+func textPositionExtendedLabels(position Position, styles c.Styles) string {
 
 	if position.Quantity == 0.0 {
 		return ""
 	}
 
-	return StyleNeutralFaded("Quantity:") +
+	return styles.TextLabel("Quantity:") +
 		"\n" +
-		StyleNeutralFaded("Avg. Cost:")
+		styles.TextLabel("Avg. Cost:")
 }
 
-func textQuoteRange(quote Quote) string {
+func textQuoteRange(quote Quote, styles c.Styles) string {
 
 	textDayRange := ""
 
 	if quote.PriceDayHigh != 0.0 && quote.PriceDayLow != 0.0 {
 		textDayRange = ConvertFloatToString(quote.PriceDayLow, quote.IsVariablePrecision) +
-			StyleNeutral(" - ") +
+			styles.Text(" - ") +
 			ConvertFloatToString(quote.PriceDayHigh, quote.IsVariablePrecision) +
 			"\n" +
 			ConvertFloatToString(quote.FiftyTwoWeekLow, quote.IsVariablePrecision) +
-			StyleNeutral(" - ") +
+			styles.Text(" - ") +
 			ConvertFloatToString(quote.FiftyTwoWeekHigh, quote.IsVariablePrecision)
 	}
 
@@ -234,24 +236,24 @@ func textQuoteRange(quote Quote) string {
 
 }
 
-func textQuoteRangeLabels(quote Quote) string {
+func textQuoteRangeLabels(quote Quote, styles c.Styles) string {
 
 	textDayRange := ""
 
 	if quote.PriceDayHigh != 0.0 && quote.PriceDayLow != 0.0 {
-		textDayRange = StyleNeutralFaded("Day Range: ") +
+		textDayRange = styles.TextLabel("Day Range: ") +
 			"\n" +
-			StyleNeutralFaded("52wk Range: ")
+			styles.TextLabel("52wk Range: ")
 	}
 
 	return textDayRange
 }
 
-func textSeparator(width int) string {
-	return StyleLine(strings.Repeat("─", width))
+func textSeparator(width int, styles c.Styles) string {
+	return styles.TextLine(strings.Repeat("─", width))
 }
 
-func textTags(q Quote) string {
+func textTags(q Quote, styles c.Styles) string {
 
 	currencyText := q.Currency
 
@@ -259,7 +261,7 @@ func textTags(q Quote) string {
 		currencyText = q.Currency + " → " + q.CurrencyConverted
 	}
 
-	return formatTag(currencyText) + " " + formatTag(exchangeDelayText(q.ExchangeDelay)) + " " + formatTag(q.ExchangeName)
+	return formatTag(currencyText, styles) + " " + formatTag(exchangeDelayText(q.ExchangeDelay), styles) + " " + formatTag(q.ExchangeName, styles)
 }
 
 func exchangeDelayText(delay float64) string {
@@ -270,30 +272,30 @@ func exchangeDelayText(delay float64) string {
 	return "Delayed " + strconv.FormatFloat(delay, 'f', 0, 64) + "min"
 }
 
-func formatTag(text string) string {
-	return StyleTagEnd(" ") + StyleTag(text) + StyleTagEnd(" ")
+func formatTag(text string, style c.Styles) string {
+	return style.Tag(" " + text + " ")
 }
 
-func textMarketState(q Quote) string {
+func textMarketState(q Quote, styles c.Styles) string {
 	if q.IsRegularTradingSession {
-		return StyleNeutralFaded(" ●  ")
+		return styles.TextLabel(" ●  ")
 	}
 
 	if !q.IsRegularTradingSession && q.IsActive {
-		return StyleNeutralFaded(" ○  ")
+		return styles.TextLabel(" ○  ")
 	}
 
 	return ""
 }
 
-func quoteChangeText(change float64, changePercent float64, isVariablePrecision bool) string {
+func quoteChangeText(change float64, changePercent float64, isVariablePrecision bool, styles c.Styles) string {
 	if change == 0.0 {
-		return StylePrice(changePercent, "  "+ConvertFloatToString(change, isVariablePrecision)+"  ("+ConvertFloatToString(changePercent, false)+"%)")
+		return styles.TextPrice(changePercent, "  "+ConvertFloatToString(change, isVariablePrecision)+"  ("+ConvertFloatToString(changePercent, false)+"%)")
 	}
 
 	if change > 0.0 {
-		return StylePrice(changePercent, "↑ "+ConvertFloatToString(change, isVariablePrecision)+"  ("+ConvertFloatToString(changePercent, false)+"%)")
+		return styles.TextPrice(changePercent, "↑ "+ConvertFloatToString(change, isVariablePrecision)+"  ("+ConvertFloatToString(changePercent, false)+"%)")
 	}
 
-	return StylePrice(changePercent, "↓ "+ConvertFloatToString(change, isVariablePrecision)+" ("+ConvertFloatToString(changePercent, false)+"%)")
+	return styles.TextPrice(changePercent, "↓ "+ConvertFloatToString(change, isVariablePrecision)+" ("+ConvertFloatToString(changePercent, false)+"%)")
 }

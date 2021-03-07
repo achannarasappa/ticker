@@ -8,6 +8,7 @@ import (
 	. "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/currency"
 	"github.com/achannarasappa/ticker/internal/position"
+	"github.com/achannarasappa/ticker/internal/ui/util"
 
 	"github.com/adrg/xdg"
 	"github.com/go-resty/resty/v2"
@@ -112,9 +113,11 @@ func getReference(config Config, client resty.Client) (Reference, error) {
 	symbols := position.GetSymbols(config.Watchlist, aggregatedLots)
 
 	currencyRates, err := currency.GetCurrencyRates(client, symbols, config.Currency)
+	styles := util.GetColorScheme(config.ColorScheme)
 
 	return Reference{
 		CurrencyRates: currencyRates,
+		Styles:        styles,
 	}, err
 
 }

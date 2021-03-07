@@ -139,6 +139,31 @@ It's possible to set a custom sort order with the `--sort` flag or `sort:` confi
 * If a `currency` is not set (default behavior) and the `show-summary` option is enabled, the summary will be calculated in USD regardless of the exchange currency to avoid mixing currencies
 * Currencies are retrieved only once at start time - currency exchange rates do fluctuate over time and thus converted values may vary depending on when ticker is started 
 
+### Custom Color Schemes
+
+`ticker` supports setting custom color schemes from the config file. Colors are represented by a [hex triplet](https://en.wikipedia.org/wiki/Web_colors#Hex_triplet). Below is an annotated example config block from `.ticker.yaml` where custom colors are set:
+
+```yaml
+# ~/.ticker.yaml
+watchlist:
+  - NET
+  - TEAM
+  - ESTC
+  - BTC-USD
+colors:
+  text: "#005fff"
+  text-light: "#0087ff"
+  text-label: "#00d7ff"
+  text-line: "#00ffff"
+  text-tag: "#005fff"
+  background-tag: "#0087ff"
+```
+
+* Terminals supporting TrueColor will be able to represent the full color space and in other cases colors will be down sampled
+* Any omitted or invalid colors will revert to default color scheme values
+
+
+
 ## Notes
 
 * **Real-time quotes** - Quotes are pulled from Yahoo finance which may provide delayed stock quotes depending on the exchange. The major US exchanges (NYSE, NASDAQ) have real-time quotes however other exchanges may not. Consult the [help article](https://help.yahoo.com/kb/SLN2310.html) on exchange delays to determine which exchanges you can expect delays for or use the `--show-tags` flag to include timeliness of data alongside quotes in `ticker`.

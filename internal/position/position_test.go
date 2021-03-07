@@ -102,7 +102,7 @@ var _ = Describe("Position", func() {
 				Cost:             4000,
 				Change:           1450,
 				DayChange:        625,
-				ChangePercent:    136.25,
+				ChangePercent:    36.25,
 				DayChangePercent: 11.46788990825688,
 			}
 			Expect(outputPositions["ARKW"]).To(Equal(Position{

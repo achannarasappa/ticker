@@ -106,12 +106,14 @@ func GetPositions(ctx c.Context, aggregatedLots map[string]AggregatedLot) func([
 
 		positionsReduced := getPositionsReduced(ctx, aggregatedLots, quotes)
 
+		change := positionsReduced.positionSummaryBase.value - positionsReduced.positionSummaryBase.cost
+
 		positionSummary := PositionSummary{
 			Value:            positionsReduced.positionSummaryBase.value,
 			Cost:             positionsReduced.positionSummaryBase.cost,
 			Change:           positionsReduced.positionSummaryBase.value - positionsReduced.positionSummaryBase.cost,
 			DayChange:        positionsReduced.positionSummaryBase.dayChange,
-			ChangePercent:    (positionsReduced.positionSummaryBase.value / positionsReduced.positionSummaryBase.cost) * 100,
+			ChangePercent:    (change / positionsReduced.positionSummaryBase.cost) * 100,
 			DayChangePercent: (positionsReduced.positionSummaryBase.dayChange / positionsReduced.positionSummaryBase.value) * 100,
 		}
 

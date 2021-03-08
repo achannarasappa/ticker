@@ -567,8 +567,8 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 				},
 			}
 			expected := strings.Join([]string{
-				"PTON                                     ●         Quantity:  100.00            105.00 (0.00%)                    100.00",
-				"Peloton                                           Avg. Cost:    0.00        ↑ 55.00  (110.00%)         ↑ 10.00  (10.00%)",
+				"PTON                                  ●         Quantity:     100.00            105.00 (0.00%)                    100.00",
+				"Peloton                                        Avg. Cost:       0.00        ↑ 55.00  (110.00%)         ↑ 10.00  (10.00%)",
 			}, "\n")
 			Expect("\n" + removeFormatting(m.View())).To(Equal("\n" + expected))
 		})
@@ -597,7 +597,7 @@ Google Inc.                                                    ↓ -32.02 (-1.35
 					},
 				}
 				expected := strings.Join([]string{
-					"PTON                                     ●                                                                        100.00",
+					"PTON                                  ●                                                                           100.00",
 					"Peloton                                                                                                ↑ 10.00  (10.00%)",
 				}, "\n")
 				Expect("\n" + removeFormatting(m.View())).To(Equal("\n" + expected))

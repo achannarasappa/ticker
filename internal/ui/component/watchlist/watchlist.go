@@ -114,7 +114,7 @@ func buildCells(quote Quote, position Position, config c.Config, styles c.Styles
 		cells = append(
 			[]grid.Cell{
 				{Text: textPositionExtendedLabels(position, styles), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
-				{Text: textPositionExtended(quote, position, styles), Width: 7, Align: grid.Right, VisibleMinWidth: widthMinTerm},
+				{Text: textPositionExtended(quote, position, styles), Width: 10, Align: grid.Right, VisibleMinWidth: widthMinTerm},
 			},
 			cells...,
 		)

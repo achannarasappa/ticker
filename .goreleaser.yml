@@ -141,4 +141,4 @@ snapcrafts:
     confinement: strict
     apps:
       ticker:
-        plugs: ["network"]
+        plugs: ["network", "home"]

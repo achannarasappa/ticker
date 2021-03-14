@@ -14,6 +14,7 @@ go install github.com/go-delve/delve/cmd/dlv@latest
 In vscode, open command palette with <kbd>CTRL</kbd>+<kbd>SHIFT</kbd>+<kbd>P</kbd>, select `Open launch.json`, and add debug config block below to `launch.json`
 
 ```json
+{
   "version": "0.2.0",
   "configurations": [
     {

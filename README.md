@@ -49,6 +49,8 @@ docker run -it --rm achannarasappa/ticker
 sudo snap install ticker
 ```
 
+Note: config file will need to be set with `--config $HOME/ticker.yaml` since Snap does not allow access to dotfiles
+
 ### Third-party repositories
 These repositories are maintained by a third-party and may not have the latest versions available
 

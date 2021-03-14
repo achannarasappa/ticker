@@ -21,6 +21,8 @@ github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpH
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
 github.com/achannarasappa/term-grid v0.2.3 h1:acYVsmM33MT7xy5lvIUX3PyNAnALulRRG5JPQrtZ3Qs=
 github.com/achannarasappa/term-grid v0.2.3/go.mod h1:uXEY1bCtUSooU1owBx76qEGO2m07r2VAJr2LbxAvNZo=
+github.com/achannarasappa/term-grid v0.2.4 h1:4shrL7Gm/Jb5eRfB1dROEw9lVf6T/z4MUrUZ03G6v34=
+github.com/achannarasappa/term-grid v0.2.4/go.mod h1:uXEY1bCtUSooU1owBx76qEGO2m07r2VAJr2LbxAvNZo=
 github.com/adrg/xdg v0.3.0 h1:BO+k4wFj0IoTolBF1Apn8oZrX3LQrEbBA8+/9vyW9J4=
 github.com/adrg/xdg v0.3.0/go.mod h1:7I2hH/IT30IsupOpKZ5ue7/qNi3CoKzD6tL3HwpaRMQ=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=

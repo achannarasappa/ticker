@@ -23,7 +23,7 @@ var (
 )
 
 const (
-	footerHeight = 0
+	footerHeight = 1
 )
 
 type Model struct {
@@ -142,8 +142,8 @@ func (m Model) View() string {
 		viewSummary += m.summary.View()
 	}
 
-	return viewSummary +
-		m.viewport.View() +
+	return viewSummary + "\n" +
+		m.viewport.View() + "\n" +
 		footer(m.viewport.Width, m.lastUpdateTime)
 
 }

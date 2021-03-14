@@ -23,7 +23,7 @@ var (
 )
 
 const (
-	footerHeight = 1
+	footerHeight = 0
 )
 
 type Model struct {

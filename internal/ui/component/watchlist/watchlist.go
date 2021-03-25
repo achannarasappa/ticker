@@ -92,7 +92,6 @@ func buildCells(quote Quote, position Position, config c.Config, styles c.Styles
 		return []grid.Cell{
 			{Text: textName(quote, styles)},
 			{Text: textMarketState(quote, styles), Width: 5, Align: grid.Right},
-			{Text: textPosition(quote, position, styles), Width: 25, Align: grid.Right},
 			{Text: textQuote(quote, styles), Width: 25, Align: grid.Right},
 		}
 
@@ -104,30 +103,30 @@ func buildCells(quote Quote, position Position, config c.Config, styles c.Styles
 		{Text: textMarketState(quote, styles), Width: 5, Align: grid.Right},
 	}
 
-	widthMinTerm := 90
+	widthMinTerm := 53
 	cells := []grid.Cell{
-		{Text: textPosition(quote, position, styles), Width: 25, Align: grid.Right},
 		{Text: textQuote(quote, styles), Width: 25, Align: grid.Right},
 	}
 
 	if config.ShowHoldings {
 		cells = append(
 			[]grid.Cell{
-				{Text: textPositionExtendedLabels(position, styles), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
-				{Text: textPositionExtended(quote, position, styles), Width: 10, Align: grid.Right, VisibleMinWidth: widthMinTerm},
+				{Text: textPositionExtendedLabels(position, styles), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 53},
+				{Text: textPositionExtended(quote, position, styles), Width: 10, Align: grid.Right, VisibleMinWidth: widthMinTerm + 37},
+				{Text: textPosition(quote, position, styles), Width: 25, Align: grid.Right, VisibleMinWidth: widthMinTerm + 26},
 			},
 			cells...,
 		)
-		widthMinTerm += 30
+		widthMinTerm += 60
 	}
 
 	if config.ExtraInfoFundamentals {
 		cells = append(
 			[]grid.Cell{
-				{Text: textQuoteRangeLabels(quote, styles), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 50},
-				{Text: textQuoteRange(quote, styles), Width: 20, Align: grid.Right, VisibleMinWidth: widthMinTerm + 30},
-				{Text: textQuoteExtendedLabels(quote, styles), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 15},
-				{Text: textQuoteExtended(quote, styles), Width: 7, Align: grid.Right, VisibleMinWidth: widthMinTerm},
+				{Text: textQuoteRangeLabels(quote, styles), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 63},
+				{Text: textQuoteRange(quote, styles), Width: 20, Align: grid.Right, VisibleMinWidth: widthMinTerm + 47},
+				{Text: textQuoteExtendedLabels(quote, styles), Width: 15, Align: grid.Right, VisibleMinWidth: widthMinTerm + 27},
+				{Text: textQuoteExtended(quote, styles), Width: 7, Align: grid.Right, VisibleMinWidth: widthMinTerm + 11},
 			},
 			cells...,
 		)

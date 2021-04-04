@@ -26,6 +26,11 @@ type Model struct {
 	styles                c.Styles
 }
 
+type CellWidths struct {
+	PositionMaxWidth int
+	QuoteMaxWidth    int
+}
+
 // NewModel returns a model with default values.
 func NewModel(ctx c.Context) Model {
 	return Model{
@@ -83,6 +88,28 @@ func (m Model) View() string {
 	}
 
 	return grid.Render(grid.Grid{Rows: rows, GutterHorizontal: 1})
+}
+
+func getCellWidths(quotes []Quote, positions []Position) CellWidths {
+
+	cellMaxWidths := CellWidths{}
+
+	for _, quote := range quotes {
+		quoteMaxWidth := len(ConvertFloatToString(quote.FiftyTwoWeekHigh, quote.IsVariablePrecision)) + 1
+		if quoteMaxWidth > cellMaxWidths.QuoteMaxWidth {
+			cellMaxWidths.QuoteMaxWidth = quoteMaxWidth
+		}
+	}
+
+	for _, position := range positions {
+		positionMaxWidth := len(ConvertFloatToString(position., quote.IsVariablePrecision)) + 1
+		if positionMaxWidth > cellMaxWidths.QuoteMaxWidth {
+			cellMaxWidths.QuoteMaxWidth = quoteMaxWidth
+		}
+	}
+
+	return cellMaxWidths
+
 }
 
 func buildCells(quote Quote, position Position, config c.Config, styles c.Styles) []grid.Cell {

@@ -115,7 +115,15 @@ func getCellWidths(quotes []Quote, positions map[string]Position) CellWidths {
 	cellMaxWidths := CellWidths{}
 
 	for _, quote := range quotes {
-		quoteLength := len(ConvertFloatToString(quote.FiftyTwoWeekHigh, quote.IsVariablePrecision))
+		var quoteLength int
+
+		if quote.FiftyTwoWeekHigh == 0.0 {
+			quoteLength = len(ConvertFloatToString(quote.Price, quote.IsVariablePrecision))
+		}
+
+		if quote.FiftyTwoWeekHigh != 0.0 {
+			quoteLength = len(ConvertFloatToString(quote.FiftyTwoWeekHigh, quote.IsVariablePrecision))
+		}
 
 		if quoteLength > cellMaxWidths.quoteLength {
 			cellMaxWidths.quoteLength = quoteLength

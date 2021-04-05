@@ -1,6 +1,7 @@
 package watchlist_test
 
 import (
+	"io/ioutil"
 	"strings"
 
 	"github.com/acarl005/stripansi"
@@ -33,264 +34,104 @@ var _ = Describe("Watchlist", func() {
 		Tag:       func(v string) string { return v },
 	}
 
-	// describe := func(desc string) func(bool, bool, float64, Position, string) string {
-	// 	return func(isActive bool, isRegularTradingSession bool, change float64, position Position, expected string) string {
-	// 		return fmt.Sprintf("%s expected:%s", desc, expected)
-	// 	}
-	// }
-
-	// DescribeTable("should render a watchlist",
-	// 	func(isActive bool, isRegularTradingSession bool, change float64, position Position, expected string) {
-
-	// 		var positionMap map[string]Position
-	// 		if (position == Position{}) {
-	// 			positionMap = map[string]Position{}
-	// 		} else {
-	// 			positionMap = map[string]Position{
-	// 				"AAPL": position,
-	// 			}
-	// 		}
-
-	// 		m := NewModel(c.Context{
-	// 			Reference: c.Reference{Styles: stylesFixture},
-	// 			Config: c.Config{
-	// 				Separate:              false,
-	// 				ShowHoldings:          true,
-	// 				ExtraInfoExchange:     false,
-	// 				ExtraInfoFundamentals: false,
-	// 				Sort:                  "",
-	// 			},
-	// 		})
-	// 		m.Width = 80
-	// 		m.Positions = positionMap
-	// 		m.Quotes = []Quote{
-	// 			{
-	// 				ResponseQuote: ResponseQuote{
-	// 					Symbol:    "AAPL",
-	// 					ShortName: "Apple Inc.",
-	// 				},
-	// 				Price:                   1.00 + change,
-	// 				Change:                  change,
-	// 				ChangePercent:           change,
-	// 				IsActive:                isActive,
-	// 				IsRegularTradingSession: isRegularTradingSession,
-	// 			},
-	// 		}
-	// 		Expect("\n" + removeFormatting(m.View())).To(Equal("\n" + expected))
-	// 	},
-	// 	Entry(
-	// 		describe("gain"),
-	// 		true,
-	// 		true,
-	// 		0.05,
-	// 		Position{},
-	// 		strings.Join([]string{
-	// 			"AAPL                                                        ●               1.05",
-	// 			"Apple Inc.                                                        ↑ 0.05 (0.05%)",
-	// 		}, "\n"),
-	// 	),
-	// 	Entry(
-	// 		describe("loss"),
-	// 		true,
-	// 		true,
-	// 		-0.05,
-	// 		Position{},
-	// 		strings.Join([]string{
-	// 			"AAPL                                                        ●               0.95",
-	// 			"Apple Inc.                                                      ↓ -0.05 (-0.05%)",
-	// 		}, "\n"),
-	// 	),
-	// 	Entry(
-	// 		describe("gain, after hours"),
-	// 		true,
-	// 		false,
-	// 		0.05,
-	// 		Position{},
-	// 		strings.Join([]string{
-	// 			"AAPL                                                        ○               1.05",
-	// 			"Apple Inc.                                                        ↑ 0.05 (0.05%)",
-	// 		}, "\n"),
-	// 	),
-	// 	Entry(
-	// 		describe("position, day gain, total gain"),
-	// 		true,
-	// 		true,
-	// 		0.05,
-	// 		Position{
-	// 			AggregatedLot: AggregatedLot{
-	// 				Symbol:   "AAPL",
-	// 				Quantity: 100.0,
-	// 				Cost:     50.0,
-	// 			},
-	// 			Value:              105.0,
-	// 			DayChange:          5.0,
-	// 			DayChangePercent:   5.0,
-	// 			TotalChange:        55.0,
-	// 			TotalChangePercent: 110.0,
-	// 		},
-	// 		strings.Join([]string{
-	// 			"AAPL                     ●              105.00 (0.00%)                      1.05",
-	// 			"Apple Inc.                          ↑ 55.00  (110.00%)            ↑ 0.05 (0.05%)",
-	// 		}, "\n"),
-	// 	),
-	// 	Entry(
-	// 		describe("position, day gain, total loss"),
-	// 		true,
-	// 		true,
-	// 		0.05,
-	// 		Position{
-	// 			AggregatedLot: AggregatedLot{
-	// 				Symbol:   "AAPL",
-	// 				Quantity: 100.0,
-	// 				Cost:     150.0,
-	// 			},
-	// 			Value:              105.0,
-	// 			DayChange:          5.0,
-	// 			DayChangePercent:   5.0,
-	// 			TotalChange:        -45.0,
-	// 			TotalChangePercent: -30.0,
-	// 		},
-	// 		strings.Join([]string{
-	// 			"AAPL                     ●              105.00 (0.00%)                      1.05",
-	// 			"Apple Inc.                          ↓ -45.00 (-30.00%)            ↑ 0.05 (0.05%)",
-	// 		}, "\n"),
-	// 	),
-	// 	Entry(
-	// 		describe("position, day loss, total gain"),
-	// 		true,
-	// 		true,
-	// 		-0.05,
-	// 		Position{
-	// 			AggregatedLot: AggregatedLot{
-	// 				Symbol:   "AAPL",
-	// 				Quantity: 100.0,
-	// 				Cost:     50.0,
-	// 			},
-	// 			Value:              95.0,
-	// 			DayChange:          -5.0,
-	// 			DayChangePercent:   -5.0,
-	// 			TotalChange:        45.0,
-	// 			TotalChangePercent: 90.0,
-	// 		},
-	// 		strings.Join([]string{
-	// 			"AAPL                     ●               95.00 (0.00%)                      0.95",
-	// 			"Apple Inc.                           ↑ 45.00  (90.00%)          ↓ -0.05 (-0.05%)",
-	// 		}, "\n"),
-	// 	),
-	// 	Entry(
-	// 		describe("position, day loss, total loss"),
-	// 		true,
-	// 		true,
-	// 		-0.05,
-	// 		Position{
-	// 			AggregatedLot: AggregatedLot{
-	// 				Symbol:   "AAPL",
-	// 				Quantity: 100.0,
-	// 				Cost:     150.0,
-	// 			},
-	// 			Value:              95.0,
-	// 			DayChange:          -5.0,
-	// 			DayChangePercent:   -5.0,
-	// 			TotalChange:        -55.0,
-	// 			TotalChangePercent: -36.67,
-	// 		},
-	// 		strings.Join([]string{
-	// 			"AAPL                     ●               95.00 (0.00%)                      0.95",
-	// 			"Apple Inc.                          ↓ -55.00 (-36.67%)          ↓ -0.05 (-0.05%)",
-	// 		}, "\n"),
-	// 	),
-	// 	Entry(
-	// 		describe("position, closed market"),
-	// 		false,
-	// 		false,
-	// 		0.0,
-	// 		Position{
-	// 			AggregatedLot: AggregatedLot{
-	// 				Symbol:   "AAPL",
-	// 				Quantity: 100.0,
-	// 				Cost:     100.0,
-	// 			},
-	// 			Value:            95.0,
-	// 			DayChange:        0.0,
-	// 			DayChangePercent: 0.0,
-	// 		},
-	// 		strings.Join([]string{
-	// 			"AAPL                                     95.00 (0.00%)                      1.00",
-	// 			"Apple Inc.                                                          0.00 (0.00%)",
-	// 		}, "\n"),
-	// 	),
-	// )
+	It("should render a watchlist", func() {
+		m := NewModel(c.Context{
+			Reference: c.Reference{Styles: stylesFixture},
+			Config: c.Config{
+				ShowHoldings:          true,
+				ExtraInfoExchange:     true,
+				ExtraInfoFundamentals: true,
+				Sort:                  "alpha",
+			},
+		})
+		m.Width = 150
+		m.Positions = map[string]Position{
+			"STOCK4": {
+				AggregatedLot: AggregatedLot{Symbol: "STOCK4", Quantity: 100.0, Cost: 50.0},
+				Value:         105.0,
+				DayChange:     5.0, DayChangePercent: 5.0,
+				TotalChange: 55.0, TotalChangePercent: 110.0,
+			},
+			"STOCK5": {
+				AggregatedLot: AggregatedLot{Symbol: "STOCK5", Quantity: 100.0, Cost: 150.0},
+				Value:         105.0,
+				DayChange:     5.0, DayChangePercent: 5.0,
+				TotalChange: -45.0, TotalChangePercent: -30.0,
+			},
+			"STOCK6": {
+				AggregatedLot: AggregatedLot{Symbol: "STOCK6", Quantity: 100.0, Cost: 50.0},
+				Value:         95.0,
+				DayChange:     -5.0, DayChangePercent: -5.0,
+				TotalChange: -55.0, TotalChangePercent: -36.67,
+			},
+			"STOCK7": {
+				AggregatedLot: AggregatedLot{Symbol: "STOCK7", Quantity: 100.0, Cost: 50.0},
+				Value:         95.0,
+				DayChange:     -5.0, DayChangePercent: -5.0,
+				TotalChange: 45.0, TotalChangePercent: 90.0,
+			},
+			"STOCK8": {
+				AggregatedLot: AggregatedLot{Symbol: "STOCK8", Quantity: 100.0, Cost: 100.0},
+				Value:         95.0,
+				DayChange:     0.0, DayChangePercent: 0.0,
+				TotalChange: 45.0, TotalChangePercent: 90.0,
+			},
+		}
+		m.Quotes = []Quote{
+			{
+				ResponseQuote: ResponseQuote{Symbol: "STOCK1", ShortName: "Stock 1 Inc. (gain)"},
+				Price:         105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
+				Change: 5.0, ChangePercent: 5.0,
+				IsActive: true, IsRegularTradingSession: true,
+			},
+			{
+				ResponseQuote: ResponseQuote{Symbol: "STOCK2", ShortName: "Stock 2 Inc. (loss)", FiftyTwoWeekHigh: 150.00},
+				Price:         95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
+				Change: -5.0, ChangePercent: -5.0,
+				IsActive: true, IsRegularTradingSession: true,
+			},
+			{
+				ResponseQuote: ResponseQuote{Symbol: "STOCK3", ShortName: "Stock 3 Inc. (gain, after hours)", FiftyTwoWeekHigh: 150.00},
+				Price:         105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
+				Change: 5.0, ChangePercent: 5.0,
+				IsActive: true, IsRegularTradingSession: false,
+			},
+			{
+				ResponseQuote: ResponseQuote{Symbol: "STOCK4", ShortName: "Stock 4 Inc. (position, day gain, total gain)", FiftyTwoWeekHigh: 150.00},
+				Price:         105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
+				Change: 5.0, ChangePercent: 5.0,
+				IsActive: true, IsRegularTradingSession: true,
+			},
+			{
+				ResponseQuote: ResponseQuote{Symbol: "STOCK5", ShortName: "Stock 5 Inc. (position, day gain, total loss)", FiftyTwoWeekHigh: 150.00},
+				Price:         105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
+				Change: 5.0, ChangePercent: 5.0,
+				IsActive: true, IsRegularTradingSession: true,
+			},
+			{
+				ResponseQuote: ResponseQuote{Symbol: "STOCK6", ShortName: "Stock 6 Inc. (position, day loss, total loss)", FiftyTwoWeekHigh: 150.00},
+				Price:         95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
+				Change: -5.0, ChangePercent: -5.0,
+				IsActive: true, IsRegularTradingSession: true,
+			},
+			{
+				ResponseQuote: ResponseQuote{Symbol: "STOCK7", ShortName: "Stock 7 Inc. (position, day loss, total gain)"},
+				Price:         95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
+				Change: -5.0, ChangePercent: -5.0,
+				IsActive: true, IsRegularTradingSession: true,
+			},
+			{
+				ResponseQuote: ResponseQuote{Symbol: "STOCK8", ShortName: "Stock 8 Inc. (position, closed market)"},
+				Price:         95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
+				Change: 0.0, ChangePercent: 0.0,
+				IsActive: false, IsRegularTradingSession: false,
+			},
+		}
+		expected, _ := ioutil.ReadFile("./snapshots/watchlist-all-options.snap")
+		Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + string(expected)))
+	})
 
 	When("there are more than one symbols on the watchlist", func() {
-		// 		It("should render a watchlist with each symbol", func() {
-
-		// 			m := NewModel(c.Context{
-		// 				Reference: c.Reference{Styles: stylesFixture},
-		// 				Config: c.Config{
-		// 					Separate:              false,
-		// 					ExtraInfoExchange:     false,
-		// 					ExtraInfoFundamentals: false,
-		// 					Sort:                  "",
-		// 				},
-		// 			})
-		// 			m.Width = 80
-		// 			m.Quotes = []Quote{
-		// 				{
-		// 					ResponseQuote: ResponseQuote{
-		// 						Symbol:    "MSFT",
-		// 						ShortName: "Microsoft Corporation Inc.",
-		// 					},
-		// 					Price:                   1.05,
-		// 					Change:                  0.00,
-		// 					ChangePercent:           0.00,
-		// 					IsActive:                false,
-		// 					IsRegularTradingSession: false,
-		// 				},
-		// 				{
-		// 					ResponseQuote: ResponseQuote{
-		// 						Symbol:    "TW",
-		// 						ShortName: "ThoughtWorks",
-		// 					},
-		// 					Price:                   109.04,
-		// 					Change:                  3.53,
-		// 					ChangePercent:           5.65,
-		// 					IsActive:                true,
-		// 					IsRegularTradingSession: false,
-		// 				},
-		// 				{
-		// 					ResponseQuote: ResponseQuote{
-		// 						Symbol:    "GOOG",
-		// 						ShortName: "Google Inc.",
-		// 					},
-		// 					Price:                   2523.53,
-		// 					Change:                  -32.02,
-		// 					ChangePercent:           -1.35,
-		// 					IsActive:                true,
-		// 					IsRegularTradingSession: false,
-		// 				},
-		// 				{
-		// 					ResponseQuote: ResponseQuote{
-		// 						Symbol:    "BTC-USD",
-		// 						ShortName: "Bitcoin",
-		// 					},
-		// 					Price:                   50000.0,
-		// 					Change:                  10000.0,
-		// 					ChangePercent:           20.0,
-		// 					IsActive:                true,
-		// 					IsRegularTradingSession: true,
-		// 				},
-		// 			}
-		// 			expected := `
-		// BTC-USD                  ●                                              50000.00
-		// Bitcoin                                                      ↑ 10000.00 (20.00%)
-		// TW                       ○                                                109.04
-		// ThoughtWorks                                                      ↑ 3.53 (5.65%)
-		// GOOG                     ○                                               2523.53
-		// Google Inc.                                                    ↓ -32.02 (-1.35%)
-		// MSFT                                                                        1.05
-		// Microsoft Corporatio                                                0.00 (0.00%)`
-		// 			Expect("\n" + removeFormatting(m.View())).To(Equal(expected))
-		// 		})
 
 		When("the show-separator layout flag is set", func() {
 			It("should render a watchlist with separators", func() {
@@ -553,6 +394,52 @@ var _ = Describe("Watchlist", func() {
 			}
 			Expect(removeFormatting(m.View())).To(ContainSubstring("Quantity"))
 			Expect(removeFormatting(m.View())).To(ContainSubstring("Avg. Cost"))
+			Expect(removeFormatting(m.View())).To(ContainSubstring("100.00"))
+			Expect(removeFormatting(m.View())).To(ContainSubstring("0.00"))
+		})
+
+		When("the holding quantity is high", func() {
+			It("should render extra holding information without truncation", func() {
+				m := NewModel(c.Context{
+					Reference: c.Reference{Styles: stylesFixture},
+					Config: c.Config{
+						ShowHoldings: true,
+					},
+				})
+				m.Width = 120
+				m.Quotes = []Quote{
+					{
+						ResponseQuote: ResponseQuote{
+							Symbol:             "PENNY",
+							ShortName:          "A Penny Stock",
+							RegularMarketPrice: 0.10,
+						},
+						Price:                   0.11,
+						Change:                  0.01,
+						ChangePercent:           10.0,
+						IsActive:                true,
+						IsRegularTradingSession: true,
+					},
+				}
+				m.Positions = map[string]Position{
+					"PENNY": {
+						AggregatedLot: AggregatedLot{
+							Symbol:   "PENNY",
+							Quantity: 92709.0,
+							Cost:     0.10,
+						},
+						Value:              9270.90,
+						DayChange:          10.0,
+						DayChangePercent:   10.0,
+						TotalChange:        10.0,
+						TotalChangePercent: 10.0,
+					},
+				}
+				Expect(removeFormatting(m.View())).To(ContainSubstring("Quantity"))
+				Expect(removeFormatting(m.View())).To(ContainSubstring("Avg. Cost"))
+				Expect(removeFormatting(m.View())).To(ContainSubstring("92709.00"))
+				Expect(removeFormatting(m.View())).To(ContainSubstring("0.00"))
+			})
 		})
 
 		When("there is no position", func() {

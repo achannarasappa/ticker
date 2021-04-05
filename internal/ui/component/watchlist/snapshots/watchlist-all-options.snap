@@ -1,0 +1,24 @@
+STOCK1                       ●        Day Range:  90.00 - 120.00    Prev. Close: 100.00                                                         105.00
+Stock 1 Inc. (gain)                  52wk Range:     0.00 - 0.00           Open: 110.00                                                 ↑ 5.00 (5.00%)
+    Real-Time                                                                                                                                         
+STOCK2                       ●        Day Range:  90.00 - 120.00    Prev. Close: 100.00                                                          95.00
+Stock 2 Inc. (loss)                  52wk Range:   0.00 - 150.00           Open: 110.00                                               ↓ -5.00 (-5.00%)
+    Real-Time                                                                                                                                         
+STOCK3                       ○        Day Range:  90.00 - 120.00    Prev. Close: 100.00                                                         105.00
+Stock 3 Inc. (gain,                  52wk Range:   0.00 - 150.00           Open: 110.00                                                 ↑ 5.00 (5.00%)
+    Real-Time                                                                                                                                         
+STOCK4                       ●        Day Range:  90.00 - 120.00    Prev. Close: 100.00       Quantity: 100.00       105.00 (0.00%)             105.00
+Stock 4 Inc. (positi                 52wk Range:   0.00 - 150.00           Open: 110.00      Avg. Cost:   0.00    ↑ 55.00 (110.00%)     ↑ 5.00 (5.00%)
+    Real-Time                                                                                                                                         
+STOCK5                       ●        Day Range:  90.00 - 120.00    Prev. Close: 100.00       Quantity: 100.00       105.00 (0.00%)             105.00
+Stock 5 Inc. (positi                 52wk Range:   0.00 - 150.00           Open: 110.00      Avg. Cost:   0.00   ↓ -45.00 (-30.00%)     ↑ 5.00 (5.00%)
+    Real-Time                                                                                                                                         
+STOCK6                       ●        Day Range:  90.00 - 120.00    Prev. Close: 100.00       Quantity: 100.00        95.00 (0.00%)              95.00
+Stock 6 Inc. (positi                 52wk Range:   0.00 - 150.00           Open: 110.00      Avg. Cost:   0.00   ↓ -55.00 (-36.67%)   ↓ -5.00 (-5.00%)
+    Real-Time                                                                                                                                         
+STOCK7                       ●        Day Range:  90.00 - 120.00    Prev. Close: 100.00       Quantity: 100.00        95.00 (0.00%)              95.00
+Stock 7 Inc. (positi                 52wk Range:     0.00 - 0.00           Open: 110.00      Avg. Cost:   0.00     ↑ 45.00 (90.00%)   ↓ -5.00 (-5.00%)
+    Real-Time                                                                                                                                         
+STOCK8                                Day Range:  90.00 - 120.00    Prev. Close: 100.00       Quantity: 100.00        95.00 (0.00%)              95.00
+Stock 8 Inc. (positi                 52wk Range:     0.00 - 0.00           Open: 110.00      Avg. Cost:   0.00     ↑ 45.00 (90.00%)       0.00 (0.00%)
+    Real-Time                                                                                                                                         

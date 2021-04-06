@@ -138,7 +138,7 @@ func (m Model) View() string {
 
 	viewSummary := ""
 
-	if m.ctx.Config.ShowSummary {
+	if m.ctx.Config.ShowSummary && m.ctx.Config.ShowHoldings {
 		viewSummary += m.summary.View()
 	}
 
@@ -173,7 +173,7 @@ func footer(width int, time string) string {
 }
 
 func getVerticalMargin(config c.Config) int {
-	if config.ShowSummary {
+	if config.ShowSummary && config.ShowHoldings {
 		return 2
 	}
 

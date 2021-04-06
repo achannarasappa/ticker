@@ -110,7 +110,7 @@ func readConfig(fs afero.Fs, configPathOption string) (Config, error) {
 func getReference(config Config, client resty.Client) (Reference, error) {
 
 	aggregatedLots := position.GetLots(config.Lots)
-	symbols := position.GetSymbols(config.Watchlist, aggregatedLots)
+	symbols := position.GetSymbols(config, aggregatedLots)
 
 	currencyRates, err := currency.GetCurrencyRates(client, symbols, config.Currency)
 	styles := util.GetColorScheme(config.ColorScheme)

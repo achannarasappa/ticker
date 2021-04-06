@@ -56,7 +56,7 @@ func (m Model) updateQuotes() tea.Cmd {
 func NewModel(dep c.Dependencies, ctx c.Context) Model {
 
 	aggregatedLots := position.GetLots(ctx.Config.Lots)
-	symbols := position.GetSymbols(ctx.Config.Watchlist, aggregatedLots)
+	symbols := position.GetSymbols(ctx.Config, aggregatedLots)
 
 	return Model{
 		ctx:             ctx,

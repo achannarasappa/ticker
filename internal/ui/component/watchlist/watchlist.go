@@ -310,9 +310,9 @@ func textPositionExtended(quote Quote, position Position, styles c.Styles) strin
 		return ""
 	}
 
-	return styles.Text(ConvertFloatToString(position.Quantity, quote.IsVariablePrecision)) +
+	return styles.Text(ConvertFloatToString(position.AverageCost, quote.IsVariablePrecision)) +
 		"\n" +
-		styles.Text(ConvertFloatToString(position.AverageCost, quote.IsVariablePrecision))
+		styles.Text(ConvertFloatToString(position.Quantity, quote.IsVariablePrecision))
 
 }
 
@@ -322,9 +322,9 @@ func textPositionExtendedLabels(position Position, styles c.Styles) string {
 		return ""
 	}
 
-	return styles.TextLabel("Quantity:") +
+	return styles.TextLabel("Avg. Cost:") +
 		"\n" +
-		styles.TextLabel("Avg. Cost:")
+		styles.TextLabel("Quantity:")
 }
 
 func textQuoteRange(quote Quote, styles c.Styles) string {

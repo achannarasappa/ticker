@@ -167,6 +167,7 @@ func buildCells(quote Quote, position Position, config c.Config, styles c.Styles
 			{Text: genPrice(quote, styles), Width: 10, Align: grid.Left},
 			{Text: genPriceChange(quote, styles), Width: 10, Align: grid.Left},
 			{Text: genPriceChangePct(quote, styles), Width: 10, Align: grid.Left},
+			{Text: genHighLow(quote.FiftyTwoWeekLow, quote.FiftyTwoWeekHigh, styles), Width: 20, Align: grid.Left},
 			{Text: ConvertMktcap(quote.MarketCap), Width: 8, Align: grid.Left},
 		}
 	}
@@ -295,6 +296,10 @@ func genPriceChange(quote Quote, styles c.Styles) string {
 
 func genPriceChangePct(quote Quote, styles c.Styles) string {
 	return styles.Text(ConvertPercent(quote.ChangePercent))
+}
+
+func genHighLow(lo, hi float64, styles c.Styles) string {
+	return styles.Text("["+PriceToString(lo) + " " + PriceToString(hi)+"]")
 }
 
 func quoteChangeText(change float64, changePercent float64, isVariablePrecision bool, styles c.Styles) string {

@@ -159,6 +159,18 @@ func getCellWidths(quotes []Quote, positions map[string]Position) CellWidths {
 
 func buildCells(quote Quote, position Position, config c.Config, styles c.Styles, cellWidths CellWidths) []grid.Cell {
 
+	if config.Compact {
+		return []grid.Cell{
+			{Text: styles.TextBold(quote.Symbol), Width:10, Align: grid.Left},
+			{Text: genInstrumentName(quote, styles), Width: 30, Align: grid.Left},
+			{Text: textMarketState(quote, styles), Width: 4, Align: grid.Left},
+			{Text: genPrice(quote, styles), Width: 10, Align: grid.Left},
+			{Text: genPriceChange(quote, styles), Width: 10, Align: grid.Left},
+			{Text: genPriceChangePct(quote, styles), Width: 10, Align: grid.Left},
+			{Text: ConvertMktcap(quote.MarketCap), Width: 8, Align: grid.Left},
+		}
+	}
+	
 	if !config.ExtraInfoFundamentals && !config.ShowHoldings {
 
 		return []grid.Cell{
@@ -249,6 +261,52 @@ func buildCells(quote Quote, position Position, config c.Config, styles c.Styles
 
 	return cells
 
+}
+
+func genInstrumentName(quote Quote, styles c.Styles) string {
+	name := quote.LongName
+	if(name=="") {
+		name = quote.ShortName
+	}
+
+	if len(name) > 30 {
+		name = name[:30]
+	}
+
+	return styles.TextLabel(name)
+}
+
+func genPrice(quote Quote, styles c.Styles) string {
+	return styles.Text(ConvertFloatToString(quote.Price, quote.IsVariablePrecision))
+}
+
+func genPriceChange(quote Quote, styles c.Styles) string {
+	if(quote.Change == 0.0) {
+		return ""
+	}
+
+	prefix := " "
+	if quote.Change<0 {
+		prefix = ""
+	}
+
+	return prefix + styles.Text(PriceToString(quote.Change))
+}
+
+func genPriceChangePct(quote Quote, styles c.Styles) string {
+	return styles.Text(ConvertPercent(quote.ChangePercent))
+}
+
+func quoteChangeText(change float64, changePercent float64, isVariablePrecision bool, styles c.Styles) string {
+	if change == 0.0 {
+		return styles.TextPrice(changePercent, "  "+ConvertFloatToString(change, isVariablePrecision)+" ("+ConvertFloatToString(changePercent, false)+"%)")
+	}
+	
+	if change > 0.0 {
+		return styles.TextPrice(changePercent, "↑ "+ConvertFloatToString(change, isVariablePrecision)+" ("+ConvertFloatToString(changePercent, false)+"%)")
+	}
+
+	return styles.TextPrice(changePercent, "↓ "+ConvertFloatToString(change, isVariablePrecision)+" ("+ConvertFloatToString(changePercent, false)+"%)")
 }
 
 func textName(quote Quote, styles c.Styles) string {
@@ -395,16 +453,4 @@ func textMarketState(q Quote, styles c.Styles) string {
 	}
 
 	return ""
-}
-
-func quoteChangeText(change float64, changePercent float64, isVariablePrecision bool, styles c.Styles) string {
-	if change == 0.0 {
-		return styles.TextPrice(changePercent, "  "+ConvertFloatToString(change, isVariablePrecision)+" ("+ConvertFloatToString(changePercent, false)+"%)")
-	}
-
-	if change > 0.0 {
-		return styles.TextPrice(changePercent, "↑ "+ConvertFloatToString(change, isVariablePrecision)+" ("+ConvertFloatToString(changePercent, false)+"%)")
-	}
-
-	return styles.TextPrice(changePercent, "↓ "+ConvertFloatToString(change, isVariablePrecision)+" ("+ConvertFloatToString(changePercent, false)+"%)")
 }

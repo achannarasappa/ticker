@@ -11,6 +11,7 @@ import (
 
 type ResponseQuote struct {
 	ShortName                  string  `json:"shortName"`
+	LongName                   string  `json:"longName"`
 	Symbol                     string  `json:"symbol"`
 	MarketState                string  `json:"marketState"`
 	Currency                   string  `json:"currency"`
@@ -33,6 +34,7 @@ type ResponseQuote struct {
 	FiftyTwoWeekHigh           float64 `json:"fiftyTwoWeekHigh"`
 	FiftyTwoWeekLow            float64 `json:"fiftyTwoWeekLow"`
 	QuoteType                  string  `json:"quoteType"`
+	MarketCap                  float64 `json:"marketCap"`
 }
 
 type Quote struct {

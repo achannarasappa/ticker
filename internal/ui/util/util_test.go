@@ -63,6 +63,44 @@ var _ = Describe("Util", func() {
 			Expect(output).To(Equal(expectedOutput))
 		})
 	})
+	Describe("PriceToString", func() {
+		It("should convert a price less than 1 to a precision of 5", func() {
+			output := PriceToString(0.563412)
+			Expect(output).To(Equal("0.56341"))
+		})
+		It("should convert a price less than 10 to a precision of 4", func() {
+			output := PriceToString(5.63412)
+			Expect(output).To(Equal("5.6341"))
+		})
+		It("should convert a price less than 100 to a precision of 3", func() {
+			output := PriceToString(56.3412)
+			Expect(output).To(Equal("56.341"))
+		})
+		It("should convert a price less than 1000 to a precision of 2", func() {
+			output := PriceToString(563.412)
+			Expect(output).To(Equal("563.41"))
+		})
+		It("should convert a price less than 10000 to a precision of 1", func() {
+			output := PriceToString(5634.12)
+			Expect(output).To(Equal("5634.1"))
+		})
+		It("should convert a price greater than 10000 to a precision of 0", func() {
+			output := PriceToString(56341.2)
+			Expect(output).To(Equal("56341"))
+		})
+	})
+	Describe("ConvertPercent", func() {
+		It("should convert to a precision of 2", func() {
+			output := ConvertPercent(12.44)
+			Expect(output).To(Equal("(12.44%)"))
+		})
+	})
+	Describe("ConvertMktcap", func() {
+		It("should convert to human readable string", func() {
+			output := ConvertMktcap(12.2e9)
+			Expect(output).To(Equal("12.20B"))
+		})
+	})
 	Describe("NewStyle", func() {
 		It("should generate text with a background and foreground color", func() {
 			inputStyleFn := NewStyle("#ffffff", "#000000", false)

@@ -27,9 +27,9 @@ var _ = Describe("Util", func() {
 		})
 
 		When("there using variable precision", func() {
-			It("should convert a float that smaller than 10 to a string with a precision of four", func() {
+			It("should convert a float that smaller than 1 to a string with a precision of five", func() {
 				output := ConvertFloatToString(0.563412, true)
-				Expect(output).To(Equal("0.5634"))
+				Expect(output).To(Equal("0.56341"))
 			})
 			It("should convert a float that between 10 and 100 to a string with a precision of three", func() {
 				output := ConvertFloatToString(12.5634, true)

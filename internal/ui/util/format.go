@@ -11,7 +11,7 @@ func getPrecision(f float64) int {
 	v := math.Abs(f)
 
 	if v == 0.0 {
-		return 1
+		return 2
 	}
 
 	if v >= 10000 {

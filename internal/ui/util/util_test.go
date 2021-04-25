@@ -97,8 +97,20 @@ var _ = Describe("Util", func() {
 	})
 	Describe("ConvertMktcap", func() {
 		It("should convert to human readable string", func() {
+			output := ConvertMktcap(12.2e12)
+			Expect(output).To(Equal("12.20T"))
+		})
+		It("should convert to human readable string", func() {
 			output := ConvertMktcap(12.2e9)
 			Expect(output).To(Equal("12.20B"))
+		})
+		It("should convert to human readable string", func() {
+			output := ConvertMktcap(12.2e6)
+			Expect(output).To(Equal("12.20M"))
+		})
+		It("should convert to human readable string", func() {
+			output := ConvertMktcap(12.2)
+			Expect(output).To(Equal("12.2"))
 		})
 	})
 	Describe("NewStyle", func() {

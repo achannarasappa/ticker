@@ -167,11 +167,11 @@ func buildCells(quote Quote, position Position, config c.Config, styles c.Styles
 			{Text: genPrice(quote, styles), Width: 10, Align: grid.Left},
 			{Text: genPriceChange(quote, styles), Width: 10, Align: grid.Left},
 			{Text: genPriceChangePct(quote, styles), Width: 10, Align: grid.Left},
-			{Text: genHighLow(quote.FiftyTwoWeekLow, quote.FiftyTwoWeekHigh, styles), Width: 20, Align: grid.Left},
+			{Text: genHighLow(quote, styles), Width: 23, Align: grid.Left},
 			{Text: ConvertMktcap(quote.MarketCap), Width: 8, Align: grid.Left},
 		}
 	}
-	
+
 	if !config.ExtraInfoFundamentals && !config.ShowHoldings {
 
 		return []grid.Cell{
@@ -298,15 +298,21 @@ func genPriceChangePct(quote Quote, styles c.Styles) string {
 	return styles.Text(ConvertPercent(quote.ChangePercent))
 }
 
-func genHighLow(lo, hi float64, styles c.Styles) string {
-	return styles.Text("["+PriceToString(lo) + " " + PriceToString(hi)+"]")
+func genHighLow(quote Quote, styles c.Styles) string {
+	l := quote.FiftyTwoWeekLow
+	h := quote.FiftyTwoWeekHigh
+	p := quote.Price
+	intercept := l
+	slope := 1.0/(h-l)
+	lhnorm := (p-intercept) * slope
+	return styles.Text("["+PriceToString(l) + " " + PriceToString(h)+"] " + strconv.FormatFloat(lhnorm, 'f', 2, 64))
 }
 
 func quoteChangeText(change float64, changePercent float64, isVariablePrecision bool, styles c.Styles) string {
 	if change == 0.0 {
 		return styles.TextPrice(changePercent, "  "+ConvertFloatToString(change, isVariablePrecision)+" ("+ConvertFloatToString(changePercent, false)+"%)")
 	}
-	
+
 	if change > 0.0 {
 		return styles.TextPrice(changePercent, "↑ "+ConvertFloatToString(change, isVariablePrecision)+" ("+ConvertFloatToString(changePercent, false)+"%)")
 	}

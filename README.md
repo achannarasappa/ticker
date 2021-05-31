@@ -67,19 +67,19 @@ ticker -w NET,AAPL,TSLA
 ```
 
 ## Usage
-|Alias|Flag|Default|Description|
-|-|-|-|-|
-|  |--config|`~/.ticker.yaml`|config with watchlist and positions|
-|-i|--interval|`5`|Refresh interval in seconds|
-|-w|--watchlist||comma separated list of symbols to watch|
-|  |--show-tags||display currency, exchange name, and quote delay for each quote |
-|  |--show-fundamentals||display open price, previous close, and day range |
-|  |--show-separator||layout with separators between each quote|
-|  |--show-summary||show total day change, total value, and total value change|
-|  |--show-holdings||show holdings including weight, average cost, and quantity|
-|  |--sort||sort quotes on the UI - options are change percent (default), `alpha`, `value`, and `user`|
-|  |--proxy||proxy URL for requests (default is none)|
-|  |--version||print the current version number|
+|Option Name|Alias|Flag|Default|Description|
+|-------------------|--|-------------------|----------------|-------------------------------------------------|
+|                   |  |--config           |`~/.ticker.yaml`|config file location with watchlist and positions|
+|`interval`         |-i|--interval         |`5`             |Refresh interval in seconds|
+|`watchlist`        |-w|--watchlist        |                |comma separated list of symbols to watch|
+|`show-tags`        |  |--show-tags        |                |display currency, exchange name, and quote delay for each quote |
+|`show-fundamentals`|  |--show-fundamentals|                |display open price, previous close, and day range |
+|`show-separator`   |  |--show-separator   |                |layout with separators between each quote|
+|`show-summary`     |  |--show-summary     |                |show total day change, total value, and total value change|
+|`show-holdings`    |  |--show-holdings    |                |show holdings including weight, average cost, and quantity|
+|`sort`             |  |--sort             |                |sort quotes on the UI - options are change percent (default), `alpha`, `value`, and `user`|
+|`proxy`            |  |--proxy            |                |proxy URL for requests (default is none)|
+|`version`          |  |--version          |                |print the current version number|
 
 ## Configuration
 
@@ -94,7 +94,7 @@ show-separator: true
 show-holdings: true
 interval: 5
 currency: USD
-currency-convert-summary-only: false
+currency-summary-only: false
 watchlist:
   - NET
   - TEAM
@@ -141,7 +141,8 @@ It's possible to set a custom sort order with the `--sort` flag or `sort:` confi
 * When a `currency` is defined, all values are converted including summary, quote, and position
 * Add cost basis lots in the currency of the exchange - these will be converted automatically when `currency` is defined
 * If a `currency` is not set (default behavior) and the `show-summary` option is enabled, the summary will be calculated in USD regardless of the exchange currency to avoid mixing currencies
-* Currencies are retrieved only once at start time - currency exchange rates do fluctuate over time and thus converted values may vary depending on when ticker is started 
+* Currencies are retrieved only once at start time - currency exchange rates do fluctuate over time and thus converted values may vary depending on when ticker is started
+* If the `currency-summary-only` is set to `true` and a value is set for `currency`, only the summary values will be converted
 
 ### Custom Color Schemes
 

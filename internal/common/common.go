@@ -22,7 +22,7 @@ type Config struct {
 	Proxy                      string            `yaml:"proxy"`
 	Sort                       string            `yaml:"sort"`
 	Currency                   string            `yaml:"currency"`
-	CurrencyConvertSummaryOnly bool              `yaml:"currency-convert-summary-only"`
+	CurrencyConvertSummaryOnly bool              `yaml:"currency-summary-only"`
 	ColorScheme                ConfigColorScheme `yaml:"colors"`
 }
 

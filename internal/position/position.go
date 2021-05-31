@@ -138,9 +138,9 @@ func getPositionsReduced(ctx c.Context, aggregatedLots map[string]AggregatedLot,
 	acc := positionAcc{}
 	for _, quote := range quotes {
 		if aggregatedLot, ok := aggregatedLots[quote.Symbol]; ok {
-			currencyRate, currencyRateDefault, currencyCode := currency.GetCurrencyRateFromContext(ctx, quote.Currency)
+			currencyRateByUse := currency.GetCurrencyRateFromContext(ctx, quote.Currency)
 
-			cost := aggregatedLot.Cost * currencyRate
+			cost := aggregatedLot.Cost * currencyRateByUse.PositionCost
 			value := quote.Price * aggregatedLot.Quantity
 			totalChange := value - cost
 			totalChangePercant := (totalChange / cost) * 100
@@ -155,11 +155,11 @@ func getPositionsReduced(ctx c.Context, aggregatedLots map[string]AggregatedLot,
 				TotalChangePercent: totalChangePercant,
 				AverageCost:        cost / aggregatedLot.Quantity,
 				Currency:           quote.Currency,
-				CurrencyConverted:  currencyCode,
+				CurrencyConverted:  currencyRateByUse.ToCurrencyCode,
 			}
 
 			acc.positions = append(acc.positions, position)
-			acc.positionSummaryBase = getPositionSummaryBase(position, acc.positionSummaryBase, currencyRateDefault)
+			acc.positionSummaryBase = getPositionSummaryBase(position, acc.positionSummaryBase, currencyRateByUse)
 		}
 	}
 
@@ -175,9 +175,9 @@ func getPositionMapFromPositionsReduced(p []Position, totalValue float64) map[st
 	return positions
 }
 
-func getPositionSummaryBase(position Position, acc positionSummaryBase, currencyRateDefault float64) positionSummaryBase {
-	acc.value += (position.Value * currencyRateDefault)
-	acc.cost += (position.Cost * currencyRateDefault)
-	acc.dayChange += (position.DayChange * currencyRateDefault)
+func getPositionSummaryBase(position Position, acc positionSummaryBase, currencyRateByUse currency.CurrencyRateByUse) positionSummaryBase {
+	acc.value += (position.Value * currencyRateByUse.SummaryValue)
+	acc.cost += (position.Cost * currencyRateByUse.SummaryCost)
+	acc.dayChange += (position.DayChange * currencyRateByUse.PositionValue)
 	return acc
 }

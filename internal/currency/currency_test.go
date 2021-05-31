@@ -161,10 +161,13 @@ var _ = Describe("Currency", func() {
 					},
 				},
 			}
-			outputRate, outputDefaultRate, outputCurrencyCode := GetCurrencyRateFromContext(inputCtx, "EUR")
-			Expect(outputRate).To(Equal(1.0))
-			Expect(outputDefaultRate).To(Equal(1.0))
-			Expect(outputCurrencyCode).To(Equal("EUR"))
+			outputCurrencyRateByUse := GetCurrencyRateFromContext(inputCtx, "EUR")
+			Expect(outputCurrencyRateByUse.QuotePrice).To(Equal(1.0))
+			Expect(outputCurrencyRateByUse.PositionValue).To(Equal(1.0))
+			Expect(outputCurrencyRateByUse.PositionCost).To(Equal(1.0))
+			Expect(outputCurrencyRateByUse.SummaryValue).To(Equal(1.0))
+			Expect(outputCurrencyRateByUse.SummaryCost).To(Equal(1.0))
+			Expect(outputCurrencyRateByUse.ToCurrencyCode).To(Equal("EUR"))
 		})
 	})
 
@@ -189,10 +192,13 @@ var _ = Describe("Currency", func() {
 					},
 				},
 			}
-			outputRate, outputDefaultRate, outputCurrencyCode := GetCurrencyRateFromContext(inputCtx, "USD")
-			Expect(outputRate).To(Equal(1.25))
-			Expect(outputDefaultRate).To(Equal(1.0))
-			Expect(outputCurrencyCode).To(Equal("EUR"))
+			outputCurrencyRateByUse := GetCurrencyRateFromContext(inputCtx, "USD")
+			Expect(outputCurrencyRateByUse.QuotePrice).To(Equal(1.25))
+			Expect(outputCurrencyRateByUse.PositionValue).To(Equal(1.25))
+			Expect(outputCurrencyRateByUse.PositionCost).To(Equal(1.25))
+			Expect(outputCurrencyRateByUse.SummaryValue).To(Equal(1.0))
+			Expect(outputCurrencyRateByUse.SummaryCost).To(Equal(1.0))
+			Expect(outputCurrencyRateByUse.ToCurrencyCode).To(Equal("EUR"))
 		})
 	})
 
@@ -217,10 +223,13 @@ var _ = Describe("Currency", func() {
 					},
 				},
 			}
-			outputRate, outputDefaultRate, outputCurrencyCode := GetCurrencyRateFromContext(inputCtx, "USD")
-			Expect(outputRate).To(Equal(1.0))
-			Expect(outputDefaultRate).To(Equal(1.25))
-			Expect(outputCurrencyCode).To(Equal("EUR"))
+			outputCurrencyRateByUse := GetCurrencyRateFromContext(inputCtx, "USD")
+			Expect(outputCurrencyRateByUse.QuotePrice).To(Equal(1.0))
+			Expect(outputCurrencyRateByUse.PositionValue).To(Equal(1.0))
+			Expect(outputCurrencyRateByUse.PositionCost).To(Equal(1.0))
+			Expect(outputCurrencyRateByUse.SummaryValue).To(Equal(1.25))
+			Expect(outputCurrencyRateByUse.SummaryCost).To(Equal(1.25))
+			Expect(outputCurrencyRateByUse.ToCurrencyCode).To(Equal("EUR"))
 		})
 	})
 
@@ -246,10 +255,13 @@ var _ = Describe("Currency", func() {
 					},
 				},
 			}
-			outputRate, outputDefaultRate, outputCurrencyCode := GetCurrencyRateFromContext(inputCtx, "USD")
-			Expect(outputRate).To(Equal(1.0))
-			Expect(outputDefaultRate).To(Equal(1.25))
-			Expect(outputCurrencyCode).To(Equal("USD"))
+			outputCurrencyRateByUse := GetCurrencyRateFromContext(inputCtx, "USD")
+			Expect(outputCurrencyRateByUse.QuotePrice).To(Equal(1.0))
+			Expect(outputCurrencyRateByUse.PositionValue).To(Equal(1.0))
+			Expect(outputCurrencyRateByUse.PositionCost).To(Equal(1.0))
+			Expect(outputCurrencyRateByUse.SummaryValue).To(Equal(1.25))
+			Expect(outputCurrencyRateByUse.SummaryCost).To(Equal(1.25))
+			Expect(outputCurrencyRateByUse.ToCurrencyCode).To(Equal("USD"))
 		})
 	})
 })

@@ -63,7 +63,9 @@ func isVariablePrecision(responseQuote ResponseQuote) bool {
 
 func transformResponseQuote(ctx c.Context, responseQuote ResponseQuote) Quote {
 
-	currencyRate, _, currencyCode := currency.GetCurrencyRateFromContext(ctx, responseQuote.Currency)
+	currencyRateByUse := currency.GetCurrencyRateFromContext(ctx, responseQuote.Currency)
+	currencyRate := currencyRateByUse.QuotePrice
+	currencyCode := currencyRateByUse.ToCurrencyCode
 
 	if responseQuote.MarketState == "REGULAR" {
 		return Quote{

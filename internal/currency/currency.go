@@ -21,6 +21,15 @@ type Response struct {
 	} `json:"quoteResponse"`
 }
 
+type CurrencyRateByUse struct {
+	ToCurrencyCode string
+	QuotePrice     float64
+	PositionValue  float64
+	PositionCost   float64
+	SummaryValue   float64
+	SummaryCost    float64
+}
+
 func getCurrencyPair(pair string) (string, string) {
 	return pair[:3], pair[3:6]
 }
@@ -125,22 +134,50 @@ func GetCurrencyRates(client resty.Client, symbols []string, targetCurrency stri
 	return currencyRates, nil
 }
 
-func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) (float64, float64, string) {
+func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) CurrencyRateByUse {
 	if currencyRate, ok := ctx.Reference.CurrencyRates[fromCurrency]; ok {
 
 		// Convert only the summary currency to the configured currency
 		if ctx.Config.Currency != "" && ctx.Config.CurrencyConvertSummaryOnly {
-			return 1.0, currencyRate.Rate, fromCurrency
+			return CurrencyRateByUse{
+				ToCurrencyCode: fromCurrency,
+				QuotePrice:     1.0,
+				PositionValue:  1.0,
+				PositionCost:   1.0,
+				SummaryValue:   currencyRate.Rate,
+				SummaryCost:    currencyRate.Rate,
+			}
 		}
 
 		// Convert all quotes and positions to target currency and implicitly convert summary currency (i.e. no conversion since underlying values are already converted)
 		if ctx.Config.Currency != "" {
-			return currencyRate.Rate, 1.0, currencyRate.ToCurrency
+			return CurrencyRateByUse{
+				ToCurrencyCode: currencyRate.ToCurrency,
+				QuotePrice:     currencyRate.Rate,
+				PositionValue:  currencyRate.Rate,
+				PositionCost:   currencyRate.Rate,
+				SummaryValue:   1.0,
+				SummaryCost:    1.0,
+			}
 		}
 
 		// Convert only the summary currency to the default currency (USD) when currency conversion is not enabled
-		return 1.0, currencyRate.Rate, currencyRate.ToCurrency
+		return CurrencyRateByUse{
+			ToCurrencyCode: currencyRate.ToCurrency,
+			QuotePrice:     1.0,
+			PositionValue:  1.0,
+			PositionCost:   1.0,
+			SummaryValue:   currencyRate.Rate,
+			SummaryCost:    currencyRate.Rate,
+		}
 
 	}
-	return 1.0, 1.0, fromCurrency
+	return CurrencyRateByUse{
+		ToCurrencyCode: fromCurrency,
+		QuotePrice:     1.0,
+		PositionValue:  1.0,
+		PositionCost:   1.0,
+		SummaryValue:   1.0,
+		SummaryCost:    1.0,
+	}
 }

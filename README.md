@@ -176,6 +176,13 @@ colors:
 
 * [alpaca-ticker-config](https://www.npmjs.com/package/alpaca-ticker-config) - Pull [alpaca.markets](https://alpaca.markets) positions into `.ticker.yaml` from the command line
 
+## Development
+
+Running tests:
+```sh
+ginkgo -cover ./...
+```
+
 ## Libraries `ticker` uses
 
 * [bubbletea](https://github.com/charmbracelet/bubbletea) - terminal UI framework

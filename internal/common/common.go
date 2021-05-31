@@ -11,19 +11,20 @@ type Context struct {
 }
 
 type Config struct {
-	RefreshInterval            int               `yaml:"interval"`
-	Watchlist                  []string          `yaml:"watchlist"`
-	Lots                       []Lot             `yaml:"lots"`
-	Separate                   bool              `yaml:"show-separator"`
-	ExtraInfoExchange          bool              `yaml:"show-tags"`
-	ExtraInfoFundamentals      bool              `yaml:"show-fundamentals"`
-	ShowSummary                bool              `yaml:"show-summary"`
-	ShowHoldings               bool              `yaml:"show-holdings"`
-	Proxy                      string            `yaml:"proxy"`
-	Sort                       string            `yaml:"sort"`
-	Currency                   string            `yaml:"currency"`
-	CurrencyConvertSummaryOnly bool              `yaml:"currency-summary-only"`
-	ColorScheme                ConfigColorScheme `yaml:"colors"`
+	RefreshInterval                   int               `yaml:"interval"`
+	Watchlist                         []string          `yaml:"watchlist"`
+	Lots                              []Lot             `yaml:"lots"`
+	Separate                          bool              `yaml:"show-separator"`
+	ExtraInfoExchange                 bool              `yaml:"show-tags"`
+	ExtraInfoFundamentals             bool              `yaml:"show-fundamentals"`
+	ShowSummary                       bool              `yaml:"show-summary"`
+	ShowHoldings                      bool              `yaml:"show-holdings"`
+	Proxy                             string            `yaml:"proxy"`
+	Sort                              string            `yaml:"sort"`
+	Currency                          string            `yaml:"currency"`
+	CurrencyConvertSummaryOnly        bool              `yaml:"currency-summary-only"`
+	CurrencyDisableUnitCostConversion bool              `yaml:"currency-disable-unit-cost-conversion"`
+	ColorScheme                       ConfigColorScheme `yaml:"colors"`
 }
 
 type ConfigColorScheme struct {

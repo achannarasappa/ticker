@@ -135,7 +135,15 @@ func GetCurrencyRates(client resty.Client, symbols []string, targetCurrency stri
 }
 
 func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) CurrencyRateByUse {
+
+	// If currency is convertable
 	if currencyRate, ok := ctx.Reference.CurrencyRates[fromCurrency]; ok {
+
+		currencyRateCost := currencyRate.Rate
+
+		if ctx.Config.CurrencyDisableUnitCostConversion {
+			currencyRateCost = 1.0
+		}
 
 		// Convert only the summary currency to the configured currency
 		if ctx.Config.Currency != "" && ctx.Config.CurrencyConvertSummaryOnly {
@@ -145,7 +153,7 @@ func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) CurrencyRate
 				PositionValue:  1.0,
 				PositionCost:   1.0,
 				SummaryValue:   currencyRate.Rate,
-				SummaryCost:    currencyRate.Rate,
+				SummaryCost:    currencyRateCost,
 			}
 		}
 
@@ -155,7 +163,7 @@ func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) CurrencyRate
 				ToCurrencyCode: currencyRate.ToCurrency,
 				QuotePrice:     currencyRate.Rate,
 				PositionValue:  currencyRate.Rate,
-				PositionCost:   currencyRate.Rate,
+				PositionCost:   currencyRateCost,
 				SummaryValue:   1.0,
 				SummaryCost:    1.0,
 			}
@@ -168,10 +176,11 @@ func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) CurrencyRate
 			PositionValue:  1.0,
 			PositionCost:   1.0,
 			SummaryValue:   currencyRate.Rate,
-			SummaryCost:    currencyRate.Rate,
+			SummaryCost:    currencyRateCost,
 		}
 
 	}
+
 	return CurrencyRateByUse{
 		ToCurrencyCode: fromCurrency,
 		QuotePrice:     1.0,

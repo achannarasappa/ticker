@@ -264,4 +264,31 @@ var _ = Describe("Currency", func() {
 			Expect(outputCurrencyRateByUse.ToCurrencyCode).To(Equal("USD"))
 		})
 	})
+
+	When("the option to not convert unit cost is set", func() {
+		It("should not convert cost", func() {
+			inputCtx := c.Context{
+				Config: c.Config{
+					Currency:                          "EUR",
+					CurrencyDisableUnitCostConversion: true,
+				},
+				Reference: c.Reference{
+					CurrencyRates: c.CurrencyRates{
+						"USD": c.CurrencyRate{
+							FromCurrency: "USD",
+							ToCurrency:   "EUR",
+							Rate:         1.25,
+						},
+						"GBP": c.CurrencyRate{
+							FromCurrency: "GBP",
+							ToCurrency:   "EUR",
+							Rate:         2,
+						},
+					},
+				},
+			}
+			outputCurrencyRateByUse := GetCurrencyRateFromContext(inputCtx, "USD")
+			Expect(outputCurrencyRateByUse.SummaryCost).To(Equal(1.0))
+		})
+	})
 })

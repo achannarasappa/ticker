@@ -143,6 +143,7 @@ It's possible to set a custom sort order with the `--sort` flag or `sort:` confi
 * If a `currency` is not set (default behavior) and the `show-summary` option is enabled, the summary will be calculated in USD regardless of the exchange currency to avoid mixing currencies
 * Currencies are retrieved only once at start time - currency exchange rates do fluctuate over time and thus converted values may vary depending on when ticker is started
 * If the `currency-summary-only` is set to `true` and a value is set for `currency`, only the summary values will be converted
+* If `currency-disable-unit-cost-conversion` flag to `true`, currency conversion will not be done when calculating the cost basis. This can be useful for users that purchase a foreign security and want to use the currency exchange rate at the time of purchase by inputting the unit cost in their local currency (set in `currency`) rather than using the most recent currency exchange rate.
 
 ### Custom Color Schemes
 

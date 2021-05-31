@@ -7,13 +7,13 @@ require (
 	github.com/achannarasappa/term-grid v0.2.4
 	github.com/adrg/xdg v0.3.0
 	github.com/charmbracelet/bubbles v0.7.5
-	github.com/charmbracelet/bubbletea v0.12.2
+	github.com/charmbracelet/bubbletea v0.13.4
 	github.com/go-resty/resty/v2 v2.3.0
 	github.com/jarcoal/httpmock v1.0.7
-	github.com/lucasb-eyer/go-colorful v1.0.3
+	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/muesli/reflow v0.2.1-0.20201126184510-3bcb929042f2
-	github.com/muesli/termenv v0.7.4
+	github.com/muesli/reflow v0.2.1-0.20210115123740-9e1d0d53df68
+	github.com/muesli/termenv v0.8.1
 	github.com/nxadm/tail v1.4.6 // indirect
 	github.com/onsi/ginkgo v1.15.0
 	github.com/onsi/gomega v1.10.5

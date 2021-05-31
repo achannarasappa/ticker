@@ -94,6 +94,7 @@ show-separator: true
 show-holdings: true
 interval: 5
 currency: USD
+currency-convert-summary-only: false
 watchlist:
   - NET
   - TEAM

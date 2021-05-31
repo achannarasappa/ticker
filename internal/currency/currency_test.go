@@ -197,7 +197,7 @@ var _ = Describe("Currency", func() {
 	})
 
 	When("the currency is not set", func() {
-		It("should return rate to convert", func() {
+		It("should return the conversion rate to convert only the summary line", func() {
 			inputCtx := c.Context{
 				Config: c.Config{
 					Currency: "",
@@ -221,6 +221,35 @@ var _ = Describe("Currency", func() {
 			Expect(outputRate).To(Equal(1.0))
 			Expect(outputDefaultRate).To(Equal(1.25))
 			Expect(outputCurrencyCode).To(Equal("EUR"))
+		})
+	})
+
+	When("the option to convert only the summary values is set", func() {
+		It("should return summary conversion rate", func() {
+			inputCtx := c.Context{
+				Config: c.Config{
+					Currency:                   "EUR",
+					CurrencyConvertSummaryOnly: true,
+				},
+				Reference: c.Reference{
+					CurrencyRates: c.CurrencyRates{
+						"USD": c.CurrencyRate{
+							FromCurrency: "USD",
+							ToCurrency:   "EUR",
+							Rate:         1.25,
+						},
+						"GBP": c.CurrencyRate{
+							FromCurrency: "GBP",
+							ToCurrency:   "EUR",
+							Rate:         2,
+						},
+					},
+				},
+			}
+			outputRate, outputDefaultRate, outputCurrencyCode := GetCurrencyRateFromContext(inputCtx, "USD")
+			Expect(outputRate).To(Equal(1.0))
+			Expect(outputDefaultRate).To(Equal(1.25))
+			Expect(outputCurrencyCode).To(Equal("USD"))
 		})
 	})
 })

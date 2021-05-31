@@ -127,10 +127,18 @@ func GetCurrencyRates(client resty.Client, symbols []string, targetCurrency stri
 
 func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) (float64, float64, string) {
 	if currencyRate, ok := ctx.Reference.CurrencyRates[fromCurrency]; ok {
+
+		// Convert only the summary currency to the configured currency
+		if ctx.Config.Currency != "" && ctx.Config.CurrencyConvertSummaryOnly {
+			return 1.0, currencyRate.Rate, fromCurrency
+		}
+
+		// Convert all quotes and positions to target currency and implicitly convert summary currency (i.e. no conversion since underlying values are already converted)
 		if ctx.Config.Currency != "" {
 			return currencyRate.Rate, 1.0, currencyRate.ToCurrency
 		}
 
+		// Convert only the summary currency to the default currency (USD) when currency conversion is not enabled
 		return 1.0, currencyRate.Rate, currencyRate.ToCurrency
 
 	}

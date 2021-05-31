@@ -63,7 +63,7 @@ func GetLots(lots []c.Lot) map[string]AggregatedLot {
 
 			aggregatedLots[lot.Symbol] = AggregatedLot{
 				Symbol:     lot.Symbol,
-				Cost:       lot.UnitCost * lot.Quantity,
+				Cost:       (lot.UnitCost * lot.Quantity) + lot.FixedCost,
 				Quantity:   lot.Quantity,
 				OrderIndex: i,
 			}

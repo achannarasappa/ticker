@@ -34,6 +34,19 @@ var _ = Describe("Position", func() {
 				Expect(output).To(Equal(expected))
 			})
 		})
+
+		When("there is a fixed cost (e.g. commission or fee)", func() {
+			It("should add the fixed cost onto the total cost", func() {
+				input := []c.Lot{
+					{Symbol: "F", UnitCost: 10.00, Quantity: 10, FixedCost: 7.00},
+				}
+				output := GetLots(input)
+				expected := map[string]AggregatedLot{
+					"F": {Symbol: "F", Cost: 107, Quantity: 10, OrderIndex: 0},
+				}
+				Expect(output).To(Equal(expected))
+			})
+		})
 	})
 
 	Describe("GetSymbols", func() {

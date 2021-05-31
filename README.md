@@ -110,6 +110,7 @@ lots:
   - symbol: "ARKW"
     quantity: 20.0
     unit_cost: 145.35
+    fixed_cost: 7.00 # e.g. brokerage commission fee
 ```
 
 * Symbols not on the watchlist that exists in `lots` will automatically be watched

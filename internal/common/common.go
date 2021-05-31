@@ -47,9 +47,10 @@ type Dependencies struct {
 }
 
 type Lot struct {
-	Symbol   string  `yaml:"symbol"`
-	UnitCost float64 `yaml:"unit_cost"`
-	Quantity float64 `yaml:"quantity"`
+	Symbol    string  `yaml:"symbol"`
+	UnitCost  float64 `yaml:"unit_cost"`
+	Quantity  float64 `yaml:"quantity"`
+	FixedCost float64 `yaml:"fixed_cost"`
 }
 
 type CurrencyRates map[string]CurrencyRate

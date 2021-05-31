@@ -4,8 +4,6 @@ import (
 	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/currency"
 	. "github.com/achannarasappa/ticker/internal/quote"
-
-	"github.com/novalagung/gubrak/v2"
 )
 
 type Position struct {
@@ -55,32 +53,33 @@ func GetLots(lots []c.Lot) map[string]AggregatedLot {
 		return map[string]AggregatedLot{}
 	}
 
-	aggregatedLots := gubrak.
-		From(lots).
-		Reduce(func(acc map[string]AggregatedLot, lot c.Lot, i int) map[string]AggregatedLot {
+	aggregatedLots := map[string]AggregatedLot{}
 
-			aggregatedLot, ok := acc[lot.Symbol]
-			if !ok {
-				acc[lot.Symbol] = AggregatedLot{
-					Symbol:     lot.Symbol,
-					Cost:       lot.UnitCost * lot.Quantity,
-					Quantity:   lot.Quantity,
-					OrderIndex: i,
-				}
-				return acc
+	for i, lot := range lots {
+
+		aggregatedLot, ok := aggregatedLots[lot.Symbol]
+
+		if !ok {
+
+			aggregatedLots[lot.Symbol] = AggregatedLot{
+				Symbol:     lot.Symbol,
+				Cost:       lot.UnitCost * lot.Quantity,
+				Quantity:   lot.Quantity,
+				OrderIndex: i,
 			}
+
+		} else {
 
 			aggregatedLot.Quantity = aggregatedLot.Quantity + lot.Quantity
 			aggregatedLot.Cost = aggregatedLot.Cost + (lot.Quantity * lot.UnitCost)
 
-			acc[lot.Symbol] = aggregatedLot
+			aggregatedLots[lot.Symbol] = aggregatedLot
 
-			return acc
+		}
 
-		}, make(map[string]AggregatedLot)).
-		Result()
+	}
 
-	return (aggregatedLots).(map[string]AggregatedLot)
+	return aggregatedLots
 }
 
 func GetSymbols(config c.Config, aggregatedLots map[string]AggregatedLot) []string {

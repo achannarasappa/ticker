@@ -6,7 +6,6 @@ import (
 
 	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/go-resty/resty/v2"
-	. "github.com/novalagung/gubrak/v2"
 )
 
 type ResponseQuote struct {
@@ -40,13 +39,14 @@ func transformResponseCurrency(responseQuote ResponseQuote) c.CurrencyRate {
 
 func transformResponseCurrencies(responseQuotes []ResponseQuote) c.CurrencyRates {
 
-	currencyRates := From(responseQuotes).Reduce(func(acc c.CurrencyRates, responseQuote ResponseQuote) c.CurrencyRates {
-		currencyRate := transformResponseCurrency(responseQuote)
-		acc[currencyRate.FromCurrency] = currencyRate
-		return acc
-	}, c.CurrencyRates{}).Result()
+	currencyRates := c.CurrencyRates{}
 
-	return (currencyRates).(c.CurrencyRates)
+	for _, responseQuote := range responseQuotes {
+		currencyRate := transformResponseCurrency(responseQuote)
+		currencyRates[currencyRate.FromCurrency] = currencyRate
+	}
+
+	return currencyRates
 
 }
 

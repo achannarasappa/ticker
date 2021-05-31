@@ -59,6 +59,17 @@ var _ = Describe("Sorter", func() {
 			IsActive:                false,
 			IsRegularTradingSession: false,
 		}
+		rblxQuote := Quote{
+			ResponseQuote: ResponseQuote{
+				Symbol:    "RBLX",
+				ShortName: "Roblox",
+			},
+			Price:                   85.00,
+			Change:                  10.00,
+			ChangePercent:           7.32,
+			IsActive:                false,
+			IsRegularTradingSession: false,
+		}
 		quotes := []Quote{
 			bitcoinQuote,
 			twQuote,
@@ -114,11 +125,35 @@ var _ = Describe("Sorter", func() {
 			It("should sort position value, with inactive quotes last", func() {
 				sorter := NewSorter("value")
 
+				positions := map[string]Position{
+					"BTC-USD": {
+						Value: 50000.0,
+					},
+					"GOOG": {
+						Value: 2523.53,
+					},
+					"RBLX": {
+						Value: 900.00,
+					},
+					"MSFT": {
+						Value: 100.00,
+					},
+				}
+
+				quotes := []Quote{
+					bitcoinQuote,
+					twQuote,
+					googleQuote,
+					msftQuote,
+					rblxQuote,
+				}
+
 				sortedQuotes := sorter(quotes, positions)
 				expected := []Quote{
 					bitcoinQuote,
 					googleQuote,
 					twQuote,
+					rblxQuote,
 					msftQuote,
 				}
 

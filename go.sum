@@ -14,13 +14,9 @@ dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/DefinitelyMod/gocsv v0.0.0-20181205141819-acfa5f112b45 h1:+OD9vawobD89HK04zwMokunBCSEeAb08VWAHPUMg+UE=
-github.com/DefinitelyMod/gocsv v0.0.0-20181205141819-acfa5f112b45/go.mod h1:+nlrAh0au59iC1KN5RA1h1NdiOQYlNOBrbtE1Plqht4=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpHMqeKTCYkitsPqHNxTmd4SNR5r94FGM8=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
-github.com/achannarasappa/term-grid v0.2.3 h1:acYVsmM33MT7xy5lvIUX3PyNAnALulRRG5JPQrtZ3Qs=
-github.com/achannarasappa/term-grid v0.2.3/go.mod h1:uXEY1bCtUSooU1owBx76qEGO2m07r2VAJr2LbxAvNZo=
 github.com/achannarasappa/term-grid v0.2.4 h1:4shrL7Gm/Jb5eRfB1dROEw9lVf6T/z4MUrUZ03G6v34=
 github.com/achannarasappa/term-grid v0.2.4/go.mod h1:uXEY1bCtUSooU1owBx76qEGO2m07r2VAJr2LbxAvNZo=
 github.com/adrg/xdg v0.3.0 h1:BO+k4wFj0IoTolBF1Apn8oZrX3LQrEbBA8+/9vyW9J4=
@@ -183,8 +179,6 @@ github.com/muesli/termenv v0.7.2/go.mod h1:ct2L5N2lmix82RaY3bMWwVu/jUFc9Ule0KGDC
 github.com/muesli/termenv v0.7.4 h1:/pBqvU5CpkY53tU0vVn+xgs2ZTX63aH5nY+SSps5Xa8=
 github.com/muesli/termenv v0.7.4/go.mod h1:pZ7qY9l3F7e5xsAOS0zCew2tME+p7bWeBkotCEcIIcc=
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
-github.com/novalagung/gubrak/v2 v2.0.1 h1:OmabeSZsnf8Yd4FSZfm3F6VG2XoEsQBpktwtkjiCLdg=
-github.com/novalagung/gubrak/v2 v2.0.1/go.mod h1:zilliNLzP2RSdZ67Sz7NdqI4bg3j5zUTFR34tuXopA0=
 github.com/nxadm/tail v1.4.4 h1:DQuhQpB1tVlglWS2hLQ5OV6B5r8aGxSrPc5Qo6uTN78=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/nxadm/tail v1.4.6 h1:11TGpSHY7Esh/i/qnq02Jo5oVrI1Gue8Slbq0ujPZFQ=

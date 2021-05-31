@@ -14,7 +14,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/muesli/reflow v0.2.1-0.20201126184510-3bcb929042f2
 	github.com/muesli/termenv v0.7.4
-	github.com/novalagung/gubrak/v2 v2.0.1
 	github.com/nxadm/tail v1.4.6 // indirect
 	github.com/onsi/ginkgo v1.15.0
 	github.com/onsi/gomega v1.10.5

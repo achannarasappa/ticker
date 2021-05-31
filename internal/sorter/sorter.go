@@ -1,10 +1,10 @@
 package sorter
 
 import (
+	"sort"
+
 	. "github.com/achannarasappa/ticker/internal/position"
 	. "github.com/achannarasappa/ticker/internal/quote"
-
-	"github.com/novalagung/gubrak/v2"
 )
 
 type Sorter func(quotes []Quote, positions map[string]Position) []Quote
@@ -18,99 +18,117 @@ func NewSorter(sort string) Sorter {
 }
 
 var sortDict = map[string]Sorter{
-	"alpha": sortByTicker,
+	"alpha": sortByAlpha,
 	"value": sortByValue,
 	"user":  sortByUser,
 }
 
-func sortByUser(quotes []Quote, positions map[string]Position) []Quote {
+func sortByUser(q []Quote, positions map[string]Position) []Quote {
 
-	quoteCount := len(quotes)
+	quoteCount := len(q)
 
 	if quoteCount <= 0 {
-		return quotes
+		return q
 	}
 
-	result := gubrak.
-		From(quotes).
-		OrderBy(func(v Quote) int {
-			if p, ok := positions[v.Symbol]; ok {
-				return p.AggregatedLot.OrderIndex
-			}
-			return quoteCount
-		}).
-		Result()
+	quotes := make([]Quote, quoteCount)
+	copy(quotes, q)
 
-	return (result).([]Quote)
+	sort.SliceStable(quotes, func(i, j int) bool {
+
+		prevIndex := quoteCount
+		nextIndex := quoteCount
+
+		if position, ok := positions[quotes[i].Symbol]; ok {
+			prevIndex = position.AggregatedLot.OrderIndex
+		}
+
+		if position, ok := positions[quotes[j].Symbol]; ok {
+			nextIndex = position.AggregatedLot.OrderIndex
+		}
+
+		return nextIndex > prevIndex
+	})
+
+	return quotes
+
 }
 
-func sortByTicker(quotes []Quote, positions map[string]Position) []Quote {
-	if len(quotes) <= 0 {
-		return quotes
+func sortByAlpha(q []Quote, positions map[string]Position) []Quote {
+
+	quoteCount := len(q)
+
+	if quoteCount <= 0 {
+		return q
 	}
 
-	result := gubrak.
-		From(quotes).
-		OrderBy(func(v Quote) string {
-			return v.Symbol
-		}).
-		Result()
+	quotes := make([]Quote, quoteCount)
+	copy(quotes, q)
 
-	return (result).([]Quote)
+	sort.SliceStable(quotes, func(i, j int) bool {
+		return quotes[j].Symbol > quotes[i].Symbol
+	})
+
+	return quotes
 }
 
-func sortByValue(quotes []Quote, positions map[string]Position) []Quote {
-	if len(quotes) <= 0 {
-		return quotes
+func sortByValue(q []Quote, positions map[string]Position) []Quote {
+
+	quoteCount := len(q)
+
+	if quoteCount <= 0 {
+		return q
 	}
+
+	quotes := make([]Quote, quoteCount)
+	copy(quotes, q)
 
 	activeQuotes, inactiveQuotes := splitActiveQuotes(quotes)
 
-	cActiveQuotes := gubrak.From(activeQuotes)
-	cInactiveQuotes := gubrak.From(inactiveQuotes)
+	sort.SliceStable(inactiveQuotes, func(i, j int) bool {
+		return positions[inactiveQuotes[j].Symbol].Value < positions[inactiveQuotes[i].Symbol].Value
+	})
 
-	positionsSorter := func(v Quote) float64 {
-		return positions[v.Symbol].Value
-	}
+	sort.SliceStable(activeQuotes, func(i, j int) bool {
+		return positions[activeQuotes[j].Symbol].Value < positions[activeQuotes[i].Symbol].Value
+	})
 
-	cActiveQuotes.OrderBy(positionsSorter, false)
-	cInactiveQuotes.OrderBy(positionsSorter, false)
-
-	result := cActiveQuotes.
-		Concat(cInactiveQuotes.Result()).
-		Result()
-
-	return (result).([]Quote)
+	return append(activeQuotes, inactiveQuotes...)
 }
 
-func sortByChange(quotes []Quote, positions map[string]Position) []Quote {
-	if len(quotes) <= 0 {
-		return quotes
+func sortByChange(q []Quote, positions map[string]Position) []Quote {
+
+	quoteCount := len(q)
+
+	if quoteCount <= 0 {
+		return q
 	}
+
+	quotes := make([]Quote, quoteCount)
+	copy(quotes, q)
 
 	activeQuotes, inactiveQuotes := splitActiveQuotes(quotes)
 
-	cActiveQuotes := gubrak.
-		From(activeQuotes)
+	sort.SliceStable(activeQuotes, func(i, j int) bool {
+		return activeQuotes[j].ChangePercent < activeQuotes[i].ChangePercent
+	})
 
-	cActiveQuotes.OrderBy(func(v Quote) float64 {
-		return v.ChangePercent
-	}, false)
+	return append(activeQuotes, inactiveQuotes...)
 
-	result := cActiveQuotes.
-		Concat(inactiveQuotes).
-		Result()
-
-	return (result).([]Quote)
 }
 
-func splitActiveQuotes(quotes []Quote) (interface{}, interface{}) {
-	activeQuotes, inactiveQuotes, _ := gubrak.
-		From(quotes).
-		Partition(func(v Quote) bool {
-			return v.IsActive
-		}).
-		ResultAndError()
+func splitActiveQuotes(quotes []Quote) ([]Quote, []Quote) {
+
+	activeQuotes := make([]Quote, 0)
+	inactiveQuotes := make([]Quote, 0)
+
+	for _, quote := range quotes {
+		if quote.IsActive {
+			activeQuotes = append(activeQuotes, quote)
+		} else {
+			inactiveQuotes = append(inactiveQuotes, quote)
+		}
+	}
 
 	return activeQuotes, inactiveQuotes
 }

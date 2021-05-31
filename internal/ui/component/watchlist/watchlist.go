@@ -118,7 +118,7 @@ func getCellWidths(quotes []Quote, positions map[string]Position) CellWidths {
 	for _, quote := range quotes {
 		var quoteLength int
 
-		volumeMarketCapLength := len(ConvertFloatToString(quote.MarketCap, quote.IsVariablePrecision))
+		volumeMarketCapLength := len(ConvertFloatToString(quote.MarketCap, true))
 
 		if quote.FiftyTwoWeekHigh == 0.0 {
 			quoteLength = len(ConvertFloatToString(quote.Price, quote.IsVariablePrecision))

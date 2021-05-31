@@ -44,7 +44,7 @@ var _ = Describe("Watchlist", func() {
 				Sort:                  "alpha",
 			},
 		})
-		m.Width = 200
+		m.Width = 175
 		m.Positions = map[string]Position{
 			"STOCK4": {
 				AggregatedLot: AggregatedLot{Symbol: "STOCK4", Quantity: 100.0, Cost: 50.0},

@@ -44,7 +44,7 @@ var _ = Describe("Watchlist", func() {
 				Sort:                  "alpha",
 			},
 		})
-		m.Width = 150
+		m.Width = 200
 		m.Positions = map[string]Position{
 			"STOCK4": {
 				AggregatedLot: AggregatedLot{Symbol: "STOCK4", Quantity: 100.0, Cost: 50.0},
@@ -79,7 +79,7 @@ var _ = Describe("Watchlist", func() {
 		}
 		m.Quotes = []Quote{
 			{
-				ResponseQuote: ResponseQuote{Symbol: "STOCK1", ShortName: "Stock 1 Inc. (gain)"},
+				ResponseQuote: ResponseQuote{Symbol: "STOCK1", ShortName: "Stock 1 Inc. (gain)", MarketCap: 23467907, RegularMarketVolume: 4239786698},
 				Price:         105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
 				Change: 5.0, ChangePercent: 5.0,
 				IsActive: true, IsRegularTradingSession: true,

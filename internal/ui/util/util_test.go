@@ -47,6 +47,18 @@ var _ = Describe("Util", func() {
 				output := ConvertFloatToString(10000.0, true)
 				Expect(output).To(Equal("10000"))
 			})
+			It("should append a M when the value is over a million", func() {
+				output := ConvertFloatToString(43523398, true)
+				Expect(output).To(Equal("43.523 M"))
+			})
+			It("should append a M when the value is over a billion", func() {
+				output := ConvertFloatToString(43523398000, true)
+				Expect(output).To(Equal("43.523 B"))
+			})
+			It("should append a M when the value is over a trillion", func() {
+				output := ConvertFloatToString(43523398000000, true)
+				Expect(output).To(Equal("43.523 T"))
+			})
 		})
 
 	})

@@ -32,13 +32,30 @@ func getPrecision(f float64) int {
 
 func ConvertFloatToString(f float64, isVariablePrecision bool) string {
 
+	var unit string
+
 	if !isVariablePrecision {
 		return strconv.FormatFloat(f, 'f', 2, 64)
 	}
 
+	if f > 1000000000000 {
+		f = f / 1000000000000
+		unit = " T"
+	}
+
+	if f > 1000000000 {
+		f = f / 1000000000
+		unit = " B"
+	}
+
+	if f > 1000000 {
+		f = f / 1000000
+		unit = " M"
+	}
+
 	prec := getPrecision(f)
 
-	return strconv.FormatFloat(f, 'f', prec, 64)
+	return strconv.FormatFloat(f, 'f', prec, 64) + unit
 }
 
 func ValueText(value float64, styles c.Styles) string {

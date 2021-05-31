@@ -45,6 +45,7 @@ type CellWidths struct {
 	WidthQuoteRange       int
 	WidthPosition         int
 	WidthPositionExtended int
+	WidthVolumeMarketCap  int
 }
 
 // NewModel returns a model with default values.
@@ -117,12 +118,18 @@ func getCellWidths(quotes []Quote, positions map[string]Position) CellWidths {
 	for _, quote := range quotes {
 		var quoteLength int
 
+		volumeMarketCapLength := len(ConvertFloatToString(quote.MarketCap, quote.IsVariablePrecision))
+
 		if quote.FiftyTwoWeekHigh == 0.0 {
 			quoteLength = len(ConvertFloatToString(quote.Price, quote.IsVariablePrecision))
 		}
 
 		if quote.FiftyTwoWeekHigh != 0.0 {
 			quoteLength = len(ConvertFloatToString(quote.FiftyTwoWeekHigh, quote.IsVariablePrecision))
+		}
+
+		if volumeMarketCapLength > cellMaxWidths.WidthVolumeMarketCap {
+			cellMaxWidths.WidthVolumeMarketCap = volumeMarketCapLength
 		}
 
 		if quoteLength > cellMaxWidths.quoteLength {
@@ -213,6 +220,18 @@ func buildCells(quote Quote, position Position, config c.Config, styles c.Styles
 	if config.ExtraInfoFundamentals {
 		cells = append(
 			[]grid.Cell{
+				{
+					Text:            textVolumeMarketCapLabels(quote, styles),
+					Width:           WIDTH_LABEL,
+					Align:           grid.Right,
+					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (6 * WIDTH_GUTTER) + (3 * WIDTH_LABEL) + cellWidths.WidthQuoteRange + cellWidths.WidthVolumeMarketCap,
+				},
+				{
+					Text:            textVolumeMarketCap(quote, styles),
+					Width:           cellWidths.WidthVolumeMarketCap,
+					Align:           grid.Right,
+					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (5 * WIDTH_GUTTER) + (2 * WIDTH_LABEL) + cellWidths.WidthQuoteRange + cellWidths.WidthVolumeMarketCap,
+				},
 				{
 					Text:            textQuoteRangeLabels(quote, styles),
 					Width:           WIDTH_LABEL,
@@ -356,6 +375,20 @@ func textQuoteRangeLabels(quote Quote, styles c.Styles) string {
 	}
 
 	return textDayRange
+}
+
+func textVolumeMarketCap(quote Quote, styles c.Styles) string {
+
+	return ConvertFloatToString(quote.ResponseQuote.MarketCap, true) +
+		"\n" +
+		ConvertFloatToString(quote.ResponseQuote.RegularMarketVolume, true)
+}
+
+func textVolumeMarketCapLabels(quote Quote, styles c.Styles) string {
+
+	return styles.TextLabel("Market Cap:") +
+		"\n" +
+		styles.TextLabel("Volume:")
 }
 
 func textSeparator(width int, styles c.Styles) string {

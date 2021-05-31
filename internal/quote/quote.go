@@ -24,6 +24,7 @@ type ResponseQuote struct {
 	RegularMarketDayRange      string  `json:"regularMarketDayRange"`
 	RegularMarketDayHigh       float64 `json:"regularMarketDayHigh"`
 	RegularMarketDayLow        float64 `json:"regularMarketDayLow"`
+	RegularMarketVolume        float64 `json:"regularMarketVolume"`
 	PostMarketChange           float64 `json:"postMarketChange"`
 	PostMarketChangePercent    float64 `json:"postMarketChangePercent"`
 	PostMarketPrice            float64 `json:"postMarketPrice"`
@@ -33,6 +34,7 @@ type ResponseQuote struct {
 	FiftyTwoWeekHigh           float64 `json:"fiftyTwoWeekHigh"`
 	FiftyTwoWeekLow            float64 `json:"fiftyTwoWeekLow"`
 	QuoteType                  string  `json:"quoteType"`
+	MarketCap                  float64 `json:"marketCap"`
 }
 
 type Quote struct {

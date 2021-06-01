@@ -4,28 +4,29 @@ import (
 	"fmt"
 	"time"
 
+	grid "github.com/achannarasappa/term-grid"
 	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/position"
 	"github.com/achannarasappa/ticker/internal/quote"
 	"github.com/achannarasappa/ticker/internal/ui/component/summary"
 	"github.com/achannarasappa/ticker/internal/ui/component/watchlist"
 
-	. "github.com/achannarasappa/ticker/internal/ui/util"
-	. "github.com/achannarasappa/ticker/internal/ui/util/text"
+	util "github.com/achannarasappa/ticker/internal/ui/util"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 var (
-	styleLogo = NewStyle("#ffffd7", "#ff8700", true)
-	styleHelp = NewStyle("#4e4e4e", "", true)
+	styleLogo = util.NewStyle("#ffffd7", "#ff8700", true)
+	styleHelp = util.NewStyle("#4e4e4e", "", true)
 )
 
 const (
 	footerHeight = 1
 )
 
+// Model for UI
 type Model struct {
 	ctx             c.Context
 	ready           bool
@@ -46,13 +47,14 @@ func getTime() string {
 
 func (m Model) updateQuotes() tea.Cmd {
 	return tea.Tick(time.Second*time.Duration(m.requestInterval), func(t time.Time) tea.Msg {
-		return QuoteMsg{
+		return quoteMsg{
 			quotes: m.getQuotes(),
 			time:   getTime(),
 		}
 	})
 }
 
+// Constructor for UI model
 func NewModel(dep c.Dependencies, ctx c.Context) Model {
 
 	aggregatedLots := position.GetLots(ctx.Config.Lots)
@@ -70,20 +72,22 @@ func NewModel(dep c.Dependencies, ctx c.Context) Model {
 	}
 }
 
+// Initialize hook
 func (m Model) Init() tea.Cmd {
 	return func() tea.Msg {
-		return QuoteMsg{
+		return quoteMsg{
 			quotes: m.getQuotes(),
 			time:   getTime(),
 		}
 	}
 }
 
-type QuoteMsg struct {
+type quoteMsg struct {
 	quotes []quote.Quote
 	time   string
 }
 
+// Update hook
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
@@ -113,7 +117,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.viewport.SetContent(m.watchlist.View())
 
-	case QuoteMsg:
+	case quoteMsg:
 		positions, positionSummary := m.getPositions(msg.quotes)
 		m.watchlist.Quotes = msg.quotes
 		m.watchlist.Positions = positions
@@ -131,6 +135,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// Rendering hook
 func (m Model) View() string {
 	if !m.ready {
 		return "\n  Initalizing..."
@@ -154,21 +159,18 @@ func footer(width int, time string) string {
 		return styleLogo(" ticker ")
 	}
 
-	return Line(
-		width,
-		Cell{
-			Width: 10,
-			Text:  styleLogo(" ticker "),
+	return grid.Render(grid.Grid{
+		Rows: []grid.Row{
+			{
+				Width: width,
+				Cells: []grid.Cell{
+					{Text: styleLogo(" ticker "), Width: 9},
+					{Text: styleHelp("q: exit ↑: scroll up ↓: scroll down"), Width: 35},
+					{Text: styleHelp("↻  " + time), Align: grid.Right},
+				},
+			},
 		},
-		Cell{
-			Width: 36,
-			Text:  styleHelp("q: exit ↑: scroll up ↓: scroll down"),
-		},
-		Cell{
-			Text:  styleHelp("↻  " + time),
-			Align: RightAlign,
-		},
-	)
+	})
 
 }
 

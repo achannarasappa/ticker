@@ -8,12 +8,14 @@ import (
 	"github.com/jarcoal/httpmock"
 )
 
+// Response values for a templated HTTP API response
 type ResponseParameters struct {
 	Symbol   string
 	Currency string
 	Price    float64
 }
 
+// Register a mock responder for price quotes
 func MockResponse(responseParameters ResponseParameters) {
 	var responseBytes bytes.Buffer
 	responseTemplate := `{
@@ -39,6 +41,7 @@ func MockResponse(responseParameters ResponseParameters) {
 	})
 }
 
+// Register a mock responder for currency rates
 func MockResponseCurrency() {
 	response := `{
 		"quoteResponse": {

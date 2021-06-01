@@ -19,6 +19,7 @@ var (
 	stylePriceNegative = newStyleFromGradient("#FF7940", "#994926")
 )
 
+// Create a new predefined style function
 func NewStyle(fg string, bg string, bold bool) func(string) string {
 	s := te.Style{}.Foreground(p.Color(fg)).Background(p.Color(bg))
 	if bold {
@@ -91,6 +92,7 @@ func getNormalizedPercentWithMax(percent float64, maxPercent float64) float64 {
 
 }
 
+// Generate a color scheme based on user defined colors or defaults
 func GetColorScheme(colorScheme c.ConfigColorScheme) c.Styles {
 
 	return c.Styles{

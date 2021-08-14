@@ -5,13 +5,13 @@ import (
 	"github.com/spf13/afero"
 )
 
-// Context struct containing user defined configuration and derived reference configuration
+// Context represents user defined configuration and derived reference configuration
 type Context struct {
 	Config    Config
 	Reference Reference
 }
 
-// User defined configuration
+// Config represents user defined configuration
 type Config struct {
 	RefreshInterval                   int               `yaml:"interval"`
 	Watchlist                         []string          `yaml:"watchlist"`
@@ -29,7 +29,7 @@ type Config struct {
 	ColorScheme                       ConfigColorScheme `yaml:"colors"`
 }
 
-// User defined color scheme
+// ConfigColorScheme represents user defined color scheme
 type ConfigColorScheme struct {
 	Text          string `yaml:"text"`
 	TextLight     string `yaml:"text-light"`
@@ -39,19 +39,19 @@ type ConfigColorScheme struct {
 	BackgroundTag string `yaml:"background-tag"`
 }
 
-// Derived configuration for internal use from user defined configuration
+// Reference represents derived configuration for internal use from user defined configuration
 type Reference struct {
 	CurrencyRates CurrencyRates
 	Styles        Styles
 }
 
-// External dependencies
+// Dependencies represents references to external dependencies
 type Dependencies struct {
 	Fs         afero.Fs
 	HttpClient *resty.Client
 }
 
-// Cost basis lot
+// Lot represents a cost basis lot
 type Lot struct {
 	Symbol    string  `yaml:"symbol"`
 	UnitCost  float64 `yaml:"unit_cost"`
@@ -59,17 +59,17 @@ type Lot struct {
 	FixedCost float64 `yaml:"fixed_cost"`
 }
 
-// Map of currency rates for lookup by currency that needs to be converted
+// CurrencyRates is a map of currency rates for lookup by currency that needs to be converted
 type CurrencyRates map[string]CurrencyRate
 
-// Currency rate for conversion
+// CurrencyRate represents a single currency conversion pair
 type CurrencyRate struct {
 	FromCurrency string
 	ToCurrency   string
 	Rate         float64
 }
 
-// Style functions for components of the UI
+// Styles represents style functions for components of the UI
 type Styles struct {
 	Text      StyleFn
 	TextLight StyleFn
@@ -80,5 +80,5 @@ type Styles struct {
 	Tag       StyleFn
 }
 
-// Function that styles text
+// StyleFn is a function that styles text
 type StyleFn func(string) string

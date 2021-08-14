@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	. "github.com/achannarasappa/ticker/internal/common"
+	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/currency"
 	"github.com/achannarasappa/ticker/internal/position"
 	"github.com/achannarasappa/ticker/internal/ui/util"
@@ -19,6 +19,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Options to configured ticker behavior
 type Options struct {
 	RefreshInterval       int
 	Watchlist             string
@@ -31,6 +32,7 @@ type Options struct {
 	Sort                  string
 }
 
+// Run starts the ticker UI
 func Run(uiStartFn func() error) func(*cobra.Command, []string) {
 	return func(cmd *cobra.Command, args []string) {
 		err := uiStartFn()
@@ -41,7 +43,8 @@ func Run(uiStartFn func() error) func(*cobra.Command, []string) {
 	}
 }
 
-func Validate(ctx *Context, options *Options, prevErr *error) func(*cobra.Command, []string) error {
+// Validate checks whether config is valid and returns an error if invalid or if an error was generated earlier
+func Validate(ctx *c.Context, options *Options, prevErr *error) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 
 		if prevErr != nil {
@@ -56,27 +59,28 @@ func Validate(ctx *Context, options *Options, prevErr *error) func(*cobra.Comman
 	}
 }
 
-func GetContext(d Dependencies, options Options, configPath string) (Context, error) {
+// GetContext builds the context from the config and reference data
+func GetContext(d c.Dependencies, options Options, configPath string) (c.Context, error) {
 	var (
-		reference Reference
-		config    Config
+		reference c.Reference
+		config    c.Config
 		err       error
 	)
 
 	config, err = readConfig(d.Fs, configPath)
 
 	if err != nil {
-		return Context{}, err
+		return c.Context{}, err
 	}
 
 	config = getConfig(config, options, *d.HttpClient)
 	reference, err = getReference(config, *d.HttpClient)
 
 	if err != nil {
-		return Context{}, err
+		return c.Context{}, err
 	}
 
-	context := Context{
+	context := c.Context{
 		Reference: reference,
 		Config:    config,
 	}
@@ -84,8 +88,8 @@ func GetContext(d Dependencies, options Options, configPath string) (Context, er
 	return context, nil
 }
 
-func readConfig(fs afero.Fs, configPathOption string) (Config, error) {
-	var config Config
+func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {
+	var config c.Config
 	configPath, err := getConfigPath(fs, configPathOption)
 
 	if err != nil {
@@ -107,7 +111,7 @@ func readConfig(fs afero.Fs, configPathOption string) (Config, error) {
 	return config, nil
 }
 
-func getReference(config Config, client resty.Client) (Reference, error) {
+func getReference(config c.Config, client resty.Client) (c.Reference, error) {
 
 	aggregatedLots := position.GetLots(config.Lots)
 	symbols := position.GetSymbols(config, aggregatedLots)
@@ -115,14 +119,14 @@ func getReference(config Config, client resty.Client) (Reference, error) {
 	currencyRates, err := currency.GetCurrencyRates(client, symbols, config.Currency)
 	styles := util.GetColorScheme(config.ColorScheme)
 
-	return Reference{
+	return c.Reference{
 		CurrencyRates: currencyRates,
 		Styles:        styles,
 	}, err
 
 }
 
-func getConfig(config Config, options Options, client resty.Client) Config {
+func getConfig(config c.Config, options Options, client resty.Client) c.Config {
 
 	if len(options.Watchlist) != 0 {
 		config.Watchlist = strings.Split(strings.ReplaceAll(options.Watchlist, " ", ""), ",")

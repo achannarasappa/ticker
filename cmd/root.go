@@ -14,6 +14,7 @@ import (
 )
 
 var (
+	// Version is a placeholder that is replaced at build time with a linker flag (-ldflags)
 	Version    string = "v0.0.0"
 	configPath string
 	dep        c.Dependencies
@@ -29,6 +30,7 @@ var (
 	}
 )
 
+// Execute starts the CLI or prints an error is there is one
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

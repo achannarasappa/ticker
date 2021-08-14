@@ -8,12 +8,14 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+// ResponseQuote represents a quote with the relevant fields for currency conversion
 type ResponseQuote struct {
 	Symbol             string  `json:"symbol"`
 	Currency           string  `json:"currency"`
 	RegularMarketPrice float64 `json:"regularMarketPrice"`
 }
 
+// Response represents the container object from the API response
 type Response struct {
 	QuoteResponse struct {
 		Quotes []ResponseQuote `json:"result"`
@@ -21,6 +23,7 @@ type Response struct {
 	} `json:"quoteResponse"`
 }
 
+// CurrencyRateByUse represents the currency conversion rate for each use case
 type CurrencyRateByUse struct {
 	ToCurrencyCode string
 	QuotePrice     float64
@@ -109,6 +112,7 @@ func getCurrencyPairSymbols(client resty.Client, symbols []string, targetCurrenc
 	return transformResponseCurrencyPairs((res.Result().(*Response)).QuoteResponse.Quotes, targetCurrency), nil
 }
 
+// GetCurrencyRates retrieves the currency rates to convert from each currency for the given symbols to the target currency
 func GetCurrencyRates(client resty.Client, symbols []string, targetCurrency string) (c.CurrencyRates, error) {
 
 	if targetCurrency == "" {
@@ -134,6 +138,7 @@ func GetCurrencyRates(client resty.Client, symbols []string, targetCurrency stri
 	return currencyRates, nil
 }
 
+// GetCurrencyRateFromContext reads currency rates from the context and sets the conversion rate for each use case
 func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) CurrencyRateByUse {
 
 	// If currency is convertable

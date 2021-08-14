@@ -3,9 +3,10 @@ package position
 import (
 	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/currency"
-	. "github.com/achannarasappa/ticker/internal/quote"
+	q "github.com/achannarasappa/ticker/internal/quote"
 )
 
+// Position represents a position taken with a security at a point in time
 type Position struct {
 	AggregatedLot
 	Value              float64
@@ -20,6 +21,7 @@ type Position struct {
 	Weight             float64
 }
 
+// PositionSummary represents a summary of all positions at a point in time
 type PositionSummary struct {
 	Value            float64
 	Cost             float64
@@ -29,6 +31,7 @@ type PositionSummary struct {
 	DayChangePercent float64
 }
 
+// AggregatedLot represents a summation of the costs and quantities of a single type of security
 type AggregatedLot struct {
 	Symbol     string
 	Cost       float64
@@ -47,6 +50,7 @@ type positionAcc struct {
 	positions           []Position
 }
 
+// GetLots aggregates costs basis lots
 func GetLots(lots []c.Lot) map[string]AggregatedLot {
 
 	if lots == nil {
@@ -82,6 +86,7 @@ func GetLots(lots []c.Lot) map[string]AggregatedLot {
 	return aggregatedLots
 }
 
+// GetSymbols generates a unique list of symbols from the watchlist and cost basis lots
 func GetSymbols(config c.Config, aggregatedLots map[string]AggregatedLot) []string {
 
 	symbols := make(map[string]bool)
@@ -107,8 +112,9 @@ func GetSymbols(config c.Config, aggregatedLots map[string]AggregatedLot) []stri
 
 }
 
-func GetPositions(ctx c.Context, aggregatedLots map[string]AggregatedLot) func([]Quote) (map[string]Position, PositionSummary) {
-	return func(quotes []Quote) (map[string]Position, PositionSummary) {
+// GetPositions calculates the positions for each symbol and a summary of all positions
+func GetPositions(ctx c.Context, aggregatedLots map[string]AggregatedLot) func([]q.Quote) (map[string]Position, PositionSummary) {
+	return func(quotes []q.Quote) (map[string]Position, PositionSummary) {
 
 		if len(aggregatedLots) <= 0 {
 			return map[string]Position{}, PositionSummary{}
@@ -133,7 +139,7 @@ func GetPositions(ctx c.Context, aggregatedLots map[string]AggregatedLot) func([
 	}
 }
 
-func getPositionsReduced(ctx c.Context, aggregatedLots map[string]AggregatedLot, quotes []Quote) positionAcc {
+func getPositionsReduced(ctx c.Context, aggregatedLots map[string]AggregatedLot, quotes []q.Quote) positionAcc {
 
 	acc := positionAcc{}
 	for _, quote := range quotes {

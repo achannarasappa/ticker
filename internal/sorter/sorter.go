@@ -3,18 +3,19 @@ package sorter
 import (
 	"sort"
 
-	. "github.com/achannarasappa/ticker/internal/position"
-	. "github.com/achannarasappa/ticker/internal/quote"
+	p "github.com/achannarasappa/ticker/internal/position"
+	q "github.com/achannarasappa/ticker/internal/quote"
 )
 
-type Sorter func(quotes []Quote, positions map[string]Position) []Quote
+// Sorter represents a function that sorts quotes
+type Sorter func(quotes []q.Quote, positions map[string]p.Position) []q.Quote
 
+// NewSorter creates a sorting function
 func NewSorter(sort string) Sorter {
 	if sorter, ok := sortDict[sort]; ok {
 		return sorter
-	} else {
-		return sortByChange
 	}
+	return sortByChange
 }
 
 var sortDict = map[string]Sorter{
@@ -23,16 +24,16 @@ var sortDict = map[string]Sorter{
 	"user":  sortByUser,
 }
 
-func sortByUser(q []Quote, positions map[string]Position) []Quote {
+func sortByUser(quoteIn []q.Quote, positions map[string]p.Position) []q.Quote {
 
-	quoteCount := len(q)
+	quoteCount := len(quoteIn)
 
 	if quoteCount <= 0 {
-		return q
+		return quoteIn
 	}
 
-	quotes := make([]Quote, quoteCount)
-	copy(quotes, q)
+	quotes := make([]q.Quote, quoteCount)
+	copy(quotes, quoteIn)
 
 	sort.SliceStable(quotes, func(i, j int) bool {
 
@@ -54,16 +55,16 @@ func sortByUser(q []Quote, positions map[string]Position) []Quote {
 
 }
 
-func sortByAlpha(q []Quote, positions map[string]Position) []Quote {
+func sortByAlpha(quoteIn []q.Quote, positions map[string]p.Position) []q.Quote {
 
-	quoteCount := len(q)
+	quoteCount := len(quoteIn)
 
 	if quoteCount <= 0 {
-		return q
+		return quoteIn
 	}
 
-	quotes := make([]Quote, quoteCount)
-	copy(quotes, q)
+	quotes := make([]q.Quote, quoteCount)
+	copy(quotes, quoteIn)
 
 	sort.SliceStable(quotes, func(i, j int) bool {
 		return quotes[j].Symbol > quotes[i].Symbol
@@ -72,16 +73,16 @@ func sortByAlpha(q []Quote, positions map[string]Position) []Quote {
 	return quotes
 }
 
-func sortByValue(q []Quote, positions map[string]Position) []Quote {
+func sortByValue(quoteIn []q.Quote, positions map[string]p.Position) []q.Quote {
 
-	quoteCount := len(q)
+	quoteCount := len(quoteIn)
 
 	if quoteCount <= 0 {
-		return q
+		return quoteIn
 	}
 
-	quotes := make([]Quote, quoteCount)
-	copy(quotes, q)
+	quotes := make([]q.Quote, quoteCount)
+	copy(quotes, quoteIn)
 
 	activeQuotes, inactiveQuotes := splitActiveQuotes(quotes)
 
@@ -96,16 +97,16 @@ func sortByValue(q []Quote, positions map[string]Position) []Quote {
 	return append(activeQuotes, inactiveQuotes...)
 }
 
-func sortByChange(q []Quote, positions map[string]Position) []Quote {
+func sortByChange(quoteIn []q.Quote, positions map[string]p.Position) []q.Quote {
 
-	quoteCount := len(q)
+	quoteCount := len(quoteIn)
 
 	if quoteCount <= 0 {
-		return q
+		return quoteIn
 	}
 
-	quotes := make([]Quote, quoteCount)
-	copy(quotes, q)
+	quotes := make([]q.Quote, quoteCount)
+	copy(quotes, quoteIn)
 
 	activeQuotes, inactiveQuotes := splitActiveQuotes(quotes)
 
@@ -117,10 +118,10 @@ func sortByChange(q []Quote, positions map[string]Position) []Quote {
 
 }
 
-func splitActiveQuotes(quotes []Quote) ([]Quote, []Quote) {
+func splitActiveQuotes(quotes []q.Quote) ([]q.Quote, []q.Quote) {
 
-	activeQuotes := make([]Quote, 0)
-	inactiveQuotes := make([]Quote, 0)
+	activeQuotes := make([]q.Quote, 0)
+	inactiveQuotes := make([]q.Quote, 0)
 
 	for _, quote := range quotes {
 		if quote.IsActive {

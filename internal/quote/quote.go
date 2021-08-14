@@ -9,6 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+// ResponseQuote represents a quote of a single security from the API response
 type ResponseQuote struct {
 	ShortName                  string  `json:"shortName"`
 	Symbol                     string  `json:"symbol"`
@@ -37,6 +38,7 @@ type ResponseQuote struct {
 	MarketCap                  float64 `json:"marketCap"`
 }
 
+// Quote represents a price quote and related attributes for a single security
 type Quote struct {
 	ResponseQuote
 	Price                   float64
@@ -52,6 +54,7 @@ type Quote struct {
 	CurrencyConverted       string
 }
 
+// Response represents the container object from the API response
 type Response struct {
 	QuoteResponse struct {
 		Quotes []ResponseQuote `json:"result"`
@@ -198,6 +201,7 @@ func transformResponseQuotes(ctx c.Context, responseQuotes []ResponseQuote) []Qu
 
 }
 
+// GetQuotes issues a HTTP request to retrieve quotes from the API and process the response
 func GetQuotes(ctx c.Context, client resty.Client, symbols []string) func() []Quote {
 	return func() []Quote {
 		symbolsString := strings.Join(symbols, ",")

@@ -54,7 +54,7 @@ func (m Model) updateQuotes() tea.Cmd {
 	})
 }
 
-// Constructor for UI model
+// NewModel is the constructor for UI model
 func NewModel(dep c.Dependencies, ctx c.Context) Model {
 
 	aggregatedLots := position.GetLots(ctx.Config.Lots)
@@ -72,7 +72,7 @@ func NewModel(dep c.Dependencies, ctx c.Context) Model {
 	}
 }
 
-// Initialize hook
+// Init is the initialization hook for bubbletea
 func (m Model) Init() tea.Cmd {
 	return func() tea.Msg {
 		return quoteMsg{
@@ -87,7 +87,7 @@ type quoteMsg struct {
 	time   string
 }
 
-// Update hook
+// Update hook for bubbletea
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
@@ -135,7 +135,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// Rendering hook
+// View rendering hook for bubbletea
 func (m Model) View() string {
 	if !m.ready {
 		return "\n  Initializing..."

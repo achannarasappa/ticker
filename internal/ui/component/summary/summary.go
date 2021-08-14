@@ -7,10 +7,11 @@ import (
 	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/position"
 
-	. "github.com/achannarasappa/ticker/internal/ui/util"
+	u "github.com/achannarasappa/ticker/internal/ui/util"
 	"github.com/muesli/reflow/ansi"
 )
 
+// Model for summary section
 type Model struct {
 	Width   int
 	Summary position.PositionSummary
@@ -18,7 +19,7 @@ type Model struct {
 	styles  c.Styles
 }
 
-// NewModel returns a model with default values.
+// NewModel returns a model with default values
 func NewModel(ctx c.Context) Model {
 	return Model{
 		Width:  80,
@@ -26,6 +27,7 @@ func NewModel(ctx c.Context) Model {
 	}
 }
 
+// View rendering hook for bubbletea
 func (m Model) View() string {
 
 	if m.Width < 80 {
@@ -37,10 +39,10 @@ func (m Model) View() string {
 		m.styles.TextLabel("Change: ") + quoteChangeText(m.Summary.Change, m.Summary.ChangePercent, m.styles)
 	widthChange := ansi.PrintableRuneWidth(textChange)
 	textValue := m.styles.TextLabel(" • ") +
-		m.styles.TextLabel("Value: ") + ValueText(m.Summary.Value, m.styles)
+		m.styles.TextLabel("Value: ") + u.ValueText(m.Summary.Value, m.styles)
 	widthValue := ansi.PrintableRuneWidth(textValue)
 	textCost := m.styles.TextLabel(" • ") +
-		m.styles.TextLabel("Cost: ") + ValueText(m.Summary.Cost, m.styles)
+		m.styles.TextLabel("Cost: ") + u.ValueText(m.Summary.Cost, m.styles)
 	widthCost := ansi.PrintableRuneWidth(textValue)
 
 	return grid.Render(grid.Grid{
@@ -78,12 +80,12 @@ func (m Model) View() string {
 
 func quoteChangeText(change float64, changePercent float64, styles c.Styles) string {
 	if change == 0.0 {
-		return styles.TextLabel(ConvertFloatToString(change, false) + " (" + ConvertFloatToString(changePercent, false) + "%)")
+		return styles.TextLabel(u.ConvertFloatToString(change, false) + " (" + u.ConvertFloatToString(changePercent, false) + "%)")
 	}
 
 	if change > 0.0 {
-		return styles.TextPrice(changePercent, "↑ "+ConvertFloatToString(change, false)+" ("+ConvertFloatToString(changePercent, false)+"%)")
+		return styles.TextPrice(changePercent, "↑ "+u.ConvertFloatToString(change, false)+" ("+u.ConvertFloatToString(changePercent, false)+"%)")
 	}
 
-	return styles.TextPrice(changePercent, "↓ "+ConvertFloatToString(change, false)+" ("+ConvertFloatToString(changePercent, false)+"%)")
+	return styles.TextPrice(changePercent, "↓ "+u.ConvertFloatToString(change, false)+" ("+u.ConvertFloatToString(changePercent, false)+"%)")
 }

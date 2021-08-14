@@ -30,7 +30,7 @@ func getPrecision(f float64) int {
 	return 2
 }
 
-// Format a float as a string including handling large or small numbers
+// ConvertFloatToString formats a float as a string including handling large or small numbers
 func ConvertFloatToString(f float64, isVariablePrecision bool) string {
 
 	var unit string
@@ -59,7 +59,7 @@ func ConvertFloatToString(f float64, isVariablePrecision bool) string {
 	return strconv.FormatFloat(f, 'f', prec, 64) + unit
 }
 
-// Format a float as a styled string
+// ValueText formats a float as a styled string
 func ValueText(value float64, styles c.Styles) string {
 	if value <= 0.0 {
 		return ""

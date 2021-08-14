@@ -44,6 +44,8 @@ curl -Ls https://api.github.com/repos/achannarasappa/ticker/releases/latest \
 docker run -it --rm achannarasappa/ticker
 ```
 
+Note: config file can be mounted from the host machine by using a bind mount with `-v ~/.ticker.yaml:/.ticker.yaml`
+
 **snap**
 ```sh
 sudo snap install ticker

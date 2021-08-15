@@ -95,11 +95,33 @@ var _ = Describe("Sorter", func() {
 			It("should sort by default (change percent)", func() {
 				sorter := NewSorter("")
 
+				coinQuote := Quote{
+					ResponseQuote: ResponseQuote{
+						Symbol:    "COIN",
+						ShortName: "Coinbase",
+					},
+					Price:                   220.00,
+					Change:                  20.00,
+					ChangePercent:           10.00,
+					IsActive:                false,
+					IsRegularTradingSession: false,
+				}
+				quotes := []Quote{
+					rblxQuote,
+					bitcoinQuote,
+					twQuote,
+					googleQuote,
+					msftQuote,
+					coinQuote,
+				}
+
 				sortedQuotes := sorter(quotes, positions)
 				expected := []Quote{
 					bitcoinQuote,
 					twQuote,
 					googleQuote,
+					coinQuote,
+					rblxQuote,
 					msftQuote,
 				}
 

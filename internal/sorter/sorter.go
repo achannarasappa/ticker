@@ -114,6 +114,10 @@ func sortByChange(quoteIn []q.Quote, positions map[string]p.Position) []q.Quote 
 		return activeQuotes[j].ChangePercent < activeQuotes[i].ChangePercent
 	})
 
+	sort.SliceStable(inactiveQuotes, func(i, j int) bool {
+		return inactiveQuotes[j].ChangePercent < inactiveQuotes[i].ChangePercent
+	})
+
 	return append(activeQuotes, inactiveQuotes...)
 
 }

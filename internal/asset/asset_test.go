@@ -133,7 +133,7 @@ var _ = Describe("Asset", func() {
 				Expect(outputHoldingSummary.Cost).To(Equal(1500.0))
 				Expect(outputHoldingSummary.Value).To(Equal(1650.0))
 				Expect(outputHoldingSummary.TotalChange.Amount).To(Equal(150.0))
-				Expect(outputHoldingSummary.DayChange.Amount).To(Equal(225.0))
+				Expect(outputHoldingSummary.DayChange.Amount).To(Equal(150.0))
 			})
 		})
 

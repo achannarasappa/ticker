@@ -184,6 +184,6 @@ func getPositionMapFromPositionsReduced(p []Position, totalValue float64) map[st
 func getPositionSummaryBase(position Position, acc positionSummaryBase, currencyRateByUse currency.CurrencyRateByUse) positionSummaryBase {
 	acc.value += (position.Value * currencyRateByUse.SummaryValue)
 	acc.cost += (position.Cost * currencyRateByUse.SummaryCost)
-	acc.dayChange += (position.DayChange * currencyRateByUse.PositionValue)
+	acc.dayChange += (position.DayChange)
 	return acc
 }

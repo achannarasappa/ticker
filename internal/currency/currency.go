@@ -27,7 +27,6 @@ type Response struct {
 type CurrencyRateByUse struct {
 	ToCurrencyCode string
 	QuotePrice     float64
-	PositionValue  float64
 	PositionCost   float64
 	SummaryValue   float64
 	SummaryCost    float64
@@ -155,7 +154,6 @@ func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) CurrencyRate
 			return CurrencyRateByUse{
 				ToCurrencyCode: fromCurrency,
 				QuotePrice:     1.0,
-				PositionValue:  1.0,
 				PositionCost:   1.0,
 				SummaryValue:   currencyRate.Rate,
 				SummaryCost:    currencyRateCost,
@@ -167,7 +165,6 @@ func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) CurrencyRate
 			return CurrencyRateByUse{
 				ToCurrencyCode: currencyRate.ToCurrency,
 				QuotePrice:     currencyRate.Rate,
-				PositionValue:  currencyRate.Rate,
 				PositionCost:   currencyRateCost,
 				SummaryValue:   1.0,
 				SummaryCost:    1.0,
@@ -178,7 +175,6 @@ func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) CurrencyRate
 		return CurrencyRateByUse{
 			ToCurrencyCode: currencyRate.ToCurrency,
 			QuotePrice:     1.0,
-			PositionValue:  1.0,
 			PositionCost:   1.0,
 			SummaryValue:   currencyRate.Rate,
 			SummaryCost:    currencyRateCost,
@@ -189,7 +185,6 @@ func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) CurrencyRate
 	return CurrencyRateByUse{
 		ToCurrencyCode: fromCurrency,
 		QuotePrice:     1.0,
-		PositionValue:  1.0,
 		PositionCost:   1.0,
 		SummaryValue:   1.0,
 		SummaryCost:    1.0,

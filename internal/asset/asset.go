@@ -13,8 +13,17 @@ type AggregatedLot struct {
 	OrderIndex int
 }
 
-func GetAssets(dep c.Dependencies, ctx c.Context) []c.Asset {
+// HoldingSummary represents a summary of all asset holdings at a point in time
+type HoldingSummary struct {
+	Value       float64
+	Cost        float64
+	TotalChange c.HoldingChange
+	DayChange   c.HoldingChange
+}
 
+func GetAssets(dep c.Dependencies, ctx c.Context) ([]c.Asset, HoldingSummary) {
+
+	var holdingSummary HoldingSummary
 	assets := getAssetsFixed(ctx)
 	symbols := getSymbols(ctx.Config)
 	assetQuotes := q.GetAssetQuotes(*dep.HttpClient, symbols)
@@ -26,6 +35,7 @@ func GetAssets(dep c.Dependencies, ctx c.Context) []c.Asset {
 		currencyCode := currencyRateByUse.ToCurrencyCode
 
 		holding := getHolding(assetQuote, lotsBySymbol)
+		holdingSummary = addHoldingToHoldingSummary(holdingSummary, holding, currencyRateByUse)
 
 		assets = append(assets, c.Asset{
 			Name:   assetQuote.Name,
@@ -47,9 +57,50 @@ func GetAssets(dep c.Dependencies, ctx c.Context) []c.Asset {
 
 	}
 
-	// combine asset quotes, lots, and holdings to produce assets
+	assets = updateHoldingWeights(assets, holdingSummary)
 
-	return []c.Asset{}
+	return assets, holdingSummary
+
+}
+
+func addHoldingToHoldingSummary(holdingSummary HoldingSummary, holding c.Holding, currencyRateByUse currency.CurrencyRateByUse) HoldingSummary {
+
+	if holding.Cost == 0 || holding.Value == 0 {
+		return holdingSummary
+	}
+
+	value := holdingSummary.Value + (holding.Value * currencyRateByUse.SummaryValue)
+	cost := holdingSummary.Cost + (holding.Cost * currencyRateByUse.SummaryCost)
+	dayChange := holdingSummary.DayChange.Amount + (holding.DayChange.Amount * currencyRateByUse.PositionValue) // TODO: validate this is the correct calculation; transferred as is from positions.go
+	totalChange := value - cost
+	totalChangePercent := (totalChange / cost) * 100
+	dayChangePercent := (dayChange / value) * 100 // TODO: validate this is the correct calculation; transferred as is from positions.go
+
+	return HoldingSummary{
+		Value: value,
+		Cost:  cost,
+		TotalChange: c.HoldingChange{
+			Amount:  totalChange,
+			Percent: totalChangePercent,
+		},
+		DayChange: c.HoldingChange{
+			Amount:  dayChange,
+			Percent: dayChangePercent,
+		},
+	}
+}
+
+func updateHoldingWeights(assets []c.Asset, holdingSummary HoldingSummary) []c.Asset {
+
+	if holdingSummary.Value == 0 {
+		return assets
+	}
+
+	for i, asset := range assets {
+		assets[i].Holding.Weight = (asset.Holding.Value / holdingSummary.Value) * 100
+	}
+
+	return assets
 
 }
 

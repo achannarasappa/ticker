@@ -28,7 +28,7 @@ func getAssetsFixed(ctx c.Context) []c.Asset {
 		return []c.Asset{}
 	}
 
-	// Add currency convert
+	// TODO: Add currency convert
 	assetsFixed := make([]c.Asset, 0)
 
 	for _, configHolding := range ctx.Config.Holdings {
@@ -43,8 +43,8 @@ func getAssetsFixed(ctx c.Context) []c.Asset {
 			Symbol: configHolding.Symbol,
 			Class:  getAssetFixedClass(configHolding.Class),
 			Currency: c.Currency{
-				Code:          configHolding.Currency,
-				CodeConverted: currencyCode,
+				FromCurrencyCode: configHolding.Currency,
+				ToCurrencyCode:   currencyCode,
 			},
 			Holding: c.Holding{
 				Value:     value,

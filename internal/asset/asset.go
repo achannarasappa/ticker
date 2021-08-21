@@ -1,7 +1,6 @@
 package asset
 
 import (
-	q "github.com/achannarasappa/ticker/internal/adapter/yahoo"
 	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/currency"
 )
@@ -21,18 +20,15 @@ type HoldingSummary struct {
 	DayChange   c.HoldingChange
 }
 
-func GetAssets(dep c.Dependencies, ctx c.Context) ([]c.Asset, HoldingSummary) {
+func GetAssets(ctx c.Context, assetQuotes []c.AssetQuote) ([]c.Asset, HoldingSummary) {
 
 	var holdingSummary HoldingSummary
 	assets := getAssetsFixed(ctx)
-	symbols := getSymbols(ctx.Config)
-	assetQuotes := q.GetAssetQuotes(*dep.HttpClient, symbols)
 	lotsBySymbol := getLots(ctx.Config.Lots)
 
 	for i, assetQuote := range assetQuotes {
 
-		currencyRateByUse := currency.GetCurrencyRateFromContext(ctx, assetQuote.Currency.Code)
-		currencyCode := currencyRateByUse.ToCurrencyCode
+		currencyRateByUse := currency.GetCurrencyRateFromContext(ctx, assetQuote.Currency.FromCurrencyCode)
 
 		holding := getHolding(assetQuote, lotsBySymbol)
 		holdingSummary = addHoldingToHoldingSummary(holdingSummary, holding, currencyRateByUse)
@@ -42,8 +38,8 @@ func GetAssets(dep c.Dependencies, ctx c.Context) ([]c.Asset, HoldingSummary) {
 			Symbol: assetQuote.Symbol,
 			Class:  assetQuote.Class,
 			Currency: c.Currency{
-				Code:          assetQuote.Currency.Code,
-				CodeConverted: currencyCode,
+				FromCurrencyCode: assetQuote.Currency.FromCurrencyCode,
+				ToCurrencyCode:   currencyRateByUse.ToCurrencyCode,
 			},
 			Holding:       convertAssetHoldingCurrency(currencyRateByUse, holding),
 			QuotePrice:    convertAssetQuotePriceCurrency(currencyRateByUse, assetQuote.QuotePrice),
@@ -133,7 +129,8 @@ func getHolding(assetQuote c.AssetQuote, lotsBySymbol map[string]AggregatedLot) 
 
 }
 
-func getSymbols(config c.Config) []string {
+// GetSymbols retrieves a unique slice of symbols from the watchlist and lots sections of the config
+func GetSymbols(config c.Config) []string {
 
 	symbols := make(map[string]bool)
 	symbolsUnique := make([]string, 0)

@@ -119,9 +119,9 @@ type Holding struct {
 // Currency is the original and converted currency if applicable
 type Currency struct {
 	// Code is the original currency code of the asset
-	Code string
+	FromCurrencyCode string
 	// CodeConverted is the currency code that pricing and values have been converted into
-	CodeConverted string
+	ToCurrencyCode string
 }
 
 type QuotePrice struct {

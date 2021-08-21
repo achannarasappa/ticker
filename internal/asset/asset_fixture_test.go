@@ -19,6 +19,11 @@ var fixtureAssetQuotes = []c.AssetQuote{
 			Change:         10.0,
 			ChangePercent:  10.0,
 		},
+		QuoteExtended: c.QuoteExtended{
+			FiftyTwoWeekHigh: 150,
+			FiftyTwoWeekLow:  50,
+			MarketCap:        1000000,
+		},
 	},
 	{
 		Name:     "Microsoft Inc",
@@ -49,6 +54,9 @@ var fixtureAssetQuotes = []c.AssetQuote{
 			Change:         1.0,
 			ChangePercent:  10.0,
 		},
+		Meta: c.Meta{
+			IsVariablePrecision: true,
+		},
 	},
 }
 var fixtureAssets = []c.Asset{
@@ -65,6 +73,11 @@ var fixtureAssets = []c.Asset{
 			PriceDayLow:    90.0,
 			Change:         10.0,
 			ChangePercent:  10.0,
+		},
+		QuoteExtended: c.QuoteExtended{
+			FiftyTwoWeekHigh: 150,
+			FiftyTwoWeekLow:  50,
+			MarketCap:        1000000,
 		},
 		Meta: c.Meta{
 			OrderIndex: 0,
@@ -103,7 +116,8 @@ var fixtureAssets = []c.Asset{
 			ChangePercent:  10.0,
 		},
 		Meta: c.Meta{
-			OrderIndex: 2,
+			OrderIndex:          2,
+			IsVariablePrecision: true,
 		},
 	},
 }

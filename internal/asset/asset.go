@@ -31,6 +31,7 @@ func GetAssets(ctx c.Context, assetQuotes []c.AssetQuote) ([]c.Asset, HoldingSum
 		currencyRateByUse := currency.GetCurrencyRateFromContext(ctx, assetQuote.Currency.FromCurrencyCode)
 
 		holding := getHolding(assetQuote, lotsBySymbol)
+		holding = convertAssetHoldingCurrency(currencyRateByUse, holding)
 		holdingSummary = addHoldingToHoldingSummary(holdingSummary, holding, currencyRateByUse)
 
 		assets = append(assets, c.Asset{
@@ -41,12 +42,12 @@ func GetAssets(ctx c.Context, assetQuotes []c.AssetQuote) ([]c.Asset, HoldingSum
 				FromCurrencyCode: assetQuote.Currency.FromCurrencyCode,
 				ToCurrencyCode:   currencyRateByUse.ToCurrencyCode,
 			},
-			Holding:       convertAssetHoldingCurrency(currencyRateByUse, holding),
+			Holding:       holding,
 			QuotePrice:    convertAssetQuotePriceCurrency(currencyRateByUse, assetQuote.QuotePrice),
 			QuoteExtended: convertAssetQuoteExtendedCurrency(currencyRateByUse, assetQuote.QuoteExtended),
 			Exchange:      assetQuote.Exchange,
 			Meta: c.Meta{
-				IsVariablePrecision: false,
+				IsVariablePrecision: assetQuote.Meta.IsVariablePrecision,
 				OrderIndex:          i,
 			},
 		})
@@ -70,7 +71,7 @@ func addHoldingToHoldingSummary(holdingSummary HoldingSummary, holding c.Holding
 	dayChange := holdingSummary.DayChange.Amount + (holding.DayChange.Amount * currencyRateByUse.PositionValue) // TODO: validate this is the correct calculation; transferred as is from positions.go
 	totalChange := value - cost
 	totalChangePercent := (totalChange / cost) * 100
-	dayChangePercent := (dayChange / value) * 100 // TODO: validate this is the correct calculation; transferred as is from positions.go
+	dayChangePercent := (dayChange / value) * 100
 
 	return HoldingSummary{
 		Value: value,

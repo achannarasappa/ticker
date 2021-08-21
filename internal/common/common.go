@@ -16,6 +16,7 @@ type Config struct {
 	RefreshInterval                   int               `yaml:"interval"`
 	Watchlist                         []string          `yaml:"watchlist"`
 	Lots                              []Lot             `yaml:"lots"`
+	Holdings                          []ConfigHolding   `yaml:"holdings"`
 	Separate                          bool              `yaml:"show-separator"`
 	ExtraInfoExchange                 bool              `yaml:"show-tags"`
 	ExtraInfoFundamentals             bool              `yaml:"show-fundamentals"`
@@ -37,6 +38,17 @@ type ConfigColorScheme struct {
 	TextLine      string `yaml:"text-line"`
 	TextTag       string `yaml:"text-tag"`
 	BackgroundTag string `yaml:"background-tag"`
+}
+
+type ConfigHolding struct {
+	Symbol      string  `yaml:"symbol"`
+	Class       string  `yaml:"class"`
+	Description string  `yaml:"description"`
+	Currency    string  `yaml:"currency"`
+	UnitValue   float64 `yaml:"unit_value"`
+	UnitCost    float64 `yaml:"unit_cost"`
+	FixedCost   float64 `yaml:"fixed_cost"`
+	Quantity    float64 `yaml:"quantity"`
 }
 
 // Reference represents derived configuration for internal use from user defined configuration
@@ -82,3 +94,107 @@ type Styles struct {
 
 // StyleFn is a function that styles text
 type StyleFn func(string) string
+
+type HoldingChange struct {
+	Amount  float64
+	Percent float64
+}
+
+type Meta struct {
+	IsVariablePrecision bool
+	OrderIndex          int
+}
+
+type Holding struct {
+	Value       float64
+	Cost        float64
+	Quantity    float64
+	UnitValue   float64
+	UnitCost    float64
+	DayChange   HoldingChange
+	TotalChange HoldingChange
+	Weight      float64
+}
+
+// Currency is the original and converted currency if applicable
+type Currency struct {
+	// Code is the original currency code of the asset
+	Code string
+	// CodeConverted is the currency code that pricing and values have been converted into
+	CodeConverted string
+}
+
+type QuotePrice struct {
+	Price          float64
+	PricePrevClose float64
+	PriceOpen      float64
+	PriceDayHigh   float64
+	PriceDayLow    float64
+	Change         float64
+	ChangePercent  float64
+}
+
+type QuoteExtended struct {
+	FiftyTwoWeekHigh float64
+	FiftyTwoWeekLow  float64
+	MarketCap        float64
+	Volume           float64
+}
+
+type Exchange struct {
+	Name                    string
+	Delay                   float64
+	State                   ExchangeState
+	IsActive                bool
+	IsRegularTradingSession bool
+}
+
+type ExchangeState int
+
+const (
+	ExchangeStateOpen ExchangeState = iota
+	ExchangeStatePremarket
+	ExchangeStatePostmarket
+	ExchangeStateClosed
+)
+
+type Asset struct {
+	Name          string
+	Symbol        string
+	Class         AssetClass
+	Currency      Currency
+	Holding       Holding
+	QuotePrice    QuotePrice
+	QuoteExtended QuoteExtended
+	Exchange      Exchange
+	Meta          Meta
+}
+
+type AssetClass int
+
+const (
+	AssetClassCash AssetClass = iota
+	AssetClassStock
+	AssetClassCryptocurrency
+	AssetClassPrivateSecurity
+	AssetClassUnknown
+)
+
+type AssetSource int
+
+const (
+	AssetSourceFixed AssetSource = iota
+	AssetSourceYahoo
+)
+
+// AssetQuote represents a price quote and related attributes for a single security
+type AssetQuote struct {
+	Name          string
+	Symbol        string
+	Class         AssetClass
+	Currency      Currency
+	QuotePrice    QuotePrice
+	QuoteExtended QuoteExtended
+	Exchange      Exchange
+	Meta          Meta
+}

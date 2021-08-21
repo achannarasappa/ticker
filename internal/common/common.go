@@ -16,7 +16,6 @@ type Config struct {
 	RefreshInterval                   int               `yaml:"interval"`
 	Watchlist                         []string          `yaml:"watchlist"`
 	Lots                              []Lot             `yaml:"lots"`
-	Holdings                          []ConfigHolding   `yaml:"holdings"`
 	Separate                          bool              `yaml:"show-separator"`
 	ExtraInfoExchange                 bool              `yaml:"show-tags"`
 	ExtraInfoFundamentals             bool              `yaml:"show-fundamentals"`
@@ -40,17 +39,6 @@ type ConfigColorScheme struct {
 	BackgroundTag string `yaml:"background-tag"`
 }
 
-type ConfigHolding struct {
-	Symbol      string  `yaml:"symbol"`
-	Class       string  `yaml:"class"`
-	Description string  `yaml:"description"`
-	Currency    string  `yaml:"currency"`
-	UnitValue   float64 `yaml:"unit_value"`
-	UnitCost    float64 `yaml:"unit_cost"`
-	FixedCost   float64 `yaml:"fixed_cost"`
-	Quantity    float64 `yaml:"quantity"`
-}
-
 // Reference represents derived configuration for internal use from user defined configuration
 type Reference struct {
 	CurrencyRates CurrencyRates
@@ -69,7 +57,15 @@ type Lot struct {
 	UnitCost  float64 `yaml:"unit_cost"`
 	Quantity  float64 `yaml:"quantity"`
 	FixedCost float64 `yaml:"fixed_cost"`
+	// FixedProperties LotFixedProperties `yaml:"fixed_properties"`
 }
+
+// type LotFixedProperties struct {
+// 	Class       string  `yaml:"class"`
+// 	Description string  `yaml:"description"`
+// 	Currency    string  `yaml:"currency"`
+// 	UnitValue   float64 `yaml:"unit_value"`
+// }
 
 // CurrencyRates is a map of currency rates for lookup by currency that needs to be converted
 type CurrencyRates map[string]CurrencyRate
@@ -178,13 +174,6 @@ const (
 	AssetClassCryptocurrency
 	AssetClassPrivateSecurity
 	AssetClassUnknown
-)
-
-type AssetSource int
-
-const (
-	AssetSourceFixed AssetSource = iota
-	AssetSourceYahoo
 )
 
 // AssetQuote represents a price quote and related attributes for a single security

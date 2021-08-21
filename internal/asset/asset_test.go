@@ -188,6 +188,7 @@ var _ = Describe("Asset", func() {
 				Expect(outputHoldingSummary).To(Equal(HoldingSummary{}))
 			})
 		})
+
 	})
 
 	Describe("GetSymbols", func() {

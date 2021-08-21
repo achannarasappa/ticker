@@ -23,14 +23,14 @@ type HoldingSummary struct {
 func GetAssets(ctx c.Context, assetQuotes []c.AssetQuote) ([]c.Asset, HoldingSummary) {
 
 	var holdingSummary HoldingSummary
-	assets := getAssetsFixed(ctx)
+	assets := make([]c.Asset, 0)
 	lotsBySymbol := getLots(ctx.Config.Lots)
 
 	for i, assetQuote := range assetQuotes {
 
 		currencyRateByUse := currency.GetCurrencyRateFromContext(ctx, assetQuote.Currency.FromCurrencyCode)
 
-		holding := getHolding(assetQuote, lotsBySymbol)
+		holding := getHoldingFromAssetQuote(assetQuote, lotsBySymbol)
 		holding = convertAssetHoldingCurrency(currencyRateByUse, holding)
 		holdingSummary = addHoldingToHoldingSummary(holdingSummary, holding, currencyRateByUse)
 
@@ -101,7 +101,7 @@ func updateHoldingWeights(assets []c.Asset, holdingSummary HoldingSummary) []c.A
 
 }
 
-func getHolding(assetQuote c.AssetQuote, lotsBySymbol map[string]AggregatedLot) c.Holding {
+func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]AggregatedLot) c.Holding {
 
 	if aggregatedLot, ok := lotsBySymbol[assetQuote.Symbol]; ok {
 		value := aggregatedLot.Quantity * assetQuote.QuotePrice.Price

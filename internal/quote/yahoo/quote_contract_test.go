@@ -1,4 +1,4 @@
-package quote_test
+package yahoo_test
 
 import (
 	"fmt"

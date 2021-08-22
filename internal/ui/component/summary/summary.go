@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	grid "github.com/achannarasappa/term-grid"
+	"github.com/achannarasappa/ticker/internal/asset"
 	c "github.com/achannarasappa/ticker/internal/common"
-	"github.com/achannarasappa/ticker/internal/position"
 
 	u "github.com/achannarasappa/ticker/internal/ui/util"
 	"github.com/muesli/reflow/ansi"
@@ -14,7 +14,7 @@ import (
 // Model for summary section
 type Model struct {
 	Width   int
-	Summary position.PositionSummary
+	Summary asset.HoldingSummary
 	Context c.Context
 	styles  c.Styles
 }
@@ -34,9 +34,9 @@ func (m Model) View() string {
 		return ""
 	}
 
-	textChange := m.styles.TextLabel("Day Change: ") + quoteChangeText(m.Summary.DayChange, m.Summary.DayChangePercent, m.styles) +
+	textChange := m.styles.TextLabel("Day Change: ") + quoteChangeText(m.Summary.DayChange.Amount, m.Summary.DayChange.Percent, m.styles) +
 		m.styles.TextLabel(" • ") +
-		m.styles.TextLabel("Change: ") + quoteChangeText(m.Summary.Change, m.Summary.ChangePercent, m.styles)
+		m.styles.TextLabel("Change: ") + quoteChangeText(m.Summary.TotalChange.Amount, m.Summary.TotalChange.Percent, m.styles)
 	widthChange := ansi.PrintableRuneWidth(textChange)
 	textValue := m.styles.TextLabel(" • ") +
 		m.styles.TextLabel("Value: ") + u.ValueText(m.Summary.Value, m.styles)

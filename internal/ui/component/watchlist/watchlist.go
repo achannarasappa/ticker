@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	c "github.com/achannarasappa/ticker/internal/common"
-	p "github.com/achannarasappa/ticker/internal/position"
-	q "github.com/achannarasappa/ticker/internal/quote"
 	s "github.com/achannarasappa/ticker/internal/sorter"
 	u "github.com/achannarasappa/ticker/internal/ui/util"
 
@@ -27,8 +25,7 @@ const (
 // Model for watchlist section
 type Model struct {
 	Width                 int
-	Quotes                []q.Quote
-	Positions             map[string]p.Position
+	Assets                []c.Asset
 	Separate              bool
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
@@ -70,20 +67,18 @@ func (m Model) View() string {
 	}
 
 	if (m.cellWidths == cellWidthsContainer{}) {
-		m.cellWidths = getCellWidths(m.Quotes, m.Positions)
+		m.cellWidths = getCellWidths(m.Assets)
 	}
 
-	quotes := m.Sorter(m.Quotes, m.Positions)
+	assets := m.Sorter(m.Assets)
 	rows := make([]grid.Row, 0)
-	for _, quote := range quotes {
-
-		position := m.Positions[quote.Symbol]
+	for _, asset := range assets {
 
 		rows = append(
 			rows,
 			grid.Row{
 				Width: m.Width,
-				Cells: buildCells(quote, position, m.Context.Config, m.styles, m.cellWidths),
+				Cells: buildCells(asset, m.Context.Config, m.styles, m.cellWidths),
 			})
 
 		if m.Context.Config.ExtraInfoExchange {
@@ -92,7 +87,7 @@ func (m Model) View() string {
 				grid.Row{
 					Width: m.Width,
 					Cells: []grid.Cell{
-						{Text: textTags(quote, m.styles)},
+						{Text: textTags(asset, m.styles)},
 					},
 				})
 		}
@@ -113,21 +108,21 @@ func (m Model) View() string {
 	return grid.Render(grid.Grid{Rows: rows, GutterHorizontal: widthGutter})
 }
 
-func getCellWidths(quotes []q.Quote, positions map[string]p.Position) cellWidthsContainer {
+func getCellWidths(assets []c.Asset) cellWidthsContainer {
 
 	cellMaxWidths := cellWidthsContainer{}
 
-	for _, quote := range quotes {
+	for _, asset := range assets {
 		var quoteLength int
 
-		volumeMarketCapLength := len(u.ConvertFloatToString(quote.MarketCap, true))
+		volumeMarketCapLength := len(u.ConvertFloatToString(asset.QuoteExtended.MarketCap, true))
 
-		if quote.FiftyTwoWeekHigh == 0.0 {
-			quoteLength = len(u.ConvertFloatToString(quote.Price, quote.IsVariablePrecision))
+		if asset.QuoteExtended.FiftyTwoWeekHigh == 0.0 {
+			quoteLength = len(u.ConvertFloatToString(asset.QuotePrice.Price, asset.Meta.IsVariablePrecision))
 		}
 
-		if quote.FiftyTwoWeekHigh != 0.0 {
-			quoteLength = len(u.ConvertFloatToString(quote.FiftyTwoWeekHigh, quote.IsVariablePrecision))
+		if asset.QuoteExtended.FiftyTwoWeekHigh != 0.0 {
+			quoteLength = len(u.ConvertFloatToString(asset.QuoteExtended.FiftyTwoWeekHigh, asset.Meta.IsVariablePrecision))
 		}
 
 		if volumeMarketCapLength > cellMaxWidths.WidthVolumeMarketCap {
@@ -141,9 +136,9 @@ func getCellWidths(quotes []q.Quote, positions map[string]p.Position) cellWidths
 			cellMaxWidths.WidthQuoteRange = widthRangeStatic + (quoteLength * 2)
 		}
 
-		if position, ok := positions[quote.Symbol]; ok {
-			positionLength := len(u.ConvertFloatToString(position.Value, quote.IsVariablePrecision))
-			positionQuantityLength := len(u.ConvertFloatToString(position.Quantity, quote.IsVariablePrecision))
+		if asset.Holding != (c.Holding{}) {
+			positionLength := len(u.ConvertFloatToString(asset.Holding.Value, asset.Meta.IsVariablePrecision))
+			positionQuantityLength := len(u.ConvertFloatToString(asset.Holding.Quantity, asset.Meta.IsVariablePrecision))
 
 			if positionLength > cellMaxWidths.positionLength {
 				cellMaxWidths.positionLength = positionLength
@@ -166,26 +161,26 @@ func getCellWidths(quotes []q.Quote, positions map[string]p.Position) cellWidths
 
 }
 
-func buildCells(quote q.Quote, position p.Position, config c.Config, styles c.Styles, cellWidths cellWidthsContainer) []grid.Cell {
+func buildCells(asset c.Asset, config c.Config, styles c.Styles, cellWidths cellWidthsContainer) []grid.Cell {
 
 	if !config.ExtraInfoFundamentals && !config.ShowHoldings {
 
 		return []grid.Cell{
-			{Text: textName(quote, styles)},
-			{Text: textMarketState(quote, styles), Width: widthMarketState, Align: grid.Right},
-			{Text: textQuote(quote, styles), Width: cellWidths.WidthQuote, Align: grid.Right},
+			{Text: textName(asset, styles)},
+			{Text: textMarketState(asset, styles), Width: widthMarketState, Align: grid.Right},
+			{Text: textQuote(asset, styles), Width: cellWidths.WidthQuote, Align: grid.Right},
 		}
 
 	}
 
 	cellName := []grid.Cell{
-		{Text: textName(quote, styles), Width: widthName},
+		{Text: textName(asset, styles), Width: widthName},
 		{Text: ""},
-		{Text: textMarketState(quote, styles), Width: widthMarketState, Align: grid.Right},
+		{Text: textMarketState(asset, styles), Width: widthMarketState, Align: grid.Right},
 	}
 
 	cells := []grid.Cell{
-		{Text: textQuote(quote, styles), Width: cellWidths.WidthQuote, Align: grid.Right},
+		{Text: textQuote(asset, styles), Width: cellWidths.WidthQuote, Align: grid.Right},
 	}
 
 	widthMinTerm := widthName + widthMarketState + cellWidths.WidthQuote + (3 * widthGutter)
@@ -196,19 +191,19 @@ func buildCells(quote q.Quote, position p.Position, config c.Config, styles c.St
 		cells = append(
 			[]grid.Cell{
 				{
-					Text:            textPositionExtendedLabels(position, styles),
+					Text:            textPositionExtendedLabels(asset, styles),
 					Width:           widthLabel,
 					Align:           grid.Right,
 					VisibleMinWidth: widthHoldings,
 				},
 				{
-					Text:            textPositionExtended(quote, position, styles),
+					Text:            textPositionExtended(asset, styles),
 					Width:           cellWidths.WidthPositionExtended,
 					Align:           grid.Right,
 					VisibleMinWidth: widthMinTerm + cellWidths.WidthPosition + (2 * widthGutter) + cellWidths.WidthPositionExtended,
 				},
 				{
-					Text:            textPosition(quote, position, styles),
+					Text:            textPosition(asset, styles),
 					Width:           cellWidths.WidthPosition,
 					Align:           grid.Right,
 					VisibleMinWidth: widthMinTerm + cellWidths.WidthPosition + widthGutter,
@@ -223,37 +218,37 @@ func buildCells(quote q.Quote, position p.Position, config c.Config, styles c.St
 		cells = append(
 			[]grid.Cell{
 				{
-					Text:            textVolumeMarketCapLabels(quote, styles),
+					Text:            textVolumeMarketCapLabels(asset, styles),
 					Width:           widthLabel,
 					Align:           grid.Right,
 					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (6 * widthGutter) + (3 * widthLabel) + cellWidths.WidthQuoteRange + cellWidths.WidthVolumeMarketCap,
 				},
 				{
-					Text:            textVolumeMarketCap(quote, styles),
+					Text:            textVolumeMarketCap(asset, styles),
 					Width:           cellWidths.WidthVolumeMarketCap,
 					Align:           grid.Right,
 					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (5 * widthGutter) + (2 * widthLabel) + cellWidths.WidthQuoteRange + cellWidths.WidthVolumeMarketCap,
 				},
 				{
-					Text:            textQuoteRangeLabels(quote, styles),
+					Text:            textQuoteRangeLabels(asset, styles),
 					Width:           widthLabel,
 					Align:           grid.Right,
 					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (4 * widthGutter) + (2 * widthLabel) + cellWidths.WidthQuoteRange,
 				},
 				{
-					Text:            textQuoteRange(quote, styles),
+					Text:            textQuoteRange(asset, styles),
 					Width:           cellWidths.WidthQuoteRange,
 					Align:           grid.Right,
 					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (3 * widthGutter) + widthLabel + cellWidths.WidthQuoteRange,
 				},
 				{
-					Text:            textQuoteExtendedLabels(quote, styles),
+					Text:            textQuoteExtendedLabels(asset, styles),
 					Width:           widthLabel,
 					Align:           grid.Right,
 					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (2 * widthGutter) + widthLabel,
 				},
 				{
-					Text:            textQuoteExtended(quote, styles),
+					Text:            textQuoteExtended(asset, styles),
 					Width:           cellWidths.WidthQuoteExtended,
 					Align:           grid.Right,
 					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + widthGutter,
@@ -272,37 +267,37 @@ func buildCells(quote q.Quote, position p.Position, config c.Config, styles c.St
 
 }
 
-func textName(quote q.Quote, styles c.Styles) string {
+func textName(asset c.Asset, styles c.Styles) string {
 
-	if len(quote.ShortName) > 20 {
-		quote.ShortName = quote.ShortName[:20]
+	if len(asset.Name) > 20 {
+		asset.Name = asset.Name[:20]
 	}
 
-	return styles.TextBold(quote.Symbol) +
+	return styles.TextBold(asset.Symbol) +
 		"\n" +
-		styles.TextLabel(quote.ShortName)
+		styles.TextLabel(asset.Name)
 }
 
-func textQuote(quote q.Quote, styles c.Styles) string {
-	return styles.Text(u.ConvertFloatToString(quote.Price, quote.IsVariablePrecision)) +
+func textQuote(asset c.Asset, styles c.Styles) string {
+	return styles.Text(u.ConvertFloatToString(asset.QuotePrice.Price, asset.Meta.IsVariablePrecision)) +
 		"\n" +
-		quoteChangeText(quote.Change, quote.ChangePercent, quote.IsVariablePrecision, styles)
+		quoteChangeText(asset.QuotePrice.Change, asset.QuotePrice.ChangePercent, asset.Meta.IsVariablePrecision, styles)
 }
 
-func textPosition(quote q.Quote, position p.Position, styles c.Styles) string {
+func textPosition(asset c.Asset, styles c.Styles) string {
 
 	positionValue := ""
 	positionChange := ""
 
-	if position.Value != 0.0 {
-		positionValue = u.ValueText(position.Value, styles) +
+	if asset.Holding.Value != 0.0 {
+		positionValue = u.ValueText(asset.Holding.Value, styles) +
 			styles.TextLight(
 				" ("+
-					u.ConvertFloatToString(position.Weight, quote.IsVariablePrecision)+"%"+
+					u.ConvertFloatToString(asset.Holding.Weight, asset.Meta.IsVariablePrecision)+"%"+
 					")")
 	}
-	if position.TotalChange != 0.0 {
-		positionChange = quoteChangeText(position.TotalChange, position.TotalChangePercent, quote.IsVariablePrecision, styles)
+	if asset.Holding.TotalChange.Amount != 0.0 {
+		positionChange = quoteChangeText(asset.Holding.TotalChange.Amount, asset.Holding.TotalChange.Percent, asset.Meta.IsVariablePrecision, styles)
 	}
 
 	return positionValue +
@@ -310,36 +305,36 @@ func textPosition(quote q.Quote, position p.Position, styles c.Styles) string {
 		positionChange
 }
 
-func textQuoteExtended(quote q.Quote, styles c.Styles) string {
+func textQuoteExtended(asset c.Asset, styles c.Styles) string {
 
-	return styles.Text(u.ConvertFloatToString(quote.PricePrevClose, quote.IsVariablePrecision)) +
+	return styles.Text(u.ConvertFloatToString(asset.QuotePrice.PricePrevClose, asset.Meta.IsVariablePrecision)) +
 		"\n" +
-		styles.Text(u.ConvertFloatToString(quote.PriceOpen, quote.IsVariablePrecision))
+		styles.Text(u.ConvertFloatToString(asset.QuotePrice.PriceOpen, asset.Meta.IsVariablePrecision))
 
 }
 
-func textQuoteExtendedLabels(quote q.Quote, styles c.Styles) string {
+func textQuoteExtendedLabels(asset c.Asset, styles c.Styles) string {
 
 	return styles.TextLabel("Prev. Close:") +
 		"\n" +
 		styles.TextLabel("Open:")
 }
 
-func textPositionExtended(quote q.Quote, position p.Position, styles c.Styles) string {
+func textPositionExtended(asset c.Asset, styles c.Styles) string {
 
-	if position.Quantity == 0.0 {
+	if asset.Holding.Quantity == 0.0 {
 		return ""
 	}
 
-	return styles.Text(u.ConvertFloatToString(position.AverageCost, quote.IsVariablePrecision)) +
+	return styles.Text(u.ConvertFloatToString(asset.Holding.UnitCost, asset.Meta.IsVariablePrecision)) +
 		"\n" +
-		styles.Text(u.ConvertFloatToString(position.Quantity, quote.IsVariablePrecision))
+		styles.Text(u.ConvertFloatToString(asset.Holding.Quantity, asset.Meta.IsVariablePrecision))
 
 }
 
-func textPositionExtendedLabels(position p.Position, styles c.Styles) string {
+func textPositionExtendedLabels(asset c.Asset, styles c.Styles) string {
 
-	if position.Quantity == 0.0 {
+	if asset.Holding.Quantity == 0.0 {
 		return ""
 	}
 
@@ -348,29 +343,29 @@ func textPositionExtendedLabels(position p.Position, styles c.Styles) string {
 		styles.TextLabel("Quantity:")
 }
 
-func textQuoteRange(quote q.Quote, styles c.Styles) string {
+func textQuoteRange(asset c.Asset, styles c.Styles) string {
 
 	textDayRange := ""
 
-	if quote.PriceDayHigh != 0.0 && quote.PriceDayLow != 0.0 {
-		textDayRange = u.ConvertFloatToString(quote.PriceDayLow, quote.IsVariablePrecision) +
+	if asset.QuotePrice.PriceDayHigh != 0.0 && asset.QuotePrice.PriceDayLow != 0.0 {
+		textDayRange = u.ConvertFloatToString(asset.QuotePrice.PriceDayLow, asset.Meta.IsVariablePrecision) +
 			styles.Text(" - ") +
-			u.ConvertFloatToString(quote.PriceDayHigh, quote.IsVariablePrecision) +
+			u.ConvertFloatToString(asset.QuotePrice.PriceDayHigh, asset.Meta.IsVariablePrecision) +
 			"\n" +
-			u.ConvertFloatToString(quote.FiftyTwoWeekLow, quote.IsVariablePrecision) +
+			u.ConvertFloatToString(asset.QuoteExtended.FiftyTwoWeekLow, asset.Meta.IsVariablePrecision) +
 			styles.Text(" - ") +
-			u.ConvertFloatToString(quote.FiftyTwoWeekHigh, quote.IsVariablePrecision)
+			u.ConvertFloatToString(asset.QuoteExtended.FiftyTwoWeekHigh, asset.Meta.IsVariablePrecision)
 	}
 
 	return textDayRange
 
 }
 
-func textQuoteRangeLabels(quote q.Quote, styles c.Styles) string {
+func textQuoteRangeLabels(asset c.Asset, styles c.Styles) string {
 
 	textDayRange := ""
 
-	if quote.PriceDayHigh != 0.0 && quote.PriceDayLow != 0.0 {
+	if asset.QuotePrice.PriceDayHigh != 0.0 && asset.QuotePrice.PriceDayLow != 0.0 {
 		textDayRange = styles.TextLabel("Day Range:") +
 			"\n" +
 			styles.TextLabel("52wk Range:")
@@ -379,14 +374,14 @@ func textQuoteRangeLabels(quote q.Quote, styles c.Styles) string {
 	return textDayRange
 }
 
-func textVolumeMarketCap(quote q.Quote, styles c.Styles) string {
+func textVolumeMarketCap(asset c.Asset, styles c.Styles) string {
 
-	return u.ConvertFloatToString(quote.ResponseQuote.MarketCap, true) +
+	return u.ConvertFloatToString(asset.QuoteExtended.MarketCap, true) +
 		"\n" +
-		u.ConvertFloatToString(quote.ResponseQuote.RegularMarketVolume, true)
+		u.ConvertFloatToString(asset.QuoteExtended.Volume, true)
 }
 
-func textVolumeMarketCapLabels(quote q.Quote, styles c.Styles) string {
+func textVolumeMarketCapLabels(asset c.Asset, styles c.Styles) string {
 
 	return styles.TextLabel("Market Cap:") +
 		"\n" +
@@ -397,15 +392,15 @@ func textSeparator(width int, styles c.Styles) string {
 	return styles.TextLine(strings.Repeat("─", width))
 }
 
-func textTags(quote q.Quote, styles c.Styles) string {
+func textTags(asset c.Asset, styles c.Styles) string {
 
-	currencyText := quote.Currency
+	currencyText := asset.Currency.FromCurrencyCode
 
-	if quote.CurrencyConverted != "" && quote.CurrencyConverted != quote.Currency {
-		currencyText = quote.Currency + " → " + quote.CurrencyConverted
+	if asset.Currency.ToCurrencyCode != "" && asset.Currency.ToCurrencyCode != asset.Currency.FromCurrencyCode {
+		currencyText = asset.Currency.FromCurrencyCode + " → " + asset.Currency.ToCurrencyCode
 	}
 
-	return formatTag(currencyText, styles) + " " + formatTag(exchangeDelayText(quote.ExchangeDelay), styles) + " " + formatTag(quote.ExchangeName, styles)
+	return formatTag(currencyText, styles) + " " + formatTag(exchangeDelayText(asset.Exchange.Delay), styles) + " " + formatTag(asset.Exchange.Name, styles)
 }
 
 func exchangeDelayText(delay float64) string {
@@ -420,12 +415,12 @@ func formatTag(text string, style c.Styles) string {
 	return style.Tag(" " + text + " ")
 }
 
-func textMarketState(quote q.Quote, styles c.Styles) string {
-	if quote.IsRegularTradingSession {
+func textMarketState(asset c.Asset, styles c.Styles) string {
+	if asset.Exchange.IsRegularTradingSession {
 		return styles.TextLabel(" ●  ")
 	}
 
-	if !quote.IsRegularTradingSession && quote.IsActive {
+	if !asset.Exchange.IsRegularTradingSession && asset.Exchange.IsActive {
 		return styles.TextLabel(" ○  ")
 	}
 

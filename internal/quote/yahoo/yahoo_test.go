@@ -45,7 +45,7 @@ var _ = Describe("Yahoo Quote", func() {
 				return resp, nil
 			})
 
-			output := GetAssetQuotes(*client, []string{"NET"})
+			output := GetAssetQuotes(*client, []string{"NET"})()
 			Expect(output[0].QuotePrice.Price).To(Equal(84.98))
 			Expect(output[0].QuotePrice.PricePrevClose).To(Equal(84.00))
 			Expect(output[0].QuotePrice.PriceOpen).To(Equal(85.22))
@@ -84,7 +84,7 @@ var _ = Describe("Yahoo Quote", func() {
 					return resp, nil
 				})
 
-				output := GetAssetQuotes(*client, []string{"NET"})
+				output := GetAssetQuotes(*client, []string{"NET"})()
 				Expect(output[0].QuotePrice.Price).To(Equal(86.03))
 				Expect(output[0].QuotePrice.Change).To(Equal(1.0399933))
 				Expect(output[0].QuotePrice.ChangePercent).To(Equal(1.2238094))
@@ -116,7 +116,7 @@ var _ = Describe("Yahoo Quote", func() {
 						return resp, nil
 					})
 
-					output := GetAssetQuotes(*client, []string{"NET"})
+					output := GetAssetQuotes(*client, []string{"NET"})()
 					Expect(output[0].QuotePrice.Price).To(Equal(84.98))
 					Expect(output[0].QuotePrice.Change).To(Equal(3.0800018))
 					Expect(output[0].QuotePrice.ChangePercent).To(Equal(3.7606857))
@@ -153,7 +153,7 @@ var _ = Describe("Yahoo Quote", func() {
 					return resp, nil
 				})
 
-				output := GetAssetQuotes(*client, []string{"NET"})
+				output := GetAssetQuotes(*client, []string{"NET"})()
 				Expect(output[0].QuotePrice.Price).To(Equal(86.02))
 				Expect(output[0].QuotePrice.Change).To(Equal(4.1199951))
 				Expect(output[0].QuotePrice.ChangePercent).To(Equal(4.9844951))
@@ -187,7 +187,7 @@ var _ = Describe("Yahoo Quote", func() {
 						return resp, nil
 					})
 
-					output := GetAssetQuotes(*client, []string{"NET"})
+					output := GetAssetQuotes(*client, []string{"NET"})()
 					expectedPrice := 84.98
 					expectedChange := 3.0800018
 					expectedChangePercent := 3.7606857
@@ -224,7 +224,7 @@ var _ = Describe("Yahoo Quote", func() {
 					return resp, nil
 				})
 
-				output := GetAssetQuotes(*client, []string{"NET"})
+				output := GetAssetQuotes(*client, []string{"NET"})()
 				Expect(output[0].QuotePrice.Price).To(Equal(84.98))
 				Expect(output[0].QuotePrice.Change).To(Equal(3.0800018))
 				Expect(output[0].QuotePrice.ChangePercent).To(Equal(3.7606857))
@@ -261,7 +261,7 @@ var _ = Describe("Yahoo Quote", func() {
 						return resp, nil
 					})
 
-					output := GetAssetQuotes(*client, []string{"NET"})
+					output := GetAssetQuotes(*client, []string{"NET"})()
 					Expect(output[0].QuotePrice.Price).To(Equal(86.02))
 					Expect(output[0].QuotePrice.Change).To(Equal(4.1199951))
 					Expect(output[0].QuotePrice.ChangePercent).To(Equal(4.9844951))

@@ -9,8 +9,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	c "github.com/achannarasappa/ticker/internal/common"
-	. "github.com/achannarasappa/ticker/internal/position"
-	. "github.com/achannarasappa/ticker/internal/quote"
 	. "github.com/achannarasappa/ticker/internal/ui/component/watchlist"
 )
 
@@ -45,86 +43,89 @@ var _ = Describe("Watchlist", func() {
 			},
 		})
 		m.Width = 175
-		m.Positions = map[string]Position{
-			"STOCK4": {
-				AggregatedLot: AggregatedLot{Symbol: "STOCK4", Quantity: 100.0, Cost: 50.0},
-				Value:         105.0,
-				DayChange:     5.0, DayChangePercent: 5.0,
-				TotalChange: 55.0, TotalChangePercent: 110.0,
-			},
-			"STOCK5": {
-				AggregatedLot: AggregatedLot{Symbol: "STOCK5", Quantity: 100.0, Cost: 150.0},
-				Value:         105.0,
-				DayChange:     5.0, DayChangePercent: 5.0,
-				TotalChange: -45.0, TotalChangePercent: -30.0,
-			},
-			"STOCK6": {
-				AggregatedLot: AggregatedLot{Symbol: "STOCK6", Quantity: 100.0, Cost: 50.0},
-				Value:         95.0,
-				DayChange:     -5.0, DayChangePercent: -5.0,
-				TotalChange: -55.0, TotalChangePercent: -36.67,
-			},
-			"STOCK7": {
-				AggregatedLot: AggregatedLot{Symbol: "STOCK7", Quantity: 100.0, Cost: 50.0},
-				Value:         95.0,
-				DayChange:     -5.0, DayChangePercent: -5.0,
-				TotalChange: 45.0, TotalChangePercent: 90.0,
-			},
-			"STOCK8": {
-				AggregatedLot: AggregatedLot{Symbol: "STOCK8", Quantity: 100.0, Cost: 100.0},
-				Value:         95.0,
-				DayChange:     0.0, DayChangePercent: 0.0,
-				TotalChange: 45.0, TotalChangePercent: 90.0,
-			},
-		}
-		m.Quotes = []Quote{
+		m.Assets = []c.Asset{
 			{
-				ResponseQuote: ResponseQuote{Symbol: "STOCK1", ShortName: "Stock 1 Inc. (gain)", MarketCap: 23467907, RegularMarketVolume: 4239786698},
-				Price:         105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
-				Change: 5.0, ChangePercent: 5.0,
-				IsActive: true, IsRegularTradingSession: true,
+				Symbol: "STOCK1", Name: "Stock 1 Inc. (gain)", QuoteExtended: c.QuoteExtended{MarketCap: 23467907, Volume: 4239786698},
+				QuotePrice: c.QuotePrice{Price: 105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
+					PriceDayLow: 90.00, Change: 5.0, ChangePercent: 5.0},
+				Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: true},
 			},
 			{
-				ResponseQuote: ResponseQuote{Symbol: "STOCK2", ShortName: "Stock 2 Inc. (loss)", FiftyTwoWeekHigh: 150.00},
-				Price:         95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
-				Change: -5.0, ChangePercent: -5.0,
-				IsActive: true, IsRegularTradingSession: true,
+				Symbol: "STOCK2", Name: "Stock 2 Inc. (loss)", QuoteExtended: c.QuoteExtended{FiftyTwoWeekHigh: 150.00},
+				QuotePrice: c.QuotePrice{Price: 95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
+					PriceDayLow: 90.00, Change: -5.0, ChangePercent: -5.0},
+				Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: true},
 			},
 			{
-				ResponseQuote: ResponseQuote{Symbol: "STOCK3", ShortName: "Stock 3 Inc. (gain, after hours)", FiftyTwoWeekHigh: 150.00},
-				Price:         105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
-				Change: 5.0, ChangePercent: 5.0,
-				IsActive: true, IsRegularTradingSession: false,
+				Symbol: "STOCK3", Name: "Stock 3 Inc. (gain, after hours)", QuoteExtended: c.QuoteExtended{FiftyTwoWeekHigh: 150.00},
+				QuotePrice: c.QuotePrice{Price: 105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
+					PriceDayLow: 90.00, Change: 5.0, ChangePercent: 5.0},
+				Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: false},
 			},
 			{
-				ResponseQuote: ResponseQuote{Symbol: "STOCK4", ShortName: "Stock 4 Inc. (position, day gain, total gain)", FiftyTwoWeekHigh: 150.00},
-				Price:         105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
-				Change: 5.0, ChangePercent: 5.0,
-				IsActive: true, IsRegularTradingSession: true,
+				Symbol: "STOCK4", Name: "Stock 4 Inc. (position, day gain, total gain)", QuoteExtended: c.QuoteExtended{FiftyTwoWeekHigh: 150.00},
+				QuotePrice: c.QuotePrice{Price: 105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
+					PriceDayLow: 90.00, Change: 5.0, ChangePercent: 5.0},
+				Holding: c.Holding{
+					Quantity:    100.0,
+					Cost:        50.0,
+					Value:       105.0,
+					DayChange:   c.HoldingChange{Amount: 5.0, Percent: 5.0},
+					TotalChange: c.HoldingChange{Amount: 55.0, Percent: 110.0},
+				},
+				Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: true},
 			},
 			{
-				ResponseQuote: ResponseQuote{Symbol: "STOCK5", ShortName: "Stock 5 Inc. (position, day gain, total loss)", FiftyTwoWeekHigh: 150.00},
-				Price:         105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
-				Change: 5.0, ChangePercent: 5.0,
-				IsActive: true, IsRegularTradingSession: true,
+				Symbol: "STOCK5", Name: "Stock 5 Inc. (position, day gain, total loss)", QuoteExtended: c.QuoteExtended{FiftyTwoWeekHigh: 150.00},
+				QuotePrice: c.QuotePrice{Price: 105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
+					PriceDayLow: 90.00, Change: 5.0, ChangePercent: 5.0},
+				Holding: c.Holding{
+					Quantity:    100.0,
+					Cost:        150.0,
+					Value:       105.0,
+					DayChange:   c.HoldingChange{Amount: 5.0, Percent: 5.0},
+					TotalChange: c.HoldingChange{Amount: -45.0, Percent: -30.0},
+				},
+				Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: true},
 			},
 			{
-				ResponseQuote: ResponseQuote{Symbol: "STOCK6", ShortName: "Stock 6 Inc. (position, day loss, total loss)", FiftyTwoWeekHigh: 150.00},
-				Price:         95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
-				Change: -5.0, ChangePercent: -5.0,
-				IsActive: true, IsRegularTradingSession: true,
+				Symbol: "STOCK6", Name: "Stock 6 Inc. (position, day loss, total loss)", QuoteExtended: c.QuoteExtended{FiftyTwoWeekHigh: 150.00},
+				QuotePrice: c.QuotePrice{Price: 95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
+					PriceDayLow: 90.00, Change: -5.0, ChangePercent: -5.0},
+				Holding: c.Holding{
+					Quantity:    100.0,
+					Cost:        50.0,
+					Value:       95.0,
+					DayChange:   c.HoldingChange{Amount: -5.0, Percent: -5.0},
+					TotalChange: c.HoldingChange{Amount: -55.0, Percent: -36.67},
+				},
+				Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: true},
 			},
 			{
-				ResponseQuote: ResponseQuote{Symbol: "STOCK7", ShortName: "Stock 7 Inc. (position, day loss, total gain)"},
-				Price:         95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
-				Change: -5.0, ChangePercent: -5.0,
-				IsActive: true, IsRegularTradingSession: true,
+				Symbol: "STOCK7", Name: "Stock 7 Inc. (position, day loss, total gain)",
+				QuotePrice: c.QuotePrice{Price: 95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
+					PriceDayLow: 90.00, Change: -5.0, ChangePercent: -5.0},
+				Holding: c.Holding{
+					Quantity:    100.0,
+					Cost:        50.0,
+					Value:       95.0,
+					DayChange:   c.HoldingChange{Amount: -5.0, Percent: -5.0},
+					TotalChange: c.HoldingChange{Amount: 45.0, Percent: 90.0},
+				},
+				Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: true},
 			},
 			{
-				ResponseQuote: ResponseQuote{Symbol: "STOCK8", ShortName: "Stock 8 Inc. (position, closed market)"},
-				Price:         95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00, PriceDayLow: 90.00,
-				Change: 0.0, ChangePercent: 0.0,
-				IsActive: false, IsRegularTradingSession: false,
+				Symbol: "STOCK8", Name: "Stock 8 Inc. (position, closed market)",
+				QuotePrice: c.QuotePrice{Price: 95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
+					PriceDayLow: 90.00, Change: 0.0, ChangePercent: 0.0},
+				Holding: c.Holding{
+					Quantity:    100.0,
+					Cost:        100.0,
+					Value:       95.0,
+					DayChange:   c.HoldingChange{Amount: 0.0, Percent: 0.0},
+					TotalChange: c.HoldingChange{Amount: 45.0, Percent: 90.0},
+				},
+				Exchange: c.Exchange{IsActive: false, IsRegularTradingSession: false},
 			},
 		}
 		expected, _ := ioutil.ReadFile("./snapshots/watchlist-all-options.snap")
@@ -145,39 +146,48 @@ var _ = Describe("Watchlist", func() {
 						Sort:                  "",
 					},
 				})
-				m.Quotes = []Quote{
+				m.Assets = []c.Asset{
 					{
-						ResponseQuote: ResponseQuote{
-							Symbol:    "BTC-USD",
-							ShortName: "Bitcoin",
+
+						Symbol: "BTC-USD",
+						Name:   "Bitcoin",
+						QuotePrice: c.QuotePrice{
+							Price:         50000.0,
+							Change:        10000.0,
+							ChangePercent: 20.0,
 						},
-						Price:                   50000.0,
-						Change:                  10000.0,
-						ChangePercent:           20.0,
-						IsActive:                true,
-						IsRegularTradingSession: true,
+						Exchange: c.Exchange{
+							IsActive:                true,
+							IsRegularTradingSession: true,
+						},
 					},
 					{
-						ResponseQuote: ResponseQuote{
-							Symbol:    "TW",
-							ShortName: "ThoughtWorks",
+
+						Symbol: "TW",
+						Name:   "ThoughtWorks",
+						QuotePrice: c.QuotePrice{
+							Price:         109.04,
+							Change:        3.53,
+							ChangePercent: 5.65,
 						},
-						Price:                   109.04,
-						Change:                  3.53,
-						ChangePercent:           5.65,
-						IsActive:                true,
-						IsRegularTradingSession: false,
+						Exchange: c.Exchange{
+							IsActive:                true,
+							IsRegularTradingSession: false,
+						},
 					},
 					{
-						ResponseQuote: ResponseQuote{
-							Symbol:    "GOOG",
-							ShortName: "Google Inc.",
+
+						Symbol: "GOOG",
+						Name:   "Google Inc.",
+						QuotePrice: c.QuotePrice{
+							Price:         2523.53,
+							Change:        -32.02,
+							ChangePercent: -1.35,
 						},
-						Price:                   2523.53,
-						Change:                  -32.02,
-						ChangePercent:           -1.35,
-						IsActive:                true,
-						IsRegularTradingSession: false,
+						Exchange: c.Exchange{
+							IsActive:                true,
+							IsRegularTradingSession: false,
+						},
 					},
 				}
 
@@ -197,20 +207,25 @@ var _ = Describe("Watchlist", func() {
 					ExtraInfoExchange: true,
 				},
 			})
-			m.Quotes = []Quote{
+			m.Assets = []c.Asset{
 				{
-					ResponseQuote: ResponseQuote{
-						Symbol:        "BTC-USD",
-						ShortName:     "Bitcoin",
-						Currency:      "USD",
-						ExchangeName:  "Cryptocurrency",
-						ExchangeDelay: 0,
+
+					Symbol: "BTC-USD",
+					Name:   "Bitcoin",
+					Currency: c.Currency{
+						FromCurrencyCode: "USD",
 					},
-					Price:                   50000.0,
-					Change:                  10000.0,
-					ChangePercent:           20.0,
-					IsActive:                true,
-					IsRegularTradingSession: true,
+					QuotePrice: c.QuotePrice{
+						Price:         50000.0,
+						Change:        10000.0,
+						ChangePercent: 20.0,
+					},
+					Exchange: c.Exchange{
+						Name:                    "Cryptocurrency",
+						Delay:                   0,
+						IsActive:                true,
+						IsRegularTradingSession: true,
+					},
 				},
 			}
 			expected := " USD   Real-Time   Cryptocurrency                                               "
@@ -225,20 +240,24 @@ var _ = Describe("Watchlist", func() {
 						ExtraInfoExchange: true,
 					},
 				})
-				m.Quotes = []Quote{
+				m.Assets = []c.Asset{
 					{
-						ResponseQuote: ResponseQuote{
-							Symbol:        "BTC-USD",
-							ShortName:     "Bitcoin",
-							Currency:      "USD",
-							ExchangeName:  "Cryptocurrency",
-							ExchangeDelay: 15,
+						Symbol: "BTC-USD",
+						Name:   "Bitcoin",
+						Currency: c.Currency{
+							FromCurrencyCode: "USD",
 						},
-						Price:                   50000.0,
-						Change:                  10000.0,
-						ChangePercent:           20.0,
-						IsActive:                true,
-						IsRegularTradingSession: true,
+						QuotePrice: c.QuotePrice{
+							Price:         50000.0,
+							Change:        10000.0,
+							ChangePercent: 20.0,
+						},
+						Exchange: c.Exchange{
+							Name:                    "Cryptocurrency",
+							Delay:                   15,
+							IsActive:                true,
+							IsRegularTradingSession: true,
+						},
 					},
 				}
 				expected := " USD   Delayed 15min   Cryptocurrency                                           "
@@ -255,21 +274,25 @@ var _ = Describe("Watchlist", func() {
 						Currency:          "EUR",
 					},
 				})
-				m.Quotes = []Quote{
+				m.Assets = []c.Asset{
 					{
-						ResponseQuote: ResponseQuote{
-							Symbol:        "APPL",
-							ShortName:     "Apple, Inc",
-							Currency:      "USD",
-							ExchangeName:  "NASDAQ",
-							ExchangeDelay: 0,
+						Symbol: "APPL",
+						Name:   "Apple, Inc",
+						Currency: c.Currency{
+							FromCurrencyCode: "USD",
+							ToCurrencyCode:   "EUR",
 						},
-						Price:                   5000.0,
-						Change:                  1000.0,
-						ChangePercent:           20.0,
-						IsActive:                true,
-						IsRegularTradingSession: true,
-						CurrencyConverted:       "EUR",
+						QuotePrice: c.QuotePrice{
+							Price:         5000.0,
+							Change:        1000.0,
+							ChangePercent: 20.0,
+						},
+						Exchange: c.Exchange{
+							Name:                    "NASDAQ",
+							Delay:                   0,
+							IsActive:                true,
+							IsRegularTradingSession: true,
+						},
 					},
 				}
 				m.Context.Config.Currency = "EUR"
@@ -289,28 +312,30 @@ var _ = Describe("Watchlist", func() {
 				},
 			})
 			m.Width = 165
-			m.Quotes = []Quote{
+			m.Assets = []c.Asset{
 				{
-					ResponseQuote: ResponseQuote{
-						Symbol:                     "BTC-USD",
-						ShortName:                  "Bitcoin",
-						RegularMarketPreviousClose: 1000.0,
-						RegularMarketOpen:          1000.0,
-						RegularMarketDayHigh:       1500.0,
-						RegularMarketDayLow:        500.0,
-						FiftyTwoWeekHigh:           2000.0,
-						FiftyTwoWeekLow:            300.0,
+					Symbol: "BTC-USD",
+					Name:   "Bitcoin",
+					QuotePrice: c.QuotePrice{
+						Price:          5000.0,
+						PricePrevClose: 1000.0,
+						PriceOpen:      1000.0,
+						PriceDayHigh:   200.0,
+						PriceDayLow:    100.0,
+						Change:         1000.0,
+						ChangePercent:  20.0,
 					},
-					Price:                   5000.0,
-					PricePrevClose:          1000.0,
-					PriceOpen:               1000.0,
-					PriceDayHigh:            200.0,
-					PriceDayLow:             100.0,
-					Change:                  1000.0,
-					ChangePercent:           20.0,
-					IsActive:                true,
-					IsRegularTradingSession: true,
-					IsVariablePrecision:     false,
+					QuoteExtended: c.QuoteExtended{
+						FiftyTwoWeekHigh: 2000.0,
+						FiftyTwoWeekLow:  300.0,
+					},
+					Exchange: c.Exchange{
+						IsActive:                true,
+						IsRegularTradingSession: true,
+					},
+					Meta: c.Meta{
+						IsVariablePrecision: false,
+					},
 				},
 			}
 
@@ -329,21 +354,21 @@ var _ = Describe("Watchlist", func() {
 					},
 				})
 				m.Width = 135
-				m.Quotes = []Quote{
+				m.Assets = []c.Asset{
 					{
-						ResponseQuote: ResponseQuote{
-							Symbol:                     "BTC-USD",
-							ShortName:                  "Bitcoin",
-							RegularMarketPreviousClose: 1000.0,
-							RegularMarketOpen:          1000.0,
+						Symbol: "BTC-USD",
+						Name:   "Bitcoin",
+						QuotePrice: c.QuotePrice{
+							Price:          5000.0,
+							PricePrevClose: 1000.0,
+							PriceOpen:      1000.0,
+							Change:         1000.0,
+							ChangePercent:  20.0,
 						},
-						Price:                   5000.0,
-						PricePrevClose:          1000.0,
-						PriceOpen:               1000.0,
-						Change:                  1000.0,
-						ChangePercent:           20.0,
-						IsActive:                true,
-						IsRegularTradingSession: true,
+						Exchange: c.Exchange{
+							IsActive:                true,
+							IsRegularTradingSession: true,
+						},
 					},
 				}
 
@@ -364,32 +389,26 @@ var _ = Describe("Watchlist", func() {
 				},
 			})
 			m.Width = 120
-			m.Quotes = []Quote{
+			m.Assets = []c.Asset{
 				{
-					ResponseQuote: ResponseQuote{
-						Symbol:             "PTON",
-						ShortName:          "Peloton",
-						RegularMarketPrice: 100.0,
+					Symbol: "PTON",
+					Name:   "Peloton",
+					QuotePrice: c.QuotePrice{
+						Price:         100.0,
+						Change:        10.0,
+						ChangePercent: 10.0,
 					},
-					Price:                   100.0,
-					Change:                  10.0,
-					ChangePercent:           10.0,
-					IsActive:                true,
-					IsRegularTradingSession: true,
-				},
-			}
-			m.Positions = map[string]Position{
-				"PTON": {
-					AggregatedLot: AggregatedLot{
-						Symbol:   "PTON",
-						Quantity: 100.0,
-						Cost:     50.0,
+					Holding: c.Holding{
+						Quantity:    100.0,
+						Cost:        50.0,
+						Value:       105.0,
+						DayChange:   c.HoldingChange{Amount: 5.0, Percent: 5.0},
+						TotalChange: c.HoldingChange{Amount: 55.0, Percent: 110.0},
 					},
-					Value:              105.0,
-					DayChange:          5.0,
-					DayChangePercent:   5.0,
-					TotalChange:        55.0,
-					TotalChangePercent: 110.0,
+					Exchange: c.Exchange{
+						IsActive:                true,
+						IsRegularTradingSession: true,
+					},
 				},
 			}
 			Expect(removeFormatting(m.View())).To(ContainSubstring("Quantity"))
@@ -407,32 +426,26 @@ var _ = Describe("Watchlist", func() {
 					},
 				})
 				m.Width = 120
-				m.Quotes = []Quote{
+				m.Assets = []c.Asset{
 					{
-						ResponseQuote: ResponseQuote{
-							Symbol:             "PENNY",
-							ShortName:          "A Penny Stock",
-							RegularMarketPrice: 0.10,
+						Symbol: "PENNY",
+						Name:   "A Penny Stock",
+						QuotePrice: c.QuotePrice{
+							Price:         0.11,
+							Change:        0.01,
+							ChangePercent: 10.0,
 						},
-						Price:                   0.11,
-						Change:                  0.01,
-						ChangePercent:           10.0,
-						IsActive:                true,
-						IsRegularTradingSession: true,
-					},
-				}
-				m.Positions = map[string]Position{
-					"PENNY": {
-						AggregatedLot: AggregatedLot{
-							Symbol:   "PENNY",
-							Quantity: 92709.0,
-							Cost:     0.10,
+						Holding: c.Holding{
+							Quantity:    92709.0,
+							Cost:        0.10,
+							Value:       9270.90,
+							DayChange:   c.HoldingChange{Amount: 10.0, Percent: 10.0},
+							TotalChange: c.HoldingChange{Amount: 10.0, Percent: 10.0},
 						},
-						Value:              9270.90,
-						DayChange:          10.0,
-						DayChangePercent:   10.0,
-						TotalChange:        10.0,
-						TotalChangePercent: 10.0,
+						Exchange: c.Exchange{
+							IsActive:                true,
+							IsRegularTradingSession: true,
+						},
 					},
 				}
 				Expect(removeFormatting(m.View())).To(ContainSubstring("Quantity"))
@@ -451,18 +464,19 @@ var _ = Describe("Watchlist", func() {
 					},
 				})
 				m.Width = 120
-				m.Quotes = []Quote{
+				m.Assets = []c.Asset{
 					{
-						ResponseQuote: ResponseQuote{
-							Symbol:             "PTON",
-							ShortName:          "Peloton",
-							RegularMarketPrice: 100.0,
+						Symbol: "PTON",
+						Name:   "Peloton",
+						QuotePrice: c.QuotePrice{
+							Price:         100.0,
+							Change:        10.0,
+							ChangePercent: 10.0,
 						},
-						Price:                   100.0,
-						Change:                  10.0,
-						ChangePercent:           10.0,
-						IsActive:                true,
-						IsRegularTradingSession: true,
+						Exchange: c.Exchange{
+							IsActive:                true,
+							IsRegularTradingSession: true,
+						},
 					},
 				}
 				Expect(removeFormatting(m.View())).ToNot(ContainSubstring("Quantity"))

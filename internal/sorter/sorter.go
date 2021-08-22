@@ -3,12 +3,11 @@ package sorter
 import (
 	"sort"
 
-	p "github.com/achannarasappa/ticker/internal/position"
-	q "github.com/achannarasappa/ticker/internal/quote"
+	c "github.com/achannarasappa/ticker/internal/common"
 )
 
 // Sorter represents a function that sorts quotes
-type Sorter func(quotes []q.Quote, positions map[string]p.Position) []q.Quote
+type Sorter func([]c.Asset) []c.Asset
 
 // NewSorter creates a sorting function
 func NewSorter(sort string) Sorter {
@@ -24,116 +23,116 @@ var sortDict = map[string]Sorter{
 	"user":  sortByUser,
 }
 
-func sortByUser(quoteIn []q.Quote, positions map[string]p.Position) []q.Quote {
+func sortByUser(assetsIn []c.Asset) []c.Asset {
 
-	quoteCount := len(quoteIn)
+	assetCount := len(assetsIn)
 
-	if quoteCount <= 0 {
-		return quoteIn
+	if assetCount <= 0 {
+		return assetsIn
 	}
 
-	quotes := make([]q.Quote, quoteCount)
-	copy(quotes, quoteIn)
+	assets := make([]c.Asset, assetCount)
+	copy(assets, assetsIn)
 
-	sort.SliceStable(quotes, func(i, j int) bool {
+	sort.SliceStable(assets, func(i, j int) bool {
 
-		prevIndex := quoteCount
-		nextIndex := quoteCount
+		prevIndex := assetCount
+		nextIndex := assetCount
 
-		if position, ok := positions[quotes[i].Symbol]; ok {
-			prevIndex = position.AggregatedLot.OrderIndex
+		if assets[i].Holding != (c.Holding{}) {
+			prevIndex = assets[i].Meta.OrderIndex
 		}
 
-		if position, ok := positions[quotes[j].Symbol]; ok {
-			nextIndex = position.AggregatedLot.OrderIndex
+		if assets[j].Holding != (c.Holding{}) {
+			nextIndex = assets[j].Meta.OrderIndex
 		}
 
 		return nextIndex > prevIndex
 	})
 
-	return quotes
+	return assets
 
 }
 
-func sortByAlpha(quoteIn []q.Quote, positions map[string]p.Position) []q.Quote {
+func sortByAlpha(assetsIn []c.Asset) []c.Asset {
 
-	quoteCount := len(quoteIn)
+	assetCount := len(assetsIn)
 
-	if quoteCount <= 0 {
-		return quoteIn
+	if assetCount <= 0 {
+		return assetsIn
 	}
 
-	quotes := make([]q.Quote, quoteCount)
-	copy(quotes, quoteIn)
+	assets := make([]c.Asset, assetCount)
+	copy(assets, assetsIn)
 
-	sort.SliceStable(quotes, func(i, j int) bool {
-		return quotes[j].Symbol > quotes[i].Symbol
+	sort.SliceStable(assets, func(i, j int) bool {
+		return assets[j].Symbol > assets[i].Symbol
 	})
 
-	return quotes
+	return assets
 }
 
-func sortByValue(quoteIn []q.Quote, positions map[string]p.Position) []q.Quote {
+func sortByValue(assetsIn []c.Asset) []c.Asset {
 
-	quoteCount := len(quoteIn)
+	assetCount := len(assetsIn)
 
-	if quoteCount <= 0 {
-		return quoteIn
+	if assetCount <= 0 {
+		return assetsIn
 	}
 
-	quotes := make([]q.Quote, quoteCount)
-	copy(quotes, quoteIn)
+	assets := make([]c.Asset, assetCount)
+	copy(assets, assetsIn)
 
-	activeQuotes, inactiveQuotes := splitActiveQuotes(quotes)
+	activeAssets, inactiveAssets := splitActiveAssets(assets)
 
-	sort.SliceStable(inactiveQuotes, func(i, j int) bool {
-		return positions[inactiveQuotes[j].Symbol].Value < positions[inactiveQuotes[i].Symbol].Value
+	sort.SliceStable(inactiveAssets, func(i, j int) bool {
+		return inactiveAssets[j].Holding.Value < inactiveAssets[i].Holding.Value
 	})
 
-	sort.SliceStable(activeQuotes, func(i, j int) bool {
-		return positions[activeQuotes[j].Symbol].Value < positions[activeQuotes[i].Symbol].Value
+	sort.SliceStable(activeAssets, func(i, j int) bool {
+		return activeAssets[j].Holding.Value < activeAssets[i].Holding.Value
 	})
 
-	return append(activeQuotes, inactiveQuotes...)
+	return append(activeAssets, inactiveAssets...)
 }
 
-func sortByChange(quoteIn []q.Quote, positions map[string]p.Position) []q.Quote {
+func sortByChange(assetsIn []c.Asset) []c.Asset {
 
-	quoteCount := len(quoteIn)
+	assetCount := len(assetsIn)
 
-	if quoteCount <= 0 {
-		return quoteIn
+	if assetCount <= 0 {
+		return assetsIn
 	}
 
-	quotes := make([]q.Quote, quoteCount)
-	copy(quotes, quoteIn)
+	assets := make([]c.Asset, assetCount)
+	copy(assets, assetsIn)
 
-	activeQuotes, inactiveQuotes := splitActiveQuotes(quotes)
+	activeAssets, inactiveAssets := splitActiveAssets(assets)
 
-	sort.SliceStable(activeQuotes, func(i, j int) bool {
-		return activeQuotes[j].ChangePercent < activeQuotes[i].ChangePercent
+	sort.SliceStable(activeAssets, func(i, j int) bool {
+		return activeAssets[j].QuotePrice.ChangePercent < activeAssets[i].QuotePrice.ChangePercent
 	})
 
-	sort.SliceStable(inactiveQuotes, func(i, j int) bool {
-		return inactiveQuotes[j].ChangePercent < inactiveQuotes[i].ChangePercent
+	sort.SliceStable(inactiveAssets, func(i, j int) bool {
+		return inactiveAssets[j].QuotePrice.ChangePercent < inactiveAssets[i].QuotePrice.ChangePercent
 	})
 
-	return append(activeQuotes, inactiveQuotes...)
+	return append(activeAssets, inactiveAssets...)
 
 }
 
-func splitActiveQuotes(quotes []q.Quote) ([]q.Quote, []q.Quote) {
+func splitActiveAssets(assets []c.Asset) ([]c.Asset, []c.Asset) {
 
-	activeQuotes := make([]q.Quote, 0)
-	inactiveQuotes := make([]q.Quote, 0)
+	activeAssets := make([]c.Asset, 0)
+	inactiveAssets := make([]c.Asset, 0)
 
-	for _, quote := range quotes {
-		if quote.IsActive {
-			activeQuotes = append(activeQuotes, quote)
+	for _, asset := range assets {
+		if asset.Exchange.IsActive {
+			activeAssets = append(activeAssets, asset)
 		} else {
-			inactiveQuotes = append(inactiveQuotes, quote)
+			inactiveAssets = append(inactiveAssets, asset)
 		}
 	}
 
-	return activeQuotes, inactiveQuotes
+	return activeAssets, inactiveAssets
 }

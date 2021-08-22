@@ -5,9 +5,9 @@ import (
 	"time"
 
 	grid "github.com/achannarasappa/term-grid"
+	"github.com/achannarasappa/ticker/internal/asset"
 	c "github.com/achannarasappa/ticker/internal/common"
-	"github.com/achannarasappa/ticker/internal/position"
-	"github.com/achannarasappa/ticker/internal/quote"
+	quote "github.com/achannarasappa/ticker/internal/quote/yahoo"
 	"github.com/achannarasappa/ticker/internal/ui/component/summary"
 	"github.com/achannarasappa/ticker/internal/ui/component/watchlist"
 
@@ -31,8 +31,7 @@ type Model struct {
 	ctx             c.Context
 	ready           bool
 	headerHeight    int
-	getQuotes       func() []quote.Quote
-	getPositions    func([]quote.Quote) (map[string]position.Position, position.PositionSummary)
+	getQuotes       func() []c.AssetQuote
 	requestInterval int
 	viewport        viewport.Model
 	watchlist       watchlist.Model
@@ -57,16 +56,14 @@ func (m Model) updateQuotes() tea.Cmd {
 // NewModel is the constructor for UI model
 func NewModel(dep c.Dependencies, ctx c.Context) Model {
 
-	aggregatedLots := position.GetLots(ctx.Config.Lots)
-	symbols := position.GetSymbols(ctx.Config, aggregatedLots)
+	symbols := asset.GetSymbols(ctx.Config)
 
 	return Model{
 		ctx:             ctx,
 		headerHeight:    getVerticalMargin(ctx.Config),
 		ready:           false,
 		requestInterval: ctx.Config.RefreshInterval,
-		getQuotes:       quote.GetQuotes(ctx, *dep.HttpClient, symbols),
-		getPositions:    position.GetPositions(ctx, aggregatedLots),
+		getQuotes:       quote.GetAssetQuotes(*dep.HttpClient, symbols),
 		watchlist:       watchlist.NewModel(ctx),
 		summary:         summary.NewModel(ctx),
 	}
@@ -83,7 +80,7 @@ func (m Model) Init() tea.Cmd {
 }
 
 type quoteMsg struct {
-	quotes []quote.Quote
+	quotes []c.AssetQuote
 	time   string
 }
 
@@ -118,11 +115,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetContent(m.watchlist.View())
 
 	case quoteMsg:
-		positions, positionSummary := m.getPositions(msg.quotes)
-		m.watchlist.Quotes = msg.quotes
-		m.watchlist.Positions = positions
+		assets, holdingSummary := asset.GetAssets(m.ctx, msg.quotes)
+		m.watchlist.Assets = assets
 		m.lastUpdateTime = msg.time
-		m.summary.Summary = positionSummary
+		m.summary.Summary = holdingSummary
 		if m.ready {
 			m.viewport.SetContent(m.watchlist.View())
 		}

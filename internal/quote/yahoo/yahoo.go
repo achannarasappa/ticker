@@ -151,12 +151,14 @@ func transformResponseQuotes(responseQuotes []ResponseQuote) []c.AssetQuote {
 }
 
 // GetAssetQuotes issues a HTTP request to retrieve quotes from the API and process the response
-func GetAssetQuotes(client resty.Client, symbols []string) []c.AssetQuote {
-	symbolsString := strings.Join(symbols, ",")
-	url := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=%s", symbolsString)
-	res, _ := client.R().
-		SetResult(Response{}).
-		Get(url)
+func GetAssetQuotes(client resty.Client, symbols []string) func() []c.AssetQuote {
+	return func() []c.AssetQuote {
+		symbolsString := strings.Join(symbols, ",")
+		url := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=%s", symbolsString)
+		res, _ := client.R().
+			SetResult(Response{}).
+			Get(url)
 
-	return transformResponseQuotes((res.Result().(*Response)).QuoteResponse.Quotes)
+		return transformResponseQuotes((res.Result().(*Response)).QuoteResponse.Quotes)
+	}
 }

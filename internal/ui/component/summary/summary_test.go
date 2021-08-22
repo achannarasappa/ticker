@@ -3,8 +3,8 @@ package summary_test
 import (
 	"strings"
 
+	"github.com/achannarasappa/ticker/internal/asset"
 	c "github.com/achannarasappa/ticker/internal/common"
-	"github.com/achannarasappa/ticker/internal/position"
 	. "github.com/achannarasappa/ticker/internal/ui/component/summary"
 
 	"github.com/acarl005/stripansi"
@@ -32,13 +32,17 @@ var _ = Describe("Summary", func() {
 		It("should render a summary with up arrow", func() {
 			m := NewModel(ctxFixture)
 			m.Width = 120
-			m.Summary = position.PositionSummary{
-				Value:            10000,
-				Cost:             1000,
-				Change:           9000,
-				DayChange:        100.0,
-				ChangePercent:    1000.0,
-				DayChangePercent: 10.0,
+			m.Summary = asset.HoldingSummary{
+				Value: 10000,
+				Cost:  1000,
+				DayChange: c.HoldingChange{
+					Amount:  100.0,
+					Percent: 10.0,
+				},
+				TotalChange: c.HoldingChange{
+					Amount:  9000,
+					Percent: 1000.0,
+				},
 			}
 			Expect(removeFormatting(m.View())).To(Equal(strings.Join([]string{
 				"Day Change: ↑ 100.00 (10.00%) • Change: ↑ 9000.00 (1000.00%)  • Value: 10000.00  • Cost: 1000.00  ",
@@ -51,13 +55,17 @@ var _ = Describe("Summary", func() {
 		It("should render a summary with down arrow", func() {
 			m := NewModel(ctxFixture)
 			m.Width = 120
-			m.Summary = position.PositionSummary{
-				Value:            1000,
-				Cost:             10000,
-				Change:           -9000,
-				DayChange:        -100.0,
-				ChangePercent:    -1000.0,
-				DayChangePercent: -10.0,
+			m.Summary = asset.HoldingSummary{
+				Value: 1000,
+				Cost:  10000,
+				DayChange: c.HoldingChange{
+					Amount:  -100.0,
+					Percent: -10.0,
+				},
+				TotalChange: c.HoldingChange{
+					Amount:  -9000,
+					Percent: -1000.0,
+				},
 			}
 			Expect(removeFormatting(m.View())).To(Equal(strings.Join([]string{
 				"Day Change: ↓ -100.00 (-10.00%) • Change: ↓ -9000.00 (-1000.00%)  • Value: 1000.00  • Cost: 10000.00",

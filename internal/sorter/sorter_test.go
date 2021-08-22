@@ -1,8 +1,7 @@
 package sorter_test
 
 import (
-	. "github.com/achannarasappa/ticker/internal/position"
-	. "github.com/achannarasappa/ticker/internal/quote"
+	c "github.com/achannarasappa/ticker/internal/common"
 	. "github.com/achannarasappa/ticker/internal/sorter"
 
 	. "github.com/onsi/ginkgo"
@@ -12,101 +11,110 @@ import (
 var _ = Describe("Sorter", func() {
 
 	Describe("NewSorter", func() {
-		bitcoinQuote := Quote{
-			ResponseQuote: ResponseQuote{
-				Symbol:                     "BTC-USD",
-				ShortName:                  "Bitcoin",
-				RegularMarketPreviousClose: 10000.0,
-				RegularMarketOpen:          10000.0,
-				RegularMarketDayRange:      "10000 - 10000",
+		bitcoinQuote := c.Asset{
+			Symbol: "BTC-USD",
+			Name:   "Bitcoin",
+			QuotePrice: c.QuotePrice{
+				PricePrevClose: 10000.0,
+				PriceOpen:      10000.0,
+				Price:          50000.0,
+				Change:         10000.0,
+				ChangePercent:  20.0,
 			},
-			Price:                   50000.0,
-			Change:                  10000.0,
-			ChangePercent:           20.0,
-			IsActive:                true,
-			IsRegularTradingSession: true,
-		}
-		twQuote := Quote{
-			ResponseQuote: ResponseQuote{
-				Symbol:    "TW",
-				ShortName: "ThoughtWorks",
+			Holding: c.Holding{
+				Value: 50000.0,
 			},
-			Price:                   109.04,
-			Change:                  3.53,
-			ChangePercent:           5.65,
-			IsActive:                true,
-			IsRegularTradingSession: false,
-		}
-		googleQuote := Quote{
-			ResponseQuote: ResponseQuote{
-				Symbol:    "GOOG",
-				ShortName: "Google Inc.",
+			Exchange: c.Exchange{
+				IsActive:                true,
+				IsRegularTradingSession: true,
 			},
-			Price:                   2523.53,
-			Change:                  -32.02,
-			ChangePercent:           -1.35,
-			IsActive:                true,
-			IsRegularTradingSession: false,
-		}
-		msftQuote := Quote{
-			ResponseQuote: ResponseQuote{
-				Symbol:    "MSFT",
-				ShortName: "Microsoft Corporation",
+			Meta: c.Meta{
+				OrderIndex: 1,
 			},
-			Price:                   242.01,
-			Change:                  -0.99,
-			ChangePercent:           -0.41,
-			IsActive:                false,
-			IsRegularTradingSession: false,
 		}
-		rblxQuote := Quote{
-			ResponseQuote: ResponseQuote{
-				Symbol:    "RBLX",
-				ShortName: "Roblox",
+		twQuote := c.Asset{
+			Symbol: "TW",
+			Name:   "ThoughtWorks",
+			QuotePrice: c.QuotePrice{
+				Price:         109.04,
+				Change:        3.53,
+				ChangePercent: 5.65,
 			},
-			Price:                   85.00,
-			Change:                  10.00,
-			ChangePercent:           7.32,
-			IsActive:                false,
-			IsRegularTradingSession: false,
+			Exchange: c.Exchange{
+				IsActive:                true,
+				IsRegularTradingSession: false,
+			},
 		}
-		quotes := []Quote{
+		googleQuote := c.Asset{
+			Symbol: "GOOG",
+			Name:   "Google Inc.",
+			QuotePrice: c.QuotePrice{
+				Price:         2523.53,
+				Change:        -32.02,
+				ChangePercent: -1.35,
+			},
+			Holding: c.Holding{
+				Value: 2523.53,
+			},
+			Exchange: c.Exchange{
+				IsActive:                true,
+				IsRegularTradingSession: false,
+			},
+			Meta: c.Meta{
+				OrderIndex: 0,
+			},
+		}
+		msftQuote := c.Asset{
+			Symbol: "MSFT",
+			Name:   "Microsoft Corporation",
+			QuotePrice: c.QuotePrice{
+				Price:         242.01,
+				Change:        -0.99,
+				ChangePercent: -0.41,
+			},
+			Exchange: c.Exchange{
+				IsActive:                false,
+				IsRegularTradingSession: false,
+			},
+		}
+		rblxQuote := c.Asset{
+			Symbol: "RBLX",
+			Name:   "Roblox",
+			QuotePrice: c.QuotePrice{
+				Price:         85.00,
+				Change:        10.00,
+				ChangePercent: 7.32,
+			},
+			Exchange: c.Exchange{
+				IsActive:                false,
+				IsRegularTradingSession: false,
+			},
+		}
+		assets := []c.Asset{
 			bitcoinQuote,
 			twQuote,
 			googleQuote,
 			msftQuote,
 		}
 
-		positions := map[string]Position{
-			"BTC-USD": {
-				Value: 50000.0,
-				AggregatedLot: AggregatedLot{
-					OrderIndex: 1,
-				},
-			},
-			"GOOG": {
-				Value: 2523.53,
-				AggregatedLot: AggregatedLot{
-					OrderIndex: 0,
-				},
-			},
-		}
 		When("providing no sort parameter", func() {
 			It("should sort by default (change percent)", func() {
 				sorter := NewSorter("")
 
-				coinQuote := Quote{
-					ResponseQuote: ResponseQuote{
-						Symbol:    "COIN",
-						ShortName: "Coinbase",
+				coinQuote := c.Asset{
+					Symbol: "COIN",
+					Name:   "Coinbase",
+					QuotePrice: c.QuotePrice{
+						Price:         220.00,
+						Change:        20.00,
+						ChangePercent: 10.00,
 					},
-					Price:                   220.00,
-					Change:                  20.00,
-					ChangePercent:           10.00,
-					IsActive:                false,
-					IsRegularTradingSession: false,
+					Exchange: c.Exchange{
+						IsActive:                false,
+						IsRegularTradingSession: false,
+					},
 				}
-				quotes := []Quote{
+				assets := []c.Asset{
 					rblxQuote,
 					bitcoinQuote,
 					twQuote,
@@ -115,8 +123,8 @@ var _ = Describe("Sorter", func() {
 					coinQuote,
 				}
 
-				sortedQuotes := sorter(quotes, positions)
-				expected := []Quote{
+				sortedQuotes := sorter(assets)
+				expected := []c.Asset{
 					bitcoinQuote,
 					twQuote,
 					googleQuote,
@@ -132,8 +140,8 @@ var _ = Describe("Sorter", func() {
 			It("should sort by alphabetical order", func() {
 				sorter := NewSorter("alpha")
 
-				sortedQuotes := sorter(quotes, positions)
-				expected := []Quote{
+				sortedQuotes := sorter(assets)
+				expected := []c.Asset{
 					bitcoinQuote,
 					googleQuote,
 					msftQuote,
@@ -147,36 +155,30 @@ var _ = Describe("Sorter", func() {
 			It("should sort position value, with inactive quotes last", func() {
 				sorter := NewSorter("value")
 
-				positions := map[string]Position{
-					"BTC-USD": {
-						Value: 50000.0,
-					},
-					"GOOG": {
-						Value: 2523.53,
-					},
-					"RBLX": {
-						Value: 900.00,
-					},
-					"MSFT": {
-						Value: 100.00,
-					},
+				bitcoinQuoteWithHolding := bitcoinQuote
+				bitcoinQuoteWithHolding.Holding.Value = 50000.0
+				googleQuoteWithHolding := googleQuote
+				googleQuoteWithHolding.Holding.Value = 2523.53
+				rblxQuoteWithHolding := rblxQuote
+				rblxQuoteWithHolding.Holding.Value = 900.00
+				msftQuoteWithHolding := msftQuote
+				msftQuoteWithHolding.Holding.Value = 100.00
+
+				assets := []c.Asset{
+					bitcoinQuoteWithHolding,
+					twQuote,
+					googleQuoteWithHolding,
+					msftQuoteWithHolding,
+					rblxQuoteWithHolding,
 				}
 
-				quotes := []Quote{
-					bitcoinQuote,
+				sortedQuotes := sorter(assets)
+				expected := []c.Asset{
+					bitcoinQuoteWithHolding,
+					googleQuoteWithHolding,
 					twQuote,
-					googleQuote,
-					msftQuote,
-					rblxQuote,
-				}
-
-				sortedQuotes := sorter(quotes, positions)
-				expected := []Quote{
-					bitcoinQuote,
-					googleQuote,
-					twQuote,
-					rblxQuote,
-					msftQuote,
+					rblxQuoteWithHolding,
+					msftQuoteWithHolding,
 				}
 
 				Expect(sortedQuotes).To(Equal(expected))
@@ -186,8 +188,8 @@ var _ = Describe("Sorter", func() {
 			It("should sort by the user defined order for positions and watchlist", func() {
 				sorter := NewSorter("user")
 
-				sortedQuotes := sorter(quotes, positions)
-				expected := []Quote{
+				sortedQuotes := sorter(assets)
+				expected := []c.Asset{
 					googleQuote,
 					bitcoinQuote,
 					twQuote,
@@ -202,8 +204,8 @@ var _ = Describe("Sorter", func() {
 				It("should return no quotes", func() {
 					sorter := NewSorter("")
 
-					sortedQuotes := sorter([]Quote{}, map[string]Position{})
-					expected := []Quote{}
+					sortedQuotes := sorter([]c.Asset{})
+					expected := []c.Asset{}
 					Expect(sortedQuotes).To(Equal(expected))
 				})
 			})
@@ -211,8 +213,8 @@ var _ = Describe("Sorter", func() {
 				It("should return no quotes", func() {
 					sorter := NewSorter("alpha")
 
-					sortedQuotes := sorter([]Quote{}, map[string]Position{})
-					expected := []Quote{}
+					sortedQuotes := sorter([]c.Asset{})
+					expected := []c.Asset{}
 					Expect(sortedQuotes).To(Equal(expected))
 				})
 			})
@@ -220,8 +222,8 @@ var _ = Describe("Sorter", func() {
 				It("should return no quotes", func() {
 					sorter := NewSorter("value")
 
-					sortedQuotes := sorter([]Quote{}, map[string]Position{})
-					expected := []Quote{}
+					sortedQuotes := sorter([]c.Asset{})
+					expected := []c.Asset{}
 					Expect(sortedQuotes).To(Equal(expected))
 				})
 			})
@@ -229,8 +231,8 @@ var _ = Describe("Sorter", func() {
 				It("should return no quotes", func() {
 					sorter := NewSorter("user")
 
-					sortedQuotes := sorter([]Quote{}, map[string]Position{})
-					expected := []Quote{}
+					sortedQuotes := sorter([]c.Asset{})
+					expected := []c.Asset{}
 					Expect(sortedQuotes).To(Equal(expected))
 				})
 			})

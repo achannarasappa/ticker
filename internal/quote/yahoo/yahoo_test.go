@@ -273,6 +273,39 @@ var _ = Describe("Yahoo Quote", func() {
 				})
 			})
 		})
+
+		When("the quote is for a cryptocurrency", func() {
+			It("should should set the asset class to cryptocurrency", func() {
+				responseFixture := `{
+					"quoteResponse": {
+						"result": [
+							{
+								"marketState": "PRE",
+								"shortName": "Cloudflare, Inc.",
+								"preMarketChange": 1.0399933,
+								"preMarketChangePercent": 1.2238094,
+								"preMarketPrice": 86.03,
+								"regularMarketChange": 3.0800018,
+								"regularMarketChangePercent": 3.7606857,
+								"regularMarketPrice": 84.98,
+								"symbol": "BTC-USD",
+								"quoteType": "CRYPTOCURRENCY"
+							}
+						],
+						"error": null
+					}
+				}`
+				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=BTC-USD"
+				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+					resp := httpmock.NewStringResponse(200, responseFixture)
+					resp.Header.Set("Content-Type", "application/json")
+					return resp, nil
+				})
+
+				output := GetAssetQuotes(*client, []string{"BTC-USD"})()
+				Expect(output[0].Class).To(Equal(c.AssetClassCryptocurrency))
+			})
+		})
 	})
 
 	Describe("GetCurrencyRates", func() {

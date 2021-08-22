@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/achannarasappa/ticker/internal/asset"
 	c "github.com/achannarasappa/ticker/internal/common"
-	"github.com/achannarasappa/ticker/internal/currency"
-	"github.com/achannarasappa/ticker/internal/position"
+	quoteYahoo "github.com/achannarasappa/ticker/internal/quote/yahoo"
 	"github.com/achannarasappa/ticker/internal/ui/util"
 
 	"github.com/adrg/xdg"
@@ -113,10 +113,9 @@ func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {
 
 func getReference(config c.Config, client resty.Client) (c.Reference, error) {
 
-	aggregatedLots := position.GetLots(config.Lots)
-	symbols := position.GetSymbols(config, aggregatedLots)
+	symbols := asset.GetSymbols(config)
 
-	currencyRates, err := currency.GetCurrencyRates(client, symbols, config.Currency)
+	currencyRates, err := quoteYahoo.GetCurrencyRates(client, symbols, config.Currency)
 	styles := util.GetColorScheme(config.ColorScheme)
 
 	return c.Reference{

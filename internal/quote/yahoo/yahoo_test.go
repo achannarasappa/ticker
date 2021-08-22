@@ -55,6 +55,7 @@ var _ = Describe("Yahoo Quote", func() {
 			Expect(output[0].QuotePrice.PriceDayLow).To(Equal(80.00))
 			Expect(output[0].QuotePrice.Change).To(Equal(3.0800018))
 			Expect(output[0].QuotePrice.ChangePercent).To(Equal(3.7606857))
+			Expect(output[0].QuoteSource).To(Equal(c.QuoteSourceYahoo))
 			Expect(output[0].Exchange.IsActive).To(BeTrue())
 			Expect(output[0].Exchange.IsRegularTradingSession).To(BeTrue())
 		})

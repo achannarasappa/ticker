@@ -82,6 +82,7 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 			MarketCap:        responseQuote.MarketCap,
 			Volume:           responseQuote.RegularMarketVolume,
 		},
+		QuoteSource: c.QuoteSourceYahoo,
 		Exchange: c.Exchange{
 			Name:                    responseQuote.ExchangeName,
 			Delay:                   responseQuote.ExchangeDelay,

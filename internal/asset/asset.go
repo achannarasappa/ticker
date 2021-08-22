@@ -45,6 +45,7 @@ func GetAssets(ctx c.Context, assetQuotes []c.AssetQuote) ([]c.Asset, HoldingSum
 			Holding:       holding,
 			QuotePrice:    convertAssetQuotePriceCurrency(currencyRateByUse, assetQuote.QuotePrice),
 			QuoteExtended: convertAssetQuoteExtendedCurrency(currencyRateByUse, assetQuote.QuoteExtended),
+			QuoteSource:   assetQuote.QuoteSource,
 			Exchange:      assetQuote.Exchange,
 			Meta: c.Meta{
 				IsVariablePrecision: assetQuote.Meta.IsVariablePrecision,

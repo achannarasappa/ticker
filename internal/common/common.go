@@ -162,6 +162,7 @@ type Asset struct {
 	Holding       Holding
 	QuotePrice    QuotePrice
 	QuoteExtended QuoteExtended
+	QuoteSource   QuoteSource
 	Exchange      Exchange
 	Meta          Meta
 }
@@ -176,6 +177,13 @@ const (
 	AssetClassUnknown
 )
 
+type QuoteSource int
+
+const (
+	QuoteSourceYahoo QuoteSource = iota
+	QuoteSourceUserDefined
+)
+
 // AssetQuote represents a price quote and related attributes for a single security
 type AssetQuote struct {
 	Name          string
@@ -184,6 +192,7 @@ type AssetQuote struct {
 	Currency      Currency
 	QuotePrice    QuotePrice
 	QuoteExtended QuoteExtended
+	QuoteSource   QuoteSource
 	Exchange      Exchange
 	Meta          Meta
 }

@@ -55,31 +55,56 @@ type Response struct {
 	} `json:"quoteResponse"`
 }
 
+// Quote prices for some symbols come back in a currency fraction format. For example,
+// UK prices are in GBp (which represent pennies, i.e. 1/100 of GBP) and hence conversion
+// fails because Yahoo returns GBPUSD and not GBpUSD.
+type CurrencyFraction struct {
+	CurrencyCode string
+	Ratio        float64
+}
+
+func guessCurrencyFraction(currencyFractionCode string) CurrencyFraction {
+	switch currencyFractionCode {
+	case "GBp":
+		return CurrencyFraction{
+			CurrencyCode: "GBP",
+			Ratio:        0.01,
+		}
+	default:
+		return CurrencyFraction{
+			CurrencyCode: currencyFractionCode,
+			Ratio:        1,
+		}
+	}
+}
+
 func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 
 	assetClass := getAssetClass(responseQuote.QuoteType)
 	isVariablePrecision := (assetClass == c.AssetClassCryptocurrency)
+
+	currencyFraction := guessCurrencyFraction(responseQuote.Currency)
 
 	assetQuote := c.AssetQuote{
 		Name:   responseQuote.ShortName,
 		Symbol: responseQuote.Symbol,
 		Class:  assetClass,
 		Currency: c.Currency{
-			FromCurrencyCode: responseQuote.Currency,
+			FromCurrencyCode: currencyFraction.CurrencyCode,
 		},
 		QuotePrice: c.QuotePrice{
-			Price:          responseQuote.RegularMarketPrice,
-			PricePrevClose: responseQuote.RegularMarketPreviousClose,
-			PriceOpen:      responseQuote.RegularMarketOpen,
-			PriceDayHigh:   responseQuote.RegularMarketDayHigh,
-			PriceDayLow:    responseQuote.RegularMarketDayLow,
-			Change:         responseQuote.RegularMarketChange,
-			ChangePercent:  responseQuote.RegularMarketChangePercent,
+			Price:          responseQuote.RegularMarketPrice * currencyFraction.Ratio,
+			PricePrevClose: responseQuote.RegularMarketPreviousClose * currencyFraction.Ratio,
+			PriceOpen:      responseQuote.RegularMarketOpen * currencyFraction.Ratio,
+			PriceDayHigh:   responseQuote.RegularMarketDayHigh * currencyFraction.Ratio,
+			PriceDayLow:    responseQuote.RegularMarketDayLow * currencyFraction.Ratio,
+			Change:         responseQuote.RegularMarketChange * currencyFraction.Ratio,
+			ChangePercent:  responseQuote.RegularMarketChangePercent * currencyFraction.Ratio,
 		},
 		QuoteExtended: c.QuoteExtended{
-			FiftyTwoWeekHigh: responseQuote.FiftyTwoWeekHigh,
-			FiftyTwoWeekLow:  responseQuote.FiftyTwoWeekLow,
-			MarketCap:        responseQuote.MarketCap,
+			FiftyTwoWeekHigh: responseQuote.FiftyTwoWeekHigh * currencyFraction.Ratio,
+			FiftyTwoWeekLow:  responseQuote.FiftyTwoWeekLow * currencyFraction.Ratio,
+			MarketCap:        responseQuote.MarketCap * currencyFraction.Ratio,
 			Volume:           responseQuote.RegularMarketVolume,
 		},
 		QuoteSource: c.QuoteSourceYahoo,

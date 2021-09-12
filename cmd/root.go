@@ -10,23 +10,30 @@ import (
 
 	"github.com/achannarasappa/ticker/internal/cli"
 	c "github.com/achannarasappa/ticker/internal/common"
+	"github.com/achannarasappa/ticker/internal/print"
 	"github.com/achannarasappa/ticker/internal/ui"
 )
 
 var (
 	// Version is a placeholder that is replaced at build time with a linker flag (-ldflags)
-	Version    string = "v0.0.0"
-	configPath string
-	dep        c.Dependencies
-	ctx        c.Context
-	options    cli.Options
-	err        error
-	rootCmd    = &cobra.Command{
+	Version      string = "v0.0.0"
+	configPath   string
+	dep          c.Dependencies
+	ctx          c.Context
+	options      cli.Options
+	optionsPrint print.Options
+	err          error
+	rootCmd      = &cobra.Command{
 		Version: Version,
 		Use:     "ticker",
 		Short:   "Terminal stock ticker and stock gain/loss tracker",
 		Args:    cli.Validate(&ctx, &options, &err),
 		Run:     cli.Run(ui.Start(&dep, &ctx)),
+	}
+	printCmd = &cobra.Command{
+		Use:   "print",
+		Short: "Prints holdings",
+		Run:   print.Run(&dep, &ctx, &optionsPrint),
 	}
 )
 
@@ -50,6 +57,9 @@ func init() {
 	rootCmd.Flags().BoolVar(&options.ShowHoldings, "show-holdings", false, "display average unit cost, quantity, portfolio weight")
 	rootCmd.Flags().StringVar(&options.Proxy, "proxy", "", "proxy URL for requests (default is none)")
 	rootCmd.Flags().StringVar(&options.Sort, "sort", "", "sort quotes on the UI. Set \"alpha\" to sort by ticker name. Set \"value\" to sort by position value. Keep empty to sort according to change percent")
+	rootCmd.AddCommand(printCmd)
+	printCmd.Flags().StringVar(&optionsPrint.Format, "format", "", "output format for printing holdings. Set \"csv\" to print as a CSV or \"json\" for JSON. Defaults to JSON.")
+	printCmd.Flags().StringVar(&configPath, "config", "", "config file (default is $HOME/.ticker.yaml)")
 }
 
 func initConfig() {

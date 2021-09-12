@@ -50,6 +50,7 @@ func convertAssetsToCSV(assets []c.Asset) string {
 
 	b := new(bytes.Buffer)
 	w := csv.NewWriter(b)
+	//nolint:errcheck
 	w.WriteAll(rows)
 
 	return b.String()

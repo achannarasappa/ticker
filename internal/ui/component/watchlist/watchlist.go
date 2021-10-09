@@ -7,7 +7,9 @@ import (
 
 	c "github.com/achannarasappa/ticker/internal/common"
 	s "github.com/achannarasappa/ticker/internal/sorter"
+	"github.com/achannarasappa/ticker/internal/ui/util"
 	u "github.com/achannarasappa/ticker/internal/ui/util"
+	"github.com/charmbracelet/lipgloss"
 
 	grid "github.com/achannarasappa/term-grid"
 )
@@ -22,6 +24,32 @@ const (
 	widthRangeStatic    = 3  // " - " = 3 length
 )
 
+var (
+	tabBorder = lipgloss.Border{
+		Top:         "─",
+		Bottom:      "─",
+		Left:        "│",
+		Right:       "│",
+		TopLeft:     "╭",
+		TopRight:    "╮",
+		BottomLeft:  "┴",
+		BottomRight: "┴",
+	}
+
+	activeTabBorder = lipgloss.Border{
+		Top:         "─",
+		Bottom:      " ",
+		Left:        "│",
+		Right:       "│",
+		TopLeft:     "╭",
+		TopRight:    "╮",
+		BottomLeft:  "┘",
+		BottomRight: "└",
+	}
+
+	tab, activeTab, tabGap lipgloss.Style
+)
+
 // Model for watchlist section
 type Model struct {
 	Width                 int
@@ -33,6 +61,7 @@ type Model struct {
 	Context               c.Context
 	styles                c.Styles
 	cellWidths            cellWidthsContainer
+	TabIndex              int
 }
 
 type cellWidthsContainer struct {
@@ -48,6 +77,18 @@ type cellWidthsContainer struct {
 
 // NewModel returns a model with default values
 func NewModel(ctx c.Context) Model {
+	styles := util.GetColorScheme(ctx.Config.ColorScheme)
+	highlight := lipgloss.AdaptiveColor{Light: styles.TabLight, Dark: styles.TabDark}
+	tab = lipgloss.NewStyle().
+		Border(tabBorder, true).
+		BorderForeground(highlight).
+		Padding(0, 1)
+	activeTab = tab.Copy().Border(activeTabBorder, true)
+	tabGap = tab.Copy().
+		BorderTop(false).
+		BorderLeft(false).
+		BorderRight(false)
+
 	return Model{
 		Width:                 80,
 		Context:               ctx,
@@ -72,7 +113,17 @@ func (m Model) View() string {
 
 	assets := m.Sorter(m.Assets)
 	rows := make([]grid.Row, 0)
+
+	group := m.Context.Config.Groups[m.TabIndex]
+	symbols := m.Context.Config.WatchlistGroupSymbols[group]
+	symbolMap := map[string]bool{}
+	for _, symbol := range symbols {
+		symbolMap[symbol] = true
+	}
 	for _, asset := range assets {
+		if !symbolMap[asset.Symbol] {
+			continue
+		}
 
 		rows = append(
 			rows,
@@ -105,7 +156,27 @@ func (m Model) View() string {
 
 	}
 
-	return grid.Render(grid.Grid{Rows: rows, GutterHorizontal: widthGutter})
+	return tabsView(m.Width, m.Context.Config, m.TabIndex) + "\n" + grid.Render(grid.Grid{Rows: rows, GutterHorizontal: widthGutter})
+}
+
+func tabsView(width int, config c.Config, tabIndex int) string {
+	renderGroups := []string{}
+	for i, group := range config.Groups {
+		if i == tabIndex {
+			renderGroups = append(renderGroups, activeTab.Render(group))
+		} else {
+			renderGroups = append(renderGroups, tab.Render(group))
+		}
+	}
+
+	row := lipgloss.JoinHorizontal(lipgloss.Top, renderGroups...)
+	count := 0
+	if v := width - lipgloss.Width(row) - 2; v > count {
+		count = v
+	}
+
+	gap := tabGap.Render(strings.Repeat(" ", count))
+	return lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
 }
 
 func getCellWidths(assets []c.Asset) cellWidthsContainer {

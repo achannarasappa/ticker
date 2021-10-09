@@ -90,8 +90,9 @@ func GetContext(d c.Dependencies, options Options, configPath string) (c.Context
 
 func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {
 	var config c.Config
-	configPath, err := getConfigPath(fs, configPathOption)
+	config.Groups = []string{c.DefaultGroup}
 
+	configPath, err := getConfigPath(fs, configPathOption)
 	if err != nil {
 		return config, nil
 	}
@@ -108,7 +109,36 @@ func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {
 		return config, fmt.Errorf("Invalid config: %w", err)
 	}
 
+	parseWatchlist(&config)
+
 	return config, nil
+}
+
+func parseWatchlist(config *c.Config) {
+	config.WatchlistSymbolGroups = map[string][]string{}
+	for _, w := range config.WatchlistWithGroups {
+		ws := strings.Split(w, ":")
+		symbol := ws[0]
+		config.Watchlist = append(config.Watchlist, symbol)
+
+		groups := []string{c.DefaultGroup}
+		if len(ws) > 1 {
+			groups = append(groups, ws[1:]...)
+		}
+		config.WatchlistSymbolGroups[symbol] = groups
+	}
+
+	config.WatchlistGroupSymbols = map[string][]string{}
+	groupMap := map[string]bool{c.DefaultGroup: true}
+	for symbol, groups := range config.WatchlistSymbolGroups {
+		for _, group := range groups {
+			if !groupMap[group] {
+				config.Groups = append(config.Groups, group)
+				groupMap[group] = true
+			}
+			config.WatchlistGroupSymbols[group] = append(config.WatchlistGroupSymbols[group], symbol)
+		}
+	}
 }
 
 func getReference(config c.Config, client resty.Client) (c.Reference, error) {
@@ -128,7 +158,8 @@ func getReference(config c.Config, client resty.Client) (c.Reference, error) {
 func getConfig(config c.Config, options Options, client resty.Client) c.Config {
 
 	if len(options.Watchlist) != 0 {
-		config.Watchlist = strings.Split(strings.ReplaceAll(options.Watchlist, " ", ""), ",")
+		config.WatchlistWithGroups = strings.Split(strings.ReplaceAll(options.Watchlist, " ", ""), ",")
+		parseWatchlist(&config)
 	}
 
 	if len(config.Proxy) > 0 {

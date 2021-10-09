@@ -11,22 +11,28 @@ type Context struct {
 	Reference Reference
 }
 
+const DefaultGroup = "All"
+
 // Config represents user defined configuration
 type Config struct {
-	RefreshInterval                   int               `yaml:"interval"`
-	Watchlist                         []string          `yaml:"watchlist"`
-	Lots                              []Lot             `yaml:"lots"`
-	Separate                          bool              `yaml:"show-separator"`
-	ExtraInfoExchange                 bool              `yaml:"show-tags"`
-	ExtraInfoFundamentals             bool              `yaml:"show-fundamentals"`
-	ShowSummary                       bool              `yaml:"show-summary"`
-	ShowHoldings                      bool              `yaml:"show-holdings"`
-	Proxy                             string            `yaml:"proxy"`
-	Sort                              string            `yaml:"sort"`
-	Currency                          string            `yaml:"currency"`
-	CurrencyConvertSummaryOnly        bool              `yaml:"currency-summary-only"`
-	CurrencyDisableUnitCostConversion bool              `yaml:"currency-disable-unit-cost-conversion"`
-	ColorScheme                       ConfigColorScheme `yaml:"colors"`
+	RefreshInterval                   int                 `yaml:"interval"`
+	WatchlistWithGroups               []string            `yaml:"watchlist"`
+	Watchlist                         []string            `yaml:"-"`
+	WatchlistSymbolGroups             map[string][]string `yaml:"-"`
+	WatchlistGroupSymbols             map[string][]string `yaml:"-"`
+	Groups                            []string            `yaml:"-"`
+	Lots                              []Lot               `yaml:"lots"`
+	Separate                          bool                `yaml:"show-separator"`
+	ExtraInfoExchange                 bool                `yaml:"show-tags"`
+	ExtraInfoFundamentals             bool                `yaml:"show-fundamentals"`
+	ShowSummary                       bool                `yaml:"show-summary"`
+	ShowHoldings                      bool                `yaml:"show-holdings"`
+	Proxy                             string              `yaml:"proxy"`
+	Sort                              string              `yaml:"sort"`
+	Currency                          string              `yaml:"currency"`
+	CurrencyConvertSummaryOnly        bool                `yaml:"currency-summary-only"`
+	CurrencyDisableUnitCostConversion bool                `yaml:"currency-disable-unit-cost-conversion"`
+	ColorScheme                       ConfigColorScheme   `yaml:"colors"`
 }
 
 // ConfigColorScheme represents user defined color scheme
@@ -37,6 +43,8 @@ type ConfigColorScheme struct {
 	TextLine      string `yaml:"text-line"`
 	TextTag       string `yaml:"text-tag"`
 	BackgroundTag string `yaml:"background-tag"`
+	TabDark       string `yaml:"tab-dark"`
+	TabLight      string `yaml:"tab-light"`
 }
 
 // Reference represents derived configuration for internal use from user defined configuration
@@ -86,6 +94,8 @@ type Styles struct {
 	TextLine  StyleFn
 	TextPrice func(float64, string) string
 	Tag       StyleFn
+	TabDark   string
+	TabLight  string
 }
 
 // StyleFn is a function that styles text

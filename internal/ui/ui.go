@@ -97,6 +97,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			fallthrough
 		case "q":
 			return m, tea.Quit
+		case "left", "h":
+			m.watchlist.TabIndex -= 1
+			if m.watchlist.TabIndex < 0 {
+				m.watchlist.TabIndex = len(m.ctx.Config.Groups) - 1
+			}
+			m.viewport.SetContent(m.watchlist.View())
+		case "right", "l":
+			m.watchlist.TabIndex = (m.watchlist.TabIndex + 1) % len(m.ctx.Config.Groups)
+			m.viewport.SetContent(m.watchlist.View())
 		}
 
 	case tea.WindowSizeMsg:
@@ -140,11 +149,10 @@ func (m Model) View() string {
 	viewSummary := ""
 
 	if m.ctx.Config.ShowSummary && m.ctx.Config.ShowHoldings {
-		viewSummary += m.summary.View()
+		viewSummary += m.summary.View() + "\n"
 	}
 
-	return viewSummary + "\n" +
-		m.viewport.View() + "\n" +
+	return viewSummary + m.viewport.View() + "\n" +
 		footer(m.viewport.Width, m.lastUpdateTime)
 
 }

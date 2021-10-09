@@ -127,8 +127,9 @@ func GetColorScheme(colorScheme c.ConfigColorScheme) c.Styles {
 			getColorOrDefault(colorScheme.BackgroundTag, "#303030"),
 			false,
 		),
+		TabDark:  getColorOrDefault(colorScheme.TabDark, "#7D56F4"),
+		TabLight: getColorOrDefault(colorScheme.TabLight, "#874BFD"),
 	}
-
 }
 
 func getColorOrDefault(colorConfig string, colorDefault string) string {

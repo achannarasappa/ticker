@@ -8,10 +8,12 @@ require (
 	github.com/adrg/xdg v0.3.0
 	github.com/charmbracelet/bubbles v0.8.0
 	github.com/charmbracelet/bubbletea v0.14.1
+	github.com/charmbracelet/lipgloss v0.4.0
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/go-resty/resty/v2 v2.3.0
 	github.com/jarcoal/httpmock v1.0.7
 	github.com/lucasb-eyer/go-colorful v1.2.0
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.9.0
@@ -22,7 +24,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.0
 	github.com/xeipuuv/gojsonschema v1.2.0
-	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
+	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0

@@ -34,7 +34,7 @@ brew install achannarasappa/tap/ticker
 curl -Ls https://api.github.com/repos/achannarasappa/ticker/releases/latest \
 | grep -wo "https.*linux-amd64*.tar.gz" \
 | wget -qi - \
-&& tar -xf ticker*.tar.gz \
+&& tar -xvf ticker*.tar.gz ticker \
 && chmod +x ./ticker \
 && sudo mv ticker /usr/local/bin/
 ```

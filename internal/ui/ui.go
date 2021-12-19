@@ -107,7 +107,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.groupSelectedIndex++
 
-			if m.groupSelectedIndex >= m.groupMaxIndex {
+			if m.groupSelectedIndex > m.groupMaxIndex {
 				m.groupSelectedIndex = 0
 			}
 

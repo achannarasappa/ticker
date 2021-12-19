@@ -8,25 +8,27 @@ import (
 // Context represents user defined configuration and derived reference configuration
 type Context struct {
 	Config    Config
+	Groups    []AssetGroup
 	Reference Reference
 }
 
 // Config represents user defined configuration
 type Config struct {
-	RefreshInterval                   int               `yaml:"interval"`
-	Watchlist                         []string          `yaml:"watchlist"`
-	Lots                              []Lot             `yaml:"lots"`
-	Separate                          bool              `yaml:"show-separator"`
-	ExtraInfoExchange                 bool              `yaml:"show-tags"`
-	ExtraInfoFundamentals             bool              `yaml:"show-fundamentals"`
-	ShowSummary                       bool              `yaml:"show-summary"`
-	ShowHoldings                      bool              `yaml:"show-holdings"`
-	Proxy                             string            `yaml:"proxy"`
-	Sort                              string            `yaml:"sort"`
-	Currency                          string            `yaml:"currency"`
-	CurrencyConvertSummaryOnly        bool              `yaml:"currency-summary-only"`
-	CurrencyDisableUnitCostConversion bool              `yaml:"currency-disable-unit-cost-conversion"`
-	ColorScheme                       ConfigColorScheme `yaml:"colors"`
+	RefreshInterval                   int                `yaml:"interval"`
+	Watchlist                         []string           `yaml:"watchlist"`
+	Lots                              []Lot              `yaml:"lots"`
+	Separate                          bool               `yaml:"show-separator"`
+	ExtraInfoExchange                 bool               `yaml:"show-tags"`
+	ExtraInfoFundamentals             bool               `yaml:"show-fundamentals"`
+	ShowSummary                       bool               `yaml:"show-summary"`
+	ShowHoldings                      bool               `yaml:"show-holdings"`
+	Proxy                             string             `yaml:"proxy"`
+	Sort                              string             `yaml:"sort"`
+	Currency                          string             `yaml:"currency"`
+	CurrencyConvertSummaryOnly        bool               `yaml:"currency-summary-only"`
+	CurrencyDisableUnitCostConversion bool               `yaml:"currency-disable-unit-cost-conversion"`
+	ColorScheme                       ConfigColorScheme  `yaml:"colors"`
+	AssetGroup                        []ConfigAssetGroup `yaml:"groups"`
 }
 
 // ConfigColorScheme represents user defined color scheme
@@ -37,6 +39,27 @@ type ConfigColorScheme struct {
 	TextLine      string `yaml:"text-line"`
 	TextTag       string `yaml:"text-tag"`
 	BackgroundTag string `yaml:"background-tag"`
+}
+
+type ConfigAssetGroup struct {
+	Name      string   `yaml:"name"`
+	Watchlist []string `yaml:"watchlist"`
+	Holdings  []Lot    `yaml:"holdings"`
+}
+
+type AssetGroup struct {
+	ConfigAssetGroup
+	SymbolsBySource []AssetGroupSymbolsBySource
+}
+
+type AssetGroupSymbolsBySource struct {
+	Symbols []string
+	Source  QuoteSource
+}
+
+type AssetGroupQuote struct {
+	AssetGroup  AssetGroup
+	AssetQuotes []AssetQuote
 }
 
 // Reference represents derived configuration for internal use from user defined configuration

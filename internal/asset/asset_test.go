@@ -13,12 +13,12 @@ var _ = Describe("Asset", func() {
 	Describe("GetAssets", func() {
 		It("should return assets", func() {
 			inputContext := c.Context{}
-			inputAssetQuotes := fixtureAssetQuotes
+			inputAssetGroupQuote := fixtureAssetGroupQuote
 
 			expectedAssets := fixtureAssets
 			expectedHoldingSummary := HoldingSummary{}
 
-			outputAssets, outputHoldingSummary := GetAssets(inputContext, inputAssetQuotes)
+			outputAssets, outputHoldingSummary := GetAssets(inputContext, inputAssetGroupQuote)
 
 			Expect(outputAssets).To(Equal(expectedAssets))
 			Expect(outputHoldingSummary).To(Equal(expectedHoldingSummary))
@@ -27,8 +27,8 @@ var _ = Describe("Asset", func() {
 		When("there are lots", func() {
 			It("should return assets with holdings and a summary of holdings", func() {
 				inputContext := c.Context{}
-				inputAssetQuotes := fixtureAssetQuotes
-				inputContext.Config.Lots = []c.Lot{
+				inputAssetGroupQuote := fixtureAssetGroupQuote
+				inputAssetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings = []c.Lot{
 					{
 						Symbol:    "TWKS",
 						UnitCost:  100,
@@ -49,7 +49,7 @@ var _ = Describe("Asset", func() {
 					},
 				}
 
-				outputAssets, outputHoldingSummary := GetAssets(inputContext, inputAssetQuotes)
+				outputAssets, outputHoldingSummary := GetAssets(inputContext, inputAssetGroupQuote)
 
 				Expect(outputAssets).To(HaveLen(3))
 
@@ -94,8 +94,8 @@ var _ = Describe("Asset", func() {
 					},
 				},
 			}
-			inputAssetQuotes := fixtureAssetQuotes
-			inputContext.Config.Lots = []c.Lot{
+			inputAssetGroupQuote := fixtureAssetGroupQuote
+			inputAssetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings = []c.Lot{
 				{
 					Symbol:    "TWKS",
 					UnitCost:  100,
@@ -104,7 +104,7 @@ var _ = Describe("Asset", func() {
 				},
 			}
 
-			outputAssets, outputHoldingSummary := GetAssets(inputContext, inputAssetQuotes)
+			outputAssets, outputHoldingSummary := GetAssets(inputContext, inputAssetGroupQuote)
 
 			It("should set currency from and to when converting", func() {
 				Expect(outputAssets[0].Currency.FromCurrencyCode).To(Equal("USD"))
@@ -151,10 +151,12 @@ var _ = Describe("Asset", func() {
 						},
 					},
 				}
-				inputAssetQuotes := make([]c.AssetQuote, len(fixtureAssetQuotes))
-				copy(inputAssetQuotes, fixtureAssetQuotes)
+				inputAssetGroupQuote := fixtureAssetGroupQuote
+				inputAssetQuotes := make([]c.AssetQuote, len(fixtureAssetGroupQuote.AssetQuotes))
+				copy(inputAssetQuotes, fixtureAssetGroupQuote.AssetQuotes)
 				inputAssetQuotes[0].Currency.FromCurrencyCode = "EUR"
-				inputContext.Config.Lots = []c.Lot{
+				inputAssetGroupQuote.AssetQuotes = inputAssetQuotes
+				inputAssetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings = []c.Lot{
 					{
 						Symbol:    "TWKS",
 						UnitCost:  100,
@@ -163,7 +165,7 @@ var _ = Describe("Asset", func() {
 					},
 				}
 
-				outputAssets, outputHoldingSummary := GetAssets(inputContext, inputAssetQuotes)
+				outputAssets, outputHoldingSummary := GetAssets(inputContext, inputAssetGroupQuote)
 
 				It("should convert the currency for the holding summary", func() {
 					Expect(outputHoldingSummary.Value).To(Equal(550.0))
@@ -182,7 +184,7 @@ var _ = Describe("Asset", func() {
 
 		When("there are no asset quotes", func() {
 			It("should return empty assets and holdings summary", func() {
-				outputAssets, outputHoldingSummary := GetAssets(c.Context{}, []c.AssetQuote{})
+				outputAssets, outputHoldingSummary := GetAssets(c.Context{}, c.AssetGroupQuote{})
 
 				Expect(outputAssets).To(Equal([]c.Asset{}))
 				Expect(outputHoldingSummary).To(Equal(HoldingSummary{}))

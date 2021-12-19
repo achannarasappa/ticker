@@ -20,17 +20,17 @@ type HoldingSummary struct {
 	DayChange   c.HoldingChange
 }
 
-func GetAssets(ctx c.Context, assetQuotes []c.AssetQuote) ([]c.Asset, HoldingSummary) {
+func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, HoldingSummary) {
 
 	var holdingSummary HoldingSummary
 	assets := make([]c.Asset, 0)
-	lotsBySymbol := getLots(ctx.Config.Lots)
+	holdingsBySymbol := getLots(assetGroupQuote.AssetGroup.Holdings)
 
-	for i, assetQuote := range assetQuotes {
+	for i, assetQuote := range assetGroupQuote.AssetQuotes {
 
 		currencyRateByUse := currency.GetCurrencyRateFromContext(ctx, assetQuote.Currency.FromCurrencyCode)
 
-		holding := getHoldingFromAssetQuote(assetQuote, lotsBySymbol)
+		holding := getHoldingFromAssetQuote(assetQuote, holdingsBySymbol)
 		holding = convertAssetHoldingCurrency(currencyRateByUse, holding)
 		holdingSummary = addHoldingToHoldingSummary(holdingSummary, holding, currencyRateByUse)
 

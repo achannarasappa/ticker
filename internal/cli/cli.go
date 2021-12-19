@@ -75,6 +75,7 @@ func GetContext(d c.Dependencies, options Options, configPath string) (c.Context
 
 	config = getConfig(config, options, *d.HttpClient)
 	reference, err = getReference(config, *d.HttpClient)
+	groups := getGroups(config)
 
 	if err != nil {
 		return c.Context{}, err
@@ -83,6 +84,7 @@ func GetContext(d c.Dependencies, options Options, configPath string) (c.Context
 	context := c.Context{
 		Reference: reference,
 		Config:    config,
+		Groups:    groups,
 	}
 
 	return context, nil
@@ -209,4 +211,54 @@ func getStringOption(cliValue string, configValue string) string {
 	}
 
 	return ""
+}
+
+func getGroups(config c.Config) []c.AssetGroup {
+
+	var groups []c.AssetGroup
+	var configAssetGroups []c.ConfigAssetGroup
+
+	if len(config.Watchlist) > 0 || len(config.Lots) > 0 {
+		configAssetGroups = append(configAssetGroups, c.ConfigAssetGroup{
+			Name:      "default",
+			Watchlist: config.Watchlist,
+			Holdings:  config.Lots,
+		})
+	}
+
+	configAssetGroups = append(configAssetGroups, config.AssetGroup...)
+
+	for _, configAssetGroup := range configAssetGroups {
+
+		symbols := make(map[string]bool)
+		symbolsUnique := make([]string, 0)
+
+		for _, symbol := range configAssetGroup.Watchlist {
+			if !symbols[symbol] {
+				symbols[symbol] = true
+				symbolsUnique = append(symbolsUnique, symbol)
+			}
+		}
+
+		for _, lot := range configAssetGroup.Holdings {
+			if !symbols[lot.Symbol] {
+				symbols[lot.Symbol] = true
+				symbolsUnique = append(symbolsUnique, lot.Symbol)
+			}
+		}
+
+		groups = append(groups, c.AssetGroup{
+			ConfigAssetGroup: configAssetGroup,
+			SymbolsBySource: []c.AssetGroupSymbolsBySource{
+				{
+					Source:  c.QuoteSourceYahoo,
+					Symbols: symbolsUnique,
+				},
+			},
+		})
+
+	}
+
+	return groups
+
 }

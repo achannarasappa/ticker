@@ -8,7 +8,7 @@ import (
 
 	"github.com/achannarasappa/ticker/internal/asset"
 	c "github.com/achannarasappa/ticker/internal/common"
-	quote "github.com/achannarasappa/ticker/internal/quote/yahoo"
+	quote "github.com/achannarasappa/ticker/internal/quote"
 	"github.com/achannarasappa/ticker/internal/ui/util"
 
 	"github.com/spf13/cobra"
@@ -83,10 +83,9 @@ func convertAssetsToJSON(assets []c.Asset) string {
 // RunHolding prints holdings to the terminal
 func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Command, []string) {
 	return func(cmd *cobra.Command, args []string) {
-		ctx.Config.ShowHoldings = true
-		symbols := asset.GetSymbols(ctx.Config)
-		assetQuotes := quote.GetAssetQuotes(*dep.HttpClient, symbols)()
-		assets, _ := asset.GetAssets(*ctx, assetQuotes)
+
+		assetGroupQuote := quote.GetAssetGroupQuote(*dep)(ctx.Groups[0])
+		assets, _ := asset.GetAssets(*ctx, assetGroupQuote)
 
 		if options.Format == "csv" {
 			fmt.Println(convertAssetsToCSV(assets))

@@ -18,7 +18,6 @@ import (
 	. "github.com/achannarasappa/ticker/internal/cli"
 	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/test/http"
-	_ "github.com/achannarasappa/ticker/test/http"
 )
 
 func getStdout(fn func()) string {

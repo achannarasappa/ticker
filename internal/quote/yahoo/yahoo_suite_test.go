@@ -25,5 +25,5 @@ var _ = AfterSuite(func() {
 
 func TestQuote(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Quote Suite")
+	RunSpecs(t, "Yahoo Quote Suite")
 }

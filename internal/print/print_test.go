@@ -6,6 +6,7 @@ import (
 
 	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/print"
+	. "github.com/achannarasappa/ticker/test/http"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
@@ -28,24 +29,41 @@ func getStdout(fn func()) string {
 var _ = Describe("Print", func() {
 
 	BeforeEach(func() {
-		mockResponse()
+		MockResponseYahooQuotes()
 	})
 
 	Describe("Run", func() {
 		var (
 			inputOptions = print.Options{}
-			inputContext = c.Context{Config: c.Config{Lots: []c.Lot{
-				{
-					Symbol:   "GOOG",
-					UnitCost: 1000,
-					Quantity: 10,
+			inputContext = c.Context{
+				Groups: []c.AssetGroup{
+					{
+						SymbolsBySource: []c.AssetGroupSymbolsBySource{
+							{
+								Source: c.QuoteSourceYahoo,
+								Symbols: []string{
+									"GOOG",
+									"RBLX",
+								},
+							},
+						},
+						ConfigAssetGroup: c.ConfigAssetGroup{
+							Holdings: []c.Lot{
+								{
+									Symbol:   "GOOG",
+									UnitCost: 1000,
+									Quantity: 10,
+								},
+								{
+									Symbol:   "RBLX",
+									UnitCost: 50,
+									Quantity: 10,
+								},
+							},
+						},
+					},
 				},
-				{
-					Symbol:   "RBLX",
-					UnitCost: 50,
-					Quantity: 10,
-				},
-			}}}
+			}
 			inputDependencies = c.Dependencies{
 				HttpClient: client,
 			}

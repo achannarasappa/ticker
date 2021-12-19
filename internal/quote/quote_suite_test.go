@@ -1,4 +1,4 @@
-package print_test
+package quote_test
 
 import (
 	"testing"
@@ -7,7 +7,6 @@ import (
 	"github.com/jarcoal/httpmock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/format"
 )
 
 var client = resty.New()
@@ -24,8 +23,7 @@ var _ = AfterSuite(func() {
 	httpmock.DeactivateAndReset()
 })
 
-func TestPrint(t *testing.T) {
-	format.TruncatedDiff = false
+func TestQuote(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Print Suite")
+	RunSpecs(t, "Quote Suite")
 }

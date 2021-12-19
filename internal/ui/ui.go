@@ -7,7 +7,7 @@ import (
 	grid "github.com/achannarasappa/term-grid"
 	"github.com/achannarasappa/ticker/internal/asset"
 	c "github.com/achannarasappa/ticker/internal/common"
-	quote "github.com/achannarasappa/ticker/internal/quote/yahoo"
+	quote "github.com/achannarasappa/ticker/internal/quote"
 	"github.com/achannarasappa/ticker/internal/ui/component/summary"
 	"github.com/achannarasappa/ticker/internal/ui/component/watchlist"
 
@@ -18,8 +18,9 @@ import (
 )
 
 var (
-	styleLogo = util.NewStyle("#ffffd7", "#ff8700", true)
-	styleHelp = util.NewStyle("#4e4e4e", "", true)
+	styleLogo  = util.NewStyle("#ffffd7", "#ff8700", true)
+	styleGroup = util.NewStyle("#8a8a8a", "#303030", false)
+	styleHelp  = util.NewStyle("#4e4e4e", "", true)
 )
 
 const (
@@ -28,15 +29,18 @@ const (
 
 // Model for UI
 type Model struct {
-	ctx             c.Context
-	ready           bool
-	headerHeight    int
-	getQuotes       func() []c.AssetQuote
-	requestInterval int
-	viewport        viewport.Model
-	watchlist       watchlist.Model
-	summary         summary.Model
-	lastUpdateTime  string
+	ctx                c.Context
+	ready              bool
+	headerHeight       int
+	getQuotes          func(c.AssetGroup) c.AssetGroupQuote
+	requestInterval    int
+	viewport           viewport.Model
+	watchlist          watchlist.Model
+	summary            summary.Model
+	lastUpdateTime     string
+	groupSelectedIndex int
+	groupMaxIndex      int
+	groupSelectedName  string
 }
 
 func getTime() string {
@@ -44,44 +48,52 @@ func getTime() string {
 	return fmt.Sprintf("%s %02d:%02d:%02d", t.Weekday().String(), t.Hour(), t.Minute(), t.Second())
 }
 
+func generateQuoteMsg(m Model, skipUpdate bool) func() tea.Msg {
+	return func() tea.Msg {
+		return quoteMsg{
+			assetGroupIndex: m.groupSelectedIndex,
+			assetGroupQuote: m.getQuotes(m.ctx.Groups[m.groupSelectedIndex]),
+			skipUpdate:      skipUpdate,
+			time:            getTime(),
+		}
+	}
+}
+
 func (m Model) updateQuotes() tea.Cmd {
 	return tea.Tick(time.Second*time.Duration(m.requestInterval), func(t time.Time) tea.Msg {
-		return quoteMsg{
-			quotes: m.getQuotes(),
-			time:   getTime(),
-		}
+		return generateQuoteMsg(m, false)()
 	})
 }
 
 // NewModel is the constructor for UI model
 func NewModel(dep c.Dependencies, ctx c.Context) Model {
 
-	symbols := asset.GetSymbols(ctx.Config)
+	groupMaxIndex := len(ctx.Groups) - 1
 
 	return Model{
-		ctx:             ctx,
-		headerHeight:    getVerticalMargin(ctx.Config),
-		ready:           false,
-		requestInterval: ctx.Config.RefreshInterval,
-		getQuotes:       quote.GetAssetQuotes(*dep.HttpClient, symbols),
-		watchlist:       watchlist.NewModel(ctx),
-		summary:         summary.NewModel(ctx),
+		ctx:                ctx,
+		headerHeight:       getVerticalMargin(ctx.Config),
+		ready:              false,
+		requestInterval:    ctx.Config.RefreshInterval,
+		getQuotes:          quote.GetAssetGroupQuote(dep),
+		watchlist:          watchlist.NewModel(ctx),
+		summary:            summary.NewModel(ctx),
+		groupMaxIndex:      groupMaxIndex,
+		groupSelectedIndex: 0,
+		groupSelectedName:  "default",
 	}
 }
 
 // Init is the initialization hook for bubbletea
 func (m Model) Init() tea.Cmd {
-	return func() tea.Msg {
-		return quoteMsg{
-			quotes: m.getQuotes(),
-			time:   getTime(),
-		}
-	}
+	return generateQuoteMsg(m, false)
 }
 
 type quoteMsg struct {
-	quotes []c.AssetQuote
-	time   string
+	assetGroupIndex int
+	assetGroupQuote c.AssetGroupQuote
+	skipUpdate      bool
+	time            string
 }
 
 // Update hook for bubbletea
@@ -91,6 +103,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "tab":
+
+			m.groupSelectedIndex++
+
+			if m.groupSelectedIndex >= m.groupMaxIndex {
+				m.groupSelectedIndex = 0
+			}
+
+			m.groupSelectedName = m.ctx.Groups[m.groupSelectedIndex].Name
+
+			return m, generateQuoteMsg(m, true)
 		case "ctrl+c":
 			fallthrough
 		case "esc":
@@ -115,15 +138,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetContent(m.watchlist.View())
 
 	case quoteMsg:
-		assets, holdingSummary := asset.GetAssets(m.ctx, msg.quotes)
-		m.watchlist.Assets = assets
-		m.lastUpdateTime = msg.time
-		m.summary.Summary = holdingSummary
-		if m.ready {
-			m.viewport.SetContent(m.watchlist.View())
+		// Update UI only if data matches current group
+		if m.groupSelectedIndex == msg.assetGroupIndex {
+			assets, holdingSummary := asset.GetAssets(m.ctx, msg.assetGroupQuote)
+			m.watchlist.Assets = assets
+			m.lastUpdateTime = msg.time
+			m.summary.Summary = holdingSummary
+			if m.ready {
+				m.viewport.SetContent(m.watchlist.View())
+			}
 		}
-		return m, m.updateQuotes()
 
+		// Do not start a new timer to update
+		if msg.skipUpdate {
+			return m, nil
+		}
+
+		return m, m.updateQuotes()
 	}
 
 	m.viewport, _ = m.viewport.Update(msg)
@@ -145,14 +176,18 @@ func (m Model) View() string {
 
 	return viewSummary + "\n" +
 		m.viewport.View() + "\n" +
-		footer(m.viewport.Width, m.lastUpdateTime)
+		footer(m.viewport.Width, m.lastUpdateTime, m.groupSelectedName)
 
 }
 
-func footer(width int, time string) string {
+func footer(width int, time string, groupSelectedName string) string {
 
 	if width < 80 {
 		return styleLogo(" ticker ")
+	}
+
+	if len(groupSelectedName) > 12 {
+		groupSelectedName = groupSelectedName[:12]
 	}
 
 	return grid.Render(grid.Grid{
@@ -160,8 +195,9 @@ func footer(width int, time string) string {
 			{
 				Width: width,
 				Cells: []grid.Cell{
-					{Text: styleLogo(" ticker "), Width: 9},
-					{Text: styleHelp("q: exit ↑: scroll up ↓: scroll down"), Width: 35},
+					{Text: styleLogo(" ticker "), Width: 8},
+					{Text: styleGroup(" " + groupSelectedName + " "), Width: len(groupSelectedName) + 2, VisibleMinWidth: 95},
+					{Text: styleHelp(" q: exit ↑: scroll up ↓: scroll down ⭾: change group"), Width: 52},
 					{Text: styleHelp("↻  " + time), Align: grid.Right},
 				},
 			},

@@ -113,6 +113,15 @@ lots:
     quantity: 20.0
     unit_cost: 145.35
     fixed_cost: 7.00 # e.g. brokerage commission fee
+groups:
+  - name: crypto
+    watchlist:
+      - SHIB-USD
+      - VGX-USD
+    holdings:
+      - symbol: SOL1-USD
+        quantity: 17
+        unit_cost: 159.10
 ```
 
 * Symbols not on the watchlist that exists in `lots` will automatically be watched
@@ -134,6 +143,14 @@ It's possible to set a custom sort order with the `--sort` flag or `sort:` confi
 * `alpha` to sort alphabetically by symbol
 * `value` to sort by position value
 * `user` to sort by the order defined in configuration with positions on top then lots
+
+### Groups
+
+Watchlists and holdings can be grouped in `.ticker.yml` under the `groups` property. While running `ticker`, press <kbd>TAB</kbd> to cycle forward through groups.
+
+* If top level `watchlist` or `lots` properties are defined in the configuration file, the entries there will be added to a group named `default` which will always be shown first
+* Ordering is defined by order in the configuration file
+* The `holdings` property replaces `lots` under `groups` but serves the same purpose
 
 ### Currency Conversion
 

@@ -192,41 +192,4 @@ var _ = Describe("Asset", func() {
 		})
 
 	})
-
-	Describe("GetSymbols", func() {
-
-		It("should return a slice of symbols", func() {
-
-			inputConfig := c.Config{
-				Watchlist: []string{"GOOG", "ARKW"},
-				Lots: []c.Lot{
-					{Symbol: "ABNB", UnitCost: 100, Quantity: 10},
-					{Symbol: "ARKW", UnitCost: 200, Quantity: 10},
-				},
-				ShowHoldings: true,
-			}
-			output := GetSymbols(inputConfig)
-			expected := []string{
-				"ABNB",
-				"ARKW",
-				"GOOG",
-			}
-			Expect(output).To(ContainElements(expected))
-		})
-
-		When("holdings are hidden", func() {
-			It("should not show symbols for holdings", func() {
-				inputConfig := c.Config{
-					Watchlist:    []string{"GOOG", "ARKW"},
-					ShowHoldings: false,
-				}
-				output := GetSymbols(inputConfig)
-				expected := []string{
-					"ARKW",
-					"GOOG",
-				}
-				Expect(output).To(ContainElements(expected))
-			})
-		})
-	})
 })

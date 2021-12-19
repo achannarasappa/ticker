@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/achannarasappa/ticker/internal/asset"
 	c "github.com/achannarasappa/ticker/internal/common"
-	quoteYahoo "github.com/achannarasappa/ticker/internal/quote/yahoo"
+	"github.com/achannarasappa/ticker/internal/quote"
 	"github.com/achannarasappa/ticker/internal/ui/util"
 
 	"github.com/adrg/xdg"
@@ -74,8 +73,8 @@ func GetContext(d c.Dependencies, options Options, configPath string) (c.Context
 	}
 
 	config = getConfig(config, options, *d.HttpClient)
-	reference, err = getReference(config, *d.HttpClient)
 	groups := getGroups(config)
+	reference, err = getReference(config, groups, *d.HttpClient)
 
 	if err != nil {
 		return c.Context{}, err
@@ -113,11 +112,9 @@ func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {
 	return config, nil
 }
 
-func getReference(config c.Config, client resty.Client) (c.Reference, error) {
+func getReference(config c.Config, assetGroups []c.AssetGroup, client resty.Client) (c.Reference, error) {
 
-	symbols := asset.GetSymbols(config)
-
-	currencyRates, err := quoteYahoo.GetCurrencyRates(client, symbols, config.Currency)
+	currencyRates, err := quote.GetAssetGroupsCurrencyRates(client, assetGroups, config.Currency)
 	styles := util.GetColorScheme(config.ColorScheme)
 
 	return c.Reference{

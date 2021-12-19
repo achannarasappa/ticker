@@ -131,32 +131,6 @@ func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]A
 
 }
 
-// GetSymbols retrieves a unique slice of symbols from the watchlist and lots sections of the config
-func GetSymbols(config c.Config) []string {
-
-	symbols := make(map[string]bool)
-	symbolsUnique := make([]string, 0)
-
-	for _, symbol := range config.Watchlist {
-		if !symbols[symbol] {
-			symbols[symbol] = true
-			symbolsUnique = append(symbolsUnique, symbol)
-		}
-	}
-
-	if config.ShowHoldings {
-		for _, lot := range config.Lots {
-			if !symbols[lot.Symbol] {
-				symbols[lot.Symbol] = true
-				symbolsUnique = append(symbolsUnique, lot.Symbol)
-			}
-		}
-	}
-
-	return symbolsUnique
-
-}
-
 func getLots(lots []c.Lot) map[string]AggregatedLot {
 
 	if lots == nil {

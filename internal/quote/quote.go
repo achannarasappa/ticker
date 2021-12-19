@@ -3,6 +3,7 @@ package quote
 import (
 	c "github.com/achannarasappa/ticker/internal/common"
 	quoteYahoo "github.com/achannarasappa/ticker/internal/quote/yahoo"
+	"github.com/go-resty/resty/v2"
 )
 
 func getQuoteBySource(dep c.Dependencies, symbolBySource c.AssetGroupSymbolsBySource) []c.AssetQuote {
@@ -33,4 +34,60 @@ func GetAssetGroupQuote(dep c.Dependencies) func(c.AssetGroup) c.AssetGroupQuote
 			AssetGroup:  assetGroup,
 		}
 	}
+}
+
+func getUniqueSymbolsBySource(assetGroups []c.AssetGroup) []c.AssetGroupSymbolsBySource {
+
+	symbols := make(map[c.QuoteSource]map[string]bool)
+	symbolsUnique := make(map[c.QuoteSource][]string)
+	var assetGroupSymbolsBySource []c.AssetGroupSymbolsBySource
+	for _, assetGroup := range assetGroups {
+
+		for _, symbolGroup := range assetGroup.SymbolsBySource {
+
+			for _, symbol := range symbolGroup.Symbols {
+
+				source := symbolGroup.Source
+
+				if symbols[source] == nil {
+					symbols[source] = map[string]bool{}
+				}
+
+				if !symbols[source][symbol] {
+					symbols[source][symbol] = true
+					symbolsUnique[source] = append(symbolsUnique[source], symbol)
+				}
+			}
+
+		}
+
+	}
+
+	for source, symbols := range symbolsUnique {
+		assetGroupSymbolsBySource = append(assetGroupSymbolsBySource, c.AssetGroupSymbolsBySource{
+			Source:  source,
+			Symbols: symbols,
+		})
+	}
+
+	return assetGroupSymbolsBySource
+
+}
+
+// GetAssetGroupsCurrencyRates gets the currency rates by source across all asset groups
+func GetAssetGroupsCurrencyRates(client resty.Client, assetGroups []c.AssetGroup, targetCurrency string) (c.CurrencyRates, error) {
+
+	var err error
+	var currencyRates c.CurrencyRates
+	uniqueSymbolsBySource := getUniqueSymbolsBySource(assetGroups)
+
+	for _, source := range uniqueSymbolsBySource {
+
+		if source.Source == c.QuoteSourceYahoo && err == nil {
+			currencyRates, err = quoteYahoo.GetCurrencyRates(client, source.Symbols, targetCurrency)
+		}
+
+	}
+
+	return currencyRates, err
 }

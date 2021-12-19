@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/mitchellh/go-homedir"
 	. "github.com/onsi/ginkgo"
@@ -131,8 +132,13 @@ var _ = Describe("Cli", func() {
 					InputConfigFileContents: "watchlist:\n  - GME\n  - BB",
 					AssertionErr:            BeNil(),
 					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"Watchlist": Equal([]string{"GME", "BB"}),
+						"Groups": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+							"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"ConfigAssetGroup": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"Name":      Equal("default"),
+									"Watchlist": Equal([]string{"GME", "BB"}),
+								}),
+							}),
 						}),
 					}),
 				}),
@@ -142,8 +148,13 @@ var _ = Describe("Cli", func() {
 					InputConfigFileContents: "",
 					AssertionErr:            BeNil(),
 					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"Watchlist": Equal([]string{"BIO", "BB"}),
+						"Groups": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+							"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"ConfigAssetGroup": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"Name":      Equal("default"),
+									"Watchlist": Equal([]string{"BIO", "BB"}),
+								}),
+							}),
 						}),
 					}),
 				}),
@@ -153,8 +164,77 @@ var _ = Describe("Cli", func() {
 					InputConfigFileContents: "watchlist:\n  - GME",
 					AssertionErr:            BeNil(),
 					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"Watchlist": Equal([]string{"BB"}),
+						"Groups": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+							"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"ConfigAssetGroup": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"Name":      Equal("default"),
+									"Watchlist": Equal([]string{"BB"}),
+								}),
+							}),
+						}),
+					}),
+				}),
+
+				// groups
+				Entry("when groups are defined", Case{
+					InputOptions: cli.Options{},
+					InputConfigFileContents: strings.Join([]string{
+						"groups:",
+						"  - name: crypto",
+						"    watchlist:",
+						"      - SHIB-USD",
+						"      - BTC-USD",
+						"    holdings:",
+						"      - symbol: SOL1-USD",
+						"        quantity: 17",
+						"        unit_cost: 159.10",
+					}, "\n"),
+					AssertionErr: BeNil(),
+					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Groups": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+							"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"ConfigAssetGroup": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"Name":      Equal("crypto"),
+									"Watchlist": Equal([]string{"SHIB-USD", "BTC-USD"}),
+									"Holdings": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+										"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+											"Symbol":   Equal("SOL1-USD"),
+											"Quantity": Equal(17.0),
+											"UnitCost": Equal(159.10),
+										}),
+									}),
+								}),
+							}),
+						}),
+					}),
+				}),
+
+				Entry("when groups and watchlist are defined", Case{
+					InputOptions: cli.Options{},
+					InputConfigFileContents: strings.Join([]string{
+						"watchlist:",
+						"  - TSLA",
+						"groups:",
+						"  - name: crypto",
+						"    watchlist:",
+						"      - SOL1-USD",
+						"      - BTC-USD",
+					}, "\n"),
+					AssertionErr: BeNil(),
+					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Groups": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+							"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"ConfigAssetGroup": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"Name":      Equal("default"),
+									"Watchlist": Equal([]string{"TSLA"}),
+								}),
+							}),
+							"1": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"ConfigAssetGroup": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"Name":      Equal("crypto"),
+									"Watchlist": Equal([]string{"SOL1-USD", "BTC-USD"}),
+								}),
+							}),
 						}),
 					}),
 				}),
@@ -251,12 +331,12 @@ var _ = Describe("Cli", func() {
 				}),
 
 				Entry("when show-separator is set in options", Case{
-					InputOptions:            cli.Options{Separate: false},
+					InputOptions:            cli.Options{Separate: true},
 					InputConfigFileContents: "",
 					AssertionErr:            BeNil(),
 					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
 						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"Separate": Equal(false),
+							"Separate": Equal(true),
 						}),
 					}),
 				}),

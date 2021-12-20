@@ -46,11 +46,11 @@ func Run(uiStartFn func() error) func(*cobra.Command, []string) {
 func Validate(ctx *c.Context, options *Options, prevErr *error) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 
-		if prevErr != nil {
+		if prevErr != nil && *prevErr != nil {
 			return *prevErr
 		}
 
-		if len(ctx.Config.Watchlist) == 0 && len(options.Watchlist) == 0 && len(ctx.Config.Lots) == 0 {
+		if len(ctx.Config.Watchlist) == 0 && len(options.Watchlist) == 0 && len(ctx.Config.Lots) == 0 && len(ctx.Config.AssetGroup) == 0 {
 			return errors.New("Invalid config: No watchlist provided")
 		}
 

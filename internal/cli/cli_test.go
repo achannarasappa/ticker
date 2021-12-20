@@ -474,6 +474,15 @@ var _ = Describe("Cli", func() {
 					options.Watchlist = ""
 					outputErr := Validate(&ctx, &options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(MatchError("Invalid config: No watchlist provided"))
+				})
+
+				When("a nil error reference is passed in from Cobra", func() {
+
+					It("should not return an error", func() {
+						var prevErr error
+						outputErr := Validate(&ctx, &options, &prevErr)(&cobra.Command{}, []string{})
+						Expect(outputErr).NotTo(HaveOccurred())
+					})
 
 				})
 

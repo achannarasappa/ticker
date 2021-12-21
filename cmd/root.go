@@ -33,6 +33,7 @@ var (
 	printCmd = &cobra.Command{
 		Use:   "print",
 		Short: "Prints holdings",
+		Args:  cli.Validate(&ctx, &options, &err),
 		Run:   print.Run(&dep, &ctx, &optionsPrint),
 	}
 )

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
@@ -100,7 +101,7 @@ var _ = Describe("Cli", func() {
 				output := getStdout(func() {
 					Run(inputStartFn)(&cobra.Command{}, []string{})
 				})
-				Expect(output).To(Equal("Unable to start UI: ui error\n"))
+				Expect(output).To(Equal("unable to start UI: ui error\n"))
 				Expect(fnIsCalled).To(Equal(true))
 			})
 		})
@@ -253,14 +254,16 @@ var _ = Describe("Cli", func() {
 					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
 						"Groups": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 							"0": g.MatchFields(g.IgnoreExtras, g.Fields{
-								"SymbolsBySource": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+								"SymbolsBySource": g.MatchAllElements(func(element interface{}) string {
+									return strconv.FormatInt(int64(element.(c.AssetGroupSymbolsBySource).Source), 10)
+								}, g.Elements{
 									"0": g.MatchFields(g.IgnoreExtras, g.Fields{
 										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 											"0": Equal("TSLA"),
 										}),
 										"Source": Equal(c.QuoteSourceYahoo),
 									}),
-									"1": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"2": g.MatchFields(g.IgnoreExtras, g.Fields{
 										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 											"0": Equal("ethereum"),
 											"1": Equal("solana"),
@@ -503,7 +506,7 @@ var _ = Describe("Cli", func() {
 					outputCtx, outputErr := GetContext(depLocal, cli.Options{}, inputConfigPath)
 
 					Expect(outputCtx.Config).To(Equal(c.Config{}))
-					Expect(outputErr).To(MatchError("Invalid config: open .config-file-that-does-not-exist.yaml: file does not exist"))
+					Expect(outputErr).To(MatchError("invalid config: open .config-file-that-does-not-exist.yaml: file does not exist"))
 				})
 			})
 
@@ -514,7 +517,7 @@ var _ = Describe("Cli", func() {
 					outputCtx, outputErr := GetContext(depLocal, cli.Options{}, inputConfigPath)
 
 					Expect(outputCtx.Config).To(Equal(c.Config{}))
-					Expect(outputErr).To(MatchError("Invalid config: yaml: unmarshal errors:\n  line 2: cannot unmarshal !!str `NOK` into []string"))
+					Expect(outputErr).To(MatchError("invalid config: yaml: unmarshal errors:\n  line 2: cannot unmarshal !!str `NOK` into []string"))
 
 				})
 			})
@@ -536,7 +539,7 @@ var _ = Describe("Cli", func() {
 				It("should return an error", func() {
 					options.Watchlist = ""
 					outputErr := Validate(&ctx, &options, nil)(&cobra.Command{}, []string{})
-					Expect(outputErr).To(MatchError("Invalid config: No watchlist provided"))
+					Expect(outputErr).To(MatchError("invalid config: No watchlist provided"))
 				})
 
 				When("a nil error reference is passed in from Cobra", func() {

@@ -73,7 +73,7 @@ var _ = Describe("Print", func() {
 			output := getStdout(func() {
 				print.Run(&inputDependencies, &inputContext, &inputOptions)(&cobra.Command{}, []string{})
 			})
-			Expect(output).To(Equal("[{\"name\":\"Alphabet Inc.\",\"symbol\":\"GOOG\",\"price\":2838.42,\"value\":28384.2,\"cost\":10000,\"quantity\":10,\"weight\":96.99689027099068},{\"name\":\"Roblox Corporation\",\"symbol\":\"RBLX\",\"price\":87.88,\"value\":878.8,\"cost\":500,\"quantity\":10,\"weight\":3.0031097290093287}]\n"))
+			Expect(output).To(Equal("[{\"name\":\"Alphabet Inc.\",\"symbol\":\"GOOG\",\"price\":\"2838.420000\",\"value\":\"28384.200000\",\"cost\":\"10000.000000\",\"quantity\":\"10.000000\",\"weight\":\"96.996890\"},{\"name\":\"Roblox Corporation\",\"symbol\":\"RBLX\",\"price\":\"87.880000\",\"value\":\"878.800000\",\"cost\":\"500.000000\",\"quantity\":\"10.000000\",\"weight\":\"3.003110\"}]\n"))
 		})
 
 		When("the format option is set to csv", func() {

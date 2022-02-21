@@ -100,7 +100,7 @@ func GetCurrencyRates(client resty.Client, symbols []string, targetCurrency stri
 		return c.CurrencyRates{}, err
 	}
 
-	if len(currencyPairSymbols) <= 0 {
+	if len(currencyPairSymbols) == 0 {
 		return c.CurrencyRates{}, nil
 	}
 

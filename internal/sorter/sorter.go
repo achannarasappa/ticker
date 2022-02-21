@@ -11,16 +11,16 @@ type Sorter func([]c.Asset) []c.Asset
 
 // NewSorter creates a sorting function
 func NewSorter(sort string) Sorter {
+	var sortDict = map[string]Sorter{
+		"alpha": sortByAlpha,
+		"value": sortByValue,
+		"user":  sortByUser,
+	}
 	if sorter, ok := sortDict[sort]; ok {
 		return sorter
 	}
-	return sortByChange
-}
 
-var sortDict = map[string]Sorter{
-	"alpha": sortByAlpha,
-	"value": sortByValue,
-	"user":  sortByUser,
+	return sortByChange
 }
 
 func sortByUser(assetsIn []c.Asset) []c.Asset {

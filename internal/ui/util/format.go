@@ -40,17 +40,17 @@ func ConvertFloatToString(f float64, isVariablePrecision bool) string {
 	}
 
 	if f > 1000000000000 {
-		f = f / 1000000000000
+		f /= 1000000000000
 		unit = " T"
 	}
 
 	if f > 1000000000 {
-		f = f / 1000000000
+		f /= 1000000000
 		unit = " B"
 	}
 
 	if f > 1000000 {
-		f = f / 1000000
+		f /= 1000000
 		unit = " M"
 	}
 

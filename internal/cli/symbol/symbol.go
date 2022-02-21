@@ -2,14 +2,14 @@ package symbol
 
 import (
 	"encoding/csv"
-	"fmt"
+	"errors"
 	"io"
 
 	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/go-resty/resty/v2"
 )
 
-type SymbolSourceMap struct {
+type SymbolSourceMap struct { //nolint:golint
 	TickerSymbol string
 	SourceSymbol string
 	Source       c.QuoteSource
@@ -34,8 +34,9 @@ func parseTickerSymbolToSourceSymbol(body io.ReadCloser) (TickerSymbolToSourceSy
 
 		row, err := reader.Read()
 
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			body.Close()
+
 			break
 		}
 
@@ -58,7 +59,7 @@ func parseTickerSymbolToSourceSymbol(body io.ReadCloser) (TickerSymbolToSourceSy
 
 // GetTickerSymbols retrieves a list of ticker specific symbols and their data source
 func GetTickerSymbols(client resty.Client) (TickerSymbolToSourceSymbol, error) {
-	url := fmt.Sprintf("https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv")
+	url := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv"
 	res, err := client.R().
 		SetDoNotParseResponse(true).
 		Get(url)

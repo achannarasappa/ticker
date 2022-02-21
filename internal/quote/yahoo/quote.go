@@ -101,12 +101,14 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 
 	if responseQuote.MarketState == "POST" && responseQuote.PostMarketPrice == 0.0 {
 		assetQuote.Exchange.IsRegularTradingSession = false
+
 		return assetQuote
 	}
 
 	if responseQuote.MarketState == "PRE" && responseQuote.PreMarketPrice == 0.0 {
 		assetQuote.Exchange.IsActive = false
 		assetQuote.Exchange.IsRegularTradingSession = false
+
 		return assetQuote
 	}
 
@@ -115,6 +117,7 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 		assetQuote.QuotePrice.Change = (responseQuote.PostMarketChange + responseQuote.RegularMarketChange)
 		assetQuote.QuotePrice.ChangePercent = responseQuote.PostMarketChangePercent + responseQuote.RegularMarketChangePercent
 		assetQuote.Exchange.IsRegularTradingSession = false
+
 		return assetQuote
 	}
 
@@ -123,6 +126,7 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 		assetQuote.QuotePrice.Change = responseQuote.PreMarketChange
 		assetQuote.QuotePrice.ChangePercent = responseQuote.PreMarketChangePercent
 		assetQuote.Exchange.IsRegularTradingSession = false
+
 		return assetQuote
 	}
 
@@ -132,11 +136,13 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 		assetQuote.QuotePrice.ChangePercent = responseQuote.PostMarketChangePercent + responseQuote.RegularMarketChangePercent
 		assetQuote.Exchange.IsActive = false
 		assetQuote.Exchange.IsRegularTradingSession = false
+
 		return assetQuote
 	}
 
 	assetQuote.Exchange.IsActive = false
 	assetQuote.Exchange.IsRegularTradingSession = false
+
 	return assetQuote
 
 }
@@ -147,6 +153,7 @@ func transformResponseQuotes(responseQuotes []ResponseQuote) []c.AssetQuote {
 	for _, responseQuote := range responseQuotes {
 		quotes = append(quotes, transformResponseQuote(responseQuote))
 	}
+
 	return quotes
 
 }

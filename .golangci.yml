@@ -1,0 +1,26 @@
+linters:
+  presets:
+    - bugs
+    - complexity
+    - format
+    - performance
+    - unused
+    - style
+  disable:
+    - paralleltest
+    - wrapcheck
+    - exhaustivestruct
+    - whitespace
+    - wsl
+    - godot
+    - lll
+    - funlen
+    - gomnd
+    - gofumpt
+    - maligned
+    - unparam
+run:
+  tests: false
+issues:
+  fix: false
+    

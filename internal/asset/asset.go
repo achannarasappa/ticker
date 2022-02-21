@@ -154,8 +154,8 @@ func getLots(lots []c.Lot) map[string]AggregatedLot {
 
 		} else {
 
-			aggregatedLot.Quantity = aggregatedLot.Quantity + lot.Quantity
-			aggregatedLot.Cost = aggregatedLot.Cost + (lot.Quantity * lot.UnitCost)
+			aggregatedLot.Quantity += lot.Quantity
+			aggregatedLot.Cost += lot.Quantity * lot.UnitCost
 
 			aggregatedLots[lot.Symbol] = aggregatedLot
 

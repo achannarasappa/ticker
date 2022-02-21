@@ -43,7 +43,7 @@ func Run(uiStartFn func() error) func(*cobra.Command, []string) {
 		err := uiStartFn()
 
 		if err != nil {
-			fmt.Println(fmt.Errorf("Unable to start UI: %w", err).Error())
+			fmt.Println(fmt.Errorf("unable to start UI: %w", err).Error())
 		}
 	}
 }
@@ -57,7 +57,7 @@ func Validate(ctx *c.Context, options *Options, prevErr *error) func(*cobra.Comm
 		}
 
 		if len(ctx.Config.Watchlist) == 0 && len(options.Watchlist) == 0 && len(ctx.Config.Lots) == 0 && len(ctx.Config.AssetGroup) == 0 {
-			return errors.New("Invalid config: No watchlist provided")
+			return errors.New("invalid config: No watchlist provided") //nolint:goerr113
 		}
 
 		return nil
@@ -107,14 +107,14 @@ func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {
 	handle, err := fs.Open(configPath)
 
 	if err != nil {
-		return config, fmt.Errorf("Invalid config: %w", err)
+		return config, fmt.Errorf("invalid config: %w", err)
 	}
 
 	defer handle.Close()
 	err = yaml.NewDecoder(handle).Decode(&config)
 
 	if err != nil {
-		return config, fmt.Errorf("Invalid config: %w", err)
+		return config, fmt.Errorf("invalid config: %w", err)
 	}
 
 	return config, nil
@@ -173,7 +173,7 @@ func getConfigPath(fs afero.Fs, configPathOption string) (string, error) {
 	err = v.ReadInConfig()
 
 	if err != nil {
-		return "", fmt.Errorf("Invalid config: %w", err)
+		return "", fmt.Errorf("invalid config: %w", err)
 	}
 
 	return v.ConfigFileUsed(), nil
@@ -220,7 +220,7 @@ func getStringOption(cliValue string, configValue string) string {
 
 func getGroups(config c.Config, client resty.Client) ([]c.AssetGroup, error) {
 
-	var groups []c.AssetGroup
+	groups := make([]c.AssetGroup, 0)
 	var configAssetGroups []c.ConfigAssetGroup
 	var assetGroupSymbolsBySource []c.AssetGroupSymbolsBySource
 

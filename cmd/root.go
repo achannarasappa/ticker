@@ -14,6 +14,7 @@ import (
 	"github.com/achannarasappa/ticker/internal/ui"
 )
 
+//nolint:gochecknoglobals
 var (
 	// Version is a placeholder that is replaced at build time with a linker flag (-ldflags)
 	Version      string = "v0.0.0"
@@ -46,7 +47,7 @@ func Execute() {
 	}
 }
 
-func init() {
+func init() { //nolint: gochecknoinits
 	cobra.OnInitialize(initConfig)
 	rootCmd.Flags().StringVar(&configPath, "config", "", "config file (default is $HOME/.ticker.yaml)")
 	rootCmd.Flags().StringVarP(&options.Watchlist, "watchlist", "w", "", "comma separated list of symbols to watch")

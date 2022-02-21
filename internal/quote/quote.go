@@ -45,7 +45,7 @@ func getUniqueSymbolsBySource(assetGroups []c.AssetGroup) []c.AssetGroupSymbolsB
 
 	symbols := make(map[c.QuoteSource]map[string]bool)
 	symbolsUnique := make(map[c.QuoteSource][]string)
-	var assetGroupSymbolsBySource []c.AssetGroupSymbolsBySource
+	assetGroupSymbolsBySource := make([]c.AssetGroupSymbolsBySource, 0)
 	for _, assetGroup := range assetGroups {
 
 		for _, symbolGroup := range assetGroup.SymbolsBySource {

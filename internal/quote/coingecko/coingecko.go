@@ -11,31 +11,31 @@ import (
 type ResponseQuotes []ResponseQuote
 
 type ResponseQuote struct {
-	Id                           string  `json:"id"`                               //"bitcoin",
-	Symbol                       string  `json:"symbol"`                           //"btc",
-	Name                         string  `json:"name"`                             //"Bitcoin",
-	Image                        string  `json:"image"`                            //"https://assets.coingecko.com/coins/images/1/large/bitcoin.png?1547033579",
-	CurrentPrice                 float64 `json:"current_price"`                    //42306,
-	MarketCap                    float64 `json:"market_cap"`                       //802234977601,
-	MarketCapRank                float64 `json:"market_cap_rank"`                  //1,
-	FullyDilutedValuation        float64 `json:"fully_diluted_valuation"`          //888680014113,
-	TotalVolume                  float64 `json:"total_volume"`                     //12256877478,
-	High24h                      float64 `json:"high_24h"`                         //42751,
-	Low24h                       float64 `json:"low_24h"`                          //41992,
-	PriceChange24h               float64 `json:"price_change_24h"`                 //307.47,
-	PriceChangePercentage24h     float64 `json:"price_change_percentage_24h"`      //0.73209,
-	MarketCapChange24h           float64 `json:"market_cap_change_24h"`            //6782357519,
-	MarketCapChangePercentage24h float64 `json:"market_cap_change_percentage_24h"` //0.85264,
-	CirculatingSupply            float64 `json:"circulating_supply"`               //18957256,
-	TotalSupply                  float64 `json:"total_supply"`                     //21000000,
-	MaxSupply                    float64 `json:"max_supply"`                       //21000000,
-	Ath                          float64 `json:"ath"`                              //69045,
-	AthChangePercentage          float64 `json:"ath_change_percentage"`            //-38.70919,
-	AthDate                      string  `json:"ath_date"`                         //"2021-11-10T14:24:11.849Z",
-	Atl                          float64 `json:"atl"`                              //67.81,
-	AtlChangePercentage          float64 `json:"atl_change_percentage"`            //62307.78644,
-	AtlDate                      string  `json:"atl_date"`                         //"2013-07-06T00:00:00.000Z",
-	LastUpdated                  string  `json:"last_updated"`                     //"2022-02-13T22:05:58.681Z"
+	Id                           string  `json:"id"` //nolint:golint,stylecheck
+	Symbol                       string  `json:"symbol"`
+	Name                         string  `json:"name"`
+	Image                        string  `json:"image"`
+	CurrentPrice                 float64 `json:"current_price"`
+	MarketCap                    float64 `json:"market_cap"`
+	MarketCapRank                float64 `json:"market_cap_rank"`
+	FullyDilutedValuation        float64 `json:"fully_diluted_valuation"`
+	TotalVolume                  float64 `json:"total_volume"`
+	High24h                      float64 `json:"high_24h"`
+	Low24h                       float64 `json:"low_24h"`
+	PriceChange24h               float64 `json:"price_change_24h"`
+	PriceChangePercentage24h     float64 `json:"price_change_percentage_24h"`
+	MarketCapChange24h           float64 `json:"market_cap_change_24h"`
+	MarketCapChangePercentage24h float64 `json:"market_cap_change_percentage_24h"`
+	CirculatingSupply            float64 `json:"circulating_supply"`
+	TotalSupply                  float64 `json:"total_supply"`
+	MaxSupply                    float64 `json:"max_supply"`
+	Ath                          float64 `json:"ath"`
+	AthChangePercentage          float64 `json:"ath_change_percentage"`
+	AthDate                      string  `json:"ath_date"`
+	Atl                          float64 `json:"atl"`
+	AtlChangePercentage          float64 `json:"atl_change_percentage"`
+	AtlDate                      string  `json:"atl_date"`
+	LastUpdated                  string  `json:"last_updated"`
 }
 
 func transformResponseToAssetQuotes(responseQuotes *ResponseQuotes) []c.AssetQuote {

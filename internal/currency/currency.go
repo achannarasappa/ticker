@@ -5,7 +5,7 @@ import (
 )
 
 // CurrencyRateByUse represents the currency conversion rate for each use case
-type CurrencyRateByUse struct {
+type CurrencyRateByUse struct { //nolint:golint
 	ToCurrencyCode string
 	QuotePrice     float64
 	PositionCost   float64

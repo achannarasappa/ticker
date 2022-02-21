@@ -17,6 +17,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+//nolint:gochecknoglobals
 var (
 	styleLogo  = util.NewStyle("#ffffd7", "#ff8700", true)
 	styleGroup = util.NewStyle("#8a8a8a", "#303030", false)
@@ -45,6 +46,7 @@ type Model struct {
 
 func getTime() string {
 	t := time.Now()
+
 	return fmt.Sprintf("%s %02d:%02d:%02d", t.Weekday().String(), t.Hour(), t.Minute(), t.Second())
 }
 

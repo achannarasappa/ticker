@@ -34,10 +34,11 @@ func MockResponse(responseParameters ResponseParameters) {
 	t, _ := template.New("response").Parse(responseTemplate)
 	//nolint:errcheck
 	t.Execute(&responseBytes, responseParameters)
-	responseURL := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=" + responseParameters.Symbol
+	responseURL := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=" + responseParameters.Symbol //nolint:golint,stylecheck
 	httpmock.RegisterResponder("GET", responseURL, func(req *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, responseBytes.String())
 		resp.Header.Set("Content-Type", "application/json")
+
 		return resp, nil
 	})
 }
@@ -56,18 +57,19 @@ func MockResponseCurrency() {
 			"error": null
 		}
 	}`
-	responseURL := `https://query1.finance.yahoo.com/v7/finance/quote`
+	responseURL := `https://query1.finance.yahoo.com/v7/finance/quote` //nolint:golint,stylecheck
 	httpmock.RegisterResponder("GET", responseURL, func(req *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, response)
 		resp.Header.Set("Content-Type", "application/json")
+
 		return resp, nil
 	})
 }
 
 func MockResponseCurrencyError() {
-	responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote"
+	responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote" //nolint:golint,stylecheck
 	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
-		return &http.Response{}, errors.New("error getting currencies")
+		return &http.Response{}, errors.New("error getting currencies") //nolint:goerr113
 	})
 }
 
@@ -123,10 +125,11 @@ func MockResponseYahooQuotes() {
 			"error": null
 		}
 	}`
-	responseURL := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=GOOG,RBLX"
+	responseURL := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=GOOG,RBLX" //nolint:golint,stylecheck
 	httpmock.RegisterResponder("GET", responseURL, func(req *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, response)
 		resp.Header.Set("Content-Type", "application/json")
+
 		return resp, nil
 	})
 }
@@ -142,17 +145,18 @@ func MockTickerSymbols() {
 "USDC.X","usd-coin","cg"
 "XRP.X","ripple","cg"
 `
-	responseUrl := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv"
+	responseUrl := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv" //nolint:golint,stylecheck
 	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, responseFixture)
 		resp.Header.Set("Content-Type", "text/plain; charset=utf-8")
+
 		return resp, nil
 	})
 }
 
 func MockTickerSymbolsError() {
-	responseUrl := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv"
+	responseUrl := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv" //nolint:golint,stylecheck
 	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
-		return &http.Response{}, errors.New("error getting ticker symbols")
+		return &http.Response{}, errors.New("error getting ticker symbols") //nolint:goerr113
 	})
 }

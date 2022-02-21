@@ -89,6 +89,7 @@ func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Comm
 
 		if options.Format == "csv" {
 			fmt.Println(convertAssetsToCSV(assets))
+
 			return
 		}
 

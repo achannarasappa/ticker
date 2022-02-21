@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	g "github.com/onsi/gomega/gstruct"
 	"github.com/onsi/gomega/types"
@@ -70,6 +70,7 @@ var _ = Describe("Cli", func() {
 		}
 		ctx = c.Context{}
 
+		http.MockTickerSymbols()
 		http.MockResponseCurrency()
 		//nolint:errcheck
 		dep.Fs.MkdirAll("./", 0755)
@@ -239,6 +240,39 @@ var _ = Describe("Cli", func() {
 					}),
 				}),
 
+				// symbols by source
+				Entry("when groups and watchlist are defined", Case{
+					InputOptions: cli.Options{},
+					InputConfigFileContents: strings.Join([]string{
+						"watchlist:",
+						"  - TSLA",        // yahoo finance
+						"  - ETHEREUM.CG", // coingecko
+						"  - SOL.X",       // ticker
+					}, "\n"),
+					AssertionErr: BeNil(),
+					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Groups": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+							"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"SymbolsBySource": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+									"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+											"0": Equal("TSLA"),
+										}),
+										"Source": Equal(c.QuoteSourceYahoo),
+									}),
+									"1": g.MatchFields(g.IgnoreExtras, g.Fields{
+										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+											"0": Equal("ethereum"),
+											"1": Equal("solana"),
+										}),
+										"Source": Equal(c.QuoteSourceCoingecko),
+									}),
+								}),
+							}),
+						}),
+					}),
+				}),
+
 				// option: string (proxy, sort)
 				Entry("when proxy is set in config file", Case{
 					InputOptions:            cli.Options{},
@@ -352,6 +386,35 @@ var _ = Describe("Cli", func() {
 					}),
 				}),
 			)
+
+			When("there is an error getting ticker symbols", func() {
+
+				It("returns the error", func() {
+
+					http.MockTickerSymbolsError()
+
+					_, outputErr := GetContext(dep, cli.Options{}, "")
+
+					Expect(outputErr).ToNot(BeNil())
+
+				})
+
+			})
+
+			When("there is an error getting reference data", func() {
+
+				PIt("returns the error", func() {
+
+					http.MockResponseCurrencyError()
+
+					_, outputErr := GetContext(dep, cli.Options{}, "")
+
+					Expect(outputErr).ToNot(BeNil())
+
+				})
+
+			})
+
 		})
 
 		//nolint:errcheck

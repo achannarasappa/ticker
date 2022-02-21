@@ -7,7 +7,7 @@ import (
 	. "github.com/achannarasappa/ticker/internal/quote"
 	. "github.com/achannarasappa/ticker/test/http"
 	"github.com/jarcoal/httpmock"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	g "github.com/onsi/gomega/gstruct"
 )
@@ -86,6 +86,13 @@ var _ = Describe("Quote", func() {
 						Symbols: []string{
 							"GOOG",
 							"RBLX",
+						},
+					},
+					{
+						Source: c.QuoteSourceCoingecko,
+						Symbols: []string{
+							"bitcoin",
+							"solana",
 						},
 					},
 					{

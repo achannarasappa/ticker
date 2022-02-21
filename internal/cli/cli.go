@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/achannarasappa/ticker/internal/cli/symbol"
 	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/quote"
 	"github.com/achannarasappa/ticker/internal/ui/util"
@@ -29,6 +30,11 @@ type Options struct {
 	ShowHoldings          bool
 	Proxy                 string
 	Sort                  string
+}
+
+type symbolSource struct {
+	symbol string
+	source c.QuoteSource
 }
 
 // Run starts the ticker UI
@@ -63,6 +69,7 @@ func GetContext(d c.Dependencies, options Options, configPath string) (c.Context
 	var (
 		reference c.Reference
 		config    c.Config
+		groups    []c.AssetGroup
 		err       error
 	)
 
@@ -73,12 +80,13 @@ func GetContext(d c.Dependencies, options Options, configPath string) (c.Context
 	}
 
 	config = getConfig(config, options, *d.HttpClient)
-	groups := getGroups(config)
-	reference, err = getReference(config, groups, *d.HttpClient)
+	groups, err = getGroups(config, *d.HttpClient)
 
 	if err != nil {
 		return c.Context{}, err
 	}
+
+	reference, err = getReference(config, groups, *d.HttpClient)
 
 	context := c.Context{
 		Reference: reference,
@@ -210,10 +218,17 @@ func getStringOption(cliValue string, configValue string) string {
 	return ""
 }
 
-func getGroups(config c.Config) []c.AssetGroup {
+func getGroups(config c.Config, client resty.Client) ([]c.AssetGroup, error) {
 
 	var groups []c.AssetGroup
 	var configAssetGroups []c.ConfigAssetGroup
+	var assetGroupSymbolsBySource []c.AssetGroupSymbolsBySource
+
+	tickerSymbolToSourceSymbol, err := symbol.GetTickerSymbols(client)
+
+	if err != nil {
+		return []c.AssetGroup{}, err
+	}
 
 	if len(config.Watchlist) > 0 || len(config.Lots) > 0 {
 		configAssetGroups = append(configAssetGroups, c.ConfigAssetGroup{
@@ -228,34 +243,86 @@ func getGroups(config c.Config) []c.AssetGroup {
 	for _, configAssetGroup := range configAssetGroups {
 
 		symbols := make(map[string]bool)
-		symbolsUnique := make([]string, 0)
+		symbolsUnique := make(map[c.QuoteSource]c.AssetGroupSymbolsBySource)
 
 		for _, symbol := range configAssetGroup.Watchlist {
 			if !symbols[symbol] {
 				symbols[symbol] = true
-				symbolsUnique = append(symbolsUnique, symbol)
+				symbolAndSource := getSymbolAndSource(symbol, tickerSymbolToSourceSymbol)
+				symbolsUnique = appendSymbol(symbolsUnique, symbolAndSource)
 			}
 		}
 
 		for _, lot := range configAssetGroup.Holdings {
 			if !symbols[lot.Symbol] {
 				symbols[lot.Symbol] = true
-				symbolsUnique = append(symbolsUnique, lot.Symbol)
+				symbolAndSource := getSymbolAndSource(lot.Symbol, tickerSymbolToSourceSymbol)
+				symbolsUnique = appendSymbol(symbolsUnique, symbolAndSource)
 			}
+		}
+
+		for _, symbolsBySource := range symbolsUnique {
+			assetGroupSymbolsBySource = append(assetGroupSymbolsBySource, symbolsBySource)
 		}
 
 		groups = append(groups, c.AssetGroup{
 			ConfigAssetGroup: configAssetGroup,
-			SymbolsBySource: []c.AssetGroupSymbolsBySource{
-				{
-					Source:  c.QuoteSourceYahoo,
-					Symbols: symbolsUnique,
-				},
-			},
+			SymbolsBySource:  assetGroupSymbolsBySource,
 		})
 
 	}
 
-	return groups
+	return groups, nil
+
+}
+
+func getSymbolAndSource(symbol string, tickerSymbolToSourceSymbol symbol.TickerSymbolToSourceSymbol) symbolSource {
+
+	symbolUppercase := strings.ToUpper(symbol)
+
+	if strings.HasSuffix(symbolUppercase, ".CG") {
+		return symbolSource{
+			source: c.QuoteSourceCoingecko,
+			symbol: strings.TrimSuffix(strings.ToLower(symbol), ".cg"),
+		}
+	}
+
+	if strings.HasSuffix(symbolUppercase, ".X") {
+
+		if tickerSymbolToSource, exists := tickerSymbolToSourceSymbol[symbolUppercase]; exists {
+
+			return symbolSource{
+				source: tickerSymbolToSource.Source,
+				symbol: tickerSymbolToSource.SourceSymbol,
+			}
+
+		}
+
+	}
+
+	return symbolSource{
+		source: c.QuoteSourceYahoo,
+		symbol: symbolUppercase,
+	}
+
+}
+
+func appendSymbol(symbolsUnique map[c.QuoteSource]c.AssetGroupSymbolsBySource, symbolAndSource symbolSource) map[c.QuoteSource]c.AssetGroupSymbolsBySource {
+
+	if symbolsBySource, ok := symbolsUnique[symbolAndSource.source]; ok {
+
+		symbolsBySource.Symbols = append(symbolsBySource.Symbols, symbolAndSource.symbol)
+
+		symbolsUnique[symbolAndSource.source] = symbolsBySource
+
+		return symbolsUnique
+	}
+
+	symbolsUnique[symbolAndSource.source] = c.AssetGroupSymbolsBySource{
+		Source:  symbolAndSource.source,
+		Symbols: []string{symbolAndSource.symbol},
+	}
+
+	return symbolsUnique
 
 }

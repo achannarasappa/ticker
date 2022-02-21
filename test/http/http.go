@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"errors"
 	"html/template"
 	"net/http"
 
@@ -63,6 +64,13 @@ func MockResponseCurrency() {
 	})
 }
 
+func MockResponseCurrencyError() {
+	responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote"
+	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+		return &http.Response{}, errors.New("error getting currencies")
+	})
+}
+
 func MockResponseYahooQuotes() {
 	response := `{
 		"quoteResponse": {
@@ -120,5 +128,31 @@ func MockResponseYahooQuotes() {
 		resp := httpmock.NewStringResponse(200, response)
 		resp.Header.Set("Content-Type", "application/json")
 		return resp, nil
+	})
+}
+
+func MockTickerSymbols() {
+	responseFixture := `"ADA.X","cardano","cg"
+"ALGO.X","algorand","cg"
+"BTC.X","bitcoin","cg"
+"ETH.X","ethereum","cg"
+"DOGE.X","dogecoin","cg"
+"DOT.X","polkadot","cg"
+"SOL.X","solana","cg"
+"USDC.X","usd-coin","cg"
+"XRP.X","ripple","cg"
+`
+	responseUrl := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv"
+	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, responseFixture)
+		resp.Header.Set("Content-Type", "text/plain; charset=utf-8")
+		return resp, nil
+	})
+}
+
+func MockTickerSymbolsError() {
+	responseUrl := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv"
+	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+		return &http.Response{}, errors.New("error getting ticker symbols")
 	})
 }

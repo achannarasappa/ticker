@@ -205,6 +205,8 @@ type QuoteSource int
 const (
 	QuoteSourceYahoo QuoteSource = iota
 	QuoteSourceUserDefined
+	QuoteSourceCoingecko
+	QuoteSourceUnknown
 )
 
 // AssetQuote represents a price quote and related attributes for a single security

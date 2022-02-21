@@ -8,7 +8,7 @@ import (
 	. "github.com/achannarasappa/ticker/internal/ui/component/summary"
 
 	"github.com/acarl005/stripansi"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

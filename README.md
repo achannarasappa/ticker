@@ -102,6 +102,8 @@ watchlist:
   - TEAM
   - ESTC
   - BTC-USD
+  - SOL.X # Solana price via CoinGecko
+  - SAMOYEDCOIN.CG # Samoyed price via CoinGecko
 lots:
   - symbol: "ABNB"
     quantity: 35.0
@@ -151,6 +153,15 @@ Watchlists and holdings can be grouped in `.ticker.yml` under the `groups` prope
 * If top level `watchlist` or `lots` properties are defined in the configuration file, the entries there will be added to a group named `default` which will always be shown first
 * Ordering is defined by order in the configuration file
 * The `holdings` property replaces `lots` under `groups` but serves the same purpose
+
+### Data Sources & Symbols
+
+`ticker` pulls price quotes from Yahoo Finance by default but also supports pulling quotes from CoinGecko which supports price quotes for most cryptocurrencies. In order to pull from a specific data source, use a source suffix:
+
+* *none* - symbols with no suffix will default to Yahoo Finance as the data source
+* `.X` - symbols with this suffix are shorthand symbols that are specific to ticker and intended to provide more concise and familiar symbols for popular assets (e.g. using `SOL.X` rather than `SOLANA.CG`)
+  * The full list of ticker symbols can be found [here](https://github.com/achannarasappa/ticker-static/blob/master/symbols.csv). Initial values are populated with the top 250 cryptocurrencies from CoinGecko at time of release
+* `.CG` - symbols with this suffix will use CoinGecko as the data source. The proper coin name can be found on the CoinGecko page in the *API id* field (e.g. for `SOL` go to the coin's [page on CoinGecko](https://www.coingecko.com/en/coins/solana), find the value is `solana`, and use the symbol `SOLANA.CG` in ticker)
 
 ### Currency Conversion
 
@@ -203,7 +214,6 @@ $ ticker --config=./.ticker.yaml print
 ## Notes
 
 * **Real-time quotes** - Quotes are pulled from Yahoo finance which may provide delayed stock quotes depending on the exchange. The major US exchanges (NYSE, NASDAQ) have real-time quotes however other exchanges may not. Consult the [help article](https://help.yahoo.com/kb/SLN2310.html) on exchange delays to determine which exchanges you can expect delays for or use the `--show-tags` flag to include timeliness of data alongside quotes in `ticker`.
-* **Cryptocurrencies**  - `ticker` supports any cryptocurrency Yahoo / CoinMarketCap supports. A full list can be found [here](https://finance.yahoo.com/cryptocurrencies?offset=0&count=100)
 * **Non-US Symbols, Forex, ETFs** - The names for there may differ from their common name/symbols. Try searching the native name in [Yahoo finance](https://finance.yahoo.com/) to determine the symbol to use in `ticker`
 * **Terminal fonts** - Font with support for the [`HORIZONTAL LINE SEPARATOR` unicode character](https://www.fileformat.info/info/unicode/char/23af/fontsupport.htm) is required to properly render separators (`--show-separator` option)
 

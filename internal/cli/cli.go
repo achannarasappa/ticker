@@ -94,7 +94,7 @@ func GetContext(d c.Dependencies, options Options, configPath string) (c.Context
 		Groups:    groups,
 	}
 
-	return context, nil
+	return context, err
 }
 
 func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {

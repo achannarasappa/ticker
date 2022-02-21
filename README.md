@@ -218,6 +218,11 @@ Running tests:
 ginkgo -cover ./...
 ```
 
+Linting:
+```sh
+golangci-lint run
+```
+
 ## Libraries `ticker` uses
 
 * [bubbletea](https://github.com/charmbracelet/bubbletea) - terminal UI framework

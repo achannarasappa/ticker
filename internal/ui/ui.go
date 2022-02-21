@@ -99,7 +99,7 @@ type quoteMsg struct {
 }
 
 // Update hook for bubbletea
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) { //nolint:ireturn,cyclop
 
 	switch msg := msg.(type) {
 

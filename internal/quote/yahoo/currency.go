@@ -50,7 +50,7 @@ func getCurrencyRatesFromCurrencyPairSymbols(client resty.Client, currencyPairSy
 		return c.CurrencyRates{}, err
 	}
 
-	return transformResponseCurrencies((res.Result().(*Response)).QuoteResponse.Quotes), nil
+	return transformResponseCurrencies((res.Result().(*Response)).QuoteResponse.Quotes), nil //nolint:forcetypeassert
 }
 
 func transformResponseCurrencyPairs(responseQuotes []ResponseQuote, targetCurrency string) []string {
@@ -84,7 +84,7 @@ func getCurrencyPairSymbols(client resty.Client, symbols []string, targetCurrenc
 		return []string{}, err
 	}
 
-	return transformResponseCurrencyPairs((res.Result().(*Response)).QuoteResponse.Quotes, targetCurrency), nil
+	return transformResponseCurrencyPairs((res.Result().(*Response)).QuoteResponse.Quotes, targetCurrency), nil //nolint:forcetypeassert
 }
 
 // GetCurrencyRates retrieves the currency rates to convert from each currency for the given symbols to the target currency

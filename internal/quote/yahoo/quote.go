@@ -167,6 +167,6 @@ func GetAssetQuotes(client resty.Client, symbols []string) func() []c.AssetQuote
 			SetResult(Response{}).
 			Get(url)
 
-		return transformResponseQuotes((res.Result().(*Response)).QuoteResponse.Quotes)
+		return transformResponseQuotes((res.Result().(*Response)).QuoteResponse.Quotes) //nolint:forcetypeassert
 	}
 }

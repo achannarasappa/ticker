@@ -19,6 +19,10 @@ linters:
     - gofumpt
     - maligned
     - unparam
+    - tagliatelle
+    - forbidigo
+    - gci
+    - varnamelen
 run:
   tests: false
 issues:

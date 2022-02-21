@@ -71,7 +71,7 @@ type Reference struct {
 // Dependencies represents references to external dependencies
 type Dependencies struct {
 	Fs         afero.Fs
-	HttpClient *resty.Client //nolint:golint,stylecheck
+	HttpClient *resty.Client //nolint:golint,stylecheck,revive
 }
 
 // Lot represents a cost basis lot

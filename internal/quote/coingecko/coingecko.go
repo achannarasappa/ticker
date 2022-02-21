@@ -11,7 +11,7 @@ import (
 type ResponseQuotes []ResponseQuote
 
 type ResponseQuote struct {
-	Id                           string  `json:"id"` //nolint:golint,stylecheck
+	Id                           string  `json:"id"` //nolint:golint,stylecheck,revive
 	Symbol                       string  `json:"symbol"`
 	Name                         string  `json:"name"`
 	Image                        string  `json:"image"`
@@ -94,7 +94,7 @@ func GetAssetQuotes(client resty.Client, symbols []string) []c.AssetQuote {
 		SetResult(ResponseQuotes{}).
 		Get(url)
 
-	out := (res.Result().(*ResponseQuotes))
+	out := (res.Result().(*ResponseQuotes)) //nolint:forcetypeassert
 
 	assetQuotes := transformResponseToAssetQuotes(out)
 

@@ -17,7 +17,7 @@ import (
 //nolint:gochecknoglobals
 var (
 	// Version is a placeholder that is replaced at build time with a linker flag (-ldflags)
-	Version      string = "v0.0.0"
+	Version      = "v0.0.0"
 	configPath   string
 	dep          c.Dependencies
 	ctx          c.Context

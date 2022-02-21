@@ -30,7 +30,7 @@ func NewStyle(fg string, bg string, bold bool) func(string) string {
 	return s.Styled
 }
 
-func stylePrice(percent float64, text string) string {
+func stylePrice(percent float64, text string) string { //nolint:cyclop
 
 	out := te.String(text)
 

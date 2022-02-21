@@ -9,7 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-type SymbolSourceMap struct { //nolint:golint
+type SymbolSourceMap struct { //nolint:golint,revive
 	TickerSymbol string
 	SourceSymbol string
 	Source       c.QuoteSource

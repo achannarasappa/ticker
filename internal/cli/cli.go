@@ -102,7 +102,7 @@ func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {
 	configPath, err := getConfigPath(fs, configPathOption)
 
 	if err != nil {
-		return config, nil
+		return config, err
 	}
 	handle, err := fs.Open(configPath)
 

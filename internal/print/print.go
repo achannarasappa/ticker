@@ -1,4 +1,4 @@
-package print
+package print //nolint:predeclared
 
 import (
 	"bytes"
@@ -20,13 +20,13 @@ type Options struct {
 }
 
 type jsonRow struct {
-	Name     string  `json:"name"`
-	Symbol   string  `json:"symbol"`
-	Price    float64 `json:"price"`
-	Value    float64 `json:"value"`
-	Cost     float64 `json:"cost"`
-	Quantity float64 `json:"quantity"`
-	Weight   float64 `json:"weight"`
+	Name     string `json:"name"`
+	Symbol   string `json:"symbol"`
+	Price    string `json:"price"`
+	Value    string `json:"value"`
+	Cost     string `json:"cost"`
+	Quantity string `json:"quantity"`
+	Weight   string `json:"weight"`
 }
 
 func convertAssetsToCSV(assets []c.Asset) string {
@@ -65,16 +65,20 @@ func convertAssetsToJSON(assets []c.Asset) string {
 			rows = append(rows, jsonRow{
 				Name:     asset.Name,
 				Symbol:   asset.Symbol,
-				Price:    asset.QuotePrice.Price,
-				Value:    asset.Holding.Value,
-				Cost:     asset.Holding.Cost,
-				Quantity: asset.Holding.Quantity,
-				Weight:   asset.Holding.Weight,
+				Price:    fmt.Sprintf("%f", asset.QuotePrice.Price),
+				Value:    fmt.Sprintf("%f", asset.Holding.Value),
+				Cost:     fmt.Sprintf("%f", asset.Holding.Cost),
+				Quantity: fmt.Sprintf("%f", asset.Holding.Quantity),
+				Weight:   fmt.Sprintf("%f", asset.Holding.Weight),
 			})
 		}
 	}
 
-	out, _ := json.Marshal(rows)
+	out, err := json.Marshal(rows)
+
+	if err != nil {
+		return err.Error()
+	}
 
 	return string(out)
 

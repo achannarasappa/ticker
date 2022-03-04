@@ -222,7 +222,6 @@ func getGroups(config c.Config, client resty.Client) ([]c.AssetGroup, error) {
 
 	groups := make([]c.AssetGroup, 0)
 	var configAssetGroups []c.ConfigAssetGroup
-	var assetGroupSymbolsBySource []c.AssetGroupSymbolsBySource
 
 	tickerSymbolToSourceSymbol, err := symbol.GetTickerSymbols(client)
 
@@ -244,6 +243,7 @@ func getGroups(config c.Config, client resty.Client) ([]c.AssetGroup, error) {
 
 		symbols := make(map[string]bool)
 		symbolsUnique := make(map[c.QuoteSource]c.AssetGroupSymbolsBySource)
+		var assetGroupSymbolsBySource []c.AssetGroupSymbolsBySource
 
 		for _, symbol := range configAssetGroup.Watchlist {
 			if !symbols[symbol] {

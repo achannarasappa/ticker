@@ -46,6 +46,13 @@ docker run -it --rm achannarasappa/ticker
 
 Note: config file can be mounted from the host machine by using a bind mount with `-v ~/.ticker.yaml:/.ticker.yaml`
 
+If you want to specify a time zone then you can add `-e TZ=<tz-database-name>` and replace `<tz-database-name>` with a name from the [tz database time zone list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List). For example, if you are in Paris:
+
+```sh
+docker run -it --rm -e TZ=Europe/Paris achannarasappa/ticker
+```
+
+
 **snap**
 ```sh
 sudo snap install ticker

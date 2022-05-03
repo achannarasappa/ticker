@@ -173,10 +173,10 @@ func (m Model) View() string {
 	viewSummary := ""
 
 	if m.ctx.Config.ShowSummary && m.ctx.Config.ShowHoldings {
-		viewSummary += m.summary.View()
+		viewSummary += m.summary.View() + "\n"
 	}
 
-	return viewSummary + "\n" +
+	return viewSummary +
 		m.viewport.View() + "\n" +
 		footer(m.viewport.Width, m.lastUpdateTime, m.groupSelectedName)
 

@@ -53,8 +53,8 @@ func transformResponseToAssetQuotes(responseQuotes *ResponseQuotes) []c.AssetQuo
 			},
 			QuotePrice: c.QuotePrice{
 				Price:          responseQuote.CurrentPrice,
-				PricePrevClose: responseQuote.CurrentPrice + responseQuote.PriceChange24h,
-				PriceOpen:      responseQuote.CurrentPrice + responseQuote.PriceChange24h,
+				PricePrevClose: responseQuote.CurrentPrice - responseQuote.PriceChange24h,
+				PriceOpen:      0.0,
 				PriceDayHigh:   responseQuote.High24h,
 				PriceDayLow:    responseQuote.Low24h,
 				Change:         responseQuote.PriceChange24h,

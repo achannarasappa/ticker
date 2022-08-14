@@ -55,8 +55,8 @@ var _ = Describe("Coingecko", func() {
 
 			output := GetAssetQuotes(*client, []string{"bitcoin"})
 			Expect(output[0].QuotePrice.Price).To(Equal(39045.0))
-			Expect(output[0].QuotePrice.PricePrevClose).To(Equal(38066.951090408686))
-			Expect(output[0].QuotePrice.PriceOpen).To(Equal(38066.951090408686))
+			Expect(output[0].QuotePrice.PricePrevClose).To(Equal(40023.048909591314))
+			Expect(output[0].QuotePrice.PriceOpen).To(Equal(0.0))
 			Expect(output[0].QuotePrice.PriceDayHigh).To(Equal(40090.0))
 			Expect(output[0].QuotePrice.PriceDayLow).To(Equal(38195.0))
 			Expect(output[0].QuotePrice.Change).To(Equal(-978.048909591315))

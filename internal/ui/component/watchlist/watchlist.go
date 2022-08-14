@@ -307,6 +307,11 @@ func textPosition(asset c.Asset, styles c.Styles) string {
 
 func textQuoteExtended(asset c.Asset, styles c.Styles) string {
 
+	if asset.QuotePrice.PriceOpen == 0.0 {
+		return styles.Text(u.ConvertFloatToString(asset.QuotePrice.PricePrevClose, asset.Meta.IsVariablePrecision)) +
+			"\n"
+	}
+
 	return styles.Text(u.ConvertFloatToString(asset.QuotePrice.PricePrevClose, asset.Meta.IsVariablePrecision)) +
 		"\n" +
 		styles.Text(u.ConvertFloatToString(asset.QuotePrice.PriceOpen, asset.Meta.IsVariablePrecision))
@@ -314,6 +319,11 @@ func textQuoteExtended(asset c.Asset, styles c.Styles) string {
 }
 
 func textQuoteExtendedLabels(asset c.Asset, styles c.Styles) string {
+
+	if asset.QuotePrice.PriceOpen == 0.0 {
+		return styles.TextLabel("Prev. Close:") +
+			"\n"
+	}
 
 	return styles.TextLabel("Prev. Close:") +
 		"\n" +

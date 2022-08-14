@@ -345,39 +345,46 @@ var _ = Describe("Watchlist", func() {
 			Expect(removeFormatting(m.View())).To(ContainSubstring("300.00 - 2000.00"))
 		})
 
-		When("there is no day range", func() {
-			It("should not render the day range field", func() {
-				m := NewModel(c.Context{
-					Reference: c.Reference{Styles: stylesFixture},
-					Config: c.Config{
-						ExtraInfoFundamentals: true,
-					},
-				})
-				m.Width = 135
-				m.Assets = []c.Asset{
-					{
-						Symbol: "BTC-USD",
-						Name:   "Bitcoin",
-						QuotePrice: c.QuotePrice{
-							Price:          5000.0,
-							PricePrevClose: 1000.0,
-							PriceOpen:      1000.0,
-							Change:         1000.0,
-							ChangePercent:  20.0,
-						},
-						Exchange: c.Exchange{
-							IsActive:                true,
-							IsRegularTradingSession: true,
-						},
-					},
-				}
+		When("there is no day range or open price", func() {
 
+			m := NewModel(c.Context{
+				Reference: c.Reference{Styles: stylesFixture},
+				Config: c.Config{
+					ExtraInfoFundamentals: true,
+				},
+			})
+			m.Width = 135
+			m.Assets = []c.Asset{
+				{
+					Symbol: "BTC-USD",
+					Name:   "Bitcoin",
+					QuotePrice: c.QuotePrice{
+						Price:          5000.0,
+						PricePrevClose: 1000.0,
+						PriceOpen:      0.0,
+						Change:         1000.0,
+						ChangePercent:  20.0,
+					},
+					Exchange: c.Exchange{
+						IsActive:                true,
+						IsRegularTradingSession: true,
+					},
+				},
+			}
+
+			It("should not render the day range field", func() {
 				Expect(removeFormatting(m.View())).ToNot(ContainSubstring("Day Range"))
 				Expect(removeFormatting(m.View())).ToNot(ContainSubstring("52wk Range"))
 				Expect(removeFormatting(m.View())).ToNot(ContainSubstring("100.00 - 200.00"))
 				Expect(removeFormatting(m.View())).ToNot(ContainSubstring("300.00 - 2000.00"))
 			})
+
+			It("should render a placeholder for the open price", func() {
+				Expect(removeFormatting(m.View())).ToNot(ContainSubstring("Open:"))
+			})
+
 		})
+
 	})
 
 	When("the option for extra holding information is set", func() {

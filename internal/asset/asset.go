@@ -69,7 +69,7 @@ func addHoldingToHoldingSummary(holdingSummary HoldingSummary, holding c.Holding
 
 	value := holdingSummary.Value + (holding.Value * currencyRateByUse.SummaryValue)
 	cost := holdingSummary.Cost + (holding.Cost * currencyRateByUse.SummaryCost)
-	dayChange := holdingSummary.DayChange.Amount + holding.DayChange.Amount
+	dayChange := holdingSummary.DayChange.Amount + (holding.DayChange.Amount * currencyRateByUse.SummaryValue)
 	totalChange := value - cost
 	totalChangePercent := (totalChange / cost) * 100
 	dayChangePercent := (dayChange / value) * 100

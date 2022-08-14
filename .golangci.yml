@@ -23,6 +23,7 @@ linters:
     - forbidigo
     - gci
     - varnamelen
+    - exhaustruct
 run:
   tests: false
 issues:

@@ -65,7 +65,7 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 		Symbol: responseQuote.Symbol,
 		Class:  assetClass,
 		Currency: c.Currency{
-			FromCurrencyCode: responseQuote.Currency,
+			FromCurrencyCode: strings.ToUpper(responseQuote.Currency),
 		},
 		QuotePrice: c.QuotePrice{
 			Price:          responseQuote.RegularMarketPrice,

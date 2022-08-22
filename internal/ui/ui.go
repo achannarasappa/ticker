@@ -116,6 +116,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) { //nolint:ireturn,cyclo
 			m.groupSelectedName = m.ctx.Groups[m.groupSelectedIndex].Name
 
 			return m, generateQuoteMsg(m, true)
+		case "shift+tab":
+
+			m.groupSelectedIndex--
+
+			if m.groupSelectedIndex < 0 {
+				m.groupSelectedIndex = m.groupMaxIndex
+			}
+
+			m.groupSelectedName = m.ctx.Groups[m.groupSelectedIndex].Name
+
+			return m, generateQuoteMsg(m, true)
 		case "ctrl+c":
 			fallthrough
 		case "esc":
@@ -199,7 +210,7 @@ func footer(width int, time string, groupSelectedName string) string {
 				Cells: []grid.Cell{
 					{Text: styleLogo(" ticker "), Width: 8},
 					{Text: styleGroup(" " + groupSelectedName + " "), Width: len(groupSelectedName) + 2, VisibleMinWidth: 95},
-					{Text: styleHelp(" q: exit ↑: scroll up ↓: scroll down ⭾: change group"), Width: 52},
+					{Text: styleHelp(" q: exit ↑: scroll up ↓: scroll down ⭾ : next group ⇧+⭾: previous group"), Width: 71},
 					{Text: styleHelp("↻  " + time), Align: grid.Right},
 				},
 			},

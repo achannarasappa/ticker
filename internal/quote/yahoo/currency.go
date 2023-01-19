@@ -44,6 +44,9 @@ func getCurrencyRatesFromCurrencyPairSymbols(client resty.Client, currencyPairSy
 
 	res, err := client.R().
 		SetResult(Response{}).
+		SetHeader("Host", "query1.finance.yahoo.com").
+		SetHeader("accept", "*/*").
+		SetHeader("user-agent", "curl/7.68.0").
 		Get(url)
 
 	if err != nil {
@@ -78,6 +81,9 @@ func getCurrencyPairSymbols(client resty.Client, symbols []string, targetCurrenc
 	url := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=%s", symbolsString)
 	res, err := client.R().
 		SetResult(Response{}).
+		SetHeader("Host", "query1.finance.yahoo.com").
+		SetHeader("accept", "*/*").
+		SetHeader("user-agent", "curl/7.68.0").
 		Get(url)
 
 	if err != nil {

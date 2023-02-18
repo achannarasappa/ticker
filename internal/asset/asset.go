@@ -30,8 +30,7 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Hol
 
 		currencyRateByUse := currency.GetCurrencyRateFromContext(ctx, assetQuote.Currency.FromCurrencyCode)
 
-		holding := getHoldingFromAssetQuote(assetQuote, holdingsBySymbol)
-		holding = convertAssetHoldingCurrency(currencyRateByUse, holding)
+		holding := getHoldingFromAssetQuote(assetQuote, holdingsBySymbol, currencyRateByUse)
 		holdingSummary = addHoldingToHoldingSummary(holdingSummary, holding, currencyRateByUse)
 
 		assets = append(assets, c.Asset{
@@ -102,21 +101,22 @@ func updateHoldingWeights(assets []c.Asset, holdingSummary HoldingSummary) []c.A
 
 }
 
-func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]AggregatedLot) c.Holding {
+func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]AggregatedLot, currencyRateByUse currency.CurrencyRateByUse) c.Holding {
 
 	if aggregatedLot, ok := lotsBySymbol[assetQuote.Symbol]; ok {
-		value := aggregatedLot.Quantity * assetQuote.QuotePrice.Price
-		totalChangeAmount := value - aggregatedLot.Cost
-		totalChangePercent := (totalChangeAmount / aggregatedLot.Cost) * 100
+		value := aggregatedLot.Quantity * assetQuote.QuotePrice.Price * currencyRateByUse.QuotePrice
+		cost := aggregatedLot.Cost * currencyRateByUse.PositionCost
+		totalChangeAmount := value - cost
+		totalChangePercent := (totalChangeAmount / cost) * 100
 
 		return c.Holding{
 			Value:     value,
-			Cost:      aggregatedLot.Cost,
+			Cost:      cost,
 			Quantity:  aggregatedLot.Quantity,
 			UnitValue: value / aggregatedLot.Quantity,
-			UnitCost:  aggregatedLot.Cost / aggregatedLot.Quantity,
+			UnitCost:  cost / aggregatedLot.Quantity,
 			DayChange: c.HoldingChange{
-				Amount:  assetQuote.QuotePrice.Change * aggregatedLot.Quantity,
+				Amount:  assetQuote.QuotePrice.Change * aggregatedLot.Quantity * currencyRateByUse.QuotePrice,
 				Percent: assetQuote.QuotePrice.ChangePercent,
 			},
 			TotalChange: c.HoldingChange{

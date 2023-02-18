@@ -164,7 +164,7 @@ var _ = Describe("Asset", func() {
 				Expect(outputHoldingSummary.DayChange.Amount).To(Equal(190.0))
 			})
 
-			When("and only the summary conversion only option is set", func() {
+			When("and the summary conversion only option is set", func() {
 
 				inputContextSummaryConversion := inputContext
 				inputContextSummaryConversion.Config = c.Config{
@@ -179,6 +179,30 @@ var _ = Describe("Asset", func() {
 					Expect(outputHoldingSummary.Value).To(Equal(2090.0))
 					Expect(outputHoldingSummary.TotalChange.Amount).To(Equal(390.0))
 					Expect(outputHoldingSummary.DayChange.Amount).To(Equal(190.0))
+				})
+
+			})
+
+			When("and the disable unit cost conversion option is set", func() {
+
+				inputContextDisableUnitCostConversion := inputContext
+				inputContextDisableUnitCostConversion.Config = c.Config{
+					Currency:                          "EUR",
+					CurrencyDisableUnitCostConversion: true,
+				}
+
+				outputAssets, outputHoldingSummary := GetAssets(inputContextDisableUnitCostConversion, inputAssetGroupQuote)
+
+				It("should not convert holding costs", func() {
+					Expect(outputAssets[0].Holding.Cost).To(Equal(1000.0)) // 1000 EUR unconverted since option is set
+					Expect(outputAssets[0].Holding.UnitCost).To(Equal(100.0))
+					Expect(outputAssets[0].Holding.Value).To(Equal(1650.0)) // Conversion 10 shares @ 110 USD/share to EUR
+					Expect(outputAssets[0].Holding.TotalChange.Amount).To(Equal(650.0))
+					Expect(outputAssets[0].Holding.TotalChange.Percent).To(Equal(65.0))
+					Expect(outputHoldingSummary.Cost).To(Equal(1100.0)) // Sum of 1000 EUR + 100 EUR
+					Expect(outputHoldingSummary.DayChange.Percent).To(Equal(9.090909090909092))
+					Expect(outputHoldingSummary.TotalChange.Amount).To(Equal(990.0))
+					Expect(outputHoldingSummary.TotalChange.Percent).To(Equal(90.0))
 				})
 
 			})

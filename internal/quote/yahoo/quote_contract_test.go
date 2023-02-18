@@ -58,7 +58,58 @@ var _ = Describe("Quote", func() {
 							"regularMarketPreviousClose": {
 								"type": "number"
 							},
+							"regularMarketOpen": {
+								"type": "number"
+							},
+							"regularMarketDayRange": {
+								"type": "string"
+							},
+							"regularMarketDayHigh": {
+								"type": "number"
+							},
+							"regularMarketDayLow": {
+								"type": "number"
+							},
+							"regularMarketVolume": {
+								"type": "number"
+							},
+							"postMarketChange": {
+								"type": "number"
+							},
+							"postMarketChangePercent": {
+								"type": "number"
+							},
+							"postMarketPrice": {
+								"type": "number"
+							},
+							"preMarketChange": {
+								"type": "number"
+							},
+							"preMarketChangePercent": {
+								"type": "number"
+							},
+							"preMarketPrice": {
+								"type": "number"
+							},
+							"fiftyTwoWeekHigh": {
+								"type": "number"
+							},
+							"fiftyTwoWeekLow": {
+								"type": "number"
+							},
 							"symbol": {
+								"type": "string"
+							},
+							"fullExchangeName": {
+								"type": "string"
+							},
+							"exchangeDataDelayedBy": {
+								"type": "number"
+							},
+							"marketCap": {
+								"type": "number"
+							},
+							"quoteType": {
 								"type": "string"
 							}
 						}
@@ -67,7 +118,7 @@ var _ = Describe("Quote", func() {
 				"required": ["quoteResponse"]
 			  }`
 
-			resp, err := http.Get("https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=NET")
+			resp, err := http.Get("https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET")
 			if err != nil {
 				panic(err)
 			}

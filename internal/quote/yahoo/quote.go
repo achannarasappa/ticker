@@ -8,6 +8,11 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+//nolint:gochecknoglobals
+var (
+	postMarketStatuses = map[string]bool{"POST": true, "POSTPOST": true}
+)
+
 // ResponseQuote represents a quote of a single security from the API response
 type ResponseQuote struct {
 	ShortName                  string  `json:"shortName"`
@@ -99,7 +104,7 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 		return assetQuote
 	}
 
-	if responseQuote.MarketState == "POSTPOST" && responseQuote.PostMarketPrice == 0.0 {
+	if _, exists := postMarketStatuses[responseQuote.MarketState]; exists && responseQuote.PostMarketPrice == 0.0 {
 		assetQuote.Exchange.IsRegularTradingSession = false
 
 		return assetQuote
@@ -112,7 +117,7 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 		return assetQuote
 	}
 
-	if responseQuote.MarketState == "POSTPOST" {
+	if _, exists := postMarketStatuses[responseQuote.MarketState]; exists {
 		assetQuote.QuotePrice.Price = responseQuote.PostMarketPrice
 		assetQuote.QuotePrice.Change = (responseQuote.PostMarketChange + responseQuote.RegularMarketChange)
 		assetQuote.QuotePrice.ChangePercent = responseQuote.PostMarketChangePercent + responseQuote.RegularMarketChangePercent

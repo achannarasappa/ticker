@@ -125,7 +125,7 @@ func MockResponseYahooQuotes() {
 			"error": null
 		}
 	}`
-	responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=GOOG,RBLX" //nolint:golint,stylecheck,revive
+	responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=GOOG,RBLX" //nolint:golint,stylecheck,revive
 	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, response)
 		resp.Header.Set("Content-Type", "application/json")

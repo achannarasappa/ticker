@@ -106,7 +106,9 @@ var _ = Describe("Quote", func() {
 			}
 			output := GetAssetGroupQuote(dep)(input)
 
-			Expect(output.AssetQuotes).To(HaveLen(2))
+			Expect(output).To(g.MatchFields(g.IgnoreExtras, g.Fields{
+				"AssetQuotes": HaveLen(2),
+			}))
 
 		})
 

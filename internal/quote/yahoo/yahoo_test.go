@@ -10,6 +10,7 @@ import (
 	c "github.com/achannarasappa/ticker/internal/common"
 	. "github.com/achannarasappa/ticker/internal/quote/yahoo"
 	. "github.com/achannarasappa/ticker/test/http"
+	g "github.com/onsi/gomega/gstruct"
 )
 
 var _ = Describe("Yahoo Quote", func() {
@@ -40,7 +41,7 @@ var _ = Describe("Yahoo Quote", func() {
 					"error": null
 				}
 			}`
-			responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=NET"
+			responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 			httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 				resp := httpmock.NewStringResponse(200, responseFixture)
 				resp.Header.Set("Content-Type", "application/json")
@@ -48,16 +49,24 @@ var _ = Describe("Yahoo Quote", func() {
 			})
 
 			output := GetAssetQuotes(*client, []string{"NET"})()
-			Expect(output[0].QuotePrice.Price).To(Equal(84.98))
-			Expect(output[0].QuotePrice.PricePrevClose).To(Equal(84.00))
-			Expect(output[0].QuotePrice.PriceOpen).To(Equal(85.22))
-			Expect(output[0].QuotePrice.PriceDayHigh).To(Equal(90.00))
-			Expect(output[0].QuotePrice.PriceDayLow).To(Equal(80.00))
-			Expect(output[0].QuotePrice.Change).To(Equal(3.0800018))
-			Expect(output[0].QuotePrice.ChangePercent).To(Equal(3.7606857))
-			Expect(output[0].QuoteSource).To(Equal(c.QuoteSourceYahoo))
-			Expect(output[0].Exchange.IsActive).To(BeTrue())
-			Expect(output[0].Exchange.IsRegularTradingSession).To(BeTrue())
+			Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+				"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+					"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Price":          Equal(84.98),
+						"PricePrevClose": Equal(84.00),
+						"PriceOpen":      Equal(85.22),
+						"PriceDayHigh":   Equal(90.00),
+						"PriceDayLow":    Equal(80.00),
+						"Change":         Equal(3.0800018),
+						"ChangePercent":  Equal(3.7606857),
+					}),
+					"QuoteSource": Equal(c.QuoteSourceYahoo),
+					"Exchange": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"IsActive":                BeTrue(),
+						"IsRegularTradingSession": BeTrue(),
+					}),
+				}),
+			}))
 		})
 
 		When("the market is in a pre-market trading session", func() {
@@ -80,7 +89,7 @@ var _ = Describe("Yahoo Quote", func() {
 						"error": null
 					}
 				}`
-				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=NET"
+				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 					resp := httpmock.NewStringResponse(200, responseFixture)
 					resp.Header.Set("Content-Type", "application/json")
@@ -88,11 +97,19 @@ var _ = Describe("Yahoo Quote", func() {
 				})
 
 				output := GetAssetQuotes(*client, []string{"NET"})()
-				Expect(output[0].QuotePrice.Price).To(Equal(86.03))
-				Expect(output[0].QuotePrice.Change).To(Equal(1.0399933))
-				Expect(output[0].QuotePrice.ChangePercent).To(Equal(1.2238094))
-				Expect(output[0].Exchange.IsActive).To(BeTrue())
-				Expect(output[0].Exchange.IsRegularTradingSession).To(BeFalse())
+				Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+					"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
+							"Price":         Equal(86.03),
+							"Change":        Equal(1.0399933),
+							"ChangePercent": Equal(1.2238094),
+						}),
+						"Exchange": g.MatchFields(g.IgnoreExtras, g.Fields{
+							"IsActive":                BeTrue(),
+							"IsRegularTradingSession": BeFalse(),
+						}),
+					}),
+				}))
 			})
 
 			When("there is no pre-market price", func() {
@@ -112,7 +129,7 @@ var _ = Describe("Yahoo Quote", func() {
 							"error": null
 						}
 					}`
-					responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=NET"
+					responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 					httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 						resp := httpmock.NewStringResponse(200, responseFixture)
 						resp.Header.Set("Content-Type", "application/json")
@@ -120,11 +137,19 @@ var _ = Describe("Yahoo Quote", func() {
 					})
 
 					output := GetAssetQuotes(*client, []string{"NET"})()
-					Expect(output[0].QuotePrice.Price).To(Equal(84.98))
-					Expect(output[0].QuotePrice.Change).To(Equal(3.0800018))
-					Expect(output[0].QuotePrice.ChangePercent).To(Equal(3.7606857))
-					Expect(output[0].Exchange.IsActive).To(Equal(false))
-					Expect(output[0].Exchange.IsRegularTradingSession).To(Equal(false))
+					Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+						"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+							"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"Price":         Equal(84.98),
+								"Change":        Equal(3.0800018),
+								"ChangePercent": Equal(3.7606857),
+							}),
+							"Exchange": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"IsActive":                BeFalse(),
+								"IsRegularTradingSession": BeFalse(),
+							}),
+						}),
+					}))
 				})
 			})
 		})
@@ -149,7 +174,7 @@ var _ = Describe("Yahoo Quote", func() {
 						"error": null
 					}
 				}`
-				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=NET"
+				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 					resp := httpmock.NewStringResponse(200, responseFixture)
 					resp.Header.Set("Content-Type", "application/json")
@@ -157,11 +182,19 @@ var _ = Describe("Yahoo Quote", func() {
 				})
 
 				output := GetAssetQuotes(*client, []string{"NET"})()
-				Expect(output[0].QuotePrice.Price).To(Equal(86.02))
-				Expect(output[0].QuotePrice.Change).To(Equal(4.1199951))
-				Expect(output[0].QuotePrice.ChangePercent).To(Equal(4.9844951))
-				Expect(output[0].Exchange.IsActive).To(BeTrue())
-				Expect(output[0].Exchange.IsRegularTradingSession).To(BeFalse())
+				Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+					"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
+							"Price":         Equal(86.02),
+							"Change":        Equal(4.1199951),
+							"ChangePercent": Equal(4.9844951),
+						}),
+						"Exchange": g.MatchFields(g.IgnoreExtras, g.Fields{
+							"IsActive":                BeTrue(),
+							"IsRegularTradingSession": BeFalse(),
+						}),
+					}),
+				}))
 			})
 
 			When("there is no post-market price", func() {
@@ -183,7 +216,7 @@ var _ = Describe("Yahoo Quote", func() {
 							"error": null
 						}
 					}`
-					responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=NET"
+					responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 					httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 						resp := httpmock.NewStringResponse(200, responseFixture)
 						resp.Header.Set("Content-Type", "application/json")
@@ -191,12 +224,15 @@ var _ = Describe("Yahoo Quote", func() {
 					})
 
 					output := GetAssetQuotes(*client, []string{"NET"})()
-					expectedPrice := 84.98
-					expectedChange := 3.0800018
-					expectedChangePercent := 3.7606857
-					Expect(output[0].QuotePrice.Price).To(Equal(expectedPrice))
-					Expect(output[0].QuotePrice.Change).To(Equal(expectedChange))
-					Expect(output[0].QuotePrice.ChangePercent).To(Equal(expectedChangePercent))
+					Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+						"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+							"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"Price":         Equal(84.98),
+								"Change":        Equal(3.0800018),
+								"ChangePercent": Equal(3.7606857),
+							}),
+						}),
+					}))
 				})
 			})
 		})
@@ -220,7 +256,7 @@ var _ = Describe("Yahoo Quote", func() {
 						"error": null
 					}
 				}`
-				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=NET"
+				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 					resp := httpmock.NewStringResponse(200, responseFixture)
 					resp.Header.Set("Content-Type", "application/json")
@@ -228,11 +264,19 @@ var _ = Describe("Yahoo Quote", func() {
 				})
 
 				output := GetAssetQuotes(*client, []string{"NET"})()
-				Expect(output[0].QuotePrice.Price).To(Equal(84.98))
-				Expect(output[0].QuotePrice.Change).To(Equal(3.0800018))
-				Expect(output[0].QuotePrice.ChangePercent).To(Equal(3.7606857))
-				Expect(output[0].Exchange.IsActive).To(Equal(false))
-				Expect(output[0].Exchange.IsRegularTradingSession).To(Equal(false))
+				Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+					"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
+							"Price":         Equal(84.98),
+							"Change":        Equal(3.0800018),
+							"ChangePercent": Equal(3.7606857),
+						}),
+						"Exchange": g.MatchFields(g.IgnoreExtras, g.Fields{
+							"IsActive":                BeFalse(),
+							"IsRegularTradingSession": BeFalse(),
+						}),
+					}),
+				}))
 			})
 
 			When("there is a post market price", func() {
@@ -257,7 +301,7 @@ var _ = Describe("Yahoo Quote", func() {
 							"error": null
 						}
 					}`
-					responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=NET"
+					responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 					httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 						resp := httpmock.NewStringResponse(200, responseFixture)
 						resp.Header.Set("Content-Type", "application/json")
@@ -265,11 +309,19 @@ var _ = Describe("Yahoo Quote", func() {
 					})
 
 					output := GetAssetQuotes(*client, []string{"NET"})()
-					Expect(output[0].QuotePrice.Price).To(Equal(86.02))
-					Expect(output[0].QuotePrice.Change).To(Equal(4.1199951))
-					Expect(output[0].QuotePrice.ChangePercent).To(Equal(4.9844951))
-					Expect(output[0].Exchange.IsActive).To(Equal(false))
-					Expect(output[0].Exchange.IsRegularTradingSession).To(Equal(false))
+					Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+						"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+							"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"Price":         Equal(86.02),
+								"Change":        Equal(4.1199951),
+								"ChangePercent": Equal(4.9844951),
+							}),
+							"Exchange": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"IsActive":                BeFalse(),
+								"IsRegularTradingSession": BeFalse(),
+							}),
+						}),
+					}))
 				})
 			})
 		})
@@ -295,7 +347,7 @@ var _ = Describe("Yahoo Quote", func() {
 						"error": null
 					}
 				}`
-				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=BTC-USD"
+				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=BTC-USD"
 				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 					resp := httpmock.NewStringResponse(200, responseFixture)
 					resp.Header.Set("Content-Type", "application/json")
@@ -303,7 +355,11 @@ var _ = Describe("Yahoo Quote", func() {
 				})
 
 				output := GetAssetQuotes(*client, []string{"BTC-USD"})()
-				Expect(output[0].Class).To(Equal(c.AssetClassCryptocurrency))
+				Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+					"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Class": Equal(c.AssetClassCryptocurrency),
+					}),
+				}))
 			})
 		})
 	})

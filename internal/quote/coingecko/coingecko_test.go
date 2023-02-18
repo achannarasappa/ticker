@@ -9,6 +9,7 @@ import (
 
 	c "github.com/achannarasappa/ticker/internal/common"
 	. "github.com/achannarasappa/ticker/internal/quote/coingecko"
+	g "github.com/onsi/gomega/gstruct"
 )
 
 var _ = Describe("Coingecko", func() {
@@ -54,16 +55,24 @@ var _ = Describe("Coingecko", func() {
 			})
 
 			output := GetAssetQuotes(*client, []string{"bitcoin"})
-			Expect(output[0].QuotePrice.Price).To(Equal(39045.0))
-			Expect(output[0].QuotePrice.PricePrevClose).To(Equal(40023.048909591314))
-			Expect(output[0].QuotePrice.PriceOpen).To(Equal(0.0))
-			Expect(output[0].QuotePrice.PriceDayHigh).To(Equal(40090.0))
-			Expect(output[0].QuotePrice.PriceDayLow).To(Equal(38195.0))
-			Expect(output[0].QuotePrice.Change).To(Equal(-978.048909591315))
-			Expect(output[0].QuotePrice.ChangePercent).To(Equal(-2.44373))
-			Expect(output[0].QuoteSource).To(Equal(c.QuoteSourceCoingecko))
-			Expect(output[0].Exchange.IsActive).To(BeTrue())
-			Expect(output[0].Exchange.IsRegularTradingSession).To(BeTrue())
+			Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+				"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+					"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Price":          Equal(39045.0),
+						"PricePrevClose": Equal(40023.048909591314),
+						"PriceOpen":      Equal(0.0),
+						"PriceDayHigh":   Equal(40090.0),
+						"PriceDayLow":    Equal(38195.0),
+						"Change":         Equal(-978.048909591315),
+						"ChangePercent":  Equal(-2.44373),
+					}),
+					"QuoteSource": Equal(c.QuoteSourceCoingecko),
+					"Exchange": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"IsActive":                BeTrue(),
+						"IsRegularTradingSession": BeTrue(),
+					}),
+				}),
+			}))
 		})
 
 	})

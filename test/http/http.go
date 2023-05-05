@@ -34,7 +34,7 @@ func MockResponse(responseParameters ResponseParameters) {
 	t, _ := template.New("response").Parse(responseTemplate)
 	//nolint:errcheck
 	t.Execute(&responseBytes, responseParameters)
-	responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=" + responseParameters.Symbol //nolint:golint,stylecheck,revive
+	responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=" + responseParameters.Symbol //nolint:golint,stylecheck,revive
 	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, responseBytes.String())
 		resp.Header.Set("Content-Type", "application/json")
@@ -57,7 +57,7 @@ func MockResponseCurrency() {
 			"error": null
 		}
 	}`
-	responseUrl := `https://query1.finance.yahoo.com/v7/finance/quote` //nolint:golint,stylecheck,revive
+	responseUrl := `https://query1.finance.yahoo.com/v6/finance/quote` //nolint:golint,stylecheck,revive
 	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, response)
 		resp.Header.Set("Content-Type", "application/json")
@@ -67,7 +67,7 @@ func MockResponseCurrency() {
 }
 
 func MockResponseCurrencyError() {
-	responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote" //nolint:golint,stylecheck,revive
+	responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote" //nolint:golint,stylecheck,revive
 	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 		return &http.Response{}, errors.New("error getting currencies") //nolint:goerr113
 	})
@@ -125,7 +125,7 @@ func MockResponseYahooQuotes() {
 			"error": null
 		}
 	}`
-	responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=GOOG,RBLX" //nolint:golint,stylecheck,revive
+	responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=GOOG,RBLX" //nolint:golint,stylecheck,revive
 	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, response)
 		resp.Header.Set("Content-Type", "application/json")

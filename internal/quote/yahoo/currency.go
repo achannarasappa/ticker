@@ -40,7 +40,7 @@ func transformResponseCurrencies(responseQuotes []ResponseQuote) c.CurrencyRates
 func getCurrencyRatesFromCurrencyPairSymbols(client resty.Client, currencyPairSymbols []string) (c.CurrencyRates, error) {
 
 	symbolsString := strings.Join(currencyPairSymbols, ",")
-	url := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=%s", symbolsString)
+	url := fmt.Sprintf("https://query1.finance.yahoo.com/v6/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=%s", symbolsString)
 
 	res, err := client.R().
 		SetResult(Response{}).
@@ -78,7 +78,7 @@ func transformResponseCurrencyPairs(responseQuotes []ResponseQuote, targetCurren
 func getCurrencyPairSymbols(client resty.Client, symbols []string, targetCurrency string) ([]string, error) {
 
 	symbolsString := strings.Join(symbols, ",")
-	url := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=%s", symbolsString)
+	url := fmt.Sprintf("https://query1.finance.yahoo.com/v6/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=%s", symbolsString)
 	res, err := client.R().
 		SetResult(Response{}).
 		SetHeader("Host", "query1.finance.yahoo.com").

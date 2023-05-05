@@ -167,7 +167,7 @@ func transformResponseQuotes(responseQuotes []ResponseQuote) []c.AssetQuote {
 func GetAssetQuotes(client resty.Client, symbols []string) func() []c.AssetQuote {
 	return func() []c.AssetQuote {
 		symbolsString := strings.Join(symbols, ",")
-		url := fmt.Sprintf("https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=%s", symbolsString)
+		url := fmt.Sprintf("https://query1.finance.yahoo.com/v6/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=%s", symbolsString)
 		res, _ := client.R().
 			SetHeader("Host", "query1.finance.yahoo.com").
 			SetHeader("accept", "*/*").

@@ -41,7 +41,7 @@ var _ = Describe("Yahoo Quote", func() {
 					"error": null
 				}
 			}`
-			responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
+			responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 			httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 				resp := httpmock.NewStringResponse(200, responseFixture)
 				resp.Header.Set("Content-Type", "application/json")
@@ -89,7 +89,7 @@ var _ = Describe("Yahoo Quote", func() {
 						"error": null
 					}
 				}`
-				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
+				responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 					resp := httpmock.NewStringResponse(200, responseFixture)
 					resp.Header.Set("Content-Type", "application/json")
@@ -129,7 +129,7 @@ var _ = Describe("Yahoo Quote", func() {
 							"error": null
 						}
 					}`
-					responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
+					responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 					httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 						resp := httpmock.NewStringResponse(200, responseFixture)
 						resp.Header.Set("Content-Type", "application/json")
@@ -174,7 +174,7 @@ var _ = Describe("Yahoo Quote", func() {
 						"error": null
 					}
 				}`
-				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
+				responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 					resp := httpmock.NewStringResponse(200, responseFixture)
 					resp.Header.Set("Content-Type", "application/json")
@@ -216,7 +216,7 @@ var _ = Describe("Yahoo Quote", func() {
 							"error": null
 						}
 					}`
-					responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
+					responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 					httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 						resp := httpmock.NewStringResponse(200, responseFixture)
 						resp.Header.Set("Content-Type", "application/json")
@@ -256,7 +256,7 @@ var _ = Describe("Yahoo Quote", func() {
 						"error": null
 					}
 				}`
-				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
+				responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 					resp := httpmock.NewStringResponse(200, responseFixture)
 					resp.Header.Set("Content-Type", "application/json")
@@ -301,7 +301,7 @@ var _ = Describe("Yahoo Quote", func() {
 							"error": null
 						}
 					}`
-					responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
+					responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET"
 					httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 						resp := httpmock.NewStringResponse(200, responseFixture)
 						resp.Header.Set("Content-Type", "application/json")
@@ -347,7 +347,7 @@ var _ = Describe("Yahoo Quote", func() {
 						"error": null
 					}
 				}`
-				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=BTC-USD"
+				responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=BTC-USD"
 				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 					resp := httpmock.NewStringResponse(200, responseFixture)
 					resp.Header.Set("Content-Type", "application/json")
@@ -425,7 +425,7 @@ var _ = Describe("Yahoo Quote", func() {
 						"error": null
 					}
 				}`
-				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=EURUSD=X"
+				responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=EURUSD=X"
 				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 					resp := httpmock.NewStringResponse(200, responseText)
 					resp.Header.Set("Content-Type", "application/json")
@@ -452,7 +452,7 @@ var _ = Describe("Yahoo Quote", func() {
 						"error": null
 					}
 				}`
-				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=VOW3.DE"
+				responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=VOW3.DE"
 				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 					resp := httpmock.NewStringResponse(200, responseText)
 					resp.Header.Set("Content-Type", "application/json")
@@ -480,7 +480,7 @@ var _ = Describe("Yahoo Quote", func() {
 						"error": null
 					}
 				}`
-				responseUrl := "https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=VOW3.DE"
+				responseUrl := "https://query1.finance.yahoo.com/v6/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=VOW3.DE"
 				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
 					resp := httpmock.NewStringResponse(200, responseText)
 					resp.Header.Set("Content-Type", "application/json")

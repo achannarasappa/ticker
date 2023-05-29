@@ -25,7 +25,7 @@ func mockResponseCurrencyGOOG() {
 		}
 	}
 	`
-	responseURL := `https://query1.finance.yahoo.com/v6/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=GOOG`
+	responseURL := `=~\/finance\/quote.*symbols\=GOOG`
 	httpmock.RegisterResponder("GET", responseURL, func(req *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, response)
 		resp.Header.Set("Content-Type", "application/json")
@@ -54,7 +54,8 @@ func mockResponseCurrencyEURUSD() {
 	}
 	
 	`
-	responseURL := `https://query1.finance.yahoo.com/v6/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&fields=regularMarketPrice,currency&symbols=USDEUR=X`
+	responseURL := `=~\/finance\/quote.*symbols\=USDEUR.*X`
+
 	httpmock.RegisterResponder("GET", responseURL, func(req *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, response)
 		resp.Header.Set("Content-Type", "application/json")
@@ -70,7 +71,10 @@ var _ = Describe("Quote", func() {
 
 	BeforeEach(func() {
 		dep = c.Dependencies{
-			HttpClient: client,
+			HttpClients: c.DependenciesHttpClients{
+				Default: client,
+				Yahoo:   client,
+			},
 		}
 		MockResponseYahooQuotes()
 	})

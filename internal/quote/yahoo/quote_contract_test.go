@@ -2,8 +2,8 @@ package yahoo_test
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
+
+	yahooClient "github.com/achannarasappa/ticker/internal/quote/yahoo/client"
 
 	"github.com/xeipuuv/gojsonschema"
 
@@ -118,14 +118,18 @@ var _ = Describe("Quote", func() {
 				"required": ["quoteResponse"]
 			  }`
 
-			resp, err := http.Get("https://query1.finance.yahoo.com/v6/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=NET")
+			client := yahooClient.New()
+
+			resp, err := client.R().
+				SetQueryParam("fields", "shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap").
+				SetQueryParam("symbols", "NET").
+				Get("/v7/finance/quote")
+
 			if err != nil {
 				panic(err)
 			}
-			defer resp.Body.Close()
 
-			body, _ := ioutil.ReadAll(resp.Body)
-			bodyString := string(body)
+			bodyString := resp.String()
 			expectedSchema := gojsonschema.NewStringLoader(responseSchema)
 			actualResponse := gojsonschema.NewStringLoader(bodyString)
 			result, err := gojsonschema.Validate(expectedSchema, actualResponse)

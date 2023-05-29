@@ -10,11 +10,11 @@ import (
 func getQuoteBySource(dep c.Dependencies, symbolBySource c.AssetGroupSymbolsBySource) []c.AssetQuote {
 
 	if symbolBySource.Source == c.QuoteSourceYahoo {
-		return quoteYahoo.GetAssetQuotes(*dep.HttpClient, symbolBySource.Symbols)()
+		return quoteYahoo.GetAssetQuotes(*dep.HttpClients.Yahoo, symbolBySource.Symbols)()
 	}
 
 	if symbolBySource.Source == c.QuoteSourceCoingecko {
-		return quoteCoingecko.GetAssetQuotes(*dep.HttpClient, symbolBySource.Symbols)
+		return quoteCoingecko.GetAssetQuotes(*dep.HttpClients.Yahoo, symbolBySource.Symbols)
 	}
 
 	return []c.AssetQuote{}

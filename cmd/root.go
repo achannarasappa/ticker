@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/go-resty/resty/v2"
-	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 
 	"github.com/achannarasappa/ticker/internal/cli"
@@ -65,10 +63,7 @@ func init() { //nolint: gochecknoinits
 }
 
 func initConfig() {
-	dep = c.Dependencies{
-		Fs:         afero.NewOsFs(),
-		HttpClient: resty.New(),
-	}
+	dep = cli.GetDependencies()
 	ctx, err = cli.GetContext(dep, options, configPath)
 
 }

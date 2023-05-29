@@ -8,6 +8,7 @@ import (
 	"github.com/achannarasappa/ticker/internal/cli/symbol"
 	c "github.com/achannarasappa/ticker/internal/common"
 	"github.com/achannarasappa/ticker/internal/quote"
+	yahooClient "github.com/achannarasappa/ticker/internal/quote/yahoo/client"
 	"github.com/achannarasappa/ticker/internal/ui/util"
 
 	"github.com/adrg/xdg"
@@ -64,6 +65,18 @@ func Validate(ctx *c.Context, options *Options, prevErr *error) func(*cobra.Comm
 	}
 }
 
+func GetDependencies() c.Dependencies {
+
+	return c.Dependencies{
+		Fs: afero.NewOsFs(),
+		HttpClients: c.DependenciesHttpClients{
+			Default: resty.New(),
+			Yahoo:   yahooClient.New(),
+		},
+	}
+
+}
+
 // GetContext builds the context from the config and reference data
 func GetContext(d c.Dependencies, options Options, configPath string) (c.Context, error) {
 	var (
@@ -79,14 +92,14 @@ func GetContext(d c.Dependencies, options Options, configPath string) (c.Context
 		return c.Context{}, err
 	}
 
-	config = getConfig(config, options, *d.HttpClient)
-	groups, err = getGroups(config, *d.HttpClient)
+	config = getConfig(config, options, &d.HttpClients)
+	groups, err = getGroups(config, *d.HttpClients.Default)
 
 	if err != nil {
 		return c.Context{}, err
 	}
 
-	reference, err = getReference(config, groups, *d.HttpClient)
+	reference, err = getReference(config, groups, *d.HttpClients.Yahoo)
 
 	context := c.Context{
 		Reference: reference,
@@ -132,14 +145,15 @@ func getReference(config c.Config, assetGroups []c.AssetGroup, client resty.Clie
 
 }
 
-func getConfig(config c.Config, options Options, client resty.Client) c.Config {
+func getConfig(config c.Config, options Options, httpClients *c.DependenciesHttpClients) c.Config {
 
 	if len(options.Watchlist) != 0 {
 		config.Watchlist = strings.Split(strings.ReplaceAll(options.Watchlist, " ", ""), ",")
 	}
 
 	if len(config.Proxy) > 0 {
-		client.SetProxy(config.Proxy)
+		httpClients.Default.SetProxy(config.Proxy)
+		httpClients.Yahoo.SetProxy(config.Proxy)
 	}
 
 	config.RefreshInterval = getRefreshInterval(options.RefreshInterval, config.RefreshInterval)

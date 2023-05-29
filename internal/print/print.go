@@ -84,7 +84,7 @@ func convertAssetsToJSON(assets []c.Asset) string {
 
 }
 
-// RunHolding prints holdings to the terminal
+// Run prints holdings to the terminal
 func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Command, []string) {
 	return func(cmd *cobra.Command, args []string) {
 

@@ -5,6 +5,7 @@ import (
 	"github.com/achannarasappa/ticker/internal/currency"
 )
 
+// AggregatedLot represents a cost basis lot of an asset grouped by symbol
 type AggregatedLot struct {
 	Symbol     string
 	Cost       float64
@@ -20,6 +21,7 @@ type HoldingSummary struct {
 	DayChange   c.HoldingChange
 }
 
+// GetAssets returns assets from an asset group quote
 func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, HoldingSummary) {
 
 	var holdingSummary HoldingSummary

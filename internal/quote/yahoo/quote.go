@@ -1,7 +1,6 @@
 package yahoo
 
 import (
-	"fmt"
 	"strings"
 
 	c "github.com/achannarasappa/ticker/internal/common"
@@ -15,31 +14,41 @@ var (
 
 // ResponseQuote represents a quote of a single security from the API response
 type ResponseQuote struct {
-	ShortName                  string  `json:"shortName"`
-	Symbol                     string  `json:"symbol"`
-	MarketState                string  `json:"marketState"`
-	Currency                   string  `json:"currency"`
-	ExchangeName               string  `json:"fullExchangeName"`
-	ExchangeDelay              float64 `json:"exchangeDataDelayedBy"`
-	RegularMarketChange        float64 `json:"regularMarketChange"`
-	RegularMarketChangePercent float64 `json:"regularMarketChangePercent"`
-	RegularMarketPrice         float64 `json:"regularMarketPrice"`
-	RegularMarketPreviousClose float64 `json:"regularMarketPreviousClose"`
-	RegularMarketOpen          float64 `json:"regularMarketOpen"`
-	RegularMarketDayRange      string  `json:"regularMarketDayRange"`
-	RegularMarketDayHigh       float64 `json:"regularMarketDayHigh"`
-	RegularMarketDayLow        float64 `json:"regularMarketDayLow"`
-	RegularMarketVolume        float64 `json:"regularMarketVolume"`
-	PostMarketChange           float64 `json:"postMarketChange"`
-	PostMarketChangePercent    float64 `json:"postMarketChangePercent"`
-	PostMarketPrice            float64 `json:"postMarketPrice"`
-	PreMarketChange            float64 `json:"preMarketChange"`
-	PreMarketChangePercent     float64 `json:"preMarketChangePercent"`
-	PreMarketPrice             float64 `json:"preMarketPrice"`
-	FiftyTwoWeekHigh           float64 `json:"fiftyTwoWeekHigh"`
-	FiftyTwoWeekLow            float64 `json:"fiftyTwoWeekLow"`
-	QuoteType                  string  `json:"quoteType"`
-	MarketCap                  float64 `json:"marketCap"`
+	ShortName                  string              `json:"shortName"`
+	Symbol                     string              `json:"symbol"`
+	MarketState                string              `json:"marketState"`
+	Currency                   string              `json:"currency"`
+	ExchangeName               string              `json:"fullExchangeName"`
+	ExchangeDelay              float64             `json:"exchangeDataDelayedBy"`
+	RegularMarketChange        ResponseFieldFloat  `json:"regularMarketChange"`
+	RegularMarketChangePercent ResponseFieldFloat  `json:"regularMarketChangePercent"`
+	RegularMarketPrice         ResponseFieldFloat  `json:"regularMarketPrice"`
+	RegularMarketPreviousClose ResponseFieldFloat  `json:"regularMarketPreviousClose"`
+	RegularMarketOpen          ResponseFieldFloat  `json:"regularMarketOpen"`
+	RegularMarketDayRange      ResponseFieldString `json:"regularMarketDayRange"`
+	RegularMarketDayHigh       ResponseFieldFloat  `json:"regularMarketDayHigh"`
+	RegularMarketDayLow        ResponseFieldFloat  `json:"regularMarketDayLow"`
+	RegularMarketVolume        ResponseFieldFloat  `json:"regularMarketVolume"`
+	PostMarketChange           ResponseFieldFloat  `json:"postMarketChange"`
+	PostMarketChangePercent    ResponseFieldFloat  `json:"postMarketChangePercent"`
+	PostMarketPrice            ResponseFieldFloat  `json:"postMarketPrice"`
+	PreMarketChange            ResponseFieldFloat  `json:"preMarketChange"`
+	PreMarketChangePercent     ResponseFieldFloat  `json:"preMarketChangePercent"`
+	PreMarketPrice             ResponseFieldFloat  `json:"preMarketPrice"`
+	FiftyTwoWeekHigh           ResponseFieldFloat  `json:"fiftyTwoWeekHigh"`
+	FiftyTwoWeekLow            ResponseFieldFloat  `json:"fiftyTwoWeekLow"`
+	QuoteType                  string              `json:"quoteType"`
+	MarketCap                  ResponseFieldFloat  `json:"marketCap"`
+}
+
+type ResponseFieldFloat struct {
+	Raw float64 `json:"raw"`
+	Fmt string  `json:"fmt"`
+}
+
+type ResponseFieldString struct {
+	Raw string `json:"raw"`
+	Fmt string `json:"fmt"`
 }
 
 func getAssetClass(assetClass string) c.AssetClass {
@@ -73,19 +82,19 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 			FromCurrencyCode: strings.ToUpper(responseQuote.Currency),
 		},
 		QuotePrice: c.QuotePrice{
-			Price:          responseQuote.RegularMarketPrice,
-			PricePrevClose: responseQuote.RegularMarketPreviousClose,
-			PriceOpen:      responseQuote.RegularMarketOpen,
-			PriceDayHigh:   responseQuote.RegularMarketDayHigh,
-			PriceDayLow:    responseQuote.RegularMarketDayLow,
-			Change:         responseQuote.RegularMarketChange,
-			ChangePercent:  responseQuote.RegularMarketChangePercent,
+			Price:          responseQuote.RegularMarketPrice.Raw,
+			PricePrevClose: responseQuote.RegularMarketPreviousClose.Raw,
+			PriceOpen:      responseQuote.RegularMarketOpen.Raw,
+			PriceDayHigh:   responseQuote.RegularMarketDayHigh.Raw,
+			PriceDayLow:    responseQuote.RegularMarketDayLow.Raw,
+			Change:         responseQuote.RegularMarketChange.Raw,
+			ChangePercent:  responseQuote.RegularMarketChangePercent.Raw,
 		},
 		QuoteExtended: c.QuoteExtended{
-			FiftyTwoWeekHigh: responseQuote.FiftyTwoWeekHigh,
-			FiftyTwoWeekLow:  responseQuote.FiftyTwoWeekLow,
-			MarketCap:        responseQuote.MarketCap,
-			Volume:           responseQuote.RegularMarketVolume,
+			FiftyTwoWeekHigh: responseQuote.FiftyTwoWeekHigh.Raw,
+			FiftyTwoWeekLow:  responseQuote.FiftyTwoWeekLow.Raw,
+			MarketCap:        responseQuote.MarketCap.Raw,
+			Volume:           responseQuote.RegularMarketVolume.Raw,
 		},
 		QuoteSource: c.QuoteSourceYahoo,
 		Exchange: c.Exchange{
@@ -104,13 +113,13 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 		return assetQuote
 	}
 
-	if _, exists := postMarketStatuses[responseQuote.MarketState]; exists && responseQuote.PostMarketPrice == 0.0 {
+	if _, exists := postMarketStatuses[responseQuote.MarketState]; exists && responseQuote.PostMarketPrice.Raw == 0.0 {
 		assetQuote.Exchange.IsRegularTradingSession = false
 
 		return assetQuote
 	}
 
-	if responseQuote.MarketState == "PRE" && responseQuote.PreMarketPrice == 0.0 {
+	if responseQuote.MarketState == "PRE" && responseQuote.PreMarketPrice.Raw == 0.0 {
 		assetQuote.Exchange.IsActive = false
 		assetQuote.Exchange.IsRegularTradingSession = false
 
@@ -118,27 +127,27 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 	}
 
 	if _, exists := postMarketStatuses[responseQuote.MarketState]; exists {
-		assetQuote.QuotePrice.Price = responseQuote.PostMarketPrice
-		assetQuote.QuotePrice.Change = (responseQuote.PostMarketChange + responseQuote.RegularMarketChange)
-		assetQuote.QuotePrice.ChangePercent = responseQuote.PostMarketChangePercent + responseQuote.RegularMarketChangePercent
+		assetQuote.QuotePrice.Price = responseQuote.PostMarketPrice.Raw
+		assetQuote.QuotePrice.Change = (responseQuote.PostMarketChange.Raw + responseQuote.RegularMarketChange.Raw)
+		assetQuote.QuotePrice.ChangePercent = responseQuote.PostMarketChangePercent.Raw + responseQuote.RegularMarketChangePercent.Raw
 		assetQuote.Exchange.IsRegularTradingSession = false
 
 		return assetQuote
 	}
 
 	if responseQuote.MarketState == "PRE" {
-		assetQuote.QuotePrice.Price = responseQuote.PreMarketPrice
-		assetQuote.QuotePrice.Change = responseQuote.PreMarketChange
-		assetQuote.QuotePrice.ChangePercent = responseQuote.PreMarketChangePercent
+		assetQuote.QuotePrice.Price = responseQuote.PreMarketPrice.Raw
+		assetQuote.QuotePrice.Change = responseQuote.PreMarketChange.Raw
+		assetQuote.QuotePrice.ChangePercent = responseQuote.PreMarketChangePercent.Raw
 		assetQuote.Exchange.IsRegularTradingSession = false
 
 		return assetQuote
 	}
 
-	if responseQuote.PostMarketPrice != 0.0 {
-		assetQuote.QuotePrice.Price = responseQuote.PostMarketPrice
-		assetQuote.QuotePrice.Change = (responseQuote.PostMarketChange + responseQuote.RegularMarketChange)
-		assetQuote.QuotePrice.ChangePercent = responseQuote.PostMarketChangePercent + responseQuote.RegularMarketChangePercent
+	if responseQuote.PostMarketPrice.Raw != 0.0 {
+		assetQuote.QuotePrice.Price = responseQuote.PostMarketPrice.Raw
+		assetQuote.QuotePrice.Change = (responseQuote.PostMarketChange.Raw + responseQuote.RegularMarketChange.Raw)
+		assetQuote.QuotePrice.ChangePercent = responseQuote.PostMarketChangePercent.Raw + responseQuote.RegularMarketChangePercent.Raw
 		assetQuote.Exchange.IsActive = false
 		assetQuote.Exchange.IsRegularTradingSession = false
 
@@ -167,13 +176,12 @@ func transformResponseQuotes(responseQuotes []ResponseQuote) []c.AssetQuote {
 func GetAssetQuotes(client resty.Client, symbols []string) func() []c.AssetQuote {
 	return func() []c.AssetQuote {
 		symbolsString := strings.Join(symbols, ",")
-		url := fmt.Sprintf("https://query1.finance.yahoo.com/v6/finance/quote?fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&region=US&lang=en-US&symbols=%s", symbolsString)
+
 		res, _ := client.R().
-			SetHeader("Host", "query1.finance.yahoo.com").
-			SetHeader("accept", "*/*").
-			SetHeader("user-agent", "curl/7.68.0").
 			SetResult(Response{}).
-			Get(url)
+			SetQueryParam("fields", "shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap").
+			SetQueryParam("symbols", symbolsString).
+			Get("/v7/finance/quote")
 
 		return transformResponseQuotes((res.Result().(*Response)).QuoteResponse.Quotes) //nolint:forcetypeassert
 	}

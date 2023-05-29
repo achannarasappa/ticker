@@ -28,10 +28,10 @@ jobs:
         with:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_HUB_PAT }}
-      # - name: Snapcraft Login
-      #   uses: samuelmeuli/action-snapcraft@v1
-      #   with:
-      #     snapcraft_token: ${{ secrets.SNAPCRAFT_PAT }}
+      - name: Snapcraft Login
+        uses: samuelmeuli/action-snapcraft@v1
+        with:
+          snapcraft_token: ${{ secrets.SNAPCRAFT_PAT }}
       - 
         name: Install upx
         run: sudo apt-get install upx -y

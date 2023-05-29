@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_PAT }}
     steps:
       -
         name: Checkout
@@ -29,9 +30,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_HUB_PAT }}
       - name: Snapcraft Login
-        uses: samuelmeuli/action-snapcraft@v1
-        with:
-          snapcraft_token: ${{ secrets.SNAPCRAFT_PAT }}
+        uses: samuelmeuli/action-snapcraft@v2
       - 
         name: Install upx
         run: sudo apt-get install upx -y

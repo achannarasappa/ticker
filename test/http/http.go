@@ -23,7 +23,10 @@ func MockResponse(responseParameters ResponseParameters) {
 		"quoteResponse": {
 			"result": [
 				{
-					"regularMarketPrice": {{.Price}},
+					"regularMarketPrice": {
+						"raw": {{.Price}},
+						"fmt": "{{.Price}}"
+					},
 					"currency": "{{.Currency}}",
 					"symbol": "{{.Symbol}}"
 				}
@@ -49,7 +52,7 @@ func MockResponseCurrency() {
 		"quoteResponse": {
 			"result": [
 				{
-					"regularMarketPrice": 123.45,
+					"regularMarketPrice": {"raw": 123.45, "fmt": "123.45"},
 					"currency": "USD",
 					"symbol": "NET"
 				}
@@ -76,26 +79,23 @@ func MockResponseCurrencyError() {
 func MockResponseYahooQuotes() {
 	response := `{
 		"quoteResponse": {
-			"result": [
-				{
+			"result": [{
 					"quoteType": "EQUITY",
 					"currency": "USD",
 					"marketState": "CLOSED",
 					"shortName": "Alphabet Inc.",
-					"preMarketChange": null,
-					"preMarketChangePercent": null,
-					"regularMarketChange": -59.850098,
-					"regularMarketChangePercent": -2.0650284,
-					"regularMarketPrice": 2838.42,
-					"regularMarketDayHigh": 2920.27,
-					"regularMarketDayLow": 2834.83,
-					"regularMarketVolume": 1644831,
-					"regularMarketPreviousClose": 2898.27,
+					"regularMarketChange": {"raw": -59.850098, "fmt": "-59.850098"},
+					"regularMarketChangePercent": {"raw": -2.0650284, "fmt": "-2.0650284"},
+					"regularMarketPrice": {"raw": 2838.42, "fmt": "2838.42"},
+					"regularMarketDayHigh": {"raw": 2920.27, "fmt": "2920.27"},
+					"regularMarketDayLow": {"raw": 2834.83, "fmt": "2834.83"},
+					"regularMarketVolume": {"raw": 1644831, "fmt": "1644831"},
+					"regularMarketPreviousClose": {"raw": 2898.27, "fmt": "2898.27"},
 					"fullExchangeName": "NasdaqGS",
-					"regularMarketOpen": 2908.87,
-					"fiftyTwoWeekLow": 1406.55,
-					"fiftyTwoWeekHigh": 2936.41,
-					"marketCap": 1885287088128,
+					"regularMarketOpen": {"raw": 2908.87, "fmt": "2908.87"},
+					"fiftyTwoWeekLow": {"raw": 1406.55, "fmt": "1406.55"},
+					"fiftyTwoWeekHigh": {"raw": 2936.41, "fmt": "2936.41"},
+					"marketCap": {"raw": 1885287088128, "fmt": "1.8bn"},
 					"exchangeDataDelayedBy": 0,
 					"symbol": "GOOG"
 				},
@@ -104,20 +104,18 @@ func MockResponseYahooQuotes() {
 					"currency": "USD",
 					"marketState": "CLOSED",
 					"shortName": "Roblox Corporation",
-					"preMarketChange": null,
-					"preMarketChangePercent": null,
-					"regularMarketChange": 1.5299988,
-					"regularMarketChangePercent": 1.7718574,
-					"regularMarketPrice": 87.88,
-					"regularMarketDayHigh": 90.43,
-					"regularMarketDayLow": 84.67,
-					"regularMarketVolume": 17465966,
-					"regularMarketPreviousClose": 86.35,
+					"regularMarketChange": {"raw": 1.5299988, "fmt": "1.5299988"},
+					"regularMarketChangePercent": {"raw": 1.7718574, "fmt": "1.7718574"},
+					"regularMarketPrice": {"raw": 87.88, "fmt": "87.88"},
+					"regularMarketDayHigh": {"raw": 90.43, "fmt": "90.43"},
+					"regularMarketDayLow": {"raw": 84.67, "fmt": "84.67"},
+					"regularMarketVolume": {"raw": 17465966, "fmt": "17465966"},
+					"regularMarketPreviousClose": {"raw": 86.35, "fmt": "86.35"},
 					"fullExchangeName": "NYSE",
-					"regularMarketOpen": 86.75,
-					"fiftyTwoWeekLow": 60.5,
-					"fiftyTwoWeekHigh": 103.866,
-					"marketCap": 50544357376,
+					"regularMarketOpen": {"raw": 86.75, "fmt": "86.75"},
+					"fiftyTwoWeekLow": {"raw": 60.5, "fmt": "60.5"},
+					"fiftyTwoWeekHigh": {"raw": 103.866, "fmt": "103.866"},
+					"marketCap": {"raw": 50544357376, "fmt": "5.0bn"},
 					"exchangeDataDelayedBy": 0,
 					"symbol": "RBLX"
 				}

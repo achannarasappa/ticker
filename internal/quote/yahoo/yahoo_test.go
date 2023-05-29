@@ -22,19 +22,19 @@ var _ = Describe("Yahoo Quote", func() {
 						{
 							"marketState": "REGULAR",
 							"shortName": "Cloudflare, Inc.",
-							"preMarketChange": 1.0399933,
-							"preMarketChangePercent": 1.2238094,
-							"preMarketPrice": 86.03,
-							"regularMarketChange": 3.0800018,
-							"regularMarketChangePercent": 3.7606857,
-							"regularMarketPrice": 84.98,
-							"regularMarketPreviousClose": 84.00,
-							"regularMarketOpen": 85.22,
-							"regularMarketDayHigh": 90.00,
-							"regularMarketDayLow": 80.00,
-							"postMarketChange": 1.37627,
-							"postMarketChangePercent": 1.35735,
-							"postMarketPrice": 86.56,
+							"preMarketChange": { "raw": 1.0399933, "fmt": "1.0399933"},
+							"preMarketChangePercent": { "raw": 1.2238094, "fmt": "1.2238094"},
+							"preMarketPrice": { "raw": 86.03, "fmt": "86.03"},
+							"regularMarketChange": { "raw": 3.0800018, "fmt": "3.0800018"},
+							"regularMarketChangePercent": { "raw": 3.7606857, "fmt": "3.7606857"},
+							"regularMarketPrice": { "raw": 84.98, "fmt": "84.98"},
+							"regularMarketPreviousClose": { "raw": 84.00, "fmt": "84.00"},
+							"regularMarketOpen": { "raw": 85.22, "fmt": "85.22"},
+							"regularMarketDayHigh": { "raw": 90.00, "fmt": "90.00"},
+							"regularMarketDayLow": { "raw": 80.00, "fmt": "80.00"},
+							"postMarketChange": { "raw": 1.37627, "fmt": "1.37627"},
+							"postMarketChangePercent": { "raw": 1.35735, "fmt": "1.35735"},
+							"postMarketPrice": { "raw": 86.56, "fmt": "86.56"},
 							"symbol": "NET"
 						}
 					],
@@ -77,12 +77,12 @@ var _ = Describe("Yahoo Quote", func() {
 							{
 								"marketState": "PRE",
 								"shortName": "Cloudflare, Inc.",
-								"preMarketChange": 1.0399933,
-								"preMarketChangePercent": 1.2238094,
-								"preMarketPrice": 86.03,
-								"regularMarketChange": 3.0800018,
-								"regularMarketChangePercent": 3.7606857,
-								"regularMarketPrice": 84.98,
+								"preMarketChange": { "raw": 1.0399933, "fmt": "1.0399933"},
+								"preMarketChangePercent": { "raw": 1.2238094, "fmt": "1.2238094"},
+								"preMarketPrice": { "raw": 86.03, "fmt": "86.03"},
+								"regularMarketChange": { "raw": 3.0800018, "fmt": "3.0800018"},
+								"regularMarketChangePercent": { "raw": 3.7606857, "fmt": "3.7606857"},
+								"regularMarketPrice": { "raw": 84.98, "fmt": "84.98"},
 								"symbol": "NET"
 							}
 						],
@@ -120,9 +120,9 @@ var _ = Describe("Yahoo Quote", func() {
 								{
 									"marketState": "PRE",
 									"shortName": "Cloudflare, Inc.",
-									"regularMarketChange": 3.0800018,
-									"regularMarketChangePercent": 3.7606857,
-									"regularMarketPrice": 84.98,
+									"regularMarketChange": { "raw": 3.0800018, "fmt": "3.0800018"},
+									"regularMarketChangePercent": { "raw": 3.7606857, "fmt": "3.7606857"},
+									"regularMarketPrice": { "raw": 84.98, "fmt": "84.98"},
 									"symbol": "NET"
 								}
 							],
@@ -162,12 +162,12 @@ var _ = Describe("Yahoo Quote", func() {
 							{
 								"marketState": "POST",
 								"shortName": "Cloudflare, Inc.",
-								"postMarketChange": 1.0399933,
-								"postMarketChangePercent": 1.2238094,
-								"postMarketPrice": 86.02,
-								"regularMarketChange": 3.0800018,
-								"regularMarketChangePercent": 3.7606857,
-								"regularMarketPrice": 84.98,
+								"postMarketChange": { "raw": 1.0399933, "fmt": "1.0399933"},
+								"postMarketChangePercent": { "raw": 1.2238094, "fmt": "1.2238094"},
+								"postMarketPrice": { "raw": 86.02, "fmt": "86.02"},
+								"regularMarketChange": { "raw": 3.0800018, "fmt": "3.0800018"},
+								"regularMarketChangePercent": { "raw": 3.7606857, "fmt": "3.7606857"},
+								"regularMarketPrice": { "raw": 84.98, "fmt": "84.98"},
 								"symbol": "NET"
 							}
 						],
@@ -205,11 +205,11 @@ var _ = Describe("Yahoo Quote", func() {
 								{
 									"marketState": "POST",
 									"shortName": "Cloudflare, Inc.",
-									"regularMarketChange": 3.0800018,
-									"regularMarketChangePercent": 3.7606857,
-									"regularMarketTime": 1608832801,
-									"regularMarketPrice": 84.98,
-									"regularMarketPreviousClose": 81.9,
+									"regularMarketChange": { "raw": 3.0800018, "fmt": "3.0800018"},
+									"regularMarketChangePercent": { "raw": 3.7606857, "fmt": "3.7606857"},
+									"regularMarketTime": { "raw": 1623777601, "fmt": "4:00PM EDT"},
+									"regularMarketPrice": { "raw": 84.98, "fmt": "84.98"},
+									"regularMarketPreviousClose": { "raw": 81.9, "fmt": "81.9"},
 									"symbol": "NET"
 								}
 							],
@@ -245,11 +245,11 @@ var _ = Describe("Yahoo Quote", func() {
 							{
 								"marketState": "CLOSED",
 								"shortName": "Cloudflare, Inc.",
-								"regularMarketChange": 3.0800018,
-								"regularMarketChangePercent": 3.7606857,
-								"regularMarketTime": 1608832801,
-								"regularMarketPrice": 84.98,
-								"regularMarketPreviousClose": 81.9,
+								"regularMarketChange": { "raw": 3.0800018, "fmt": "3.0800018"},
+								"regularMarketChangePercent": { "raw": 3.7606857, "fmt": "3.7606857"},
+								"regularMarketTime": { "raw": 1623777601, "fmt": "4:00PM EDT" },
+								"regularMarketPrice": { "raw": 84.98, "fmt": "84.98"},
+								"regularMarketPreviousClose": { "raw": 81.9, "fmt": "81.9"},
 								"symbol": "NET"
 							}
 						],
@@ -287,14 +287,14 @@ var _ = Describe("Yahoo Quote", func() {
 								{
 									"marketState": "CLOSED",
 									"shortName": "Cloudflare, Inc.",
-									"postMarketChange": 1.0399933,
-									"postMarketChangePercent": 1.2238094,
-									"postMarketPrice": 86.02,
-									"regularMarketChange": 3.0800018,
-									"regularMarketChangePercent": 3.7606857,
-									"regularMarketTime": 1608832801,
-									"regularMarketPrice": 84.98,
-									"regularMarketPreviousClose": 81.9,
+									"postMarketChange": { "raw": 1.0399933, "fmt": "1.0399933"},
+									"postMarketChangePercent": { "raw": 1.2238094, "fmt": "1.2238094"},
+									"postMarketPrice": { "raw": 86.02, "fmt": "86.02"},
+									"regularMarketChange": { "raw": 3.0800018, "fmt": "3.0800018"},
+									"regularMarketChangePercent": { "raw": 3.7606857, "fmt": "3.7606857"},
+									"regularMarketTime": { "raw": 1623777601, "fmt": "4:00PM EDT" },
+									"regularMarketPrice": { "raw": 84.98, "fmt": "84.98"},
+									"regularMarketPreviousClose": { "raw": 81.9, "fmt": "81.9"},
 									"symbol": "NET"
 								}
 							],
@@ -334,12 +334,12 @@ var _ = Describe("Yahoo Quote", func() {
 							{
 								"marketState": "PRE",
 								"shortName": "Cloudflare, Inc.",
-								"preMarketChange": 1.0399933,
-								"preMarketChangePercent": 1.2238094,
-								"preMarketPrice": 86.03,
-								"regularMarketChange": 3.0800018,
-								"regularMarketChangePercent": 3.7606857,
-								"regularMarketPrice": 84.98,
+								"preMarketChange": { "raw": 1.0399933, "fmt": "1.0399933"},
+								"preMarketChangePercent": { "raw": 1.2238094, "fmt": "1.2238094"},
+								"preMarketPrice": { "raw": 86.03, "fmt": "86.03"},
+								"regularMarketChange": { "raw": 3.0800018, "fmt": "3.0800018"},
+								"regularMarketChangePercent": { "raw": 3.7606857, "fmt": "3.7606857"},
+								"regularMarketPrice": { "raw": 84.98, "fmt": "84.98"},
 								"symbol": "BTC-USD",
 								"quoteType": "CRYPTOCURRENCY"
 							}
@@ -417,7 +417,7 @@ var _ = Describe("Yahoo Quote", func() {
 					"quoteResponse": {
 						"result": [
 							{
-								"regularMarketPrice": 1.2,
+								"regularMarketPrice": { "raw": 1.2, "fmt": "1.2"},
 								"currency": "EUR",
 								"symbol": "EURUSD=X"
 							}
@@ -445,7 +445,7 @@ var _ = Describe("Yahoo Quote", func() {
 					"quoteResponse": {
 						"result": [
 							{
-								"regularMarketPrice": 160.0,
+								"regularMarketPrice": { "raw": 160.0, "fmt": "160.0"},
 								"symbol": "VOW3.DE"
 							}
 						],
@@ -472,7 +472,7 @@ var _ = Describe("Yahoo Quote", func() {
 					"quoteResponse": {
 						"result": [
 							{
-								"regularMarketPrice": 160.0,
+								"regularMarketPrice": { "raw": 160.0, "fmt": "160.0"},
 								"currency": "EUR",
 								"symbol": "VOW3.DE"
 							}

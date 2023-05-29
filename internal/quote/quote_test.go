@@ -41,7 +41,7 @@ func mockResponseCurrencyEURUSD() {
 					"quoteType": "CURRENCY",
 					"quoteSourceName": "Delayed Quote",
 					"currency": "EUR",
-					"regularMarketPrice": 0.8891,
+					"regularMarketPrice": {"raw": 0.8891,"fmt": "0.8891"},
 					"sourceInterval": 15,
 					"exchangeDataDelayedBy": 0,
 					"exchange": "CCY",

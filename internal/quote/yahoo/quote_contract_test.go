@@ -44,58 +44,58 @@ var _ = Describe("Quote", func() {
 								"type": "string"
 							},
 							"regularMarketChange": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"regularMarketChangePercent": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"regularMarketPrice": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"regularMarketTime": {
-								"type": "integer"
+								"$ref": "#/definitions/fieldInteger"
 							},
 							"regularMarketPreviousClose": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"regularMarketOpen": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"regularMarketDayRange": {
-								"type": "string"
+								"$ref": "#/definitions/fieldString"
 							},
 							"regularMarketDayHigh": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"regularMarketDayLow": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"regularMarketVolume": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"postMarketChange": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"postMarketChangePercent": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"postMarketPrice": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"preMarketChange": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"preMarketChangePercent": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"preMarketPrice": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"fiftyTwoWeekHigh": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"fiftyTwoWeekLow": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"symbol": {
 								"type": "string"
@@ -107,16 +107,48 @@ var _ = Describe("Quote", func() {
 								"type": "number"
 							},
 							"marketCap": {
-								"type": "number"
+								"$ref": "#/definitions/fieldNumber"
 							},
 							"quoteType": {
 								"type": "string"
 							}
 						}
+					},
+					"fieldNumber": {
+						"properties": {
+							"raw": {
+								"type": "number"
+							},
+							"fmt": {
+								"type": "string"
+							}
+						}
+					},
+					"fieldInteger": {
+						"properties": {
+							"raw": {
+								"type": "integer"
+							},
+							"fmt": {
+								"type": "string"
+							}
+						}
+					},
+					"fieldString": {
+						"properties": {
+							"raw": {
+								"type": "string"
+							},
+							"fmt": {
+								"type": "string"
+							}
+						}
 					}
 				},
-				"required": ["quoteResponse"]
-			  }`
+				"required": [
+					"quoteResponse"
+				]
+			}`
 
 			client := yahooClient.New()
 
@@ -146,7 +178,7 @@ var _ = Describe("Quote", func() {
 			}
 
 			Expect(result.Valid()).To(Equal(true))
-			Expect(resp.Status).To(Equal("200 OK"))
+			Expect(resp.StatusCode()).To(Equal(200))
 		})
 	})
 })

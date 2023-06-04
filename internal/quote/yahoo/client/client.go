@@ -1,7 +1,11 @@
 package client
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
+	"regexp"
+	"strings"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -31,12 +35,13 @@ func New() *resty.Client {
 		SetQueryParam("lang", "en-US").
 		SetQueryParam("region", "US").
 		SetQueryParam("corsDomain", "finance.yahoo.com").
+		SetRedirectPolicy(resty.FlexibleRedirectPolicy(1)).
 		AddRetryAfterErrorCondition().
 		SetRetryCount(1).
 		OnAfterResponse(func(c *resty.Client, r *resty.Response) error {
 
 			if r.IsError() {
-				refreshClient(c)
+				return refreshClient(c)
 			}
 
 			return nil
@@ -46,18 +51,35 @@ func New() *resty.Client {
 
 }
 
-func refreshClient(c *resty.Client) {
-	cookies := getCookie(c)
-	crumb := getCrumb(c, cookies)
+func refreshClient(c *resty.Client) error {
+	var err error
+	var cookies []*http.Cookie
+	var crumb string
+
+	cookies, err = getCookie(c)
+
+	if err != nil {
+		return err
+	}
+
+	crumb, err = getCrumb(c, cookies)
+
+	if err != nil {
+		return err
+	}
 
 	c.
 		SetCookies(cookies).
 		SetQueryParam("crumb", crumb)
+
+	return nil
 }
 
-func getCookie(client *resty.Client) []*http.Cookie {
+func getCookie(client *resty.Client) ([]*http.Cookie, error) {
 
-	res, _ := client.R().
+	res, _ := resty.New().
+		SetRedirectPolicy(resty.FlexibleRedirectPolicy(1)).
+		R().
 		SetHeader("authority", "finance.yahoo.com").
 		SetHeader("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7").
 		SetHeader("accept-language", "en-US,en;q=0.9").
@@ -72,10 +94,114 @@ func getCookie(client *resty.Client) []*http.Cookie {
 		SetHeader("user-agent", userAgent).
 		Get("https://finance.yahoo.com/")
 
-	return res.Cookies()
+	if isEUConsentRedirect(res) {
+		return getCookieEU()
+	}
+
+	if !isRequiredCookieSet(res) {
+		return nil, errors.New("unexpected response from Yahoo API: A3 session cookie missing from response")
+	}
+
+	return res.Cookies(), nil
+
 }
 
-func getCrumb(client *resty.Client, cookies []*http.Cookie) string {
+func getCookieEU() ([]*http.Cookie, error) {
+
+	var cookies []*http.Cookie
+
+	reCsrfToken := regexp.MustCompile("gcrumb=(?:([A-Za-z0-9_]*))")
+	reSessionId := regexp.MustCompile("sessionId=(?:([A-Za-z0-9_-]*))")
+
+	res1, err1 := resty.New().
+		SetRedirectPolicy(resty.FlexibleRedirectPolicy(3)).
+		R().
+		SetHeader("authority", "finance.yahoo.com").
+		SetHeader("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7").
+		SetHeader("accept-language", "en-US,en;q=0.9").
+		SetHeader("sec-ch-ua", userAgentClientHintBrandingAndVersion).
+		SetHeader("sec-ch-ua-mobile", "?0").
+		SetHeader("sec-ch-ua-platform", userAgentClientHintPlatform).
+		SetHeader("sec-fetch-dest", "document").
+		SetHeader("sec-fetch-mode", "navigate").
+		SetHeader("sec-fetch-site", "none").
+		SetHeader("sec-fetch-user", "?1").
+		SetHeader("upgrade-insecure-requests", "1").
+		SetHeader("user-agent", userAgent).
+		Get("https://finance.yahoo.com/")
+
+	if err1 != nil && !strings.Contains(err1.Error(), "stopped after") {
+		return cookies, fmt.Errorf("error attempting to get Yahoo API session id: %w", err1)
+	}
+
+	if !strings.HasPrefix(res1.Status(), "2") {
+		return cookies, fmt.Errorf("unexpected response from Yahoo API: non-2xx response code: %s", res1.Status())
+	}
+
+	sessionIdMatchResult := reSessionId.FindStringSubmatch(res1.RawResponse.Request.URL.String())
+
+	if len(sessionIdMatchResult) != 2 {
+		return cookies, fmt.Errorf("error unable to extract session id from redirected request URL: '%s'", res1.Request.URL)
+	}
+
+	sessionId := sessionIdMatchResult[1]
+
+	csrfTokenMatchResult := reCsrfToken.FindStringSubmatch(res1.RawResponse.Request.Response.Request.URL.String())
+
+	if len(csrfTokenMatchResult) != 2 {
+		return cookies, fmt.Errorf("error unable to extract CSRF token from Location header: '%s'", res1.Header().Get("Location"))
+	}
+
+	csrfToken := csrfTokenMatchResult[1]
+
+	GUCSCookie := res1.RawResponse.Request.Response.Request.Response.Cookies()
+
+	if len(GUCSCookie) == 0 {
+		return cookies, fmt.Errorf("no cookies set by finance.yahoo.com")
+	}
+
+	res2, err2 := resty.New().
+		SetRedirectPolicy(resty.FlexibleRedirectPolicy(2)).
+		SetContentLength(true).
+		R().
+		SetHeader("origin", "https://consent.yahoo.com").
+		SetHeader("host", "consent.yahoo.com").
+		SetHeader("content-type", "application/x-www-form-urlencoded").
+		SetHeader("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8").
+		SetHeader("accept-language", "en-US,en;q=0.5").
+		SetHeader("accept-encoding", "gzip, deflate, br").
+		SetHeader("dnt", "1").
+		SetHeader("sec-ch-ua", userAgentClientHintBrandingAndVersion).
+		SetHeader("sec-ch-ua-mobile", "?0").
+		SetHeader("sec-ch-ua-platform", userAgentClientHintPlatform).
+		SetHeader("sec-fetch-dest", "document").
+		SetHeader("sec-fetch-mode", "navigate").
+		SetHeader("sec-fetch-site", "same-origin").
+		SetHeader("sec-fetch-user", "?1").
+		SetHeader("referer", "https://consent.yahoo.com/v2/collectConsent?sessionId="+sessionId).
+		SetHeader("user-agent", userAgent).
+		SetCookies(GUCSCookie).
+		SetFormData(map[string]string{
+			"csrfToken": csrfToken,
+			"sessionId": sessionId,
+			"namespace": "yahoo",
+			"agree":     "agree",
+		}).
+		Post("https://consent.yahoo.com/v2/collectConsent?sessionId=" + sessionId)
+
+	if err2 != nil && !strings.Contains(err2.Error(), "stopped after") {
+		return cookies, fmt.Errorf("error attempting to agree to EU consent request: %w", err2)
+	}
+
+	if !isRequiredCookieSet(res2) {
+		return nil, fmt.Errorf("unexpected response from Yahoo API: A3 session cookie missing from response after agreeing to EU consent request: %s", res2.Status())
+	}
+
+	return res2.Cookies(), nil
+
+}
+
+func getCrumb(client *resty.Client, cookies []*http.Cookie) (string, error) {
 	res, _ := client.R().
 		SetHeader("authority", "query2.finance.yahoo.com").
 		SetHeader("accept", "*/*").
@@ -92,5 +218,28 @@ func getCrumb(client *resty.Client, cookies []*http.Cookie) string {
 		SetCookies(cookies).
 		Get("https://query2.finance.yahoo.com/v1/test/getcrumb")
 
-	return res.String()
+	if !strings.HasPrefix(res.Status(), "2") {
+		return "", fmt.Errorf("unexpected response from Yahoo API when attempting to retrieve crumb: non-2xx response code: %s", res.Status())
+	}
+
+	return res.String(), nil
+}
+
+func isRequiredCookieSet(res *resty.Response) bool {
+
+	cookies := res.Cookies()
+
+	for _, cookie := range cookies {
+		if cookie.Name == "A3" {
+			return true
+		}
+	}
+
+	return false
+
+}
+
+func isEUConsentRedirect(res *resty.Response) bool {
+	return strings.Contains(res.Header().Get("Location"), "guce.yahoo.com") &&
+		strings.HasPrefix(res.Status(), "3")
 }

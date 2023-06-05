@@ -67,11 +67,14 @@ func Validate(ctx *c.Context, options *Options, prevErr *error) func(*cobra.Comm
 
 func GetDependencies() c.Dependencies {
 
+	client := yahooClient.New(resty.New(), resty.New())
+	yahooClient.RefreshSession(client, resty.New())
+
 	return c.Dependencies{
 		Fs: afero.NewOsFs(),
 		HttpClients: c.DependenciesHttpClients{
 			Default: resty.New(),
-			Yahoo:   yahooClient.New(),
+			Yahoo:   client,
 		},
 	}
 

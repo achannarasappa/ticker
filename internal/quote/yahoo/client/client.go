@@ -16,9 +16,9 @@ const (
 	userAgentClientHintPlatform           = "\"Windows\""
 )
 
-func New() *resty.Client {
+func New(clientMain *resty.Client, clientSession *resty.Client) *resty.Client {
 
-	client := resty.New().
+	client := clientMain.
 		SetBaseURL("https://query1.finance.yahoo.com").
 		SetHeader("authority", "query1.finance.yahoo.com").
 		SetHeader("accept", "*/*").
@@ -41,7 +41,7 @@ func New() *resty.Client {
 		OnAfterResponse(func(c *resty.Client, r *resty.Response) error {
 
 			if r.IsError() {
-				return refreshClient(c)
+				return RefreshSession(c, clientSession)
 			}
 
 			return nil
@@ -51,24 +51,24 @@ func New() *resty.Client {
 
 }
 
-func refreshClient(c *resty.Client) error {
+func RefreshSession(clientMain *resty.Client, clientSession *resty.Client) error {
 	var err error
 	var cookies []*http.Cookie
 	var crumb string
 
-	cookies, err = getCookie(c)
+	cookies, err = getCookie(clientSession)
 
 	if err != nil {
 		return err
 	}
 
-	crumb, err = getCrumb(c, cookies)
+	crumb, err = getCrumb(clientSession, cookies)
 
 	if err != nil {
 		return err
 	}
 
-	c.
+	clientMain.
 		SetCookies(cookies).
 		SetQueryParam("crumb", crumb)
 
@@ -77,7 +77,7 @@ func refreshClient(c *resty.Client) error {
 
 func getCookie(client *resty.Client) ([]*http.Cookie, error) {
 
-	res, _ := resty.New().
+	res, err := client.
 		SetRedirectPolicy(resty.FlexibleRedirectPolicy(1)).
 		R().
 		SetHeader("authority", "finance.yahoo.com").
@@ -94,26 +94,31 @@ func getCookie(client *resty.Client) ([]*http.Cookie, error) {
 		SetHeader("user-agent", userAgent).
 		Get("https://finance.yahoo.com/")
 
-	if isEUConsentRedirect(res) {
-		return getCookieEU()
+	if err != nil && !strings.Contains(err.Error(), "stopped after") {
+		return nil, fmt.Errorf("error requesting a cookie: %w", err)
 	}
 
+	if isEUConsentRedirect(res) {
+		return getCookieEU(client)
+	}
+
+	x := res.Cookies()
 	if !isRequiredCookieSet(res) {
 		return nil, errors.New("unexpected response from Yahoo API: A3 session cookie missing from response")
 	}
 
-	return res.Cookies(), nil
+	return x, nil
 
 }
 
-func getCookieEU() ([]*http.Cookie, error) {
+func getCookieEU(client *resty.Client) ([]*http.Cookie, error) {
 
 	var cookies []*http.Cookie
 
 	reCsrfToken := regexp.MustCompile("gcrumb=(?:([A-Za-z0-9_]*))")
 	reSessionId := regexp.MustCompile("sessionId=(?:([A-Za-z0-9_-]*))")
 
-	res1, err1 := resty.New().
+	res1, err1 := client.
 		SetRedirectPolicy(resty.FlexibleRedirectPolicy(3)).
 		R().
 		SetHeader("authority", "finance.yahoo.com").
@@ -160,7 +165,7 @@ func getCookieEU() ([]*http.Cookie, error) {
 		return cookies, fmt.Errorf("no cookies set by finance.yahoo.com")
 	}
 
-	res2, err2 := resty.New().
+	res2, err2 := client.
 		SetRedirectPolicy(resty.FlexibleRedirectPolicy(2)).
 		SetContentLength(true).
 		R().
@@ -202,7 +207,7 @@ func getCookieEU() ([]*http.Cookie, error) {
 }
 
 func getCrumb(client *resty.Client, cookies []*http.Cookie) (string, error) {
-	res, _ := client.R().
+	res, err := client.R().
 		SetHeader("authority", "query2.finance.yahoo.com").
 		SetHeader("accept", "*/*").
 		SetHeader("accept-language", "en-US,en;q=0.9,ja;q=0.8").
@@ -218,11 +223,15 @@ func getCrumb(client *resty.Client, cookies []*http.Cookie) (string, error) {
 		SetCookies(cookies).
 		Get("https://query2.finance.yahoo.com/v1/test/getcrumb")
 
+	if err != nil {
+		return "", fmt.Errorf("error requesting a crumb: %w", err)
+	}
+
 	if !strings.HasPrefix(res.Status(), "2") {
 		return "", fmt.Errorf("unexpected response from Yahoo API when attempting to retrieve crumb: non-2xx response code: %s", res.Status())
 	}
 
-	return res.String(), nil
+	return res.String(), err
 }
 
 func isRequiredCookieSet(res *resty.Response) bool {

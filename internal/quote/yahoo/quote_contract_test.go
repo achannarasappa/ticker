@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	yahooClient "github.com/achannarasappa/ticker/internal/quote/yahoo/client"
+	"github.com/go-resty/resty/v2"
 
 	"github.com/xeipuuv/gojsonschema"
 
@@ -150,7 +151,7 @@ var _ = Describe("Quote", func() {
 				]
 			}`
 
-			client := yahooClient.New()
+			client := yahooClient.New(resty.New(), resty.New())
 
 			resp, err := client.R().
 				SetQueryParam("fields", "shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap").

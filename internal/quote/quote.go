@@ -1,9 +1,9 @@
 package quote
 
 import (
-	c "github.com/achannarasappa/ticker/internal/common"
-	quoteCoingecko "github.com/achannarasappa/ticker/internal/quote/coingecko"
-	quoteYahoo "github.com/achannarasappa/ticker/internal/quote/yahoo"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
+	quoteCoingecko "github.com/achannarasappa/ticker/v4/internal/quote/coingecko"
+	quoteYahoo "github.com/achannarasappa/ticker/v4/internal/quote/yahoo"
 	"github.com/go-resty/resty/v2"
 )
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	c "github.com/achannarasappa/ticker/internal/common"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
 	"github.com/go-resty/resty/v2"
 )
 

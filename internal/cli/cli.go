@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/achannarasappa/ticker/internal/cli/symbol"
-	c "github.com/achannarasappa/ticker/internal/common"
-	"github.com/achannarasappa/ticker/internal/quote"
-	yahooClient "github.com/achannarasappa/ticker/internal/quote/yahoo/client"
-	"github.com/achannarasappa/ticker/internal/ui/util"
+	"github.com/achannarasappa/ticker/v4/internal/cli/symbol"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
+	"github.com/achannarasappa/ticker/v4/internal/quote"
+	yahooClient "github.com/achannarasappa/ticker/v4/internal/quote/yahoo/client"
+	"github.com/achannarasappa/ticker/v4/internal/ui/util"
 
 	"github.com/adrg/xdg"
 	"github.com/go-resty/resty/v2"

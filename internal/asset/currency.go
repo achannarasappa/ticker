@@ -1,8 +1,8 @@
 package asset
 
 import (
-	c "github.com/achannarasappa/ticker/internal/common"
-	"github.com/achannarasappa/ticker/internal/currency"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
+	"github.com/achannarasappa/ticker/v4/internal/currency"
 )
 
 func convertAssetQuotePriceCurrency(currencyRateByUse currency.CurrencyRateByUse, quotePrice c.QuotePrice) c.QuotePrice {

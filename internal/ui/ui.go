@@ -5,13 +5,13 @@ import (
 	"time"
 
 	grid "github.com/achannarasappa/term-grid"
-	"github.com/achannarasappa/ticker/internal/asset"
-	c "github.com/achannarasappa/ticker/internal/common"
-	quote "github.com/achannarasappa/ticker/internal/quote"
-	"github.com/achannarasappa/ticker/internal/ui/component/summary"
-	"github.com/achannarasappa/ticker/internal/ui/component/watchlist"
+	"github.com/achannarasappa/ticker/v4/internal/asset"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
+	quote "github.com/achannarasappa/ticker/v4/internal/quote"
+	"github.com/achannarasappa/ticker/v4/internal/ui/component/summary"
+	"github.com/achannarasappa/ticker/v4/internal/ui/component/watchlist"
 
-	util "github.com/achannarasappa/ticker/internal/ui/util"
+	util "github.com/achannarasappa/ticker/v4/internal/ui/util"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"

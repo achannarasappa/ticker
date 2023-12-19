@@ -13,13 +13,14 @@ jobs:
         platform: [ubuntu-latest]
     runs-on: ${{ matrix.platform }}
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
     - name: Install Go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go-version }}
-    - name: Checkout code
-      uses: actions/checkout@v2
     - name: Install Ginkgo
+      working-directory: ./common
       run: go install github.com/onsi/ginkgo/v2
     - name: Test
       run: ginkgo -cover -focus="GetQuotes Response" ./...

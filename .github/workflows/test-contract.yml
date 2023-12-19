@@ -19,8 +19,5 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go-version }}
-    - name: Install Ginkgo
-      working-directory: ./common
-      run: go install github.com/onsi/ginkgo/v2
     - name: Test
-      run: ginkgo -cover -focus="GetQuotes Response" ./...
+      run: go run github.com/onsi/ginkgo/ginkgo@v1.16.5 -r -v ./internal/quote/yahoo/ -focus "GetQuotes Response"

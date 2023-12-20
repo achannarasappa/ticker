@@ -33,3 +33,5 @@ jobs:
       run: go run github.com/onsi/ginkgo/ginkgo@v1.16.5 -skip="GetQuotes Response" -cover -outputdir=./ -coverprofile=coverage.gcov ./...
     - name: Coveralls
       uses: coverallsapp/github-action@v2.2.3
+      with:
+        file: ./coverage.gcov

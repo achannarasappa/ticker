@@ -30,8 +30,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
     - name: Generate coverage
-      run: go run github.com/onsi/ginkgo/ginkgo@v1.16.5 -skip="GetQuotes Response" -cover -outputdir=./ -coverprofile=coverage.gcov ./...
+      run: go run github.com/onsi/ginkgo/ginkgo@v1.16.5 -skip="GetQuotes Response" -cover -outputdir=./ -coverprofile=coverage.out ./...
     - name: Coveralls
-      uses: coverallsapp/github-action@v2.2.3
+      uses: coverallsapp/github-action@v2
       with:
-        file: ./coverage.gcov
+        file: ./coverage.out
+        format: golang

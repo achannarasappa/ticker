@@ -97,7 +97,7 @@ func getCookie(client *resty.Client) ([]*http.Cookie, error) {
 		Get("https://finance.yahoo.com/")
 
 	if err != nil && !strings.Contains(err.Error(), "stopped after") {
-		return nil, fmt.Errorf("%w: error requesting a cookie: %w", errSessionRefresh, err)
+		return nil, fmt.Errorf("error requesting a cookie: %w", err)
 	}
 
 	if isEUConsentRedirect(res) {
@@ -197,7 +197,7 @@ func getCookieEU(client *resty.Client) ([]*http.Cookie, error) {
 		Post("https://consent.yahoo.com/v2/collectConsent?sessionId=" + sessionID)
 
 	if err2 != nil && !strings.Contains(err2.Error(), "stopped after") {
-		return cookies, fmt.Errorf("%w: error attempting to agree to EU consent request: %w", errSessionRefresh, err2)
+		return cookies, fmt.Errorf("error attempting to agree to EU consent request: %w", err2)
 	}
 
 	if !isRequiredCookieSet(res2) {

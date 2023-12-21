@@ -25,6 +25,7 @@ linters:
     - varnamelen
     - exhaustruct
     - depguard
+    - nolintlint
 run:
   tests: false
 issues:

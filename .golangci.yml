@@ -24,6 +24,7 @@ linters:
     - gci
     - varnamelen
     - exhaustruct
+    - depguard
 run:
   tests: false
 issues:

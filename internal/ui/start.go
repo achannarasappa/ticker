@@ -1,7 +1,7 @@
 package ui
 
 import (
-	c "github.com/achannarasappa/ticker/internal/common"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

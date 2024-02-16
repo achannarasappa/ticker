@@ -1,8 +1,8 @@
 <p>
-    <a href="https://github.com/achannarasappa/ticker/releases"><img src="https://img.shields.io/github/v/release/achannarasappa/ticker" alt="Latest Release"></a>
-    <a href="https://github.com/achannarasappa/ticker/actions"><img src="https://github.com/achannarasappa/ticker/workflows/test/badge.svg" alt="Build Status"></a>
+    <a href="https://github.com/achannarasappa/ticker/v4/releases"><img src="https://img.shields.io/github/v/release/achannarasappa/ticker" alt="Latest Release"></a>
+    <a href="https://github.com/achannarasappa/ticker/v4/actions"><img src="https://github.com/achannarasappa/ticker/v4/workflows/test/badge.svg" alt="Build Status"></a>
     <a href='https://coveralls.io/github/achannarasappa/ticker?branch=master'><img src='https://coveralls.io/repos/github/achannarasappa/ticker/badge.svg?branch=master' alt='Coverage Status' /></a>
-    <a href='https://goreportcard.com/badge/github.com/achannarasappa/ticker'><img src='https://goreportcard.com/badge/github.com/achannarasappa/ticker' alt='Report Card' /></a>
+    <a href='https://goreportcard.com/badge/github.com/achannarasappa/ticker/v4'><img src='https://goreportcard.com/badge/github.com/achannarasappa/ticker/v4' alt='Report Card' /></a>
 </p>
 
 <h1 align="center">Ticker</h2>
@@ -22,7 +22,7 @@ Terminal stock watcher and stock position tracker
 
 ## Install
 
-Download the pre-compiled binaries from the [releases page](https://github.com/achannarasappa/ticker/releases) and copy to a location in `PATH` or see quick installs below
+Download the pre-compiled binaries from the [releases page](https://github.com/achannarasappa/ticker/v4/releases) and copy to a location in `PATH` or see quick installs below
 
 **homebrew**
 ```
@@ -160,7 +160,7 @@ Watchlists and holdings can be grouped in `.ticker.yml` under the `groups` prope
 
 * *none* - symbols with no suffix will default to Yahoo Finance as the data source
 * `.X` - symbols with this suffix are shorthand symbols that are specific to ticker and intended to provide more concise and familiar symbols for popular assets (e.g. using `SOL.X` rather than `SOLANA.CG`)
-  * The full list of ticker symbols can be found [here](https://github.com/achannarasappa/ticker-static/blob/master/symbols.csv). Initial values are populated with the top 250 cryptocurrencies from CoinGecko at time of release
+  * The full list of ticker symbols can be found [here](https://github.com/achannarasappa/ticker/v4-static/blob/master/symbols.csv). Initial values are populated with the top 250 cryptocurrencies from CoinGecko at time of release
 * `.CG` - symbols with this suffix will use CoinGecko as the data source. The proper coin name can be found on the CoinGecko page in the *API id* field (e.g. for `SOL` go to the coin's [page on CoinGecko](https://www.coingecko.com/en/coins/solana), find the value is `solana`, and use the symbol `SOLANA.CG` in ticker)
 
 ### Currency Conversion

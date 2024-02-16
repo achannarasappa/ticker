@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/achannarasappa/ticker/internal/asset"
-	c "github.com/achannarasappa/ticker/internal/common"
-	quote "github.com/achannarasappa/ticker/internal/quote"
-	"github.com/achannarasappa/ticker/internal/ui/util"
+	"github.com/achannarasappa/ticker/v4/internal/asset"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
+	quote "github.com/achannarasappa/ticker/v4/internal/quote"
+	"github.com/achannarasappa/ticker/v4/internal/ui/util"
 
 	"github.com/spf13/cobra"
 )

@@ -7,9 +7,9 @@ import (
 
 	"net/http"
 
-	"github.com/achannarasappa/ticker/internal/cli/symbol"
-	c "github.com/achannarasappa/ticker/internal/common"
-	h "github.com/achannarasappa/ticker/test/http"
+	"github.com/achannarasappa/ticker/v4/internal/cli/symbol"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
+	h "github.com/achannarasappa/ticker/v4/test/http"
 )
 
 var _ = Describe("Symbol", func() {

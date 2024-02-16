@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	c "github.com/achannarasappa/ticker/internal/quote/yahoo/client"
+	c "github.com/achannarasappa/ticker/v4/internal/quote/yahoo/client"
 )
 
 var _ = Describe("Client", func() {

@@ -3,9 +3,9 @@ package quote_test
 import (
 	"net/http"
 
-	c "github.com/achannarasappa/ticker/internal/common"
-	. "github.com/achannarasappa/ticker/internal/quote"
-	. "github.com/achannarasappa/ticker/test/http"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
+	. "github.com/achannarasappa/ticker/v4/internal/quote"
+	. "github.com/achannarasappa/ticker/v4/test/http"
 	"github.com/jarcoal/httpmock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

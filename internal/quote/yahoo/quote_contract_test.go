@@ -3,7 +3,7 @@ package yahoo_test
 import (
 	"fmt"
 
-	yahooClient "github.com/achannarasappa/ticker/internal/quote/yahoo/client"
+	yahooClient "github.com/achannarasappa/ticker/v4/internal/quote/yahoo/client"
 	"github.com/go-resty/resty/v2"
 
 	"github.com/xeipuuv/gojsonschema"

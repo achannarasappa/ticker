@@ -1,8 +1,8 @@
 package asset
 
 import (
-	c "github.com/achannarasappa/ticker/internal/common"
-	"github.com/achannarasappa/ticker/internal/currency"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
+	"github.com/achannarasappa/ticker/v4/internal/currency"
 )
 
 // AggregatedLot represents a cost basis lot of an asset grouped by symbol

@@ -1,4 +1,4 @@
-module github.com/achannarasappa/ticker
+module github.com/achannarasappa/ticker/v4
 
 go 1.18
 

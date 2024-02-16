@@ -24,6 +24,8 @@ linters:
     - gci
     - varnamelen
     - exhaustruct
+    - depguard
+    - nolintlint
 run:
   tests: false
 issues:

@@ -14,7 +14,7 @@ func getQuoteBySource(dep c.Dependencies, symbolBySource c.AssetGroupSymbolsBySo
 	}
 
 	if symbolBySource.Source == c.QuoteSourceCoingecko {
-		return quoteCoingecko.GetAssetQuotes(*dep.HttpClients.Yahoo, symbolBySource.Symbols)
+		return quoteCoingecko.GetAssetQuotes(*dep.HttpClients.Default, symbolBySource.Symbols)
 	}
 
 	return []c.AssetQuote{}

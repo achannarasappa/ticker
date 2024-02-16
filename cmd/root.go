@@ -63,7 +63,18 @@ func init() { //nolint: gochecknoinits
 }
 
 func initConfig() {
-	dep = cli.GetDependencies()
+	dep, err = cli.GetDependencies()
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	ctx, err = cli.GetContext(dep, options, configPath)
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 }

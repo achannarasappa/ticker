@@ -218,13 +218,13 @@ func buildCells(asset c.Asset, config c.Config, styles c.Styles, cellWidths cell
 		cells = append(
 			[]grid.Cell{
 				{
-					Text:            textVolumeMarketCapLabels(asset, styles),
+					Text:            textVolumeMarketCapLabels(styles),
 					Width:           widthLabel,
 					Align:           grid.Right,
 					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (6 * widthGutter) + (3 * widthLabel) + cellWidths.WidthQuoteRange + cellWidths.WidthVolumeMarketCap,
 				},
 				{
-					Text:            textVolumeMarketCap(asset, styles),
+					Text:            textVolumeMarketCap(asset),
 					Width:           cellWidths.WidthVolumeMarketCap,
 					Align:           grid.Right,
 					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (5 * widthGutter) + (2 * widthLabel) + cellWidths.WidthQuoteRange + cellWidths.WidthVolumeMarketCap,
@@ -384,14 +384,14 @@ func textQuoteRangeLabels(asset c.Asset, styles c.Styles) string {
 	return textDayRange
 }
 
-func textVolumeMarketCap(asset c.Asset, styles c.Styles) string {
+func textVolumeMarketCap(asset c.Asset) string {
 
 	return u.ConvertFloatToString(asset.QuoteExtended.MarketCap, true) +
 		"\n" +
 		u.ConvertFloatToString(asset.QuoteExtended.Volume, true)
 }
 
-func textVolumeMarketCapLabels(asset c.Asset, styles c.Styles) string {
+func textVolumeMarketCapLabels(styles c.Styles) string {
 
 	return styles.TextLabel("Market Cap:") +
 		"\n" +

@@ -16,6 +16,8 @@ const (
 	userAgentClientHintPlatform           = "\"Windows\""
 )
 
+var errSessionRefresh = errors.New("yahoo session refresh error")
+
 func New(clientMain *resty.Client, clientSession *resty.Client) *resty.Client {
 
 	client := clientMain.
@@ -104,7 +106,7 @@ func getCookie(client *resty.Client) ([]*http.Cookie, error) {
 
 	x := res.Cookies()
 	if !isRequiredCookieSet(res) {
-		return nil, errors.New("unexpected response from Yahoo API: A3 session cookie missing from response")
+		return nil, fmt.Errorf("%w: unexpected response from Yahoo API: A3 session cookie missing from response", errSessionRefresh)
 	}
 
 	return x, nil
@@ -116,7 +118,7 @@ func getCookieEU(client *resty.Client) ([]*http.Cookie, error) {
 	var cookies []*http.Cookie
 
 	reCsrfToken := regexp.MustCompile("gcrumb=(?:([A-Za-z0-9_]*))")
-	reSessionId := regexp.MustCompile("sessionId=(?:([A-Za-z0-9_-]*))")
+	reSessionID := regexp.MustCompile("sessionId=(?:([A-Za-z0-9_-]*))")
 
 	res1, err1 := client.
 		SetRedirectPolicy(resty.FlexibleRedirectPolicy(3)).
@@ -140,21 +142,21 @@ func getCookieEU(client *resty.Client) ([]*http.Cookie, error) {
 	}
 
 	if !strings.HasPrefix(res1.Status(), "2") {
-		return cookies, fmt.Errorf("unexpected response from Yahoo API: non-2xx response code: %s", res1.Status())
+		return cookies, fmt.Errorf("%w: unexpected response from Yahoo API: non-2xx response code: %s", errSessionRefresh, res1.Status())
 	}
 
-	sessionIdMatchResult := reSessionId.FindStringSubmatch(res1.RawResponse.Request.URL.String())
+	sessionIDMatchResult := reSessionID.FindStringSubmatch(res1.RawResponse.Request.URL.String())
 
-	if len(sessionIdMatchResult) != 2 {
-		return cookies, fmt.Errorf("error unable to extract session id from redirected request URL: '%s'", res1.Request.URL)
+	if len(sessionIDMatchResult) != 2 {
+		return cookies, fmt.Errorf("%w: error unable to extract session id from redirected request URL: %s", errSessionRefresh, res1.Request.URL)
 	}
 
-	sessionId := sessionIdMatchResult[1]
+	sessionID := sessionIDMatchResult[1]
 
 	csrfTokenMatchResult := reCsrfToken.FindStringSubmatch(res1.RawResponse.Request.Response.Request.URL.String())
 
 	if len(csrfTokenMatchResult) != 2 {
-		return cookies, fmt.Errorf("error unable to extract CSRF token from Location header: '%s'", res1.Header().Get("Location"))
+		return cookies, fmt.Errorf("%w: error unable to extract CSRF token from Location header: '%s'", errSessionRefresh, res1.Header().Get("Location"))
 	}
 
 	csrfToken := csrfTokenMatchResult[1]
@@ -162,7 +164,7 @@ func getCookieEU(client *resty.Client) ([]*http.Cookie, error) {
 	GUCSCookie := res1.RawResponse.Request.Response.Request.Response.Cookies()
 
 	if len(GUCSCookie) == 0 {
-		return cookies, fmt.Errorf("no cookies set by finance.yahoo.com")
+		return cookies, fmt.Errorf("%w: no cookies set by finance.yahoo.com", errSessionRefresh)
 	}
 
 	res2, err2 := client.
@@ -183,23 +185,23 @@ func getCookieEU(client *resty.Client) ([]*http.Cookie, error) {
 		SetHeader("sec-fetch-mode", "navigate").
 		SetHeader("sec-fetch-site", "same-origin").
 		SetHeader("sec-fetch-user", "?1").
-		SetHeader("referer", "https://consent.yahoo.com/v2/collectConsent?sessionId="+sessionId).
+		SetHeader("referer", "https://consent.yahoo.com/v2/collectConsent?sessionId="+sessionID).
 		SetHeader("user-agent", userAgent).
 		SetCookies(GUCSCookie).
 		SetFormData(map[string]string{
 			"csrfToken": csrfToken,
-			"sessionId": sessionId,
+			"sessionId": sessionID,
 			"namespace": "yahoo",
 			"agree":     "agree",
 		}).
-		Post("https://consent.yahoo.com/v2/collectConsent?sessionId=" + sessionId)
+		Post("https://consent.yahoo.com/v2/collectConsent?sessionId=" + sessionID)
 
 	if err2 != nil && !strings.Contains(err2.Error(), "stopped after") {
 		return cookies, fmt.Errorf("error attempting to agree to EU consent request: %w", err2)
 	}
 
 	if !isRequiredCookieSet(res2) {
-		return nil, fmt.Errorf("unexpected response from Yahoo API: A3 session cookie missing from response after agreeing to EU consent request: %s", res2.Status())
+		return nil, fmt.Errorf("%w: unexpected response from Yahoo API: A3 session cookie missing from response after agreeing to EU consent request: %s", errSessionRefresh, res2.Status())
 	}
 
 	return res2.Cookies(), nil
@@ -228,7 +230,7 @@ func getCrumb(client *resty.Client, cookies []*http.Cookie) (string, error) {
 	}
 
 	if !strings.HasPrefix(res.Status(), "2") {
-		return "", fmt.Errorf("unexpected response from Yahoo API when attempting to retrieve crumb: non-2xx response code: %s", res.Status())
+		return "", fmt.Errorf("%w: unexpected response from Yahoo API when attempting to retrieve crumb: non-2xx response code: %s", errSessionRefresh, res.Status())
 	}
 
 	return res.String(), err

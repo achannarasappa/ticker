@@ -41,9 +41,9 @@ jobs:
           go-version: 1.18
       -
         name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v5
         with:
-          version: 1.5.0
+          version: 1.25.1
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}

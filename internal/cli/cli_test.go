@@ -251,6 +251,7 @@ var _ = Describe("Cli", func() {
 						"watchlist:",
 						"  - TSLA",        // yahoo finance
 						"  - ETHEREUM.CG", // coingecko
+						"  - BITCOIN.CC",  // coincap
 						"  - SOL.X",       // ticker
 					}, "\n"),
 					AssertionErr: BeNil(),
@@ -272,6 +273,12 @@ var _ = Describe("Cli", func() {
 											"1": Equal("solana"),
 										}),
 										"Source": Equal(c.QuoteSourceCoingecko),
+									}),
+									"4": g.MatchFields(g.IgnoreExtras, g.Fields{
+										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+											"0": Equal("bitcoin"),
+										}),
+										"Source": Equal(c.QuoteSourceCoinCap),
 									}),
 								}),
 							}),

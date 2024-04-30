@@ -304,7 +304,14 @@ func getSymbolAndSource(symbol string, tickerSymbolToSourceSymbol symbol.TickerS
 	if strings.HasSuffix(symbolUppercase, ".CG") {
 		return symbolSource{
 			source: c.QuoteSourceCoingecko,
-			symbol: strings.TrimSuffix(strings.ToLower(symbol), ".cg"),
+			symbol: strings.ToLower(symbol)[:len(symbol)-3],
+		}
+	}
+
+	if strings.HasSuffix(symbolUppercase, ".CC") {
+		return symbolSource{
+			source: c.QuoteSourceCoinCap,
+			symbol: strings.ToLower(symbol)[:len(symbol)-3],
 		}
 	}
 

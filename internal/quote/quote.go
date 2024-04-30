@@ -29,8 +29,8 @@ func GetAssetGroupQuote(dep c.Dependencies) func(c.AssetGroup) c.AssetGroupQuote
 
 		for _, symbolBySource := range assetGroup.SymbolsBySource {
 
-			assetQuotebySource := getQuoteBySource(dep, symbolBySource)
-			assetQuotes = append(assetQuotes, assetQuotebySource...)
+			assetQuoteBySource := getQuoteBySource(dep, symbolBySource)
+			assetQuotes = append(assetQuotes, assetQuoteBySource...)
 
 		}
 

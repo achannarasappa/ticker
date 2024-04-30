@@ -43,6 +43,10 @@ var _ = Describe("Util", func() {
 				output := ConvertFloatToString(0.0, true)
 				Expect(output).To(Equal("0.00"))
 			})
+			It("should set a precision of one when the value is negative and over 1000", func() {
+				output := ConvertFloatToString(-2000.0, true)
+				Expect(output).To(Equal("-2000.0"))
+			})
 			It("should set a precision of zero when the value is over 10000", func() {
 				output := ConvertFloatToString(10000.0, true)
 				Expect(output).To(Equal("10000"))

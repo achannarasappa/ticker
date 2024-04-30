@@ -101,9 +101,10 @@ watchlist:
   - NET
   - TEAM
   - ESTC
-  - BTC-USD
+  - BTC-USD # Bitcoin price via Yahoo
   - SOL.X # Solana price via CoinGecko
   - SAMOYEDCOIN.CG # Samoyed price via CoinGecko
+  - CARDANO.CC # Samoyed price via CoinCap
 lots:
   - symbol: "ABNB"
     quantity: 35.0
@@ -162,6 +163,7 @@ Watchlists and holdings can be grouped in `.ticker.yml` under the `groups` prope
 * `.X` - symbols with this suffix are shorthand symbols that are specific to ticker and intended to provide more concise and familiar symbols for popular assets (e.g. using `SOL.X` rather than `SOLANA.CG`)
   * The full list of ticker symbols can be found [here](https://github.com/achannarasappa/ticker-static/blob/master/symbols.csv). Initial values are populated with the top 250 cryptocurrencies from CoinGecko at time of release
 * `.CG` - symbols with this suffix will use CoinGecko as the data source. The proper coin name can be found on the CoinGecko page in the *API id* field (e.g. for `SOL` go to the coin's [page on CoinGecko](https://www.coingecko.com/en/coins/solana), find the value is `solana`, and use the symbol `SOLANA.CG` in ticker)
+* `.CC` - symbols with this suffix will use CoinCap as the data source. The coin name can be found on [CoinCap](https://coincap.io/) by searching for the asset by name. The name of the asset in the URL bar is the name (e.g. for `EGLD` search for "MultiversX" and on the asset page the url will have the name of the coin: `elrond-egld`)
 
 ### Currency Conversion
 

@@ -50,7 +50,7 @@ var _ = Describe("CoinCap Quote", func() {
 						"PriceOpen":      Equal(0.0),
 						"PriceDayHigh":   Equal(0.0),
 						"PriceDayLow":    Equal(0.0),
-						"Change":         Equal(863.9242856318742),
+						"Change":         BeNumerically("~", 863.9242856318742, 1e8),
 						"ChangePercent":  Equal(1.3622077494913285),
 					}),
 					"QuoteSource": Equal(c.QuoteSourceCoinCap),

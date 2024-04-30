@@ -86,7 +86,7 @@ func convertAssetsToJSON(assets []c.Asset) string {
 
 // Run prints holdings to the terminal
 func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Command, []string) {
-	return func(cmd *cobra.Command, args []string) {
+	return func(_ *cobra.Command, _ []string) {
 
 		assetGroupQuote := quote.GetAssetGroupQuote(*dep)(ctx.Groups[0])
 		assets, _ := asset.GetAssets(*ctx, assetGroupQuote)

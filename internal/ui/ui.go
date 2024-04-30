@@ -62,7 +62,7 @@ func generateQuoteMsg(m Model, skipUpdate bool) func() tea.Msg {
 }
 
 func (m Model) updateQuotes() tea.Cmd {
-	return tea.Tick(time.Second*time.Duration(m.requestInterval), func(t time.Time) tea.Msg {
+	return tea.Tick(time.Second*time.Duration(m.requestInterval), func(_ time.Time) tea.Msg {
 		return generateQuoteMsg(m, false)()
 	})
 }

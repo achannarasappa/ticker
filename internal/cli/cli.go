@@ -40,7 +40,7 @@ type symbolSource struct {
 
 // Run starts the ticker UI
 func Run(uiStartFn func() error) func(*cobra.Command, []string) {
-	return func(cmd *cobra.Command, args []string) {
+	return func(_ *cobra.Command, _ []string) {
 		err := uiStartFn()
 
 		if err != nil {
@@ -51,7 +51,7 @@ func Run(uiStartFn func() error) func(*cobra.Command, []string) {
 
 // Validate checks whether config is valid and returns an error if invalid or if an error was generated earlier
 func Validate(ctx *c.Context, options *Options, prevErr *error) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
+	return func(_ *cobra.Command, _ []string) error {
 
 		if prevErr != nil && *prevErr != nil {
 			return *prevErr

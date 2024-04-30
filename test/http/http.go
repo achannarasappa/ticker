@@ -38,7 +38,7 @@ func MockResponse(responseParameters ResponseParameters) {
 	//nolint:errcheck
 	t.Execute(&responseBytes, responseParameters)
 	responseUrl := `=~\/finance\/quote.*fields\=regularMarketPrice%2Ccurrency\&symbols\=` + responseParameters.Symbol //nolint:golint,stylecheck,revive
-	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+	httpmock.RegisterResponder("GET", responseUrl, func(_ *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, responseBytes.String())
 		resp.Header.Set("Content-Type", "application/json")
 
@@ -61,7 +61,7 @@ func MockResponseCurrency() {
 		}
 	}`
 	responseUrl := `=~.*\/finance\/quote.*` //nolint:golint,stylecheck,revive
-	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+	httpmock.RegisterResponder("GET", responseUrl, func(_ *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, response)
 		resp.Header.Set("Content-Type", "application/json")
 
@@ -71,7 +71,7 @@ func MockResponseCurrency() {
 
 func MockResponseCurrencyError() {
 	responseUrl := `=~.*\/finance\/quote.*` //nolint:golint,stylecheck,revive
-	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+	httpmock.RegisterResponder("GET", responseUrl, func(_ *http.Request) (*http.Response, error) {
 		return &http.Response{}, errors.New("error getting currencies") //nolint:goerr113
 	})
 }
@@ -124,7 +124,7 @@ func MockResponseYahooQuotes() {
 		}
 	}`
 	responseUrl := `=~.*\/finance\/quote.*symbols\=GOOG.*RBLX.*` //nolint:golint,stylecheck,revive
-	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+	httpmock.RegisterResponder("GET", responseUrl, func(_ *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, response)
 		resp.Header.Set("Content-Type", "application/json")
 
@@ -144,7 +144,7 @@ func MockTickerSymbols() {
 "XRP.X","ripple","cg"
 `
 	responseUrl := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv" //nolint:golint,stylecheck,revive
-	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+	httpmock.RegisterResponder("GET", responseUrl, func(_ *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, responseFixture)
 		resp.Header.Set("Content-Type", "text/plain; charset=utf-8")
 
@@ -154,7 +154,7 @@ func MockTickerSymbols() {
 
 func MockTickerSymbolsError() {
 	responseUrl := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv" //nolint:golint,stylecheck,revive
-	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+	httpmock.RegisterResponder("GET", responseUrl, func(_ *http.Request) (*http.Response, error) {
 		return &http.Response{}, errors.New("error getting ticker symbols") //nolint:goerr113
 	})
 }

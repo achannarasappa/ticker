@@ -42,9 +42,7 @@ builds:
       - -s -w -X 'github.com/achannarasappa/ticker/cmd.Version={{.Version}}'
 archives:
   - 
-    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}-{{ .Mips }}{{ end }}"
-    replacements:
-      darwin: mac
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ if eq .Arch "darwin" }}mac{{else}}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}-{{ .Mips }}{{ end }}"
 snapshot:
   name_template: "{{ .Tag }}-next"
 checksum:
@@ -68,7 +66,7 @@ brews:
 dockers:
 - image_templates: ["achannarasappa/ticker:{{ .Version }}-amd64"]
   dockerfile: Dockerfile
-  use_buildx: true
+  use: buildx
   build_flag_templates:
   - "--platform=linux/amd64"
   - "--pull"
@@ -80,7 +78,7 @@ dockers:
 - image_templates: ["achannarasappa/ticker:{{ .Version }}-arm64v8"]
   goarch: arm64
   dockerfile: Dockerfile
-  use_buildx: true
+  use: buildx
   build_flag_templates:
   - "--platform=linux/arm64/v8"
   - "--pull"
@@ -125,7 +123,7 @@ nfpms:
 snapcrafts:
   -
     id: ticker
-    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ if eq .Arch "darwin" }}mac{{else}}{{ .Arch }}{{ end }}"
     replacements:
       darwin: mac
     publish: true

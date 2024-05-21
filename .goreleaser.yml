@@ -126,27 +126,27 @@ nfpms:
     formats:
       - deb
       - rpm
-snapcrafts:
-  -
-    id: ticker
-    name_template: >-
-      {{- .ProjectName }}-
-      {{- .Version }}-
-      {{- if eq .Os "darwin" }}mac
-      {{- else}}{{ .Os }}{{ end }}-
-      {{- .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
-      {{- if .Mips }}-{{ .Mips }}{{ end }}
-    publish: true
-    summary: Terminal stock watcher and stock position tracker
-    description: |
-      Features:
-      Live stock price quotes
-      Track value of your stock positions
-      Support for multiple cost basis lots
-      Support for pre and post market price quotes
+# snapcrafts:
+#   -
+#     id: ticker
+#     name_template: >-
+#       {{- .ProjectName }}-
+#       {{- .Version }}-
+#       {{- if eq .Os "darwin" }}mac
+#       {{- else}}{{ .Os }}{{ end }}-
+#       {{- .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
+#       {{- if .Mips }}-{{ .Mips }}{{ end }}
+#     publish: true
+#     summary: Terminal stock watcher and stock position tracker
+#     description: |
+#       Features:
+#       Live stock price quotes
+#       Track value of your stock positions
+#       Support for multiple cost basis lots
+#       Support for pre and post market price quotes
 
-    grade: stable
-    confinement: strict
-    apps:
-      ticker:
-        plugs: ["network", "home"]
+#     grade: stable
+#     confinement: strict
+#     apps:
+#       ticker:
+#         plugs: ["network", "home"]

@@ -136,8 +136,6 @@ snapcrafts:
       {{- else}}{{ .Os }}{{ end }}-
       {{- .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
       {{- if .Mips }}-{{ .Mips }}{{ end }}
-    replacements:
-      darwin: mac
     publish: true
     summary: Terminal stock watcher and stock position tracker
     description: |

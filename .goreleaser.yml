@@ -42,7 +42,13 @@ builds:
       - -s -w -X 'github.com/achannarasappa/ticker/cmd.Version={{.Version}}'
 archives:
   - id: release
-    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ if eq .Arch "darwin" }}mac{{else}}{{ .Arch }}{{ end }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}-{{ .Mips }}{{ end }}"
+    name_template: >-
+      {{- .ProjectName }}-
+      {{- .Version }}-
+      {{- if eq .Os "darwin" }}mac
+      {{- else}}{{ .Os }}{{ end }}-
+      {{- .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
+      {{- if .Mips }}-{{ .Mips }}{{ end }}
 snapshot:
   name_template: "{{ .Tag }}-next"
 checksum:

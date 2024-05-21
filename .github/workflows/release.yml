@@ -45,6 +45,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: 1.25.1
-          args: release --rm-dist
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}

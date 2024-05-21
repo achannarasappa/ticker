@@ -129,7 +129,13 @@ nfpms:
 snapcrafts:
   -
     id: ticker
-    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ if eq .Arch "darwin" }}mac{{else}}{{ .Arch }}{{ end }}"
+    name_template: >-
+      {{- .ProjectName }}-
+      {{- .Version }}-
+      {{- if eq .Os "darwin" }}mac
+      {{- else}}{{ .Os }}{{ end }}-
+      {{- .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
+      {{- if .Mips }}-{{ .Mips }}{{ end }}
     replacements:
       darwin: mac
     publish: true

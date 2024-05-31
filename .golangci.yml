@@ -9,7 +9,6 @@ linters:
   disable:
     - paralleltest
     - wrapcheck
-    - exhaustivestruct
     - whitespace
     - wsl
     - godot
@@ -17,7 +16,6 @@ linters:
     - funlen
     - gomnd
     - gofumpt
-    - maligned
     - unparam
     - tagliatelle
     - forbidigo
@@ -27,6 +25,7 @@ linters:
     - depguard
     - nolintlint
     - mnd
+    - copyloopvar
 run:
   tests: false
 issues:

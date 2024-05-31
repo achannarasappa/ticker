@@ -50,7 +50,6 @@ var _ = Describe("Cli", func() {
 	var (
 		options Options
 		dep     c.Dependencies
-		ctx     c.Context
 	)
 
 	BeforeEach(func() {
@@ -72,7 +71,6 @@ var _ = Describe("Cli", func() {
 				Yahoo:   client,
 			},
 		}
-		ctx = c.Context{}
 
 		http.MockTickerSymbols()
 		http.MockResponseCurrency()
@@ -112,7 +110,8 @@ var _ = Describe("Cli", func() {
 
 	Describe("GetContext", func() {
 
-		Context("options and configuration", func() {
+		Context("watchlist and groups", func() {
+
 			type Case struct {
 				InputOptions            cli.Options
 				InputConfigFileContents string
@@ -121,12 +120,13 @@ var _ = Describe("Cli", func() {
 				AssertionCtx            types.GomegaMatcher
 			}
 
-			DescribeTable("config values",
+			DescribeTable("context values",
 				func(c Case) {
 					if c.InputConfigFileContents != "" {
 						writeConfigFile(dep.Fs, c.InputConfigFileContents)
 					}
-					outputCtx, outputErr := GetContext(dep, c.InputOptions, c.InputConfigFilePath)
+					outputConfig, outputErr := cli.GetConfig(dep, c.InputConfigFilePath, c.InputOptions)
+					outputCtx, outputErr := cli.GetContext(dep, outputConfig)
 					Expect(outputErr).To(c.AssertionErr)
 					Expect(outputCtx).To(c.AssertionCtx)
 				},
@@ -285,16 +285,68 @@ var _ = Describe("Cli", func() {
 						}),
 					}),
 				}),
+			)
+
+		})
+
+		When("there is an error getting ticker symbols", func() {
+
+			It("returns the error", func() {
+
+				http.MockTickerSymbolsError()
+
+				_, outputErr := GetContext(dep, c.Config{})
+
+				Expect(outputErr).ToNot(BeNil())
+
+			})
+
+		})
+
+		When("there is an error getting reference data", func() {
+
+			PIt("returns the error", func() {
+
+				http.MockResponseCurrencyError()
+
+				_, outputErr := GetContext(dep, c.Config{})
+
+				Expect(outputErr).ToNot(BeNil())
+
+			})
+
+		})
+
+	})
+
+	Describe("GetConfig", func() {
+
+		Context("options and configuration", func() {
+			type Case struct {
+				InputOptions            cli.Options
+				InputConfigFileContents string
+				InputConfigFilePath     string
+				AssertionErr            types.GomegaMatcher
+				AssertionConfig         types.GomegaMatcher
+			}
+
+			DescribeTable("config values",
+				func(c Case) {
+					if c.InputConfigFileContents != "" {
+						writeConfigFile(dep.Fs, c.InputConfigFileContents)
+					}
+					outputConfig, outputErr := cli.GetConfig(dep, c.InputConfigFilePath, c.InputOptions)
+					Expect(outputErr).To(c.AssertionErr)
+					Expect(outputConfig).To(c.AssertionConfig)
+				},
 
 				// option: string (proxy, sort)
 				Entry("when proxy is set in config file", Case{
 					InputOptions:            cli.Options{},
 					InputConfigFileContents: "proxy: http://myproxy.com:4438",
 					AssertionErr:            BeNil(),
-					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"Proxy": Equal("http://myproxy.com:4438"),
-						}),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Proxy": Equal("http://myproxy.com:4438"),
 					}),
 				}),
 
@@ -302,10 +354,8 @@ var _ = Describe("Cli", func() {
 					InputOptions:            cli.Options{Proxy: "http://www.example.org:3128"},
 					InputConfigFileContents: "",
 					AssertionErr:            BeNil(),
-					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"Proxy": Equal("http://www.example.org:3128"),
-						}),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Proxy": Equal("http://www.example.org:3128"),
 					}),
 				}),
 
@@ -313,10 +363,8 @@ var _ = Describe("Cli", func() {
 					InputOptions:            cli.Options{Proxy: "http://www.example.org:3128"},
 					InputConfigFileContents: "proxy: http://myproxy.com:4438",
 					AssertionErr:            BeNil(),
-					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"Proxy": Equal("http://www.example.org:3128"),
-						}),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Proxy": Equal("http://www.example.org:3128"),
 					}),
 				}),
 
@@ -325,10 +373,8 @@ var _ = Describe("Cli", func() {
 					InputOptions:            cli.Options{},
 					InputConfigFileContents: "interval: 8",
 					AssertionErr:            BeNil(),
-					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"RefreshInterval": Equal(8),
-						}),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"RefreshInterval": Equal(8),
 					}),
 				}),
 
@@ -336,10 +382,8 @@ var _ = Describe("Cli", func() {
 					InputOptions:            cli.Options{RefreshInterval: 7},
 					InputConfigFileContents: "",
 					AssertionErr:            BeNil(),
-					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"RefreshInterval": Equal(7),
-						}),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"RefreshInterval": Equal(7),
 					}),
 				}),
 
@@ -347,10 +391,8 @@ var _ = Describe("Cli", func() {
 					InputOptions:            cli.Options{RefreshInterval: 7},
 					InputConfigFileContents: "interval: 8",
 					AssertionErr:            BeNil(),
-					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"RefreshInterval": Equal(7),
-						}),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"RefreshInterval": Equal(7),
 					}),
 				}),
 
@@ -358,10 +400,8 @@ var _ = Describe("Cli", func() {
 					InputOptions:            cli.Options{},
 					InputConfigFileContents: "",
 					AssertionErr:            BeNil(),
-					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"RefreshInterval": Equal(5),
-						}),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"RefreshInterval": Equal(5),
 					}),
 				}),
 
@@ -370,10 +410,8 @@ var _ = Describe("Cli", func() {
 					InputOptions:            cli.Options{},
 					InputConfigFileContents: "show-separator: true",
 					AssertionErr:            BeNil(),
-					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"Separate": Equal(true),
-						}),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Separate": Equal(true),
 					}),
 				}),
 
@@ -381,10 +419,8 @@ var _ = Describe("Cli", func() {
 					InputOptions:            cli.Options{Separate: true},
 					InputConfigFileContents: "",
 					AssertionErr:            BeNil(),
-					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"Separate": Equal(true),
-						}),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Separate": Equal(true),
 					}),
 				}),
 
@@ -392,41 +428,11 @@ var _ = Describe("Cli", func() {
 					InputOptions:            cli.Options{Separate: false},
 					InputConfigFileContents: "show-separator: true",
 					AssertionErr:            BeNil(),
-					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Config": g.MatchFields(g.IgnoreExtras, g.Fields{
-							"Separate": Equal(true),
-						}),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Separate": Equal(true),
 					}),
 				}),
 			)
-
-			When("there is an error getting ticker symbols", func() {
-
-				It("returns the error", func() {
-
-					http.MockTickerSymbolsError()
-
-					_, outputErr := GetContext(dep, cli.Options{}, "")
-
-					Expect(outputErr).ToNot(BeNil())
-
-				})
-
-			})
-
-			When("there is an error getting reference data", func() {
-
-				PIt("returns the error", func() {
-
-					http.MockResponseCurrencyError()
-
-					_, outputErr := GetContext(dep, cli.Options{}, "")
-
-					Expect(outputErr).ToNot(BeNil())
-
-				})
-
-			})
 
 		})
 
@@ -450,9 +456,9 @@ var _ = Describe("Cli", func() {
 			When("an explicit config file is set", func() {
 				It("should read the config file from disk", func() {
 					inputConfigPath := ".ticker.yaml"
-					outputCtx, outputErr := GetContext(depLocal, cli.Options{}, inputConfigPath)
+					outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
 
-					Expect(outputCtx.Config.Watchlist).To(Equal([]string{"NOK"}))
+					Expect(outputConfig.Watchlist).To(Equal([]string{"NOK"}))
 					Expect(outputErr).To(BeNil())
 				})
 			})
@@ -463,10 +469,10 @@ var _ = Describe("Cli", func() {
 						inputHome, _ := homedir.Dir()
 						inputConfigPath := ""
 						depLocal.Fs.MkdirAll(inputHome, 0755)
-						outputCtx, outputErr := GetContext(depLocal, cli.Options{}, inputConfigPath)
+						outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
 
 						Expect(outputErr).To(BeNil())
-						Expect(outputCtx.Config).To(Equal(c.Config{RefreshInterval: 5}))
+						Expect(outputConfig).To(Equal(c.Config{RefreshInterval: 5}))
 					})
 				})
 				When("there is a config file in the home directory", func() {
@@ -476,9 +482,9 @@ var _ = Describe("Cli", func() {
 						depLocal.Fs.MkdirAll(inputHome, 0755)
 						depLocal.Fs.Create(inputHome + "/.ticker.yaml")
 						afero.WriteFile(depLocal.Fs, inputHome+"/.ticker.yaml", []byte("watchlist:\n  - AMD"), 0644)
-						outputCtx, outputErr := GetContext(depLocal, cli.Options{}, inputConfigPath)
+						outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
 
-						Expect(outputCtx.Config.Watchlist).To(Equal([]string{"AMD"}))
+						Expect(outputConfig.Watchlist).To(Equal([]string{"AMD"}))
 						Expect(outputErr).To(BeNil())
 					})
 				})
@@ -489,9 +495,9 @@ var _ = Describe("Cli", func() {
 						depLocal.Fs.MkdirAll(inputCurrentDirectory, 0755)
 						depLocal.Fs.Create(inputCurrentDirectory + "/.ticker.yaml")
 						afero.WriteFile(depLocal.Fs, inputCurrentDirectory+"/.ticker.yaml", []byte("watchlist:\n  - JNJ"), 0644)
-						outputCtx, outputErr := GetContext(depLocal, cli.Options{}, inputConfigPath)
+						outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
 
-						Expect(outputCtx.Config.Watchlist).To(Equal([]string{"JNJ"}))
+						Expect(outputConfig.Watchlist).To(Equal([]string{"JNJ"}))
 						Expect(outputErr).To(BeNil())
 					})
 				})
@@ -504,10 +510,10 @@ var _ = Describe("Cli", func() {
 						depLocal.Fs.MkdirAll(inputConfigHome, 0755)
 						depLocal.Fs.Create(inputConfigHome + "/.ticker.yaml")
 						afero.WriteFile(depLocal.Fs, inputConfigHome+"/.ticker.yaml", []byte("watchlist:\n  - ABNB"), 0644)
-						outputCtx, outputErr := GetContext(depLocal, cli.Options{}, inputConfigPath)
+						outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
 						os.Unsetenv("XDG_CONFIG_HOME")
 
-						Expect(outputCtx.Config.Watchlist).To(Equal([]string{"ABNB"}))
+						Expect(outputConfig.Watchlist).To(Equal([]string{"ABNB"}))
 						Expect(outputErr).To(BeNil())
 					})
 				})
@@ -516,9 +522,9 @@ var _ = Describe("Cli", func() {
 			When("there is an error reading the config file", func() {
 				It("returns the error", func() {
 					inputConfigPath := ".config-file-that-does-not-exist.yaml"
-					outputCtx, outputErr := GetContext(depLocal, cli.Options{}, inputConfigPath)
+					outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
 
-					Expect(outputCtx.Config).To(Equal(c.Config{}))
+					Expect(outputConfig).To(Equal(c.Config{}))
 					Expect(outputErr).To(MatchError("invalid config: open .config-file-that-does-not-exist.yaml: file does not exist"))
 				})
 			})
@@ -527,9 +533,9 @@ var _ = Describe("Cli", func() {
 				It("returns the error", func() {
 					inputConfigPath := ".ticker.yaml"
 					afero.WriteFile(depLocal.Fs, ".ticker.yaml", []byte("watchlist:\n   NOK"), 0644)
-					outputCtx, outputErr := GetContext(depLocal, cli.Options{}, inputConfigPath)
+					outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
 
-					Expect(outputCtx.Config).To(Equal(c.Config{}))
+					Expect(outputConfig).To(Equal(c.Config{}))
 					Expect(outputErr).To(MatchError("invalid config: yaml: unmarshal errors:\n  line 2: cannot unmarshal !!str `NOK` into []string"))
 
 				})
@@ -539,10 +545,18 @@ var _ = Describe("Cli", func() {
 
 	Describe("Validate", func() {
 
+		var (
+			config c.Config
+		)
+
+		BeforeEach(func() {
+			config = c.Config{}
+		})
+
 		When("a deferred error is passed in", func() {
 			It("validation fails", func() {
 				inputErr := errors.New("some config error")
-				outputErr := Validate(&c.Context{}, &cli.Options{}, &inputErr)(&cobra.Command{}, []string{})
+				outputErr := Validate(&config, &cli.Options{}, &inputErr)(&cobra.Command{}, []string{})
 				Expect(outputErr).To(MatchError("some config error"))
 			})
 		})
@@ -551,7 +565,7 @@ var _ = Describe("Cli", func() {
 			When("there is no watchlist in the config file and no watchlist cli argument", func() {
 				It("should return an error", func() {
 					options.Watchlist = ""
-					outputErr := Validate(&ctx, &options, nil)(&cobra.Command{}, []string{})
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
 					Expect(outputErr).To(MatchError("invalid config: No watchlist provided"))
 				})
 
@@ -559,7 +573,7 @@ var _ = Describe("Cli", func() {
 
 					It("should not return an error", func() {
 						var prevErr error
-						outputErr := Validate(&ctx, &options, &prevErr)(&cobra.Command{}, []string{})
+						outputErr := Validate(&config, &options, &prevErr)(&cobra.Command{}, []string{})
 						Expect(outputErr).NotTo(HaveOccurred())
 					})
 
@@ -568,7 +582,7 @@ var _ = Describe("Cli", func() {
 				When("there are lots set", func() {
 					It("should not return an error", func() {
 						options.Watchlist = ""
-						ctx.Config = c.Config{
+						config = c.Config{
 							Lots: []c.Lot{
 								{
 									Symbol:   "SYM",
@@ -577,7 +591,7 @@ var _ = Describe("Cli", func() {
 								},
 							},
 						}
-						outputErr := Validate(&ctx, &options, nil)(&cobra.Command{}, []string{})
+						outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
 						Expect(outputErr).NotTo(HaveOccurred())
 					})
 				})

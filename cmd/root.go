@@ -19,6 +19,7 @@ var (
 	configPath   string
 	dep          c.Dependencies
 	ctx          c.Context
+	config       c.Config
 	options      cli.Options
 	optionsPrint print.Options
 	err          error
@@ -26,14 +27,16 @@ var (
 		Version: Version,
 		Use:     "ticker",
 		Short:   "Terminal stock ticker and stock gain/loss tracker",
-		Args:    cli.Validate(&ctx, &options, &err),
+		PreRun:  initContext,
+		Args:    cli.Validate(&config, &options, &err),
 		Run:     cli.Run(ui.Start(&dep, &ctx)),
 	}
 	printCmd = &cobra.Command{
-		Use:   "print",
-		Short: "Prints holdings",
-		Args:  cli.Validate(&ctx, &options, &err),
-		Run:   print.Run(&dep, &ctx, &optionsPrint),
+		Use:    "print",
+		Short:  "Prints holdings",
+		PreRun: initContext,
+		Args:   cli.Validate(&config, &options, &err),
+		Run:    print.Run(&dep, &ctx, &optionsPrint),
 	}
 )
 
@@ -63,14 +66,21 @@ func init() { //nolint: gochecknoinits
 }
 
 func initConfig() {
-	dep, err = cli.GetDependencies()
+
+	dep = cli.GetDependencies()
+
+	config, err = cli.GetConfig(dep, configPath, options)
 
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	ctx, err = cli.GetContext(dep, options, configPath)
+}
+
+func initContext(_ *cobra.Command, _ []string) {
+
+	ctx, err = cli.GetContext(dep, config)
 
 	if err != nil {
 		fmt.Println(err)

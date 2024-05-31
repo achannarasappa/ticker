@@ -50,14 +50,14 @@ func Run(uiStartFn func() error) func(*cobra.Command, []string) {
 }
 
 // Validate checks whether config is valid and returns an error if invalid or if an error was generated earlier
-func Validate(ctx *c.Context, options *Options, prevErr *error) func(*cobra.Command, []string) error {
+func Validate(config *c.Config, options *Options, prevErr *error) func(*cobra.Command, []string) error {
 	return func(_ *cobra.Command, _ []string) error {
 
 		if prevErr != nil && *prevErr != nil {
 			return *prevErr
 		}
 
-		if len(ctx.Config.Watchlist) == 0 && len(options.Watchlist) == 0 && len(ctx.Config.Lots) == 0 && len(ctx.Config.AssetGroup) == 0 {
+		if len(config.Watchlist) == 0 && len(options.Watchlist) == 0 && len(config.Lots) == 0 && len(config.AssetGroup) == 0 {
 			return errors.New("invalid config: No watchlist provided") //nolint:goerr113
 		}
 
@@ -65,41 +65,32 @@ func Validate(ctx *c.Context, options *Options, prevErr *error) func(*cobra.Comm
 	}
 }
 
-func GetDependencies() (c.Dependencies, error) {
-
-	client := yahooClient.New(resty.New(), resty.New())
-	err := yahooClient.RefreshSession(client, resty.New())
-
-	if err != nil {
-		return c.Dependencies{}, err
-	}
+func GetDependencies() c.Dependencies {
 
 	return c.Dependencies{
 		Fs: afero.NewOsFs(),
 		HttpClients: c.DependenciesHttpClients{
 			Default: resty.New(),
-			Yahoo:   client,
+			Yahoo:   yahooClient.New(resty.New(), resty.New()),
 		},
-	}, nil
+	}
 
 }
 
 // GetContext builds the context from the config and reference data
-func GetContext(d c.Dependencies, options Options, configPath string) (c.Context, error) {
+func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 	var (
 		reference c.Reference
-		config    c.Config
 		groups    []c.AssetGroup
 		err       error
 	)
 
-	config, err = readConfig(d.Fs, configPath)
+	err = yahooClient.RefreshSession(d.HttpClients.Yahoo, resty.New())
 
 	if err != nil {
 		return c.Context{}, err
 	}
 
-	config = getConfig(config, options, &d.HttpClients)
 	groups, err = getGroups(config, *d.HttpClients.Default)
 
 	if err != nil {
@@ -152,15 +143,21 @@ func getReference(config c.Config, assetGroups []c.AssetGroup, client resty.Clie
 
 }
 
-func getConfig(config c.Config, options Options, httpClients *c.DependenciesHttpClients) c.Config {
+func GetConfig(dep c.Dependencies, configPath string, options Options) (c.Config, error) {
+
+	config, err := readConfig(dep.Fs, configPath)
+
+	if err != nil {
+		return c.Config{}, err
+	}
 
 	if len(options.Watchlist) != 0 {
 		config.Watchlist = strings.Split(strings.ReplaceAll(options.Watchlist, " ", ""), ",")
 	}
 
 	if len(config.Proxy) > 0 {
-		httpClients.Default.SetProxy(config.Proxy)
-		httpClients.Yahoo.SetProxy(config.Proxy)
+		dep.HttpClients.Default.SetProxy(config.Proxy)
+		dep.HttpClients.Yahoo.SetProxy(config.Proxy)
 	}
 
 	config.RefreshInterval = getRefreshInterval(options.RefreshInterval, config.RefreshInterval)
@@ -172,7 +169,7 @@ func getConfig(config c.Config, options Options, httpClients *c.DependenciesHttp
 	config.Proxy = getStringOption(options.Proxy, config.Proxy)
 	config.Sort = getStringOption(options.Sort, config.Sort)
 
-	return config
+	return config, nil
 }
 
 func getConfigPath(fs afero.Fs, configPathOption string) (string, error) {

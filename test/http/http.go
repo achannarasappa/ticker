@@ -163,27 +163,27 @@ func MockTickerSymbolsError() {
 
 // Mocks for Yahoo session refresh
 func MockResponseForRefreshSessionSuccess() {
-	httpmock.RegisterResponder("GET", "https://finance.yahoo.com/", func(request *http.Request) (*http.Response, error) {
+	httpmock.RegisterResponder("GET", "https://finance.yahoo.com/", func(_ *http.Request) (*http.Response, error) {
 		response := httpmock.NewStringResponse(http.StatusOK, "")
 		response.Header.Set("Set-Cookie", "A3=d=AQABBPMJfWQCWPnJSAFIwq1PtsjJQ_yNsJ8FEgEBAQFbfmSGZNxN0iMA_eMAAA&S=AQAAAk_fgKYu72Cro5IHlbBd6yg; Expires=Tue, 4 Jun 2024 04:02:28 GMT; Max-Age=31557600; Domain=.yahoo.com; Path=/; SameSite=None; Secure; HttpOnly")
 
 		return response, nil
 	})
 
-	httpmock.RegisterResponder("GET", "https://query2.finance.yahoo.com/v1/test/getcrumb", func(request *http.Request) (*http.Response, error) {
+	httpmock.RegisterResponder("GET", "https://query2.finance.yahoo.com/v1/test/getcrumb", func(_ *http.Request) (*http.Response, error) {
 		return httpmock.NewStringResponse(http.StatusOK, "MrBKM4QQ"), nil
 	})
 }
 
 func MockResponseForRefreshSessionError() {
-	httpmock.RegisterResponder("GET", "https://finance.yahoo.com/", func(request *http.Request) (*http.Response, error) {
+	httpmock.RegisterResponder("GET", "https://finance.yahoo.com/", func(_ *http.Request) (*http.Response, error) {
 		response := httpmock.NewStringResponse(http.StatusOK, "")
 		response.Header.Set("Set-Cookie", "A3=d=AQABBPMJfWQCWPnJSAFIwq1PtsjJQ_yNsJ8FEgEBAQFbfmSGZNxN0iMA_eMAAA&S=AQAAAk_fgKYu72Cro5IHlbBd6yg; Expires=Tue, 4 Jun 2024 04:02:28 GMT; Max-Age=31557600; Domain=.yahoo.com; Path=/; SameSite=None; Secure; HttpOnly")
 
 		return response, nil
 	})
 
-	httpmock.RegisterResponder("GET", "https://query2.finance.yahoo.com/v1/test/getcrumb", func(request *http.Request) (*http.Response, error) {
+	httpmock.RegisterResponder("GET", "https://query2.finance.yahoo.com/v1/test/getcrumb", func(_ *http.Request) (*http.Response, error) {
 		return httpmock.NewStringResponse(http.StatusBadRequest, "tests"), nil
 	})
 }

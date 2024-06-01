@@ -19,7 +19,7 @@ import (
 	"github.com/achannarasappa/ticker/internal/cli"
 	. "github.com/achannarasappa/ticker/internal/cli"
 	c "github.com/achannarasappa/ticker/internal/common"
-	"github.com/achannarasappa/ticker/test/http"
+	httpMocks "github.com/achannarasappa/ticker/test/http"
 )
 
 func getStdout(fn func()) string {
@@ -67,13 +67,16 @@ var _ = Describe("Cli", func() {
 		dep = c.Dependencies{
 			Fs: afero.NewMemMapFs(),
 			HttpClients: c.DependenciesHttpClients{
-				Default: client,
-				Yahoo:   client,
+				Default:      client,
+				Yahoo:        client,
+				YahooSession: client,
 			},
 		}
 
-		http.MockTickerSymbols()
-		http.MockResponseCurrency()
+		httpMocks.MockTickerSymbols()
+		httpMocks.MockResponseCurrency()
+		httpMocks.MockResponseForRefreshSessionSuccess()
+
 		//nolint:errcheck
 		dep.Fs.MkdirAll("./", 0755)
 	})
@@ -293,7 +296,7 @@ var _ = Describe("Cli", func() {
 
 			It("returns the error", func() {
 
-				http.MockTickerSymbolsError()
+				httpMocks.MockTickerSymbolsError()
 
 				_, outputErr := GetContext(dep, c.Config{})
 
@@ -305,9 +308,25 @@ var _ = Describe("Cli", func() {
 
 		When("there is an error getting reference data", func() {
 
-			PIt("returns the error", func() {
+			It("returns the error", func() {
 
-				http.MockResponseCurrencyError()
+				httpMocks.MockResponseCurrencyError()
+
+				_, outputErr := GetContext(dep, c.Config{
+					Watchlist: []string{"TSLA"},
+				})
+
+				Expect(outputErr).ToNot(BeNil())
+
+			})
+
+		})
+
+		When("there is an error refreshing the yahoo session", func() {
+
+			It("returns the error", func() {
+
+				httpMocks.MockResponseForRefreshSessionError()
 
 				_, outputErr := GetContext(dep, c.Config{})
 
@@ -541,6 +560,22 @@ var _ = Describe("Cli", func() {
 				})
 			})
 		})
+	})
+
+	Describe("GetDependencies", func() {
+
+		It("should dependencies", func() {
+
+			output := GetDependencies()
+			expected := g.MatchAllFields(g.Fields{
+				"Fs":          BeAssignableToTypeOf(afero.NewOsFs()),
+				"HttpClients": BeAssignableToTypeOf(c.DependenciesHttpClients{}),
+			})
+
+			Expect(output).To(expected)
+
+		})
+
 	})
 
 	Describe("Validate", func() {

@@ -70,8 +70,9 @@ func GetDependencies() c.Dependencies {
 	return c.Dependencies{
 		Fs: afero.NewOsFs(),
 		HttpClients: c.DependenciesHttpClients{
-			Default: resty.New(),
-			Yahoo:   yahooClient.New(resty.New(), resty.New()),
+			Default:      resty.New(),
+			Yahoo:        yahooClient.New(resty.New(), resty.New()),
+			YahooSession: resty.New(),
 		},
 	}
 
@@ -85,7 +86,7 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		err       error
 	)
 
-	err = yahooClient.RefreshSession(d.HttpClients.Yahoo, resty.New())
+	err = yahooClient.RefreshSession(d.HttpClients.Yahoo, d.HttpClients.YahooSession)
 
 	if err != nil {
 		return c.Context{}, err
@@ -97,7 +98,11 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		return c.Context{}, err
 	}
 
-	reference, err = getReference(config, groups, *d.HttpClients.Yahoo)
+	reference, err = getReference(config, groups, d.HttpClients.Yahoo)
+
+	if err != nil {
+		return c.Context{}, err
+	}
 
 	context := c.Context{
 		Reference: reference,
@@ -131,10 +136,14 @@ func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {
 	return config, nil
 }
 
-func getReference(config c.Config, assetGroups []c.AssetGroup, client resty.Client) (c.Reference, error) {
+func getReference(config c.Config, assetGroups []c.AssetGroup, client *resty.Client) (c.Reference, error) {
 
 	currencyRates, err := quote.GetAssetGroupsCurrencyRates(client, assetGroups, config.Currency)
 	styles := util.GetColorScheme(config.ColorScheme)
+
+	if err != nil {
+		return c.Reference{}, err
+	}
 
 	return c.Reference{
 		CurrencyRates: currencyRates,

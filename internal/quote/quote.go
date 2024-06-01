@@ -80,7 +80,7 @@ func getUniqueSymbolsBySource(assetGroups []c.AssetGroup) []c.AssetGroupSymbolsB
 }
 
 // GetAssetGroupsCurrencyRates gets the currency rates by source across all asset groups
-func GetAssetGroupsCurrencyRates(client resty.Client, assetGroups []c.AssetGroup, targetCurrency string) (c.CurrencyRates, error) {
+func GetAssetGroupsCurrencyRates(client *resty.Client, assetGroups []c.AssetGroup, targetCurrency string) (c.CurrencyRates, error) {
 
 	var err error
 	var currencyRates c.CurrencyRates
@@ -89,7 +89,7 @@ func GetAssetGroupsCurrencyRates(client resty.Client, assetGroups []c.AssetGroup
 	for _, source := range uniqueSymbolsBySource {
 
 		if source.Source == c.QuoteSourceYahoo && err == nil {
-			currencyRates, err = quoteYahoo.GetCurrencyRates(client, source.Symbols, targetCurrency)
+			currencyRates, err = quoteYahoo.GetCurrencyRates(*client, source.Symbols, targetCurrency)
 		}
 
 	}

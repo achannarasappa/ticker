@@ -136,7 +136,7 @@ var _ = Describe("Quote", func() {
 					},
 				},
 			}
-			output, _ := GetAssetGroupsCurrencyRates(*client, input, "EUR")
+			output, _ := GetAssetGroupsCurrencyRates(client, input, "EUR")
 			Expect(output).To(g.MatchAllKeys(g.Keys{
 				"USD": g.MatchFields(g.IgnoreExtras, g.Fields{
 					"FromCurrency": Equal("USD"),

@@ -75,8 +75,9 @@ type Dependencies struct {
 }
 
 type DependenciesHttpClients struct { //nolint:golint,stylecheck,revive
-	Default *resty.Client
-	Yahoo   *resty.Client
+	Default      *resty.Client
+	Yahoo        *resty.Client
+	YahooSession *resty.Client
 }
 
 // Lot represents a cost basis lot

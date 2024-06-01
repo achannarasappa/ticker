@@ -165,8 +165,8 @@ func MockResponseCoingeckoQuotes() {
 						"total_volume": 16659222262
 				}
 		]`
-	responseUrl := "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin&order=market_cap_desc&per_page=250&page=1&sparkline=false"
-	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+	responseURL := "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin&order=market_cap_desc&per_page=250&page=1&sparkline=false"
+	httpmock.RegisterResponder("GET", responseURL, func(_ *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, responseFixture)
 		resp.Header.Set("Content-Type", "application/json")
 
@@ -195,10 +195,11 @@ func MockResponseCoincapQuotes() {
 		],
 		"timestamp": 1714453771801
 	}`
-	responseUrl := `=~\/v2\/assets.*ids\=elrond.*`
-	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+	responseURL := `=~\/v2\/assets.*ids\=elrond.*`
+	httpmock.RegisterResponder("GET", responseURL, func(_ *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, responseFixture)
 		resp.Header.Set("Content-Type", "application/json")
+
 		return resp, nil
 	})
 
@@ -215,8 +216,8 @@ func MockTickerSymbols() {
 "USDC.X","usd-coin","cg"
 "XRP.X","ripple","cg"
 `
-	responseUrl := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv" //nolint:golint,stylecheck,revive
-	httpmock.RegisterResponder("GET", responseUrl, func(_ *http.Request) (*http.Response, error) {
+	responseURL := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv" //nolint:golint,stylecheck,revive
+	httpmock.RegisterResponder("GET", responseURL, func(_ *http.Request) (*http.Response, error) {
 		resp := httpmock.NewStringResponse(200, responseFixture)
 		resp.Header.Set("Content-Type", "text/plain; charset=utf-8")
 
@@ -225,8 +226,8 @@ func MockTickerSymbols() {
 }
 
 func MockTickerSymbolsError() {
-	responseUrl := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv" //nolint:golint,stylecheck,revive
-	httpmock.RegisterResponder("GET", responseUrl, func(_ *http.Request) (*http.Response, error) {
+	responseURL := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv" //nolint:golint,stylecheck,revive
+	httpmock.RegisterResponder("GET", responseURL, func(_ *http.Request) (*http.Response, error) {
 
 		return httpmock.NewStringResponse(http.StatusInternalServerError, "server error"), errors.New("error getting ticker symbols") //nolint:goerr113
 	})

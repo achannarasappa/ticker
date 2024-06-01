@@ -77,6 +77,8 @@ var _ = Describe("Quote", func() {
 			},
 		}
 		MockResponseYahooQuotes()
+		MockResponseCoingeckoQuotes()
+		MockResponseCoincapQuotes()
 	})
 
 	Describe("GetAssetGroupQuote", func() {
@@ -96,7 +98,12 @@ var _ = Describe("Quote", func() {
 						Source: c.QuoteSourceCoingecko,
 						Symbols: []string{
 							"bitcoin",
-							"solana",
+						},
+					},
+					{
+						Source: c.QuoteSourceCoinCap,
+						Symbols: []string{
+							"elrond",
 						},
 					},
 					{
@@ -110,8 +117,20 @@ var _ = Describe("Quote", func() {
 			}
 			output := GetAssetGroupQuote(dep)(input)
 
+			idFn := func(e interface{}) string { return e.(c.AssetQuote).Symbol }
+
 			Expect(output).To(g.MatchFields(g.IgnoreExtras, g.Fields{
-				"AssetQuotes": HaveLen(2),
+				"AssetQuotes": g.MatchElements(idFn, g.IgnoreExtras, g.Elements{
+					"GOOG": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"QuoteSource": Equal(c.QuoteSourceYahoo),
+					}),
+					"BTC": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"QuoteSource": Equal(c.QuoteSourceCoingecko),
+					}),
+					"EGLD": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"QuoteSource": Equal(c.QuoteSourceCoinCap),
+					}),
+				}),
 			}))
 
 		})

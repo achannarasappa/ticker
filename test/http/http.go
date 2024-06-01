@@ -133,6 +133,77 @@ func MockResponseYahooQuotes() {
 	})
 }
 
+func MockResponseCoingeckoQuotes() {
+
+	responseFixture := `[
+				{
+						"ath": 69045,
+						"ath_change_percentage": -43.4461,
+						"ath_date": "2021-11-10T14:24:11.849Z",
+						"atl": 67.81,
+						"atl_change_percentage": 57484.55501,
+						"atl_date": "2013-07-06T00:00:00.000Z",
+						"circulating_supply": 18964093.0,
+						"current_price": 39045,
+						"fully_diluted_valuation": 819997729028,
+						"high_24h": 40090,
+						"id": "bitcoin",
+						"image": "https://assets.coingecko.com/coins/images/1/large/bitcoin.png?1547033579",
+						"last_updated": "2022-02-21T01:24:23.221Z",
+						"low_24h": 38195,
+						"market_cap": 740500628242,
+						"market_cap_change_24h": -17241577635.956177,
+						"market_cap_change_percentage_24h": -2.27539,
+						"market_cap_rank": 1,
+						"max_supply": 21000000.0,
+						"name": "Bitcoin",
+						"price_change_24h": -978.048909591315,
+						"price_change_percentage_24h": -2.44373,
+						"roi": null,
+						"symbol": "btc",
+						"total_supply": 21000000.0,
+						"total_volume": 16659222262
+				}
+		]`
+	responseUrl := "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin&order=market_cap_desc&per_page=250&page=1&sparkline=false"
+	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, responseFixture)
+		resp.Header.Set("Content-Type", "application/json")
+
+		return resp, nil
+	})
+}
+
+func MockResponseCoincapQuotes() {
+
+	responseFixture := `{
+		"data": [
+			{
+				"id": "elrond",
+				"rank": "1",
+				"symbol": "EGLD",
+				"name": "MultiversX",
+				"supply": "19685775.0000000000000000",
+				"maxSupply": "21000000.0000000000000000",
+				"marketCapUsd": "1248489381324.9592799671502700",
+				"volumeUsd24Hr": "7744198446.5431034815177485",
+				"priceUsd": "63420.8905326287270868",
+				"changePercent24Hr": "1.3622077494913284",
+				"vwap24Hr": "62988.1090433238215198",
+				"explorer": "https://blockchain.info/"
+			}
+		],
+		"timestamp": 1714453771801
+	}`
+	responseUrl := `=~\/v2\/assets.*ids\=elrond.*`
+	httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, responseFixture)
+		resp.Header.Set("Content-Type", "application/json")
+		return resp, nil
+	})
+
+}
+
 func MockTickerSymbols() {
 	responseFixture := `"ADA.X","cardano","cg"
 "ALGO.X","algorand","cg"

@@ -2,6 +2,7 @@ package quote
 
 import (
 	c "github.com/achannarasappa/ticker/internal/common"
+	quoteCoincap "github.com/achannarasappa/ticker/internal/quote/coincap"
 	quoteCoingecko "github.com/achannarasappa/ticker/internal/quote/coingecko"
 	quoteYahoo "github.com/achannarasappa/ticker/internal/quote/yahoo"
 	"github.com/go-resty/resty/v2"
@@ -15,6 +16,10 @@ func getQuoteBySource(dep c.Dependencies, symbolBySource c.AssetGroupSymbolsBySo
 
 	if symbolBySource.Source == c.QuoteSourceCoingecko {
 		return quoteCoingecko.GetAssetQuotes(*dep.HttpClients.Default, symbolBySource.Symbols)
+	}
+
+	if symbolBySource.Source == c.QuoteSourceCoinCap {
+		return quoteCoincap.GetAssetQuotes(*dep.HttpClients.Default, symbolBySource.Symbols)
 	}
 
 	return []c.AssetQuote{}

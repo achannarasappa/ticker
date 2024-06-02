@@ -8,13 +8,14 @@ import (
 // Start launches the command line interface and starts capturing input
 func Start(dep *c.Dependencies, ctx *c.Context) func() error {
 	return func() error {
-		p := tea.NewProgram(NewModel(*dep, *ctx))
 
-		p.EnableMouseCellMotion()
-		p.EnterAltScreen()
-		err := p.Start()
-		p.ExitAltScreen()
-		p.DisableMouseCellMotion()
+		p := tea.NewProgram(
+			NewModel(*dep, *ctx),
+			tea.WithMouseCellMotion(),
+			tea.WithAltScreen(),
+		)
+
+		_, err := p.Run()
 
 		return err
 	}

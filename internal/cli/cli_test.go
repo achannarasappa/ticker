@@ -16,10 +16,10 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 
-	"github.com/achannarasappa/ticker/internal/cli"
-	. "github.com/achannarasappa/ticker/internal/cli"
-	c "github.com/achannarasappa/ticker/internal/common"
-	httpMocks "github.com/achannarasappa/ticker/test/http"
+	"github.com/achannarasappa/ticker/v4/internal/cli"
+	. "github.com/achannarasappa/ticker/v4/internal/cli"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
+	httpMocks "github.com/achannarasappa/ticker/v4/test/http"
 )
 
 func getStdout(fn func()) string {

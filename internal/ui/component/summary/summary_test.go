@@ -3,9 +3,9 @@ package summary_test
 import (
 	"strings"
 
-	"github.com/achannarasappa/ticker/internal/asset"
-	c "github.com/achannarasappa/ticker/internal/common"
-	. "github.com/achannarasappa/ticker/internal/ui/component/summary"
+	"github.com/achannarasappa/ticker/v4/internal/asset"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
+	. "github.com/achannarasappa/ticker/v4/internal/ui/component/summary"
 
 	"github.com/acarl005/stripansi"
 	. "github.com/onsi/ginkgo/v2"

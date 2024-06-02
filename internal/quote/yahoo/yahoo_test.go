@@ -7,9 +7,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	c "github.com/achannarasappa/ticker/internal/common"
-	. "github.com/achannarasappa/ticker/internal/quote/yahoo"
-	. "github.com/achannarasappa/ticker/test/http"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
+	. "github.com/achannarasappa/ticker/v4/internal/quote/yahoo"
+	. "github.com/achannarasappa/ticker/v4/test/http"
 	g "github.com/onsi/gomega/gstruct"
 )
 

@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	c "github.com/achannarasappa/ticker/internal/common"
-	s "github.com/achannarasappa/ticker/internal/sorter"
-	u "github.com/achannarasappa/ticker/internal/ui/util"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
+	s "github.com/achannarasappa/ticker/v4/internal/sorter"
+	u "github.com/achannarasappa/ticker/v4/internal/ui/util"
 
 	grid "github.com/achannarasappa/term-grid"
 )

@@ -129,6 +129,7 @@ var _ = Describe("Cli", func() {
 						writeConfigFile(dep.Fs, c.InputConfigFileContents)
 					}
 					outputConfig, outputErr := cli.GetConfig(dep, c.InputConfigFilePath, c.InputOptions)
+					Expect(outputErr).To(c.AssertionErr)
 					outputCtx, outputErr := cli.GetContext(dep, outputConfig)
 					Expect(outputErr).To(c.AssertionErr)
 					Expect(outputCtx).To(c.AssertionCtx)
@@ -520,22 +521,24 @@ var _ = Describe("Cli", func() {
 						Expect(outputErr).To(BeNil())
 					})
 				})
+
 				When("there is a config file in the XDG config directory", func() {
-					XIt("should read the config file from disk", func() {
-						inputHome, _ := homedir.Dir()
-						inputConfigHome := inputHome + "/.config"
+					It("should read the config file from disk", func() {
+						inputConfigHome, _ := homedir.Dir()
+						inputConfigHome += "/.config/ticker"
 						os.Setenv("XDG_CONFIG_HOME", inputConfigHome)
 						inputConfigPath := ""
 						depLocal.Fs.MkdirAll(inputConfigHome, 0755)
-						depLocal.Fs.Create(inputConfigHome + "/.ticker.yaml")
-						afero.WriteFile(depLocal.Fs, inputConfigHome+"/.ticker.yaml", []byte("watchlist:\n  - ABNB"), 0644)
+						depLocal.Fs.Create(inputConfigHome + "/ticker.yaml")
+						afero.WriteFile(depLocal.Fs, inputConfigHome+"/ticker.yaml", []byte("watchlist:\n  - AMD"), 0644)
 						outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
 						os.Unsetenv("XDG_CONFIG_HOME")
 
-						Expect(outputConfig.Watchlist).To(Equal([]string{"ABNB"}))
+						Expect(outputConfig.Watchlist).To(Equal([]string{"AMD"}))
 						Expect(outputErr).To(BeNil())
 					})
 				})
+
 			})
 
 			When("there is an error reading the config file", func() {

@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/achannarasappa/ticker/v4/internal/cli/symbol"
@@ -187,23 +188,36 @@ func getConfigPath(fs afero.Fs, configPathOption string) (string, error) {
 		return configPathOption, nil
 	}
 
-	home, _ := homedir.Dir()
+	vc := viper.New()
+	vc.SetFs(fs)
+	vc.SetConfigType("yaml")
+	vc.AddConfigPath(filepath.Join(xdg.ConfigHome, "ticker"))
+	vc.SetConfigName("ticker")
 
-	v := viper.New()
-	v.SetFs(fs)
-	v.SetConfigType("yaml")
-	v.AddConfigPath(home)
-	v.AddConfigPath(".")
-	v.AddConfigPath(xdg.ConfigHome)
-	v.AddConfigPath(xdg.ConfigHome + "/ticker")
-	v.SetConfigName(".ticker")
-	err = v.ReadInConfig()
+	if err = vc.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			home, _ := homedir.Dir()
 
-	if err != nil {
-		return "", fmt.Errorf("invalid config: %w", err)
+			v := viper.New()
+			v.SetFs(fs)
+			v.SetConfigType("yaml")
+			v.AddConfigPath(home)
+			v.AddConfigPath(".")
+			v.SetConfigName(".ticker")
+
+			if err = v.ReadInConfig(); err != nil {
+				return "", fmt.Errorf("invalid config: %w", err)
+			}
+
+			return v.ConfigFileUsed(), nil
+
+		} else {
+
+			return "", fmt.Errorf("invalid config: %w", err)
+		}
 	}
 
-	return v.ConfigFileUsed(), nil
+	return vc.ConfigFileUsed(), nil
 }
 
 func getRefreshInterval(optionsRefreshInterval int, configRefreshInterval int) int {

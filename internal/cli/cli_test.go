@@ -266,20 +266,20 @@ var _ = Describe("Cli", func() {
 								}, g.Elements{
 									"0": g.MatchFields(g.IgnoreExtras, g.Fields{
 										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
-											"0": Equal("TSLA"),
+											"0": Equal(c.Symbol{Id: "TSLA", Name: "TSLA"}),
 										}),
 										"Source": Equal(c.QuoteSourceYahoo),
 									}),
 									"2": g.MatchFields(g.IgnoreExtras, g.Fields{
 										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
-											"0": Equal("ethereum"),
-											"1": Equal("solana"),
+											"0": Equal(c.Symbol{Id: "ETHEREUM.CG", Name: "ethereum"}),
+											"1": Equal(c.Symbol{Id: "SOL.X", Name: "solana"}),
 										}),
 										"Source": Equal(c.QuoteSourceCoingecko),
 									}),
 									"4": g.MatchFields(g.IgnoreExtras, g.Fields{
 										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
-											"0": Equal("bitcoin"),
+											"0": Equal(c.Symbol{Id: "BITCOIN.CC", Name: "bitcoin"}),
 										}),
 										"Source": Equal(c.QuoteSourceCoinCap),
 									}),

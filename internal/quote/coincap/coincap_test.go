@@ -16,7 +16,7 @@ var _ = Describe("CoinCap Quote", func() {
 
 			MockResponseCoincapQuotes()
 
-			output := GetAssetQuotes(*client, []string{"elrond"})
+			output := GetAssetQuotes(*client, []c.Symbol{{Id: "ELROND.CC", Name: "elrond"}})
 			Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 				"0": g.MatchFields(g.IgnoreExtras, g.Fields{
 					"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{

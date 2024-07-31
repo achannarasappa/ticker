@@ -41,9 +41,15 @@ var _ = Describe("Print", func() {
 						SymbolsBySource: []c.AssetGroupSymbolsBySource{
 							{
 								Source: c.QuoteSourceYahoo,
-								Symbols: []string{
-									"GOOG",
-									"RBLX",
+								Symbols: []c.Symbol{
+									{
+										Id:   "GOOG",
+										Name: "GOOG",
+									},
+									{
+										Id:   "RBLX",
+										Name: "RBLX",
+									},
 								},
 							},
 						},

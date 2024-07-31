@@ -53,7 +53,7 @@ type AssetGroup struct {
 }
 
 type AssetGroupSymbolsBySource struct {
-	Symbols []string
+	Symbols []Symbol
 	Source  QuoteSource
 }
 
@@ -228,4 +228,10 @@ type AssetQuote struct {
 	QuoteSource   QuoteSource
 	Exchange      Exchange
 	Meta          Meta
+}
+
+// Symbol represents a symbol but keep id not only name
+type Symbol struct {
+	Id   string
+	Name string
 }

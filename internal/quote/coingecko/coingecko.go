@@ -45,7 +45,7 @@ func transformResponseToAssetQuotes(responseQuotes *ResponseQuotes) []c.AssetQuo
 	for _, responseQuote := range *responseQuotes {
 
 		assetQuote := c.AssetQuote{
-			Id:     strings.ToUpper(responseQuote.Id) + ".CG",
+			Id:     responseQuote.Id,
 			Name:   responseQuote.Name,
 			Symbol: strings.ToUpper(responseQuote.Symbol),
 			Class:  c.AssetClassCryptocurrency,
@@ -88,14 +88,26 @@ func transformResponseToAssetQuotes(responseQuotes *ResponseQuotes) []c.AssetQuo
 
 }
 
-func GetAssetQuotes(client resty.Client, symbols []string) []c.AssetQuote {
-	symbolsString := strings.Join(symbols, ",")
+func GetAssetQuotes(client resty.Client, symbols []c.Symbol) []c.AssetQuote {
+
+	var symbolsDict = map[string]c.Symbol{}
+	for _, symbol := range symbols {
+		symbolsDict[strings.ToUpper(symbol.Name)] = symbol
+	}
+
+	symbolsString := c.JoinSymbolName(symbols, ",")
+
 	url := fmt.Sprintf("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=%s&order=market_cap_desc&per_page=250&page=1&sparkline=false", symbolsString)
 	res, _ := client.R().
 		SetResult(ResponseQuotes{}).
 		Get(url)
 
 	out := (res.Result().(*ResponseQuotes)) //nolint:forcetypeassert
+
+	// fix #245 : force Id using Symbol declaration
+	for idx, quote := range *out {
+		(*out)[idx].Id = symbolsDict[strings.ToUpper(quote.Id)].Id
+	}
 
 	assetQuotes := transformResponseToAssetQuotes(out)
 

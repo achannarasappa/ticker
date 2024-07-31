@@ -72,9 +72,9 @@ func transformResponseCurrencyPairs(responseQuotes []ResponseQuote, targetCurren
 
 }
 
-func getCurrencyPairSymbols(client resty.Client, symbols []string, targetCurrency string) ([]string, error) {
+func getCurrencyPairSymbols(client resty.Client, symbols []c.Symbol, targetCurrency string) ([]string, error) {
 
-	symbolsString := strings.Join(symbols, ",")
+	symbolsString := c.JoinSymbolName(symbols, ",")
 
 	res, err := client.R().
 		SetResult(Response{}).
@@ -90,7 +90,7 @@ func getCurrencyPairSymbols(client resty.Client, symbols []string, targetCurrenc
 }
 
 // GetCurrencyRates retrieves the currency rates to convert from each currency for the given symbols to the target currency
-func GetCurrencyRates(client resty.Client, symbols []string, targetCurrency string) (c.CurrencyRates, error) {
+func GetCurrencyRates(client resty.Client, symbols []c.Symbol, targetCurrency string) (c.CurrencyRates, error) {
 
 	if targetCurrency == "" {
 		targetCurrency = "USD"

@@ -14,6 +14,7 @@ var (
 
 // ResponseQuote represents a quote of a single security from the API response
 type ResponseQuote struct {
+	Id                         string
 	ShortName                  string              `json:"shortName"`
 	Symbol                     string              `json:"symbol"`
 	MarketState                string              `json:"marketState"`
@@ -75,7 +76,7 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 	isVariablePrecision := (assetClass == c.AssetClassCryptocurrency)
 
 	assetQuote := c.AssetQuote{
-		Id:     responseQuote.Symbol,
+		Id:     responseQuote.Id,
 		Name:   responseQuote.ShortName,
 		Symbol: responseQuote.Symbol,
 		Class:  assetClass,
@@ -174,9 +175,15 @@ func transformResponseQuotes(responseQuotes []ResponseQuote) []c.AssetQuote {
 }
 
 // GetAssetQuotes issues a HTTP request to retrieve quotes from the API and process the response
-func GetAssetQuotes(client resty.Client, symbols []string) func() []c.AssetQuote {
+func GetAssetQuotes(client resty.Client, symbols []c.Symbol) func() []c.AssetQuote {
 	return func() []c.AssetQuote {
-		symbolsString := strings.Join(symbols, ",")
+
+		var symbolsDict = map[string]c.Symbol{}
+		for _, symbol := range symbols {
+			symbolsDict[strings.ToUpper(symbol.Name)] = symbol
+		}
+
+		symbolsString := c.JoinSymbolName(symbols, ",")
 
 		res, _ := client.R().
 			SetResult(Response{}).
@@ -184,6 +191,13 @@ func GetAssetQuotes(client resty.Client, symbols []string) func() []c.AssetQuote
 			SetQueryParam("symbols", symbolsString).
 			Get("/v7/finance/quote")
 
-		return transformResponseQuotes((res.Result().(*Response)).QuoteResponse.Quotes) //nolint:forcetypeassert
+		var quotes = (res.Result().(*Response)).QuoteResponse.Quotes
+
+		// fix #245 : force Id using Symbol declaration
+		for idx, quote := range quotes {
+			quotes[idx].Id = symbolsDict[strings.ToUpper(quote.Symbol)].Id
+		}
+
+		return transformResponseQuotes(quotes) //nolint:forcetypeassert
 	}
 }

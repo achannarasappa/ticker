@@ -33,7 +33,7 @@ func transformQuote(responseQuote Quote) c.AssetQuote {
 	volume, _ := strconv.ParseFloat(responseQuote.RegularMarketVolume, 64)
 
 	assetQuote := c.AssetQuote{
-		Id:     strings.ToUpper(responseQuote.Id) + ".CC",
+		Id:     responseQuote.Id,
 		Name:   responseQuote.ShortName,
 		Symbol: responseQuote.Symbol,
 		Class:  c.AssetClassCryptocurrency,
@@ -84,14 +84,27 @@ func transformQuotes(responseQuotes []Quote) []c.AssetQuote {
 }
 
 // GetAssetQuotes issues a HTTP request to retrieve quotes from the API and process the response
-func GetAssetQuotes(client resty.Client, symbols []string) []c.AssetQuote {
-	symbolsString := strings.Join(symbols, ",")
+func GetAssetQuotes(client resty.Client, symbols []c.Symbol) []c.AssetQuote {
+
+	symbolsDict := map[string]c.Symbol{}
+	for _, symbol := range symbols {
+		symbolsDict[strings.ToUpper(symbol.Name)] = symbol
+	}
+
+	symbolsString := c.JoinSymbolName(symbols, ",")
 
 	res, _ := client.R().
 		SetResult(Response{}).
 		SetQueryParam("ids", strings.ToLower(symbolsString)).
 		Get("https://api.coincap.io/v2/assets")
 
-	return transformQuotes((res.Result().(*Response)).Data) //nolint:forcetypeassert
+	data := (res.Result().(*Response)).Data
+
+	// fix #245 : force Id using Symbol declaration
+	for idx, quote := range data {
+		data[idx].Id = symbolsDict[strings.ToUpper(quote.Id)].Id
+	}
+
+	return transformQuotes(data) //nolint:forcetypeassert
 
 }

@@ -45,6 +45,7 @@ func transformResponseToAssetQuotes(responseQuotes *ResponseQuotes) []c.AssetQuo
 	for _, responseQuote := range *responseQuotes {
 
 		assetQuote := c.AssetQuote{
+			Id:     strings.ToUpper(responseQuote.Id) + ".CG",
 			Name:   responseQuote.Name,
 			Symbol: strings.ToUpper(responseQuote.Symbol),
 			Class:  c.AssetClassCryptocurrency,

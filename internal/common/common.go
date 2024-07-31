@@ -218,6 +218,7 @@ const (
 
 // AssetQuote represents a price quote and related attributes for a single security
 type AssetQuote struct {
+	Id            string
 	Name          string
 	Symbol        string
 	Class         AssetClass

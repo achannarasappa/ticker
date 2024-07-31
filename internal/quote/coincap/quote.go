@@ -10,6 +10,7 @@ import (
 
 // Quote represents a quote of a single security from the API response
 type Quote struct {
+	Id                         string `json:"id"`
 	ShortName                  string `json:"name"`
 	Symbol                     string `json:"symbol"`
 	RegularMarketChangePercent string `json:"changePercent24Hr"`
@@ -32,6 +33,7 @@ func transformQuote(responseQuote Quote) c.AssetQuote {
 	volume, _ := strconv.ParseFloat(responseQuote.RegularMarketVolume, 64)
 
 	assetQuote := c.AssetQuote{
+		Id:     strings.ToUpper(responseQuote.Id) + ".CC",
 		Name:   responseQuote.ShortName,
 		Symbol: responseQuote.Symbol,
 		Class:  c.AssetClassCryptocurrency,

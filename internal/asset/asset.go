@@ -105,7 +105,8 @@ func updateHoldingWeights(assets []c.Asset, holdingSummary HoldingSummary) []c.A
 
 func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]AggregatedLot, currencyRateByUse currency.CurrencyRateByUse) c.Holding {
 
-	if aggregatedLot, ok := lotsBySymbol[assetQuote.Symbol]; ok {
+	// fix #240: Use Asset Id in place of Symbol as unique id
+	if aggregatedLot, ok := lotsBySymbol[assetQuote.Id]; ok {
 		value := aggregatedLot.Quantity * assetQuote.QuotePrice.Price * currencyRateByUse.QuotePrice
 		cost := aggregatedLot.Cost * currencyRateByUse.PositionCost
 		totalChangeAmount := value - cost

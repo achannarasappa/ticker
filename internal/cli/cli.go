@@ -197,7 +197,7 @@ func getConfigPath(fs afero.Fs, configPathOption string) (string, error) {
 	if err = vc.ReadInConfig(); err != nil {
 		var configFileNotFoundError *viper.ConfigFileNotFoundError
 
-		if errors.As(err, &configFileNotFoundError) {
+		if !errors.As(err, &configFileNotFoundError) {
 			home, _ := homedir.Dir()
 
 			v := viper.New()

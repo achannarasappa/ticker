@@ -4,10 +4,10 @@ import "strings"
 
 // Concatenates symbol names
 func JoinSymbolName(symbols []Symbol, separator string) string {
-	var symbolsStr []string
+	symbolsStr := make([]string, len(symbols))
 
-	for _, symbol := range symbols {
-		symbolsStr = append(symbolsStr, symbol.Name)
+	for i, symbol := range symbols {
+		symbolsStr[i] = symbol.Name
 	}
 
 	return strings.Join(symbolsStr, separator)

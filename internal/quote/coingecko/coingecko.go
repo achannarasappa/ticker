@@ -45,7 +45,7 @@ func transformResponseToAssetQuotes(responseQuotes *ResponseQuotes) []c.AssetQuo
 	for _, responseQuote := range *responseQuotes {
 
 		assetQuote := c.AssetQuote{
-			Id:     responseQuote.Id,
+			ID:     responseQuote.Id,
 			Name:   responseQuote.Name,
 			Symbol: strings.ToUpper(responseQuote.Symbol),
 			Class:  c.AssetClassCryptocurrency,
@@ -106,7 +106,7 @@ func GetAssetQuotes(client resty.Client, symbols []c.Symbol) []c.AssetQuote {
 
 	// fix #245 : force Id using Symbol declaration
 	for idx, quote := range *out {
-		(*out)[idx].Id = symbolsDict[strings.ToUpper(quote.Id)].Id
+		(*out)[idx].Id = symbolsDict[strings.ToUpper(quote.Id)].ID
 	}
 
 	assetQuotes := transformResponseToAssetQuotes(out)

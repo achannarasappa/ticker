@@ -48,7 +48,7 @@ var _ = Describe("Yahoo Quote", func() {
 				return resp, nil
 			})
 
-			output := GetAssetQuotes(*client, []c.Symbol{{Id: "NET", Name: "NET"}})()
+			output := GetAssetQuotes(*client, []c.Symbol{{ID: "NET", Name: "NET"}})()
 			Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 				"0": g.MatchFields(g.IgnoreExtras, g.Fields{
 					"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -96,7 +96,7 @@ var _ = Describe("Yahoo Quote", func() {
 					return resp, nil
 				})
 
-				output := GetAssetQuotes(*client, []c.Symbol{{Id: "NET", Name: "NET"}})()
+				output := GetAssetQuotes(*client, []c.Symbol{{ID: "NET", Name: "NET"}})()
 				Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 					"0": g.MatchFields(g.IgnoreExtras, g.Fields{
 						"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -136,7 +136,7 @@ var _ = Describe("Yahoo Quote", func() {
 						return resp, nil
 					})
 
-					output := GetAssetQuotes(*client, []c.Symbol{{Id: "NET", Name: "NET"}})()
+					output := GetAssetQuotes(*client, []c.Symbol{{ID: "NET", Name: "NET"}})()
 					Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 						"0": g.MatchFields(g.IgnoreExtras, g.Fields{
 							"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -181,7 +181,7 @@ var _ = Describe("Yahoo Quote", func() {
 					return resp, nil
 				})
 
-				output := GetAssetQuotes(*client, []c.Symbol{{Id: "NET", Name: "NET"}})()
+				output := GetAssetQuotes(*client, []c.Symbol{{ID: "NET", Name: "NET"}})()
 				Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 					"0": g.MatchFields(g.IgnoreExtras, g.Fields{
 						"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -223,7 +223,7 @@ var _ = Describe("Yahoo Quote", func() {
 						return resp, nil
 					})
 
-					output := GetAssetQuotes(*client, []c.Symbol{{Id: "NET", Name: "NET"}})()
+					output := GetAssetQuotes(*client, []c.Symbol{{ID: "NET", Name: "NET"}})()
 					Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 						"0": g.MatchFields(g.IgnoreExtras, g.Fields{
 							"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -263,7 +263,7 @@ var _ = Describe("Yahoo Quote", func() {
 					return resp, nil
 				})
 
-				output := GetAssetQuotes(*client, []c.Symbol{{Id: "NET", Name: "NET"}})()
+				output := GetAssetQuotes(*client, []c.Symbol{{ID: "NET", Name: "NET"}})()
 				Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 					"0": g.MatchFields(g.IgnoreExtras, g.Fields{
 						"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -308,7 +308,7 @@ var _ = Describe("Yahoo Quote", func() {
 						return resp, nil
 					})
 
-					output := GetAssetQuotes(*client, []c.Symbol{{Id: "NET", Name: "NET"}})()
+					output := GetAssetQuotes(*client, []c.Symbol{{ID: "NET", Name: "NET"}})()
 					Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 						"0": g.MatchFields(g.IgnoreExtras, g.Fields{
 							"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -354,7 +354,7 @@ var _ = Describe("Yahoo Quote", func() {
 					return resp, nil
 				})
 
-				output := GetAssetQuotes(*client, []c.Symbol{{Id: "BTC-USD", Name: "BTC-USD"}})()
+				output := GetAssetQuotes(*client, []c.Symbol{{ID: "BTC-USD", Name: "BTC-USD"}})()
 				Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 					"0": g.MatchFields(g.IgnoreExtras, g.Fields{
 						"Class": Equal(c.AssetClassCryptocurrency),
@@ -369,7 +369,7 @@ var _ = Describe("Yahoo Quote", func() {
 
 			MockResponse(ResponseParameters{Symbol: "VOW3.DE", Currency: "EUR", Price: 0.0})
 			MockResponse(ResponseParameters{Symbol: "EURUSD%3DX", Currency: "USD", Price: 1.2})
-			output, err := GetCurrencyRates(*client, []c.Symbol{{Id: "VOW3.DE", Name: "VOW3.DE"}}, "USD")
+			output, err := GetCurrencyRates(*client, []c.Symbol{{ID: "VOW3.DE", Name: "VOW3.DE"}}, "USD")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(output).To(Equal(c.CurrencyRates{
 				"EUR": c.CurrencyRate{
@@ -386,7 +386,7 @@ var _ = Describe("Yahoo Quote", func() {
 
 				MockResponse(ResponseParameters{Symbol: "VOW3.DE", Currency: "EUR", Price: 0.0})
 				MockResponse(ResponseParameters{Symbol: "EURUSD%3DX", Currency: "USD", Price: 1.2})
-				output, err := GetCurrencyRates(*client, []c.Symbol{{Id: "VOW3.DE", Name: "VOW3.DE"}}, "")
+				output, err := GetCurrencyRates(*client, []c.Symbol{{ID: "VOW3.DE", Name: "VOW3.DE"}}, "")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(output).To(Equal(c.CurrencyRates{
 					"EUR": c.CurrencyRate{
@@ -403,7 +403,7 @@ var _ = Describe("Yahoo Quote", func() {
 			It("returns an empty currency exchange rate list", func() {
 
 				MockResponse(ResponseParameters{Symbol: "VOW3.DE", Currency: "EUR", Price: 0.0})
-				output, err := GetCurrencyRates(*client, []c.Symbol{{Id: "VOW3.DE", Name: "VOW3.DE"}}, "EUR")
+				output, err := GetCurrencyRates(*client, []c.Symbol{{ID: "VOW3.DE", Name: "VOW3.DE"}}, "EUR")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(output).To(Equal(c.CurrencyRates{}))
 
@@ -431,7 +431,7 @@ var _ = Describe("Yahoo Quote", func() {
 					resp.Header.Set("Content-Type", "application/json")
 					return resp, nil
 				})
-				output, err := GetCurrencyRates(*client, []c.Symbol{{Id: "VOW3.DE", Name: "VOW3.DE"}}, "EUR")
+				output, err := GetCurrencyRates(*client, []c.Symbol{{ID: "VOW3.DE", Name: "VOW3.DE"}}, "EUR")
 				Expect(err).To(HaveOccurred())
 				Expect(output).To(Equal(c.CurrencyRates{}))
 
@@ -458,7 +458,7 @@ var _ = Describe("Yahoo Quote", func() {
 					resp.Header.Set("Content-Type", "application/json")
 					return resp, nil
 				})
-				output, err := GetCurrencyRates(*client, []c.Symbol{{Id: "VOW3.DE", Name: "VOW3.DE"}}, "EUR")
+				output, err := GetCurrencyRates(*client, []c.Symbol{{ID: "VOW3.DE", Name: "VOW3.DE"}}, "EUR")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(output).To(Equal(c.CurrencyRates{}))
 
@@ -486,7 +486,7 @@ var _ = Describe("Yahoo Quote", func() {
 					resp.Header.Set("Content-Type", "application/json")
 					return resp, nil
 				})
-				output, err := GetCurrencyRates(*client, []c.Symbol{{Id: "VOW3.DE", Name: "VOW3.DE"}}, "USD")
+				output, err := GetCurrencyRates(*client, []c.Symbol{{ID: "VOW3.DE", Name: "VOW3.DE"}}, "USD")
 				Expect(err).To(HaveOccurred())
 				Expect(output).To(Equal(c.CurrencyRates{}))
 

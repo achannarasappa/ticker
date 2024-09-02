@@ -218,7 +218,7 @@ const (
 
 // AssetQuote represents a price quote and related attributes for a single security
 type AssetQuote struct {
-	Id            string
+	ID            string
 	Name          string
 	Symbol        string
 	Class         AssetClass
@@ -232,6 +232,6 @@ type AssetQuote struct {
 
 // Symbol represents a symbol but keep id not only name
 type Symbol struct {
-	Id   string
+	ID   string
 	Name string
 }

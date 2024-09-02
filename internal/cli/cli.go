@@ -349,7 +349,7 @@ func getSymbolAndSource(symbol string, tickerSymbolToSourceSymbol symbol.TickerS
 func appendSymbol(symbolsUnique map[c.QuoteSource]c.AssetGroupSymbolsBySource, symbolAndSource symbolSource) map[c.QuoteSource]c.AssetGroupSymbolsBySource {
 
 	newSymbol := c.Symbol{
-		Id:   symbolAndSource.id,
+		ID:   symbolAndSource.id,
 		Name: symbolAndSource.symbol,
 	}
 

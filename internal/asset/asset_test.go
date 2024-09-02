@@ -102,7 +102,7 @@ var _ = Describe("Asset", func() {
 			inputAssetGroupQuote := fixtureAssetGroupQuote
 			inputAssetGroupQuote.AssetQuotes = []c.AssetQuote{
 				{
-					Id:            "TWKS",
+					ID:            "TWKS",
 					Name:          "ThoughtWorks",
 					Symbol:        "TWKS",
 					Class:         c.AssetClassStock,
@@ -111,7 +111,7 @@ var _ = Describe("Asset", func() {
 					QuoteExtended: c.QuoteExtended{FiftyTwoWeekHigh: 150, FiftyTwoWeekLow: 50, MarketCap: 1000000},
 				},
 				{
-					Id:         "MSFT",
+					ID:         "MSFT",
 					Name:       "Microsoft Inc",
 					Symbol:     "MSFT",
 					Class:      c.AssetClassStock,

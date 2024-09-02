@@ -14,7 +14,7 @@ var (
 
 // ResponseQuote represents a quote of a single security from the API response
 type ResponseQuote struct {
-	Id                         string
+	ID                         string
 	ShortName                  string              `json:"shortName"`
 	Symbol                     string              `json:"symbol"`
 	MarketState                string              `json:"marketState"`
@@ -76,7 +76,7 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 	isVariablePrecision := (assetClass == c.AssetClassCryptocurrency)
 
 	assetQuote := c.AssetQuote{
-		Id:     responseQuote.Id,
+		ID:     responseQuote.ID,
 		Name:   responseQuote.ShortName,
 		Symbol: responseQuote.Symbol,
 		Class:  assetClass,
@@ -195,7 +195,7 @@ func GetAssetQuotes(client resty.Client, symbols []c.Symbol) func() []c.AssetQuo
 
 		// fix #245 : force Id using Symbol declaration
 		for idx, quote := range quotes {
-			quotes[idx].Id = symbolsDict[strings.ToUpper(quote.Symbol)].Id
+			quotes[idx].ID = symbolsDict[strings.ToUpper(quote.Symbol)].ID
 		}
 
 		return transformResponseQuotes(quotes) //nolint:forcetypeassert

@@ -43,11 +43,11 @@ var _ = Describe("Print", func() {
 								Source: c.QuoteSourceYahoo,
 								Symbols: []c.Symbol{
 									{
-										Id:   "GOOG",
+										ID:   "GOOG",
 										Name: "GOOG",
 									},
 									{
-										Id:   "RBLX",
+										ID:   "RBLX",
 										Name: "RBLX",
 									},
 								},

@@ -17,7 +17,7 @@ var fixtureAssetGroupQuote = c.AssetGroupQuote{
 	},
 	AssetQuotes: []c.AssetQuote{
 		{
-			Id:       "TWKS",
+			ID:       "TWKS",
 			Name:     "ThoughtWorks",
 			Symbol:   "TWKS",
 			Class:    c.AssetClassStock,
@@ -38,7 +38,7 @@ var fixtureAssetGroupQuote = c.AssetGroupQuote{
 			},
 		},
 		{
-			Id:       "MSFT",
+			ID:       "MSFT",
 			Name:     "Microsoft Inc",
 			Symbol:   "MSFT",
 			Class:    c.AssetClassStock,
@@ -54,7 +54,7 @@ var fixtureAssetGroupQuote = c.AssetGroupQuote{
 			},
 		},
 		{
-			Id:       "SOL1-USD",
+			ID:       "SOL1-USD",
 			Name:     "Solana USD",
 			Symbol:   "SOL1-USD",
 			Class:    c.AssetClassCryptocurrency,

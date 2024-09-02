@@ -17,7 +17,7 @@ var _ = Describe("Coingecko", func() {
 		It("should make a request to get crypto quotes and transform the response", func() {
 			MockResponseCoingeckoQuotes()
 
-			output := GetAssetQuotes(*client, []c.Symbol{{Id: "BITCOIN.CG", Name: "bitcoin"}})
+			output := GetAssetQuotes(*client, []c.Symbol{{ID: "BITCOIN.CG", Name: "bitcoin"}})
 			Expect(output).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 				"0": g.MatchFields(g.IgnoreExtras, g.Fields{
 					"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{

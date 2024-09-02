@@ -10,7 +10,7 @@ import (
 
 // Quote represents a quote of a single security from the API response
 type Quote struct {
-	Id                         string `json:"id"`
+	ID                         string `json:"id"`
 	ShortName                  string `json:"name"`
 	Symbol                     string `json:"symbol"`
 	RegularMarketChangePercent string `json:"changePercent24Hr"`
@@ -33,7 +33,7 @@ func transformQuote(responseQuote Quote) c.AssetQuote {
 	volume, _ := strconv.ParseFloat(responseQuote.RegularMarketVolume, 64)
 
 	assetQuote := c.AssetQuote{
-		Id:     responseQuote.Id,
+		ID:     responseQuote.ID,
 		Name:   responseQuote.ShortName,
 		Symbol: responseQuote.Symbol,
 		Class:  c.AssetClassCryptocurrency,
@@ -102,7 +102,7 @@ func GetAssetQuotes(client resty.Client, symbols []c.Symbol) []c.AssetQuote {
 
 	// fix #245 : force Id using Symbol declaration
 	for idx, quote := range data {
-		data[idx].Id = symbolsDict[strings.ToUpper(quote.Id)].Id
+		data[idx].ID = symbolsDict[strings.ToUpper(quote.ID)].ID
 	}
 
 	return transformQuotes(data) //nolint:forcetypeassert

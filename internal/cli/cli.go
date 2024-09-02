@@ -195,7 +195,9 @@ func getConfigPath(fs afero.Fs, configPathOption string) (string, error) {
 	vc.SetConfigName("ticker")
 
 	if err = vc.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		var configFileNotFoundError *viper.ConfigFileNotFoundError
+
+		if errors.As(err, &configFileNotFoundError) {
 			home, _ := homedir.Dir()
 
 			v := viper.New()
@@ -211,10 +213,10 @@ func getConfigPath(fs afero.Fs, configPathOption string) (string, error) {
 
 			return v.ConfigFileUsed(), nil
 
-		} else {
-
-			return "", fmt.Errorf("invalid config: %w", err)
 		}
+
+		return "", fmt.Errorf("invalid config: %w", err)
+
 	}
 
 	return vc.ConfigFileUsed(), nil

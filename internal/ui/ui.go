@@ -105,14 +105,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) { //nolint:ireturn,cyclo
 
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "tab":
 
-			m.groupSelectedIndex++
-
-			if m.groupSelectedIndex > m.groupMaxIndex {
-				m.groupSelectedIndex = 0
+		case "tab", "shift+tab":
+			groupSelectedCursor := -1
+			if msg.String() == "tab" {
+				groupSelectedCursor = 1
 			}
 
+			m.groupSelectedIndex = (m.groupSelectedIndex + groupSelectedCursor + m.groupMaxIndex + 1) % (m.groupMaxIndex + 1)
 			m.groupSelectedName = m.ctx.Groups[m.groupSelectedIndex].Name
 
 			return m, generateQuoteMsg(m, true)

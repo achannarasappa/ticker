@@ -191,7 +191,12 @@ func GetAssetQuotes(client resty.Client, symbols []c.Symbol) func() []c.AssetQuo
 			SetQueryParam("symbols", symbolsString).
 			Get("/v7/finance/quote")
 
-		var quotes = (res.Result().(*Response)).QuoteResponse.Quotes
+		var response, ok = res.Result().(*Response)
+		if !ok {
+			return []c.AssetQuote{}
+		}
+
+		var quotes = response.QuoteResponse.Quotes
 
 		// fix #245 : force Id using Symbol declaration
 		for idx, quote := range quotes {
@@ -199,5 +204,6 @@ func GetAssetQuotes(client resty.Client, symbols []c.Symbol) func() []c.AssetQuo
 		}
 
 		return transformResponseQuotes(quotes) //nolint:forcetypeassert
+
 	}
 }

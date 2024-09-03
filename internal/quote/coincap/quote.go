@@ -98,7 +98,13 @@ func GetAssetQuotes(client resty.Client, symbols []c.Symbol) []c.AssetQuote {
 		SetQueryParam("ids", strings.ToLower(symbolsString)).
 		Get("https://api.coincap.io/v2/assets")
 
-	data := (res.Result().(*Response)).Data
+	response, ok := res.Result().(*Response)
+
+	if !ok {
+		return []c.AssetQuote{}
+	}
+
+	data := response.Data
 
 	// fix #245 : force Id using Symbol declaration
 	for idx, quote := range data {

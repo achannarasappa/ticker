@@ -89,28 +89,28 @@ var _ = Describe("Quote", func() {
 				SymbolsBySource: []c.AssetGroupSymbolsBySource{
 					{
 						Source: c.QuoteSourceYahoo,
-						Symbols: []string{
-							"GOOG",
-							"RBLX",
+						Symbols: []c.Symbol{
+							{ID: "GOOG", Name: "GOOG"},
+							{ID: "RBLX", Name: "RBLX"},
 						},
 					},
 					{
 						Source: c.QuoteSourceCoingecko,
-						Symbols: []string{
-							"bitcoin",
+						Symbols: []c.Symbol{
+							{ID: "BITCOIN.CG", Name: "bitcoin"},
 						},
 					},
 					{
 						Source: c.QuoteSourceCoinCap,
-						Symbols: []string{
-							"elrond",
+						Symbols: []c.Symbol{
+							{ID: "ELROND.CC", Name: "elrond"},
 						},
 					},
 					{
 						Source: c.QuoteSourceUserDefined,
-						Symbols: []string{
-							"CASH",
-							"PRIVATESHARES",
+						Symbols: []c.Symbol{
+							{ID: "CASH", Name: "CASH"},
+							{ID: "PRIVATESHARES", Name: "PRIVATESHARES"},
 						},
 					},
 				},
@@ -148,8 +148,8 @@ var _ = Describe("Quote", func() {
 					SymbolsBySource: []c.AssetGroupSymbolsBySource{
 						{
 							Source: c.QuoteSourceYahoo,
-							Symbols: []string{
-								"GOOG",
+							Symbols: []c.Symbol{
+								{ID: "GOOG", Name: "GOOG"},
 							},
 						},
 					},

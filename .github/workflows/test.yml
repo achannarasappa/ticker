@@ -10,7 +10,6 @@ jobs:
     runs-on: ${{ matrix.platform }}
     env:
       TERM: xterm-256color
-      XDG_CONFIG_HOME: /home/runner/.config
     steps:
     - name: Install Go
       uses: actions/setup-go@v5

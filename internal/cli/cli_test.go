@@ -522,19 +522,16 @@ var _ = Describe("Cli", func() {
 					})
 				})
 
-				When("there is a config file in the XDG config directory", func() {
+				When("there is a config file in the XDG config default directory", func() {
 					It("should read the config file from disk", func() {
 						inputConfigHome, _ := homedir.Dir()
 						inputConfigHome += "/.config"
-						os.Setenv("XDG_CONFIG_HOME", inputConfigHome)
 						inputConfigPath := ""
 						depLocal.Fs.MkdirAll(inputConfigHome+"/ticker", 0755)
 						configFile := inputConfigHome + "/ticker/ticker.yaml"
 						depLocal.Fs.Create(configFile)
 						afero.WriteFile(depLocal.Fs, configFile, []byte("watchlist:\n  - AMD"), 0644)
 						outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
-						os.Unsetenv("XDG_CONFIG_HOME")
-
 						Expect(outputConfig.Watchlist).To(Equal([]string{"AMD"}))
 						Expect(outputErr).To(BeNil())
 					})

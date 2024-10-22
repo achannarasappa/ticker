@@ -101,17 +101,15 @@ func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Comm
 	}
 }
 
-// RunValue prints holdings value to the terminal
-func RunValue(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Command, []string) {
+// RunSummary prints holdings summary to the terminal
+func RunSummary(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Command, []string) {
 	return func(_ *cobra.Command, _ []string) {
 		
 		assetGroupQuote := quote.GetAssetGroupQuote(*dep)(ctx.Groups[0])
 		_, holdingSummary := asset.GetAssets(*ctx, assetGroupQuote)
 
-		fmt.Printf("Day change (amount):\t%.2f\n", holdingSummary.DayChange.Amount)
-		fmt.Printf("Day change (percent):\t%.2f\n", holdingSummary.DayChange.Percent)
-		fmt.Printf("Total change (amount):\t%.2f\n", holdingSummary.TotalChange.Amount)
-		fmt.Printf("Total change (percent):\t%.2f\n", holdingSummary.TotalChange.Percent)
+		fmt.Printf("Day change:\t%.2f (%.2f%%)\n", holdingSummary.DayChange.Amount, holdingSummary.DayChange.Percent)
+		fmt.Printf("Total change:\t%.2f (%.2f%%)\n", holdingSummary.TotalChange.Amount, holdingSummary.TotalChange.Percent)
 		fmt.Printf("Value:\t%.2f\n", holdingSummary.Value)
 		fmt.Printf("Cost:\t%.2f\n", holdingSummary.Cost)
 

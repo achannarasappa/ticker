@@ -38,12 +38,12 @@ var (
 		Args:   cli.Validate(&config, &options, &err),
 		Run:    print.Run(&dep, &ctx, &optionsPrint),
 	}
-	valueCmd = &cobra.Command{
-		Use:    "print-value",
-		Short:  "Prints portfolio value",
+	printSummaryCmd = &cobra.Command{
+		Use:    "print-summary",
+		Short:  "Prints holdings summary",
 		PreRun: initContext,
 		Args:   cli.Validate(&config, &options, &err),
-		Run:    print.RunValue(&dep, &ctx, &optionsPrint),
+		Run:    print.RunSummary(&dep, &ctx, &optionsPrint),
 	}
 )
 
@@ -68,7 +68,7 @@ func init() { //nolint: gochecknoinits
 	rootCmd.Flags().StringVar(&options.Proxy, "proxy", "", "proxy URL for requests (default is none)")
 	rootCmd.Flags().StringVar(&options.Sort, "sort", "", "sort quotes on the UI. Set \"alpha\" to sort by ticker name. Set \"value\" to sort by position value. Keep empty to sort according to change percent")
 	rootCmd.AddCommand(printCmd)
-	rootCmd.AddCommand(valueCmd)
+	rootCmd.AddCommand(printSummaryCmd)
 	printCmd.Flags().StringVar(&optionsPrint.Format, "format", "", "output format for printing holdings. Set \"csv\" to print as a CSV or \"json\" for JSON. Defaults to JSON.")
 	printCmd.Flags().StringVar(&configPath, "config", "", "config file (default is $HOME/.ticker.yaml)")
 }

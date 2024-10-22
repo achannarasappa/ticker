@@ -213,6 +213,25 @@ $ ticker --config=./.ticker.yaml print
 * Ensure there is at least one lot in the configuration file in order to generate output
 * A specific config file can be specified with the `--config` flag
 
+#### Printing Holdings Summary
+
+Use the `--summary` flag for printing the holding summary, showing day change, total change, value and cost of portfolio.
+
+```sh
+$ ticker --config=./.ticker.yaml print --summary
+Day change:	  -192.30 (-1.05%)
+Total change:	-13296.86 (-42.06%)
+Value:		    18315.27
+Cost:		      31612.13
+```
+
+The output is easily parseable using `awk`:
+
+```sh
+$ ticker --config=./.ticker.yaml print --summary | awk '/Value/{print $2}'
+18315.27
+```
+
 ## Notes
 
 * **Real-time quotes** - Quotes are pulled from Yahoo finance which may provide delayed stock quotes depending on the exchange. The major US exchanges (NYSE, NASDAQ) have real-time quotes however other exchanges may not. Consult the [help article](https://help.yahoo.com/kb/SLN2310.html) on exchange delays to determine which exchanges you can expect delays for or use the `--show-tags` flag to include timeliness of data alongside quotes in `ticker`.

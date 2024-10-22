@@ -17,6 +17,7 @@ import (
 // Options to configure print behavior
 type Options struct {
 	Format string
+	Summary bool
 }
 
 type jsonRow struct {
@@ -89,10 +90,18 @@ func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Comm
 	return func(_ *cobra.Command, _ []string) {
 
 		assetGroupQuote := quote.GetAssetGroupQuote(*dep)(ctx.Groups[0])
-		assets, _ := asset.GetAssets(*ctx, assetGroupQuote)
+		assets, holdingSummary := asset.GetAssets(*ctx, assetGroupQuote)
 
 		if options.Format == "csv" {
 			fmt.Println(convertAssetsToCSV(assets))
+
+			return
+		}
+		if options.Summary {
+			fmt.Printf("Day change:\t%.2f (%.2f%%)\n", holdingSummary.DayChange.Amount, holdingSummary.DayChange.Percent)
+			fmt.Printf("Total change:\t%.2f (%.2f%%)\n", holdingSummary.TotalChange.Amount, holdingSummary.TotalChange.Percent)
+			fmt.Printf("Value:\t\t%.2f\n", holdingSummary.Value)
+			fmt.Printf("Cost:\t\t%.2f\n", holdingSummary.Cost)
 
 			return
 		}
@@ -101,17 +110,3 @@ func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Comm
 	}
 }
 
-// RunSummary prints holdings summary to the terminal
-func RunSummary(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Command, []string) {
-	return func(_ *cobra.Command, _ []string) {
-		
-		assetGroupQuote := quote.GetAssetGroupQuote(*dep)(ctx.Groups[0])
-		_, holdingSummary := asset.GetAssets(*ctx, assetGroupQuote)
-
-		fmt.Printf("Day change:\t%.2f (%.2f%%)\n", holdingSummary.DayChange.Amount, holdingSummary.DayChange.Percent)
-		fmt.Printf("Total change:\t%.2f (%.2f%%)\n", holdingSummary.TotalChange.Amount, holdingSummary.TotalChange.Percent)
-		fmt.Printf("Value:\t%.2f\n", holdingSummary.Value)
-		fmt.Printf("Cost:\t%.2f\n", holdingSummary.Cost)
-
-	}
-}

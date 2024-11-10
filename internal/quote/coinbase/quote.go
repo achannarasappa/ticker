@@ -91,5 +91,5 @@ func GetAssetQuotes(client resty.Client, symbols []string) []c.AssetQuote {
 		SetQueryParam("product_ids", symbolsString).
 		Get("https://api.coinbase.com/api/v3/brokerage/market/products")
 
-	return transformResponseQuotes(res.Result().(*Response).Products)
+	return transformResponseQuotes(res.Result().(*Response).Products) //nolint:forcetypeassert
 }

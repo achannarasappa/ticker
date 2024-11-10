@@ -1,6 +1,7 @@
 package coinbase
 
 import (
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -84,11 +85,9 @@ func transformResponseQuotes(responseQuotes []ResponseQuote) []c.AssetQuote {
 // GetAssetQuotes issues a HTTP request to retrieve quotes from the Coinbase API
 func GetAssetQuotes(client resty.Client, symbols []string) []c.AssetQuote {
 
-	symbolsString := strings.Join(symbols, "&product_ids=")
-
 	res, _ := client.R().
 		SetResult(Response{}).
-		SetQueryParam("product_ids", symbolsString).
+		SetQueryParamsFromValues(url.Values{"product_ids": symbols}).
 		Get("https://api.coinbase.com/api/v3/brokerage/market/products")
 
 	return transformResponseQuotes(res.Result().(*Response).Products) //nolint:forcetypeassert

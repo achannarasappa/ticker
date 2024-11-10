@@ -205,6 +205,34 @@ func MockResponseCoincapQuotes() {
 
 }
 
+func MockResponseCoinbaseQuotes() {
+	responseFixture := `{
+		"products": [
+			{
+				"base_display_symbol": "ADA",
+				"base_name": "Cardano",
+				"price": "0.45",
+				"price_percentage_change_24h": "-1.2", 
+				"volume_24h": "123456.78",
+				"high_24h": "0.47",
+				"low_24h": "0.44",
+				"open_24h": "0.46",
+				"display_name": "Cardano",
+				"status": "online",
+				"quote_currency_id": "USD",
+				"product_venue": "Coinbase"
+			}
+		]
+	}`
+	responseURL := `=~\/api\/v3\/brokerage\/market\/products.*`
+	httpmock.RegisterResponder("GET", responseURL, func(_ *http.Request) (*http.Response, error) {
+		resp := httpmock.NewStringResponse(200, responseFixture)
+		resp.Header.Set("Content-Type", "application/json")
+
+		return resp, nil
+	})
+}
+
 func MockTickerSymbols() {
 	responseFixture := `"ADA.X","cardano","cg"
 "ALGO.X","algorand","cg"

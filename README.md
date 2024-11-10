@@ -164,6 +164,7 @@ Watchlists and holdings can be grouped in `.ticker.yml` under the `groups` prope
   * The full list of ticker symbols can be found [here](https://github.com/achannarasappa/ticker-static/blob/master/symbols.csv). Initial values are populated with the top 250 cryptocurrencies from CoinGecko at time of release
 * `.CG` - symbols with this suffix will use CoinGecko as the data source. The proper coin name can be found on the CoinGecko page in the *API id* field (e.g. for `SOL` go to the coin's [page on CoinGecko](https://www.coingecko.com/en/coins/solana), find the value is `solana`, and use the symbol `SOLANA.CG` in ticker)
 * `.CC` - symbols with this suffix will use CoinCap as the data source. The coin name can be found on [CoinCap](https://coincap.io/) by searching for the asset by name. The name of the asset in the URL bar is the name (e.g. for `EGLD` search for "MultiversX" and on the asset page the url will have the name of the coin: `elrond-egld`)
+* `.CB` - symbols with this suffix will use Coinbase as the data source. The symbol can be found by searching for the asset on [Coinbase](https://www.coinbase.com/explore/s/listed) and finding the symbol for the asset. (e.g. for Starknet check the [asset page](https://www.coinbase.com/price/starknet-token) to find the symbol `STRK` and set the symbol to `STRK.CB` in ticker).
 
 ### Currency Conversion
 

@@ -79,6 +79,7 @@ var _ = Describe("Quote", func() {
 		MockResponseYahooQuotes()
 		MockResponseCoingeckoQuotes()
 		MockResponseCoincapQuotes()
+		MockResponseCoinbaseQuotes()
 	})
 
 	Describe("GetAssetGroupQuote", func() {
@@ -107,6 +108,12 @@ var _ = Describe("Quote", func() {
 						},
 					},
 					{
+						Source: c.QuoteSourceCoinbase,
+						Symbols: []string{
+							"ADA-USD",
+						},
+					},
+					{
 						Source: c.QuoteSourceUserDefined,
 						Symbols: []string{
 							"CASH",
@@ -129,6 +136,9 @@ var _ = Describe("Quote", func() {
 					}),
 					"EGLD": g.MatchFields(g.IgnoreExtras, g.Fields{
 						"QuoteSource": Equal(c.QuoteSourceCoinCap),
+					}),
+					"ADA": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"QuoteSource": Equal(c.QuoteSourceCoinbase),
 					}),
 				}),
 			}))

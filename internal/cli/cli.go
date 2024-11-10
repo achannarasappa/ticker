@@ -321,6 +321,13 @@ func getSymbolAndSource(symbol string, tickerSymbolToSourceSymbol symbol.TickerS
 		}
 	}
 
+	if strings.HasSuffix(symbolUppercase, ".CB") {
+		return symbolSource{
+			source: c.QuoteSourceCoinbase,
+			symbol: strings.ToUpper(symbol)[:len(symbol)-3] + "-USD",
+		}
+	}
+
 	if strings.HasSuffix(symbolUppercase, ".X") {
 
 		if tickerSymbolToSource, exists := tickerSymbolToSourceSymbol[symbolUppercase]; exists {

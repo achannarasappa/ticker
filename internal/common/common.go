@@ -214,6 +214,7 @@ const (
 	QuoteSourceCoingecko
 	QuoteSourceUnknown
 	QuoteSourceCoinCap
+	QuoteSourceCoinbase
 )
 
 // AssetQuote represents a price quote and related attributes for a single security

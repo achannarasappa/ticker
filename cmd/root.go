@@ -61,6 +61,7 @@ func init() { //nolint: gochecknoinits
 	rootCmd.Flags().StringVar(&options.Proxy, "proxy", "", "proxy URL for requests (default is none)")
 	rootCmd.Flags().StringVar(&options.Sort, "sort", "", "sort quotes on the UI. Set \"alpha\" to sort by ticker name. Set \"value\" to sort by position value. Keep empty to sort according to change percent")
 	rootCmd.AddCommand(printCmd)
+	printCmd.Flags().BoolVar(&optionsPrint.Summary, "summary", false, "prints holdings summary (day change, total change, value, cost)")
 	printCmd.Flags().StringVar(&optionsPrint.Format, "format", "", "output format for printing holdings. Set \"csv\" to print as a CSV or \"json\" for JSON. Defaults to JSON.")
 	printCmd.Flags().StringVar(&configPath, "config", "", "config file (default is $HOME/.ticker.yaml)")
 }

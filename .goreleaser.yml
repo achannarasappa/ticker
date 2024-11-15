@@ -26,6 +26,7 @@ builds:
       - 386
       - arm
       - arm64
+      - loong64
     hooks:
       post:
         - upx "{{ .Path }}"
@@ -93,27 +94,44 @@ dockers:
   - "--label=org.opencontainers.image.revision={{.FullCommit}}"
   - "--label=org.opencontainers.image.version={{.Version}}"
   - "--label=org.opencontainers.image.source={{.GitURL}}"
+- image_templates: ["achannarasappa/ticker:{{ .Version }}-loong64"]
+  goarch: loong64
+  dockerfile: Dockerfile
+  use: buildx
+  build_flag_templates:
+  - "--platform=linux/loong64/"
+  - "--pull"
+  - "--label=org.opencontainers.image.created={{.Date}}"
+  - "--label=org.opencontainers.image.title={{.ProjectName}}"
+  - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+  - "--label=org.opencontainers.image.version={{.Version}}"
+  - "--label=org.opencontainers.image.source={{.GitURL}}"
 docker_manifests:
 - name_template: achannarasappa/ticker:{{ .Version }}
   image_templates:
   - achannarasappa/ticker:{{ .Version }}-amd64
   - achannarasappa/ticker:{{ .Version }}-arm64v8
+  - achannarasappa/ticker:{{ .Version }}-loong64
 - name_template: achannarasappa/ticker:latest
   image_templates:
   - achannarasappa/ticker:{{ .Version }}-amd64
   - achannarasappa/ticker:{{ .Version }}-arm64v8
+  - achannarasappa/ticker:{{ .Version }}-loong64
 - name_template: achannarasappa/ticker:{{ .Major }}
   image_templates:
   - achannarasappa/ticker:{{ .Version }}-amd64
   - achannarasappa/ticker:{{ .Version }}-arm64v8
+  - achannarasappa/ticker:{{ .Version }}-loong64
 - name_template: achannarasappa/ticker:{{ .Major }}.{{ .Minor }}
   image_templates:
   - achannarasappa/ticker:{{ .Version }}-amd64
   - achannarasappa/ticker:{{ .Version }}-arm64v8
+  - achannarasappa/ticker:{{ .Version }}-loong64
 - name_template: achannarasappa/ticker:{{ .Major }}.{{ .Minor }}.{{ .Patch }}
   image_templates:
   - achannarasappa/ticker:{{ .Version }}-amd64
   - achannarasappa/ticker:{{ .Version }}-arm64v8
+  - achannarasappa/ticker:{{ .Version }}-loong64
 nfpms:
   -
     file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}-{{ .Mips }}{{ end }}"

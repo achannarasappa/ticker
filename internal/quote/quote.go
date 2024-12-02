@@ -54,7 +54,7 @@ func GetAssetGroupQuote(dep c.Dependencies) func(c.AssetGroup) c.AssetGroupQuote
 func getUniqueSymbolsBySource(assetGroups []c.AssetGroup) []c.AssetGroupSymbolsBySource {
 
 	symbols := make(map[c.QuoteSource]map[string]bool)
-	symbolsUnique := make(map[c.QuoteSource][]string)
+	symbolsUnique := make(map[c.QuoteSource][]c.Symbol)
 	assetGroupSymbolsBySource := make([]c.AssetGroupSymbolsBySource, 0)
 	for _, assetGroup := range assetGroups {
 
@@ -68,8 +68,8 @@ func getUniqueSymbolsBySource(assetGroups []c.AssetGroup) []c.AssetGroupSymbolsB
 					symbols[source] = map[string]bool{}
 				}
 
-				if !symbols[source][symbol] {
-					symbols[source][symbol] = true
+				if !symbols[source][symbol.Name] {
+					symbols[source][symbol.Name] = true
 					symbolsUnique[source] = append(symbolsUnique[source], symbol)
 				}
 			}

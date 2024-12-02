@@ -53,7 +53,7 @@ type AssetGroup struct {
 }
 
 type AssetGroupSymbolsBySource struct {
-	Symbols []string
+	Symbols []Symbol
 	Source  QuoteSource
 }
 
@@ -219,6 +219,7 @@ const (
 
 // AssetQuote represents a price quote and related attributes for a single security
 type AssetQuote struct {
+	ID            string
 	Name          string
 	Symbol        string
 	Class         AssetClass
@@ -228,4 +229,10 @@ type AssetQuote struct {
 	QuoteSource   QuoteSource
 	Exchange      Exchange
 	Meta          Meta
+}
+
+// Symbol represents a symbol but keep id not only name
+type Symbol struct {
+	ID   string
+	Name string
 }

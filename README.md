@@ -130,7 +130,7 @@ groups:
 * Symbols not on the watchlist that exists in `lots` will automatically be watched
 * To add multiple (`quantity`, `unit_cost`) to the same `symbol`, write two `symbol` entries - see `ARKW` example above
 * All properties in `.ticker.yaml` are optional
-* `.ticker.yaml` can be set in user home directory, the current directory, or [XDG config home](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
+* `.ticker.yaml` can be set in user home directory, the current directory, or [XDG config home](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) i.e `.config/ticker/ticker.yaml` or `${XDG_CONFIG_HOME}/ticker/ticker.yaml`
 
 ### Display Options
 

@@ -74,6 +74,10 @@ func convertAssetsToJSON(assets []c.Asset) string {
 		}
 	}
 
+	if len(rows) == 0 {
+		return "[]"
+	}
+
 	out, err := json.Marshal(rows)
 
 	if err != nil {

@@ -228,7 +228,7 @@ $ ticker --config=./.ticker.yaml print
 
 Running tests:
 ```sh
-ginkgo -cover ./...
+go run github.com/onsi/ginkgo/v2/ginkgo -cover ./...
 ```
 
 Linting:

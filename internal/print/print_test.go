@@ -28,49 +28,51 @@ func getStdout(fn func()) string {
 
 var _ = Describe("Print", func() {
 
+	var (
+		inputOptions      = print.Options{}
+		inputContext      = c.Context{}
+		inputDependencies = c.Dependencies{
+			HttpClients: c.DependenciesHttpClients{
+				Default: client,
+				Yahoo:   client,
+			},
+		}
+	)
+
 	BeforeEach(func() {
 		MockResponseYahooQuotes()
-	})
-
-	Describe("Run", func() {
-		var (
-			inputOptions = print.Options{}
-			inputContext = c.Context{
-				Groups: []c.AssetGroup{
-					{
-						SymbolsBySource: []c.AssetGroupSymbolsBySource{
-							{
-								Source: c.QuoteSourceYahoo,
-								Symbols: []string{
-									"GOOG",
-									"RBLX",
-								},
+		inputContext = c.Context{
+			Groups: []c.AssetGroup{
+				{
+					SymbolsBySource: []c.AssetGroupSymbolsBySource{
+						{
+							Source: c.QuoteSourceYahoo,
+							Symbols: []string{
+								"GOOG",
+								"RBLX",
 							},
 						},
-						ConfigAssetGroup: c.ConfigAssetGroup{
-							Holdings: []c.Lot{
-								{
-									Symbol:   "GOOG",
-									UnitCost: 1000,
-									Quantity: 10,
-								},
-								{
-									Symbol:   "RBLX",
-									UnitCost: 50,
-									Quantity: 10,
-								},
+					},
+					ConfigAssetGroup: c.ConfigAssetGroup{
+						Holdings: []c.Lot{
+							{
+								Symbol:   "GOOG",
+								UnitCost: 1000,
+								Quantity: 10,
+							},
+							{
+								Symbol:   "RBLX",
+								UnitCost: 50,
+								Quantity: 10,
 							},
 						},
 					},
 				},
-			}
-			inputDependencies = c.Dependencies{
-				HttpClients: c.DependenciesHttpClients{
-					Default: client,
-					Yahoo:   client,
-				},
-			}
-		)
+			},
+		}
+	})
+
+	Describe("Run", func() {
 
 		It("should print holdings in JSON format", func() {
 			output := getStdout(func() {
@@ -104,4 +106,28 @@ var _ = Describe("Print", func() {
 			})
 		})
 	})
+
+	Describe("RunSummary", func() {
+
+		It("should print the holdings summary in JSON format", func() {
+			output := getStdout(func() {
+				print.RunSummary(&inputDependencies, &inputContext, &inputOptions)(&cobra.Command{}, []string{})
+			})
+			Expect(output).To(Equal("{\"total_value\":\"29263.000000\",\"total_cost\":\"10500.000000\",\"day_change_amount\":\"-583.200992\",\"day_change_percent\":\"-1.992964\",\"total_change_amount\":\"18763.000000\",\"total_change_percent\":\"178.695238\"}\n"))
+		})
+
+		When("the format option is set to csv", func() {
+			It("should print the holdings summary in CSV format", func() {
+				inputOptions := print.Options{
+					Format: "csv",
+				}
+				output := getStdout(func() {
+					print.RunSummary(&inputDependencies, &inputContext, &inputOptions)(&cobra.Command{}, []string{})
+				})
+				Expect(output).To(Equal("total_value,total_cost,day_change_amount,day_change_percent,total_change_amount,total_change_percent\n29263.000000,10500.000000,-583.200992,-1.992964,18763.000000,178.695238\n\n"))
+			})
+		})
+
+	})
+
 })

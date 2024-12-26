@@ -29,6 +29,15 @@ type jsonRow struct {
 	Weight   string `json:"weight"`
 }
 
+type jsonSummary struct {
+	TotalValue         string `json:"total_value"`
+	TotalCost          string `json:"total_cost"`
+	DayChangeAmount    string `json:"day_change_amount"`
+	DayChangePercent   string `json:"day_change_percent"`
+	TotalChangeAmount  string `json:"total_change_amount"`
+	TotalChangePercent string `json:"total_change_percent"`
+}
+
 func convertAssetsToCSV(assets []c.Asset) string {
 	rows := [][]string{
 		{"name", "symbol", "price", "value", "cost", "quantity", "weight"},
@@ -88,6 +97,46 @@ func convertAssetsToJSON(assets []c.Asset) string {
 
 }
 
+func convertSummaryToJSON(summary asset.HoldingSummary) string {
+	row := jsonSummary{
+		TotalValue:         fmt.Sprintf("%f", summary.Value),
+		TotalCost:          fmt.Sprintf("%f", summary.Cost),
+		DayChangeAmount:    fmt.Sprintf("%f", summary.DayChange.Amount),
+		DayChangePercent:   fmt.Sprintf("%f", summary.DayChange.Percent),
+		TotalChangeAmount:  fmt.Sprintf("%f", summary.TotalChange.Amount),
+		TotalChangePercent: fmt.Sprintf("%f", summary.TotalChange.Percent),
+	}
+
+	out, err := json.Marshal(row)
+
+	if err != nil {
+		return err.Error()
+	}
+
+	return string(out)
+}
+
+func convertSummaryToCSV(summary asset.HoldingSummary) string {
+	rows := [][]string{
+		{"total_value", "total_cost", "day_change_amount", "day_change_percent", "total_change_amount", "total_change_percent"},
+		{
+			fmt.Sprintf("%f", summary.Value),
+			fmt.Sprintf("%f", summary.Cost),
+			fmt.Sprintf("%f", summary.DayChange.Amount),
+			fmt.Sprintf("%f", summary.DayChange.Percent),
+			fmt.Sprintf("%f", summary.TotalChange.Amount),
+			fmt.Sprintf("%f", summary.TotalChange.Percent),
+		},
+	}
+
+	b := new(bytes.Buffer)
+	w := csv.NewWriter(b)
+	//nolint:errcheck
+	w.WriteAll(rows)
+
+	return b.String()
+}
+
 // Run prints holdings to the terminal
 func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Command, []string) {
 	return func(_ *cobra.Command, _ []string) {
@@ -102,5 +151,21 @@ func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Comm
 		}
 
 		fmt.Println(convertAssetsToJSON(assets))
+	}
+}
+
+// RunSummary handles the print summary command
+func RunSummary(dep *c.Dependencies, ctx *c.Context, options *Options) func(cmd *cobra.Command, args []string) {
+	return func(_ *cobra.Command, _ []string) {
+		assetGroupQuote := quote.GetAssetGroupQuote(*dep)(ctx.Groups[0])
+		_, holdingSummary := asset.GetAssets(*ctx, assetGroupQuote)
+
+		if options.Format == "csv" {
+			fmt.Println(convertSummaryToCSV(holdingSummary))
+
+			return
+		}
+
+		fmt.Println(convertSummaryToJSON(holdingSummary))
 	}
 }

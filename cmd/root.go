@@ -38,6 +38,13 @@ var (
 		Args:   cli.Validate(&config, &options, &err),
 		Run:    print.Run(&dep, &ctx, &optionsPrint),
 	}
+	summaryCmd = &cobra.Command{
+		Use:    "summary",
+		Short:  "Prints holdings summary for the default group",
+		PreRun: initContext,
+		Args:   cli.Validate(&config, &options, &err),
+		Run:    print.RunSummary(&dep, &ctx, &optionsPrint),
+	}
 )
 
 // Execute starts the CLI or prints an error is there is one
@@ -50,6 +57,7 @@ func Execute() {
 
 func init() { //nolint: gochecknoinits
 	cobra.OnInitialize(initConfig)
+
 	rootCmd.Flags().StringVar(&configPath, "config", "", "config file (default is $HOME/.ticker.yaml)")
 	rootCmd.Flags().StringVarP(&options.Watchlist, "watchlist", "w", "", "comma separated list of symbols to watch")
 	rootCmd.Flags().IntVarP(&options.RefreshInterval, "interval", "i", 0, "refresh interval in seconds")
@@ -60,9 +68,12 @@ func init() { //nolint: gochecknoinits
 	rootCmd.Flags().BoolVar(&options.ShowHoldings, "show-holdings", false, "display average unit cost, quantity, portfolio weight")
 	rootCmd.Flags().StringVar(&options.Proxy, "proxy", "", "proxy URL for requests (default is none)")
 	rootCmd.Flags().StringVar(&options.Sort, "sort", "", "sort quotes on the UI. Set \"alpha\" to sort by ticker name. Set \"value\" to sort by position value. Keep empty to sort according to change percent")
+
+	printCmd.PersistentFlags().StringVar(&optionsPrint.Format, "format", "", "output format for printing holdings. Set \"csv\" to print as a CSV or \"json\" for JSON. Defaults to JSON.")
+	printCmd.PersistentFlags().StringVar(&configPath, "config", "", "config file (default is $HOME/.ticker.yaml)")
+	printCmd.AddCommand(summaryCmd)
+
 	rootCmd.AddCommand(printCmd)
-	printCmd.Flags().StringVar(&optionsPrint.Format, "format", "", "output format for printing holdings. Set \"csv\" to print as a CSV or \"json\" for JSON. Defaults to JSON.")
-	printCmd.Flags().StringVar(&configPath, "config", "", "config file (default is $HOME/.ticker.yaml)")
 }
 
 func initConfig() {

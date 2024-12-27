@@ -64,8 +64,9 @@ type AssetGroupQuote struct {
 
 // Reference represents derived configuration for internal use from user defined configuration
 type Reference struct {
-	CurrencyRates CurrencyRates
-	Styles        Styles
+	CurrencyRates                  CurrencyRates
+	SourceToUnderlyingAssetSymbols map[QuoteSource][]string
+	Styles                         Styles
 }
 
 // Dependencies represents references to external dependencies
@@ -166,6 +167,14 @@ type QuoteExtended struct {
 	Volume           float64
 }
 
+type QuoteFutures struct {
+	SymbolUnderlying string
+	IndexPrice       float64
+	Basis            float64
+	OpenInterest     float64
+	Expiry           string
+}
+
 type Exchange struct {
 	Name                    string
 	Delay                   float64
@@ -191,6 +200,7 @@ type Asset struct {
 	Holding       Holding
 	QuotePrice    QuotePrice
 	QuoteExtended QuoteExtended
+	QuoteFutures  QuoteFutures
 	QuoteSource   QuoteSource
 	Exchange      Exchange
 	Meta          Meta
@@ -204,6 +214,7 @@ const (
 	AssetClassCryptocurrency
 	AssetClassPrivateSecurity
 	AssetClassUnknown
+	AssetClassFuturesContract
 )
 
 type QuoteSource int
@@ -225,6 +236,7 @@ type AssetQuote struct {
 	Currency      Currency
 	QuotePrice    QuotePrice
 	QuoteExtended QuoteExtended
+	QuoteFutures  QuoteFutures
 	QuoteSource   QuoteSource
 	Exchange      Exchange
 	Meta          Meta

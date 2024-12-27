@@ -139,15 +139,21 @@ func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {
 func getReference(config c.Config, assetGroups []c.AssetGroup, client *resty.Client) (c.Reference, error) {
 
 	currencyRates, err := quote.GetAssetGroupsCurrencyRates(client, assetGroups, config.Currency)
+	if err != nil {
+		return c.Reference{}, err
+	}
+
 	styles := util.GetColorScheme(config.ColorScheme)
+	sourceToUnderlyingAssetSymbols, err := quote.GetAssetGroupUnderlyingAssetSymbols(client, assetGroups)
 
 	if err != nil {
 		return c.Reference{}, err
 	}
 
 	return c.Reference{
-		CurrencyRates: currencyRates,
-		Styles:        styles,
+		CurrencyRates:                  currencyRates,
+		SourceToUnderlyingAssetSymbols: sourceToUnderlyingAssetSymbols,
+		Styles:                         styles,
 	}, err
 
 }
@@ -322,9 +328,20 @@ func getSymbolAndSource(symbol string, tickerSymbolToSourceSymbol symbol.TickerS
 	}
 
 	if strings.HasSuffix(symbolUppercase, ".CB") {
+
+		symbol = strings.ToUpper(symbol)[:len(symbol)-3]
+
+		// Futures contracts on Coinbase Derivatives Exchange are implicitly USD-denominated
+		if strings.HasSuffix(symbol, "-CDE") {
+			return symbolSource{
+				source: c.QuoteSourceCoinbase,
+				symbol: symbol,
+			}
+		}
+
 		return symbolSource{
 			source: c.QuoteSourceCoinbase,
-			symbol: strings.ToUpper(symbol)[:len(symbol)-3] + "-USD",
+			symbol: symbol + "-USD",
 		}
 	}
 

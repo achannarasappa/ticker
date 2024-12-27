@@ -209,18 +209,40 @@ func MockResponseCoinbaseQuotes() {
 	responseFixture := `{
 		"products": [
 			{
-				"base_display_symbol": "ADA",
-				"base_name": "Cardano",
-				"price": "0.45",
-				"price_percentage_change_24h": "-1.2", 
-				"volume_24h": "123456.78",
-				"high_24h": "0.47",
-				"low_24h": "0.44",
-				"open_24h": "0.46",
-				"display_name": "Cardano",
-				"status": "online",
+				"product_id": "ADA-31JAN25-CDE",
+				"price": "97345",
+				"price_percentage_change_24h": "-3.14412218297597",
+				"volume_24h": "93744",
+				"base_name": "",
+				"status": "",
+				"product_type": "FUTURE",
 				"quote_currency_id": "USD",
-				"product_venue": "Coinbase"
+				"fcm_trading_session_details": {
+					"is_session_open": true
+				},
+				"base_display_symbol": "",
+				"product_venue": "FCM",
+				"future_product_details": {
+					"venue": "cde",
+					"contract_code": "ADA",
+					"contract_expiry": "2025-01-31T16:00:00Z",
+					"contract_root_unit": "ADA",
+					"group_description": "Cardano Futures",
+					"contract_expiry_timezone": "Europe/London"
+				}
+			},
+			{
+				"base_display_symbol": "ADA",
+				"product_type": "SPOT",
+				"product_id": "ADA-USD",
+				"base_name": "Cardano",
+				"price": "50000.00",
+				"price_percentage_change_24h": "2.0408163265306123",
+				"volume_24h": "1500.50",
+				"display_name": "Cardano",
+				"status": "",
+				"quote_currency_id": "USD",
+				"product_venue": "CBE"
 			}
 		]
 	}`

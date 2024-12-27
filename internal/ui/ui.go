@@ -77,7 +77,7 @@ func NewModel(dep c.Dependencies, ctx c.Context) Model {
 		headerHeight:       getVerticalMargin(ctx.Config),
 		ready:              false,
 		requestInterval:    ctx.Config.RefreshInterval,
-		getQuotes:          quote.GetAssetGroupQuote(dep),
+		getQuotes:          quote.GetAssetGroupQuote(dep, ctx.Reference),
 		watchlist:          watchlist.NewModel(ctx),
 		summary:            summary.NewModel(ctx),
 		groupMaxIndex:      groupMaxIndex,

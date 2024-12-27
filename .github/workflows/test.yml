@@ -5,7 +5,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.18.x]
+        go-version: [1.22.x]
         platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     env:
@@ -26,7 +26,7 @@ jobs:
       if: success()
       uses: actions/setup-go@v5
       with:
-        go-version: 1.18.x
+        go-version: 1.22.x
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Generate coverage

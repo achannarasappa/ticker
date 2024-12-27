@@ -9,7 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-func getQuoteBySource(dep c.Dependencies, symbolBySource c.AssetGroupSymbolsBySource) []c.AssetQuote {
+func getQuoteBySource(dep c.Dependencies, ref c.Reference, symbolBySource c.AssetGroupSymbolsBySource) []c.AssetQuote {
 
 	if symbolBySource.Source == c.QuoteSourceYahoo {
 		return quoteYahoo.GetAssetQuotes(*dep.HttpClients.Yahoo, symbolBySource.Symbols)()
@@ -24,14 +24,15 @@ func getQuoteBySource(dep c.Dependencies, symbolBySource c.AssetGroupSymbolsBySo
 	}
 
 	if symbolBySource.Source == c.QuoteSourceCoinbase {
-		return quoteCoinbase.GetAssetQuotes(*dep.HttpClients.Default, symbolBySource.Symbols)
+
+		return quoteCoinbase.GetAssetQuotes(*dep.HttpClients.Default, symbolBySource.Symbols, ref.SourceToUnderlyingAssetSymbols[c.QuoteSourceCoinbase])
 	}
 
 	return []c.AssetQuote{}
 }
 
 // GetAssetGroupQuote gets price quotes for groups of assets by data source
-func GetAssetGroupQuote(dep c.Dependencies) func(c.AssetGroup) c.AssetGroupQuote {
+func GetAssetGroupQuote(dep c.Dependencies, ref c.Reference) func(c.AssetGroup) c.AssetGroupQuote {
 
 	return func(assetGroup c.AssetGroup) c.AssetGroupQuote {
 
@@ -39,7 +40,7 @@ func GetAssetGroupQuote(dep c.Dependencies) func(c.AssetGroup) c.AssetGroupQuote
 
 		for _, symbolBySource := range assetGroup.SymbolsBySource {
 
-			assetQuoteBySource := getQuoteBySource(dep, symbolBySource)
+			assetQuoteBySource := getQuoteBySource(dep, ref, symbolBySource)
 			assetQuotes = append(assetQuotes, assetQuoteBySource...)
 
 		}
@@ -105,4 +106,20 @@ func GetAssetGroupsCurrencyRates(client *resty.Client, assetGroups []c.AssetGrou
 	}
 
 	return currencyRates, err
+}
+
+// GetAssetGroupUnderlyingAssetSymbols retrieves the underlying asset symbol for Coinbase futures contracts that are not already on the watchlist
+func GetAssetGroupUnderlyingAssetSymbols(client *resty.Client, assetGroups []c.AssetGroup) (map[c.QuoteSource][]string, error) {
+	var err error
+	sourceToUnderlyingAssetSymbols := make(map[c.QuoteSource][]string)
+	uniqueSymbolsBySource := getUniqueSymbolsBySource(assetGroups)
+
+	for _, source := range uniqueSymbolsBySource {
+		if source.Source == c.QuoteSourceCoinbase && err == nil {
+			sourceToUnderlyingAssetSymbols[c.QuoteSourceCoinbase], err = quoteCoinbase.GetUnderlyingAssetSymbols(*client, source.Symbols)
+		}
+	}
+
+	return sourceToUnderlyingAssetSymbols, err
+
 }

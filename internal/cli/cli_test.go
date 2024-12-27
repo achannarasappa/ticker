@@ -252,11 +252,12 @@ var _ = Describe("Cli", func() {
 					InputOptions: cli.Options{},
 					InputConfigFileContents: strings.Join([]string{
 						"watchlist:",
-						"  - TSLA",        // yahoo finance
-						"  - ETHEREUM.CG", // coingecko
-						"  - BITCOIN.CC",  // coincap
-						"  - ADA.CB",      // coinbase
-						"  - SOL.X",       // ticker
+						"  - TSLA",               // yahoo finance
+						"  - ETHEREUM.CG",        // coingecko
+						"  - BITCOIN.CC",         // coincap
+						"  - ADA.CB",             // coinbase
+						"  - BIT-31JAN25-CDE.CB", // coinbase futures
+						"  - SOL.X",              // ticker
 					}, "\n"),
 					AssertionErr: BeNil(),
 					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -287,6 +288,7 @@ var _ = Describe("Cli", func() {
 									"5": g.MatchFields(g.IgnoreExtras, g.Fields{
 										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 											"0": Equal("ADA-USD"),
+											"1": Equal("BIT-31JAN25-CDE"),
 										}),
 										"Source": Equal(c.QuoteSourceCoinbase),
 									}),

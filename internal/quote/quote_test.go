@@ -111,6 +111,7 @@ var _ = Describe("Quote", func() {
 						Source: c.QuoteSourceCoinbase,
 						Symbols: []string{
 							"ADA-USD",
+							"ADA-31JAN25-CDE",
 						},
 					},
 					{
@@ -122,7 +123,7 @@ var _ = Describe("Quote", func() {
 					},
 				},
 			}
-			output := GetAssetGroupQuote(dep)(input)
+			output := GetAssetGroupQuote(dep, c.Reference{})(input)
 
 			idFn := func(e interface{}) string { return e.(c.AssetQuote).Symbol }
 
@@ -138,6 +139,9 @@ var _ = Describe("Quote", func() {
 						"QuoteSource": Equal(c.QuoteSourceCoinCap),
 					}),
 					"ADA": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"QuoteSource": Equal(c.QuoteSourceCoinbase),
+					}),
+					"ADA-31JAN25-CDE": g.MatchFields(g.IgnoreExtras, g.Fields{
 						"QuoteSource": Equal(c.QuoteSourceCoinbase),
 					}),
 				}),

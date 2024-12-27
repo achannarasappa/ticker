@@ -78,7 +78,7 @@ var _ = Describe("Summary", func() {
 		It("should render an empty summary", func() {
 			m := NewModel(ctxFixture)
 			Expect(removeFormatting(m.View())).To(Equal(strings.Join([]string{
-				"Day Change: 0.00 (0.00%) • Change: 0.00 (0.00%)  • Value:   • Cost:  ",
+				"Day Change: 0.00 (0.00%) • Change: 0.00 (0.00%)  • Value: 0.00  • Cost: 0.00 ",
 				"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
 			}, "\n")))
 		})

@@ -39,10 +39,10 @@ func (m Model) View() string {
 		m.styles.TextLabel("Change: ") + quoteChangeText(m.Summary.TotalChange.Amount, m.Summary.TotalChange.Percent, m.styles)
 	widthChange := ansi.PrintableRuneWidth(textChange)
 	textValue := m.styles.TextLabel(" • ") +
-		m.styles.TextLabel("Value: ") + u.ValueText(m.Summary.Value, m.styles)
+		m.styles.TextLabel("Value: ") + m.styles.TextLabel(u.ConvertFloatToString(m.Summary.Value, false))
 	widthValue := ansi.PrintableRuneWidth(textValue)
 	textCost := m.styles.TextLabel(" • ") +
-		m.styles.TextLabel("Cost: ") + u.ValueText(m.Summary.Cost, m.styles)
+		m.styles.TextLabel("Cost: ") + m.styles.TextLabel(u.ConvertFloatToString(m.Summary.Cost, false))
 	widthCost := ansi.PrintableRuneWidth(textValue)
 
 	return grid.Render(grid.Grid{

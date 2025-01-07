@@ -42,6 +42,16 @@ builds:
       - -s -w -X 'github.com/achannarasappa/ticker/v4/cmd.Version={{.Version}}'
 archives:
   - id: release
+    format: zip
+    name_template: >-
+      {{- .ProjectName }}-
+      {{- .Version }}-
+      {{- if eq .Os "darwin" }}mac
+      {{- else}}{{ .Os }}{{ end }}-
+      {{- .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
+      {{- if .Mips }}-{{ .Mips }}{{ end }}
+  - id: tar-release
+    format: tar.gz
     name_template: >-
       {{- .ProjectName }}-
       {{- .Version }}-

@@ -31,18 +31,39 @@ builds:
         - upx "{{ .Path }}"
     ldflags:
       - -s -w -X 'github.com/achannarasappa/ticker/v4/cmd.Version={{.Version}}'
-  - id: build
+  - id: build-mac
     main: ./main.go
     env:
       - CGO_ENABLED=0
     goos:
-      - windows
       - darwin
     ldflags:
       - -s -w -X 'github.com/achannarasappa/ticker/v4/cmd.Version={{.Version}}'
+  - id: build-windows-64
+    main: ./main.go
+    env:
+      - CGO_ENABLED=0
+    goarch:
+      - amd64
+    goos:
+      - windows
+    ldflags:
+      - -s -w -X 'github.com/achannarasappa/ticker/v4/cmd.Version={{.Version}}'
+  - id: build-windows-32
+    main: ./main.go
+    env:
+      - CGO_ENABLED=0
+    goarch:
+      - 386
+    goos:
+      - windows
+    ldflags:
+      - -s -w -X 'github.com/achannarasappa/ticker/v4/cmd.Version={{.Version}}'
 archives:
-  - id: release
+  - id: release-winget
     format: zip
+    builds:
+      - build-windows-64
     name_template: >-
       {{- .ProjectName }}-
       {{- .Version }}-
@@ -50,7 +71,7 @@ archives:
       {{- else}}{{ .Os }}{{ end }}-
       {{- .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
       {{- if .Mips }}-{{ .Mips }}{{ end }}
-  - id: tar-release
+  - id: release
     format: tar.gz
     name_template: >-
       {{- .ProjectName }}-

@@ -39,6 +39,11 @@ curl -Ls https://api.github.com/repos/achannarasappa/ticker/releases/latest \
 && sudo mv ticker /usr/local/bin/
 ```
 
+**windows**
+```
+winget install -e --id achannarasappa.ticker
+```
+
 **docker**
 ```sh
 docker run -it --rm achannarasappa/ticker

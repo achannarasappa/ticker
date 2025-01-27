@@ -7,6 +7,7 @@ import (
 	grid "github.com/achannarasappa/term-grid"
 	"github.com/achannarasappa/ticker/v4/internal/asset"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
+	monitorCoinbase "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase"
 	quote "github.com/achannarasappa/ticker/v4/internal/quote"
 	"github.com/achannarasappa/ticker/v4/internal/ui/component/summary"
 	"github.com/achannarasappa/ticker/v4/internal/ui/component/watchlist"
@@ -72,12 +73,25 @@ func NewModel(dep c.Dependencies, ctx c.Context) Model {
 
 	groupMaxIndex := len(ctx.Groups) - 1
 
+	coinbase := monitorCoinbase.NewMonitorCoinbase(
+		time.Duration(5)*time.Second,
+		*dep.HttpClients.Default,
+		ctx.Reference.SourceToUnderlyingAssetSymbols[c.QuoteSourceCoinbase],
+		func() {},
+	)
+	var monitor c.Monitor = coinbase
+	monitors := c.Monitors{
+		Coinbase:    &monitor,
+		HttpClients: dep.HttpClients,
+		Reference:   ctx.Reference,
+	}
+
 	return Model{
 		ctx:                ctx,
 		headerHeight:       getVerticalMargin(ctx.Config),
 		ready:              false,
 		requestInterval:    ctx.Config.RefreshInterval,
-		getQuotes:          quote.GetAssetGroupQuote(dep, ctx.Reference),
+		getQuotes:          quote.GetAssetGroupQuote(monitors),
 		watchlist:          watchlist.NewModel(ctx),
 		summary:            summary.NewModel(ctx),
 		groupMaxIndex:      groupMaxIndex,
@@ -88,6 +102,7 @@ func NewModel(dep c.Dependencies, ctx c.Context) Model {
 
 // Init is the initialization hook for bubbletea
 func (m Model) Init() tea.Cmd {
+
 	return generateQuoteMsg(m, false)
 }
 

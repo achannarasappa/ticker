@@ -141,7 +141,11 @@ func convertSummaryToCSV(summary asset.HoldingSummary) string {
 func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Command, []string) {
 	return func(_ *cobra.Command, _ []string) {
 
-		assetGroupQuote := quote.GetAssetGroupQuote(*dep, ctx.Reference)(ctx.Groups[0])
+		monitors := c.Monitors{
+			HttpClients: dep.HttpClients,
+			Reference:   ctx.Reference,
+		}
+		assetGroupQuote := quote.GetAssetGroupQuote(monitors)(ctx.Groups[0])
 		assets, _ := asset.GetAssets(*ctx, assetGroupQuote)
 
 		if options.Format == "csv" {
@@ -157,7 +161,11 @@ func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Comm
 // RunSummary handles the print summary command
 func RunSummary(dep *c.Dependencies, ctx *c.Context, options *Options) func(cmd *cobra.Command, args []string) {
 	return func(_ *cobra.Command, _ []string) {
-		assetGroupQuote := quote.GetAssetGroupQuote(*dep, ctx.Reference)(ctx.Groups[0])
+		monitors := c.Monitors{
+			HttpClients: dep.HttpClients,
+			Reference:   ctx.Reference,
+		}
+		assetGroupQuote := quote.GetAssetGroupQuote(monitors)(ctx.Groups[0])
 		_, holdingSummary := asset.GetAssets(*ctx, assetGroupQuote)
 
 		if options.Format == "csv" {

@@ -81,6 +81,19 @@ type DependenciesHttpClients struct { //nolint:golint,stylecheck,revive
 	YahooSession *resty.Client
 }
 
+type Monitors struct {
+	Coinbase    *Monitor
+	HttpClients DependenciesHttpClients
+	Reference   Reference
+}
+
+type Monitor interface {
+	Connect(url string) error
+	GetAssetQuotes(useCache ...bool) []AssetQuote
+	SetSymbols(symbols []string)
+	Close()
+}
+
 // Lot represents a cost basis lot
 type Lot struct {
 	Symbol    string  `yaml:"symbol"`

@@ -88,10 +88,10 @@ type Monitors struct {
 }
 
 type Monitor interface {
-	Connect(url string) error
+	Start() error
 	GetAssetQuotes(useCache ...bool) []AssetQuote
 	SetSymbols(symbols []string)
-	Close()
+	Stop() error
 }
 
 // Lot represents a cost basis lot

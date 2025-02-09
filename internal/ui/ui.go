@@ -43,6 +43,7 @@ type Model struct {
 	groupSelectedIndex int
 	groupMaxIndex      int
 	groupSelectedName  string
+	monitors           c.Monitors
 }
 
 func getTime() string {
@@ -74,10 +75,13 @@ func NewModel(dep c.Dependencies, ctx c.Context) Model {
 	groupMaxIndex := len(ctx.Groups) - 1
 
 	coinbase := monitorCoinbase.NewMonitorCoinbase(
-		time.Duration(5)*time.Second,
-		*dep.HttpClients.Default,
-		ctx.Reference.SourceToUnderlyingAssetSymbols[c.QuoteSourceCoinbase],
-		func() {},
+		monitorCoinbase.Config{
+			Client:   *dep.HttpClients.Default,
+			OnUpdate: func() {},
+		},
+		monitorCoinbase.WithSymbolsUnderlying(ctx.Reference.SourceToUnderlyingAssetSymbols[c.QuoteSourceCoinbase]),
+		monitorCoinbase.WithStreamingURL("ws-feed.exchange.coinbase.com"),
+		monitorCoinbase.WithRefreshInterval(time.Duration(ctx.Config.RefreshInterval)*time.Second),
 	)
 	var monitor c.Monitor = coinbase
 	monitors := c.Monitors{
@@ -97,11 +101,14 @@ func NewModel(dep c.Dependencies, ctx c.Context) Model {
 		groupMaxIndex:      groupMaxIndex,
 		groupSelectedIndex: 0,
 		groupSelectedName:  "default",
+		monitors:           monitors,
 	}
 }
 
 // Init is the initialization hook for bubbletea
 func (m Model) Init() tea.Cmd {
+
+	(*m.monitors.Coinbase).Start()
 
 	return generateQuoteMsg(m, false)
 }

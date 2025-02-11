@@ -7,7 +7,7 @@ import (
 	grid "github.com/achannarasappa/term-grid"
 	"github.com/achannarasappa/ticker/v4/internal/asset"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	monitorCoinbase "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase"
+	mon "github.com/achannarasappa/ticker/v4/internal/monitor"
 	quote "github.com/achannarasappa/ticker/v4/internal/quote"
 	"github.com/achannarasappa/ticker/v4/internal/ui/component/summary"
 	"github.com/achannarasappa/ticker/v4/internal/ui/component/watchlist"
@@ -43,7 +43,7 @@ type Model struct {
 	groupSelectedIndex int
 	groupMaxIndex      int
 	groupSelectedName  string
-	monitors           c.Monitors
+	monitors           *mon.Monitor
 }
 
 func getTime() string {
@@ -52,8 +52,12 @@ func getTime() string {
 	return fmt.Sprintf("%s %02d:%02d:%02d", t.Weekday().String(), t.Hour(), t.Minute(), t.Second())
 }
 
-func generateQuoteMsg(m Model, skipUpdate bool) func() tea.Msg {
+func generateQuoteMsg(m Model, skipUpdate bool) tea.Cmd {
 	return func() tea.Msg {
+		// Infer group change based on skipUpdate
+		if skipUpdate {
+			m.monitors.SetSymbols(m.ctx.Groups[m.groupSelectedIndex])
+		}
 		return quoteMsg{
 			assetGroupIndex: m.groupSelectedIndex,
 			assetGroupQuote: m.getQuotes(m.ctx.Groups[m.groupSelectedIndex]),
@@ -74,28 +78,19 @@ func NewModel(dep c.Dependencies, ctx c.Context) Model {
 
 	groupMaxIndex := len(ctx.Groups) - 1
 
-	coinbase := monitorCoinbase.NewMonitorCoinbase(
-		monitorCoinbase.Config{
-			Client:   *dep.HttpClients.Default,
-			OnUpdate: func() {},
-		},
-		monitorCoinbase.WithSymbolsUnderlying(ctx.Reference.SourceToUnderlyingAssetSymbols[c.QuoteSourceCoinbase]),
-		monitorCoinbase.WithStreamingURL("ws-feed.exchange.coinbase.com"),
-		monitorCoinbase.WithRefreshInterval(time.Duration(ctx.Config.RefreshInterval)*time.Second),
-	)
-	var monitor c.Monitor = coinbase
-	monitors := c.Monitors{
-		Coinbase:    &monitor,
-		HttpClients: dep.HttpClients,
-		Reference:   ctx.Reference,
-	}
+	monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
+		ClientHttp: dep.HttpClients.Default,
+		Reference:  ctx.Reference,
+		Config:     ctx.Config,
+		OnUpdate:   func() {},
+	})
 
 	return Model{
 		ctx:                ctx,
 		headerHeight:       getVerticalMargin(ctx.Config),
 		ready:              false,
 		requestInterval:    ctx.Config.RefreshInterval,
-		getQuotes:          quote.GetAssetGroupQuote(monitors),
+		getQuotes:          quote.GetAssetGroupQuote(monitors, &dep),
 		watchlist:          watchlist.NewModel(ctx),
 		summary:            summary.NewModel(ctx),
 		groupMaxIndex:      groupMaxIndex,
@@ -108,7 +103,9 @@ func NewModel(dep c.Dependencies, ctx c.Context) Model {
 // Init is the initialization hook for bubbletea
 func (m Model) Init() tea.Cmd {
 
-	(*m.monitors.Coinbase).Start()
+	(*m.monitors).Start()
+
+	m.monitors.SetSymbols(m.ctx.Groups[m.groupSelectedIndex])
 
 	return generateQuoteMsg(m, false)
 }

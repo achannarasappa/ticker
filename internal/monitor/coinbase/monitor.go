@@ -2,11 +2,13 @@ package monitorCoinbase
 
 import (
 	"context"
+	"fmt"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/achannarasappa/ticker/v4/internal/common"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
 	poller "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/poller"
 	streamer "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/streamer"
 	unary "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/unary"
@@ -14,25 +16,33 @@ import (
 )
 
 type MonitorCoinbase struct {
-	unaryAPI    *unary.UnaryAPI
-	streamer    *streamer.Streamer
-	poller      *poller.Poller
-	unary       *unary.UnaryAPI
-	input       input
-	symbols     []string
-	assetQuotes []common.AssetQuote
-	mu          sync.Mutex
-	ctx         context.Context
-	cancel      context.CancelFunc
+	unaryAPI                      *unary.UnaryAPI
+	streamer                      *streamer.Streamer
+	poller                        *poller.Poller
+	unary                         *unary.UnaryAPI
+	input                         input
+	productIds                    []string // Coinbase APIs refer to trading pairs as Product IDs which symbols ticker accepts with a -USD suffix
+	productIdsStreaming           []string
+	productIdsPolling             []string
+	assetQuotesResponse           []c.AssetQuote           // Asset quotes filtered to the productIds set in input.productIds
+	assetQuotesCache              map[string]*c.AssetQuote // Asset quotes for all assets retrieved at least once
+	chanStreamUpdateQuotePrice    chan messageUpdate[c.QuotePrice]
+	chanStreamUpdateQuoteExtended chan messageUpdate[c.QuoteExtended]
+	chanStreamUpdateExchange      chan messageUpdate[c.Exchange]
+	chanPollUpdateAssetQuote      chan messageUpdate[c.AssetQuote]
+	mu                            sync.RWMutex
+	ctx                           context.Context
+	cancel                        context.CancelFunc
+	isStarted                     bool
 }
 
-type unaryAPI struct {
-	symbols []string
-	client  resty.Client
+type messageUpdate[T any] struct {
+	data      T
+	productId string
 }
 
 type input struct {
-	symbols           []string
+	productIds        []string
 	symbolsUnderlying []string
 }
 
@@ -52,12 +62,19 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 	unaryAPI := unary.NewUnaryAPI(config.Client)
 
 	monitor := &MonitorCoinbase{
-		streamer: streamer.NewStreamer(ctx),
-		poller:   poller.NewPoller(ctx, unaryAPI),
-		unaryAPI: unaryAPI,
-		ctx:      ctx,
-		cancel:   cancel,
+		assetQuotesCache:              make(map[string]*c.AssetQuote),
+		assetQuotesResponse:           make([]c.AssetQuote, 0),
+		chanStreamUpdateQuotePrice:    make(chan messageUpdate[c.QuotePrice]),
+		chanStreamUpdateQuoteExtended: make(chan messageUpdate[c.QuoteExtended]),
+		chanStreamUpdateExchange:      make(chan messageUpdate[c.Exchange]),
+		chanPollUpdateAssetQuote:      make(chan messageUpdate[c.AssetQuote]),
+		poller:                        poller.NewPoller(ctx, unaryAPI),
+		unaryAPI:                      unaryAPI,
+		ctx:                           ctx,
+		cancel:                        cancel,
 	}
+
+	monitor.streamer = streamer.NewStreamer(ctx, monitor.chanStreamUpdateQuotePrice, monitor.chanStreamUpdateQuoteExtended)
 
 	for _, opt := range opts {
 		opt(monitor)
@@ -87,32 +104,44 @@ func WithRefreshInterval(interval time.Duration) Option {
 	}
 }
 
-func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) []common.AssetQuote {
-
+func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) []c.AssetQuote {
 	if len(ignoreCache) > 0 && ignoreCache[0] {
-		return m.unaryAPI.GetAssetQuotes(m.symbols).AssetQuotes
+		return m.unaryAPI.GetAssetQuotes(m.productIds)
 	}
 
-	return m.assetQuotes
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	assetQuotes := make([]c.AssetQuote, 0, len(m.productIds))
+	for _, productId := range m.productIds {
+		if quote, exists := m.assetQuotesCache[productId]; exists {
+			assetQuotes = append(assetQuotes, *quote)
+		}
+	}
+
+	return assetQuotes
 }
 
-func (m *MonitorCoinbase) SetSymbols(symbols []string) {
+func (m *MonitorCoinbase) SetSymbols(productIds []string) {
 
-	symbolsMerged := make([]string, 0)
-	symbolsMerged = append(symbolsMerged, m.input.symbolsUnderlying...)
-	symbolsMerged = append(symbolsMerged, symbols...)
-	slices.Sort(symbolsMerged)
-	symbolsMerged = slices.Compact(symbolsMerged)
+	// Underlying symbols may also be explicitly set so merge and deduplicate
+	productIdsUnique := mergeAndDeduplicateProductIds(m.input.symbolsUnderlying, productIds)
 
-	m.input.symbols = symbols
-	m.symbols = symbolsMerged
+	m.productIdsStreaming, m.productIdsPolling = partitionProductIds(productIdsUnique)
+
+	m.input.productIds = productIds
+	m.productIds = productIdsUnique
+
+	// Lock updates to asset quotes while symbols are changed and subscriptions updates. ensure data from unary call supercedes potentially oudated streaming data
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	// Execute one unary API call to get data not sent by streaming API and set initial prices
-	assetQuotesIndexed := m.unaryAPI.GetAssetQuotes(m.symbols) // TODO: update to return and handle error
-	m.assetQuotes = assetQuotesIndexed.AssetQuotes             // TODO: Add saving indexed quotes
+	m.assetQuotesResponse = m.unaryAPI.GetAssetQuotes(m.productIds) // TODO: update to return and handle error
+	m.updateAssetQuotesCache(m.assetQuotesResponse)
 
 	// Coinbase steaming API for CBE (spot) only and not CDE (futures)
-	m.streamer.SetSymbolsAndUpdateSubscriptions(symbols) // TODO: update to return and handle error
+	m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIds) // TODO: update to return and handle error
 
 }
 
@@ -120,6 +149,14 @@ func (m *MonitorCoinbase) SetSymbols(symbols []string) {
 func (m *MonitorCoinbase) Start() error {
 
 	var err error
+
+	if m.isStarted {
+		return fmt.Errorf("monitor already started")
+	}
+
+	// On start, get initial quotes from unary API
+	m.assetQuotesResponse = m.unaryAPI.GetAssetQuotes(m.productIds)
+	m.updateAssetQuotesCache(m.assetQuotesResponse)
 
 	err = m.streamer.Start()
 	if err != nil {
@@ -131,11 +168,98 @@ func (m *MonitorCoinbase) Start() error {
 		return err
 	}
 
+	m.isStarted = true
+
 	return nil
 }
 
 func (m *MonitorCoinbase) Stop() error {
 
+	if !m.isStarted {
+		return fmt.Errorf("monitor not started")
+	}
+
 	m.cancel()
 	return nil
+}
+
+func (m *MonitorCoinbase) updateAssetQuotesCache(assetQuotes []c.AssetQuote) {
+	for _, quote := range assetQuotes {
+		// quote.Symbol is the base symbol so index by trading pair / product ID
+		m.assetQuotesCache[quote.Meta.SymbolInSourceAPI] = &quote
+	}
+}
+
+func isStreamingProductId(productId string) bool {
+	return !strings.HasSuffix(productId, "-CDE")
+}
+
+func partitionProductIds(productIds []string) (productIdsStreaming []string, productIdsPolling []string) {
+	productIdsStreaming = make([]string, 0)
+	productIdsPolling = make([]string, 0)
+
+	for _, productId := range productIds {
+		if isStreamingProductId(productId) {
+			productIdsStreaming = append(productIdsStreaming, productId)
+		} else {
+			productIdsPolling = append(productIdsPolling, productId)
+		}
+	}
+
+	return productIdsStreaming, productIdsPolling
+}
+
+func mergeAndDeduplicateProductIds(symbolsA, symbolsB []string) []string {
+	merged := make([]string, 0, len(symbolsA)+len(symbolsB))
+	merged = append(merged, symbolsA...)
+	merged = append(merged, symbolsB...)
+	slices.Sort(merged)
+	return slices.Compact(merged)
+}
+
+func (m *MonitorCoinbase) handleStreamPriceUpdates() {
+	go func() {
+		for {
+			select {
+			case updateMessage := <-m.chanStreamUpdateQuotePrice:
+
+				var assetQuote *c.AssetQuote
+				var exists bool
+
+				// Check if cache exists and values have changed before acquiring write lock
+				m.mu.RLock()
+				defer m.mu.RUnlock()
+
+				assetQuote, exists = m.assetQuotesCache[updateMessage.productId]
+
+				if !exists {
+					// If product id does not exist in cache, skip update
+					// TODO: log product not found in cache - should not happen
+					continue
+				}
+
+				// Skip update if price has not changed
+				if assetQuote.QuotePrice.Price == updateMessage.data.Price {
+					continue
+				}
+				m.mu.RUnlock()
+
+				// Price is different so update cache
+				m.mu.Lock()
+				defer m.mu.Unlock()
+
+				assetQuote.QuotePrice.Price = updateMessage.data.Price
+				assetQuote.QuotePrice.Change = updateMessage.data.Change
+				assetQuote.QuotePrice.ChangePercent = updateMessage.data.ChangePercent
+				assetQuote.QuotePrice.PriceDayHigh = updateMessage.data.PriceDayHigh
+				assetQuote.QuotePrice.PriceDayLow = updateMessage.data.PriceDayLow
+				assetQuote.QuotePrice.PriceOpen = updateMessage.data.PriceOpen
+				assetQuote.QuotePrice.PricePrevClose = updateMessage.data.PricePrevClose
+
+			case <-m.ctx.Done():
+				return
+			default:
+			}
+		}
+	}()
 }

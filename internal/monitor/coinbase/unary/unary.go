@@ -102,6 +102,7 @@ func transformResponseQuote(responseQuote ResponseQuote, responseQuoteUnderlying
 			Expiry:           formatExpiry(expirationDate),
 		}
 
+		// TODO: move this up to the monitor level since streaming prices for underlying assets may change by streaming while contracts are still polling based
 		// If there is a quote for the underlying asset, calculate the index price and basis
 		if responseQuoteUnderlying != (ResponseQuote{}) {
 			priceUnderlying, _ := strconv.ParseFloat(responseQuoteUnderlying.Price, 64)
@@ -135,15 +136,15 @@ func transformResponseQuote(responseQuote ResponseQuote, responseQuoteUnderlying
 		},
 		Meta: c.Meta{
 			IsVariablePrecision: true,
+			SymbolInSourceAPI:   responseQuote.ProductID,
 		},
 	}
 }
 
-func transformResponseQuotes(symbols []string, responseQuotes []ResponseQuote) AssetQuotesIndexed {
+func transformResponseQuotes(symbols []string, responseQuotes []ResponseQuote) []c.AssetQuote {
 	quotes := make([]c.AssetQuote, 0)
 	responseQuotesBySymbol := make(map[string]ResponseQuote)
 	symbolsMap := make(map[string]bool)
-	quotesByProductId := make(map[string]*c.AssetQuote)
 
 	// Create map of explicitly requested symbols
 	for _, symbol := range symbols {
@@ -176,20 +177,16 @@ func transformResponseQuotes(symbols []string, responseQuotes []ResponseQuote) A
 		}
 
 		quote := transformResponseQuote(responseQuote, responseQuoteUnderlying)
-		quotesByProductId[responseQuote.ProductID] = &quote
 		quotes = append(quotes, quote)
 	}
 
-	return AssetQuotesIndexed{
-		AssetQuotes:            quotes,
-		AssetQuotesByProductId: quotesByProductId,
-	}
+	return quotes
 }
 
-func (u *UnaryAPI) GetAssetQuotes(symbols []string) AssetQuotesIndexed {
+func (u *UnaryAPI) GetAssetQuotes(symbols []string) []c.AssetQuote {
 
 	if len(symbols) == 0 {
-		return AssetQuotesIndexed{}
+		return []c.AssetQuote{}
 	}
 
 	res, _ := u.client.R().

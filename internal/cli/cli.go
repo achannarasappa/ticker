@@ -98,7 +98,7 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		return c.Context{}, err
 	}
 
-	reference, err = getReference(config, groups, d.HttpClients.Yahoo)
+	reference, err = getReference(config, groups, d.HttpClients.Yahoo) // TODO: pass in default client for non-currency conversion requests
 
 	if err != nil {
 		return c.Context{}, err

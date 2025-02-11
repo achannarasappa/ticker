@@ -2,6 +2,8 @@ package quote
 
 import (
 	c "github.com/achannarasappa/ticker/v4/internal/common"
+
+	mon "github.com/achannarasappa/ticker/v4/internal/monitor"
 	quoteCoinbase "github.com/achannarasappa/ticker/v4/internal/quote/coinbase"
 	quoteCoincap "github.com/achannarasappa/ticker/v4/internal/quote/coincap"
 	quoteCoingecko "github.com/achannarasappa/ticker/v4/internal/quote/coingecko"
@@ -9,30 +11,31 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-func getQuoteBySource(monitors c.Monitors, symbolBySource c.AssetGroupSymbolsBySource) []c.AssetQuote {
+func getQuoteBySource(monitors *mon.Monitor, dep *c.Dependencies, symbolBySource c.AssetGroupSymbolsBySource) []c.AssetQuote {
 
 	if symbolBySource.Source == c.QuoteSourceYahoo {
-		return quoteYahoo.GetAssetQuotes(*monitors.HttpClients.Yahoo, symbolBySource.Symbols)()
+		return quoteYahoo.GetAssetQuotes(*dep.HttpClients.Yahoo, symbolBySource.Symbols)()
 	}
 
 	if symbolBySource.Source == c.QuoteSourceCoingecko {
-		return quoteCoingecko.GetAssetQuotes(*monitors.HttpClients.Default, symbolBySource.Symbols)
+		return quoteCoingecko.GetAssetQuotes(*dep.HttpClients.Default, symbolBySource.Symbols)
 	}
 
 	if symbolBySource.Source == c.QuoteSourceCoinCap {
-		return quoteCoincap.GetAssetQuotes(*monitors.HttpClients.Default, symbolBySource.Symbols)
+		return quoteCoincap.GetAssetQuotes(*dep.HttpClients.Default, symbolBySource.Symbols)
 	}
 
 	if symbolBySource.Source == c.QuoteSourceCoinbase {
-		(*monitors.Coinbase).SetSymbols(symbolBySource.Symbols)
-		return (*monitors.Coinbase).GetAssetQuotes()
+		// (*monitors.Coinbase).SetSymbols(symbolBySource.Symbols) this will force a refresh
+		x := monitors.GetMonitor(c.QuoteSourceCoinbase).GetAssetQuotes()
+		return x
 	}
 
 	return []c.AssetQuote{}
 }
 
 // GetAssetGroupQuote gets price quotes for groups of assets by data source
-func GetAssetGroupQuote(monitors c.Monitors) func(c.AssetGroup) c.AssetGroupQuote {
+func GetAssetGroupQuote(monitors *mon.Monitor, dep *c.Dependencies) func(c.AssetGroup) c.AssetGroupQuote {
 
 	return func(assetGroup c.AssetGroup) c.AssetGroupQuote {
 
@@ -40,7 +43,7 @@ func GetAssetGroupQuote(monitors c.Monitors) func(c.AssetGroup) c.AssetGroupQuot
 
 		for _, symbolBySource := range assetGroup.SymbolsBySource {
 
-			assetQuoteBySource := getQuoteBySource(monitors, symbolBySource)
+			assetQuoteBySource := getQuoteBySource(monitors, dep, symbolBySource)
 			assetQuotes = append(assetQuotes, assetQuoteBySource...)
 
 		}

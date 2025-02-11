@@ -81,12 +81,6 @@ type DependenciesHttpClients struct { //nolint:golint,stylecheck,revive
 	YahooSession *resty.Client
 }
 
-type Monitors struct {
-	Coinbase    *Monitor
-	HttpClients DependenciesHttpClients
-	Reference   Reference
-}
-
 type Monitor interface {
 	Start() error
 	GetAssetQuotes(useCache ...bool) []AssetQuote
@@ -142,6 +136,7 @@ type HoldingChange struct {
 type Meta struct {
 	IsVariablePrecision bool
 	OrderIndex          int
+	SymbolInSourceAPI   string
 }
 
 type Holding struct {

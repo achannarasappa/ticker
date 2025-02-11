@@ -52,10 +52,6 @@ func (p *Poller) Start() error {
 		return fmt.Errorf("refresh interval is not set")
 	}
 
-	if len(p.symbols) == 0 {
-		return fmt.Errorf("symbols are not set")
-	}
-
 	p.isStarted = true
 
 	// Start polling goroutine
@@ -63,15 +59,16 @@ func (p *Poller) Start() error {
 		ticker := time.NewTicker(p.refreshInterval)
 		defer ticker.Stop()
 
-		// Initial poll
-		p.unaryAPI.GetAssetQuotes(p.symbols)
-
 		for {
 			select {
 			case <-ticker.C:
+				if len(p.symbols) == 0 {
+					continue
+				}
 				p.unaryAPI.GetAssetQuotes(p.symbols)
 			case <-p.ctx.Done():
 				return
+			default:
 			}
 		}
 	}()

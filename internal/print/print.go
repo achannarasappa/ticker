@@ -8,6 +8,7 @@ import (
 
 	"github.com/achannarasappa/ticker/v4/internal/asset"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
+	mon "github.com/achannarasappa/ticker/v4/internal/monitor"
 	quote "github.com/achannarasappa/ticker/v4/internal/quote"
 	"github.com/achannarasappa/ticker/v4/internal/ui/util"
 
@@ -141,11 +142,11 @@ func convertSummaryToCSV(summary asset.HoldingSummary) string {
 func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Command, []string) {
 	return func(_ *cobra.Command, _ []string) {
 
-		monitors := c.Monitors{
-			HttpClients: dep.HttpClients,
-			Reference:   ctx.Reference,
-		}
-		assetGroupQuote := quote.GetAssetGroupQuote(monitors)(ctx.Groups[0])
+		monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
+			Config:    ctx.Config,
+			Reference: ctx.Reference,
+		})
+		assetGroupQuote := quote.GetAssetGroupQuote(monitors, dep)(ctx.Groups[0])
 		assets, _ := asset.GetAssets(*ctx, assetGroupQuote)
 
 		if options.Format == "csv" {
@@ -161,11 +162,12 @@ func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Comm
 // RunSummary handles the print summary command
 func RunSummary(dep *c.Dependencies, ctx *c.Context, options *Options) func(cmd *cobra.Command, args []string) {
 	return func(_ *cobra.Command, _ []string) {
-		monitors := c.Monitors{
-			HttpClients: dep.HttpClients,
-			Reference:   ctx.Reference,
-		}
-		assetGroupQuote := quote.GetAssetGroupQuote(monitors)(ctx.Groups[0])
+
+		monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
+			Config:    ctx.Config,
+			Reference: ctx.Reference,
+		})
+		assetGroupQuote := quote.GetAssetGroupQuote(monitors, dep)(ctx.Groups[0])
 		_, holdingSummary := asset.GetAssets(*ctx, assetGroupQuote)
 
 		if options.Format == "csv" {

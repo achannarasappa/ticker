@@ -2,7 +2,6 @@ package streamer
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -44,20 +43,21 @@ type Streamer struct {
 	isStarted        bool
 	url              string
 	assetQuoteChan   chan common.AssetQuote
-	subscriptionChan chan []byte
+	subscriptionChan chan messageSubscription
 	onUpdate         func()
 	wg               sync.WaitGroup
 	ctx              context.Context
 	cancel           context.CancelFunc
 }
 
-func NewStreamer(ctx context.Context) *Streamer {
+func NewStreamer(ctx context.Context, chanStreamUpdateQuotePrice chan messageUpdate[c.QuotePrice], chanStreamUpdateQuoteExtended chan messageUpdate[c.QuoteExtended]) *Streamer {
 	ctx, cancel := context.WithCancel(ctx)
 
 	s := &Streamer{
-		ctx:    ctx,
-		cancel: cancel,
-		wg:     sync.WaitGroup{},
+		ctx:              ctx,
+		cancel:           cancel,
+		wg:               sync.WaitGroup{},
+		subscriptionChan: make(chan messageSubscription),
 	}
 
 	return s
@@ -79,7 +79,8 @@ func (s *Streamer) Start() error {
 
 	// Connect the websocket address in a goroutine
 	go func() {
-		conn, _, err := websocket.DefaultDialer.Dial("wss://"+s.url, nil)
+		url := s.url
+		conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 		if err != nil {
 			errChan <- err
 			return
@@ -162,6 +163,7 @@ func (s *Streamer) readStreamQuote() {
 				return
 			}
 
+			// TODO: Send to correct channels
 			s.assetQuoteChan <- transformQuoteStream(quote)
 		}
 	}
@@ -175,10 +177,12 @@ func (s *Streamer) writeStreamSubscription() {
 		case <-s.ctx.Done():
 			return
 		case message := <-s.subscriptionChan:
-
-			if err := s.conn.WriteJSON(message); err != nil {
+			fmt.Println("writing subscription", message)
+			err := s.conn.WriteJSON(message)
+			if err != nil {
 				return
 			}
+		default:
 		}
 	}
 }
@@ -191,11 +195,7 @@ func (s *Streamer) subscribe(productIDs []string) error {
 		Channels:   []string{"ticker"},
 	}
 
-	data, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-	s.subscriptionChan <- data
+	s.subscriptionChan <- message
 	return nil
 }
 
@@ -206,11 +206,7 @@ func (s *Streamer) unsubscribe() error {
 		Channels: []string{"ticker"},
 	}
 
-	data, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-	s.subscriptionChan <- data
+	s.subscriptionChan <- message
 	return nil
 }
 

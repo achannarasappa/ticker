@@ -2,12 +2,12 @@ package streamer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 	"sync"
 
-	"github.com/achannarasappa/ticker/v4/internal/common"
+	c "github.com/achannarasappa/ticker/v4/internal/common"
 	"github.com/gorilla/websocket"
 )
 
@@ -17,7 +17,7 @@ type messageSubscription struct {
 	Channels   []string `json:"channels"`
 }
 
-type messageQuote struct {
+type messagePriceTick struct {
 	Type        string `json:"type"`
 	Sequence    int64  `json:"sequence"`
 	ProductID   string `json:"product_id"`
@@ -38,26 +38,35 @@ type messageQuote struct {
 }
 
 type Streamer struct {
-	symbols          []string
-	conn             *websocket.Conn
-	isStarted        bool
-	url              string
-	assetQuoteChan   chan common.AssetQuote
-	subscriptionChan chan messageSubscription
-	onUpdate         func()
-	wg               sync.WaitGroup
-	ctx              context.Context
-	cancel           context.CancelFunc
+	symbols                       []string
+	conn                          *websocket.Conn
+	isStarted                     bool
+	url                           string
+	assetQuoteChan                chan c.AssetQuote
+	subscriptionChan              chan messageSubscription
+	onUpdate                      func()
+	wg                            sync.WaitGroup
+	ctx                           context.Context
+	cancel                        context.CancelFunc
+	chanStreamUpdateQuotePrice    chan c.MessageUpdate[c.QuotePrice]
+	chanStreamUpdateQuoteExtended chan c.MessageUpdate[c.QuoteExtended]
 }
 
-func NewStreamer(ctx context.Context, chanStreamUpdateQuotePrice chan messageUpdate[c.QuotePrice], chanStreamUpdateQuoteExtended chan messageUpdate[c.QuoteExtended]) *Streamer {
+type StreamerConfig struct {
+	ChanStreamUpdateQuotePrice    chan c.MessageUpdate[c.QuotePrice]
+	ChanStreamUpdateQuoteExtended chan c.MessageUpdate[c.QuoteExtended]
+}
+
+func NewStreamer(ctx context.Context, config StreamerConfig) *Streamer {
 	ctx, cancel := context.WithCancel(ctx)
 
 	s := &Streamer{
-		ctx:              ctx,
-		cancel:           cancel,
-		wg:               sync.WaitGroup{},
-		subscriptionChan: make(chan messageSubscription),
+		chanStreamUpdateQuotePrice:    config.ChanStreamUpdateQuotePrice,
+		chanStreamUpdateQuoteExtended: config.ChanStreamUpdateQuoteExtended,
+		ctx:                           ctx,
+		cancel:                        cancel,
+		wg:                            sync.WaitGroup{},
+		subscriptionChan:              make(chan messageSubscription),
 	}
 
 	return s
@@ -157,14 +166,21 @@ func (s *Streamer) readStreamQuote() {
 		case <-s.ctx.Done():
 			return
 		default:
-			var quote messageQuote
-			err := s.conn.ReadJSON(&quote)
+			var message messagePriceTick
+			_, messageBytes, err := s.conn.ReadMessage()
+			if err != nil {
+				return
+			}
+			out := string(messageBytes)
+			fmt.Println("messageBytes", out)
+			err = json.Unmarshal(messageBytes, &message)
 			if err != nil {
 				return
 			}
 
-			// TODO: Send to correct channels
-			s.assetQuoteChan <- transformQuoteStream(quote)
+			qp, qe := transformPriceTick(message)
+			s.chanStreamUpdateQuotePrice <- qp
+			s.chanStreamUpdateQuoteExtended <- qe
 		}
 	}
 }
@@ -177,7 +193,7 @@ func (s *Streamer) writeStreamSubscription() {
 		case <-s.ctx.Done():
 			return
 		case message := <-s.subscriptionChan:
-			fmt.Println("writing subscription", message)
+
 			err := s.conn.WriteJSON(message)
 			if err != nil {
 				return
@@ -210,23 +226,38 @@ func (s *Streamer) unsubscribe() error {
 	return nil
 }
 
-func transformQuoteStream(quote messageQuote) common.AssetQuote {
+func transformPriceTick(message messagePriceTick) (qp c.MessageUpdate[c.QuotePrice], qe c.MessageUpdate[c.QuoteExtended]) {
 
-	symbol := strings.Split(quote.ProductID, "-")[0]
-	price, _ := strconv.ParseFloat(quote.Price, 64)
+	price, _ := strconv.ParseFloat(message.Price, 64)
+	priceOpen, _ := strconv.ParseFloat(message.Open24h, 64)
+	priceDayHigh, _ := strconv.ParseFloat(message.High24h, 64)
+	priceDayLow, _ := strconv.ParseFloat(message.Low24h, 64)
+	change := price - priceOpen
+	changePercent := change / priceOpen
 
-	return common.AssetQuote{
-		// Name:          quote.ProductID,
-		Symbol:   symbol,
-		Class:    common.AssetClassCryptocurrency,
-		Currency: common.Currency{FromCurrencyCode: "USD"},
-		QuotePrice: common.QuotePrice{
-			Price: price,
+	qp = c.MessageUpdate[c.QuotePrice]{
+		ID:       message.ProductID,
+		Sequence: message.Sequence,
+		Data: c.QuotePrice{
+			Price:          price,
+			PricePrevClose: priceOpen,
+			PriceOpen:      priceOpen,
+			PriceDayHigh:   priceDayHigh,
+			PriceDayLow:    priceDayLow,
+			Change:         change,
+			ChangePercent:  changePercent,
 		},
-		QuoteExtended: common.QuoteExtended{},
-		QuoteFutures:  common.QuoteFutures{},
-		QuoteSource:   common.QuoteSourceCoinbase,
-		Exchange:      common.Exchange{Name: "Coinbase"},
-		Meta:          common.Meta{},
 	}
+
+	volume, _ := strconv.ParseFloat(message.Volume24h, 64)
+
+	qe = c.MessageUpdate[c.QuoteExtended]{
+		ID:       message.ProductID,
+		Sequence: message.Sequence,
+		Data: c.QuoteExtended{
+			Volume: volume,
+		},
+	}
+
+	return qp, qe
 }

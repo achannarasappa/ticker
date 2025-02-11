@@ -26,19 +26,14 @@ type MonitorCoinbase struct {
 	productIdsPolling             []string
 	assetQuotesResponse           []c.AssetQuote           // Asset quotes filtered to the productIds set in input.productIds
 	assetQuotesCache              map[string]*c.AssetQuote // Asset quotes for all assets retrieved at least once
-	chanStreamUpdateQuotePrice    chan messageUpdate[c.QuotePrice]
-	chanStreamUpdateQuoteExtended chan messageUpdate[c.QuoteExtended]
-	chanStreamUpdateExchange      chan messageUpdate[c.Exchange]
-	chanPollUpdateAssetQuote      chan messageUpdate[c.AssetQuote]
+	chanStreamUpdateQuotePrice    chan c.MessageUpdate[c.QuotePrice]
+	chanStreamUpdateQuoteExtended chan c.MessageUpdate[c.QuoteExtended]
+	chanStreamUpdateExchange      chan c.MessageUpdate[c.Exchange]
+	chanPollUpdateAssetQuote      chan c.MessageUpdate[c.AssetQuote]
 	mu                            sync.RWMutex
 	ctx                           context.Context
 	cancel                        context.CancelFunc
 	isStarted                     bool
-}
-
-type messageUpdate[T any] struct {
-	data      T
-	productId string
 }
 
 type input struct {
@@ -64,17 +59,22 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 	monitor := &MonitorCoinbase{
 		assetQuotesCache:              make(map[string]*c.AssetQuote),
 		assetQuotesResponse:           make([]c.AssetQuote, 0),
-		chanStreamUpdateQuotePrice:    make(chan messageUpdate[c.QuotePrice]),
-		chanStreamUpdateQuoteExtended: make(chan messageUpdate[c.QuoteExtended]),
-		chanStreamUpdateExchange:      make(chan messageUpdate[c.Exchange]),
-		chanPollUpdateAssetQuote:      make(chan messageUpdate[c.AssetQuote]),
+		chanStreamUpdateQuotePrice:    make(chan c.MessageUpdate[c.QuotePrice]),
+		chanStreamUpdateQuoteExtended: make(chan c.MessageUpdate[c.QuoteExtended]),
+		chanStreamUpdateExchange:      make(chan c.MessageUpdate[c.Exchange]),
+		chanPollUpdateAssetQuote:      make(chan c.MessageUpdate[c.AssetQuote]),
 		poller:                        poller.NewPoller(ctx, unaryAPI),
 		unaryAPI:                      unaryAPI,
 		ctx:                           ctx,
 		cancel:                        cancel,
 	}
 
-	monitor.streamer = streamer.NewStreamer(ctx, monitor.chanStreamUpdateQuotePrice, monitor.chanStreamUpdateQuoteExtended)
+	streamerConfig := streamer.StreamerConfig{
+		ChanStreamUpdateQuotePrice:    monitor.chanStreamUpdateQuotePrice,
+		ChanStreamUpdateQuoteExtended: monitor.chanStreamUpdateQuoteExtended,
+	}
+
+	monitor.streamer = streamer.NewStreamer(ctx, streamerConfig)
 
 	for _, opt := range opts {
 		opt(monitor)
@@ -141,7 +141,7 @@ func (m *MonitorCoinbase) SetSymbols(productIds []string) {
 	m.updateAssetQuotesCache(m.assetQuotesResponse)
 
 	// Coinbase steaming API for CBE (spot) only and not CDE (futures)
-	m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIds) // TODO: update to return and handle error
+	m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming) // TODO: update to return and handle error
 
 }
 
@@ -168,6 +168,8 @@ func (m *MonitorCoinbase) Start() error {
 		return err
 	}
 
+	go m.handleUpdates()
+
 	m.isStarted = true
 
 	return nil
@@ -191,7 +193,7 @@ func (m *MonitorCoinbase) updateAssetQuotesCache(assetQuotes []c.AssetQuote) {
 }
 
 func isStreamingProductId(productId string) bool {
-	return !strings.HasSuffix(productId, "-CDE")
+	return !strings.HasSuffix(productId, "-CDE") && !strings.HasPrefix(productId, "CDE")
 }
 
 func partitionProductIds(productIds []string) (productIdsStreaming []string, productIdsPolling []string) {
@@ -217,49 +219,47 @@ func mergeAndDeduplicateProductIds(symbolsA, symbolsB []string) []string {
 	return slices.Compact(merged)
 }
 
-func (m *MonitorCoinbase) handleStreamPriceUpdates() {
-	go func() {
-		for {
-			select {
-			case updateMessage := <-m.chanStreamUpdateQuotePrice:
+func (m *MonitorCoinbase) handleUpdates() {
+	for {
+		select {
+		case updateMessage := <-m.chanStreamUpdateQuotePrice:
 
-				var assetQuote *c.AssetQuote
-				var exists bool
+			var assetQuote *c.AssetQuote
+			var exists bool
 
-				// Check if cache exists and values have changed before acquiring write lock
-				m.mu.RLock()
-				defer m.mu.RUnlock()
+			// Check if cache exists and values have changed before acquiring write lock
+			m.mu.RLock()
+			defer m.mu.RUnlock()
 
-				assetQuote, exists = m.assetQuotesCache[updateMessage.productId]
+			assetQuote, exists = m.assetQuotesCache[updateMessage.ID]
 
-				if !exists {
-					// If product id does not exist in cache, skip update
-					// TODO: log product not found in cache - should not happen
-					continue
-				}
-
-				// Skip update if price has not changed
-				if assetQuote.QuotePrice.Price == updateMessage.data.Price {
-					continue
-				}
-				m.mu.RUnlock()
-
-				// Price is different so update cache
-				m.mu.Lock()
-				defer m.mu.Unlock()
-
-				assetQuote.QuotePrice.Price = updateMessage.data.Price
-				assetQuote.QuotePrice.Change = updateMessage.data.Change
-				assetQuote.QuotePrice.ChangePercent = updateMessage.data.ChangePercent
-				assetQuote.QuotePrice.PriceDayHigh = updateMessage.data.PriceDayHigh
-				assetQuote.QuotePrice.PriceDayLow = updateMessage.data.PriceDayLow
-				assetQuote.QuotePrice.PriceOpen = updateMessage.data.PriceOpen
-				assetQuote.QuotePrice.PricePrevClose = updateMessage.data.PricePrevClose
-
-			case <-m.ctx.Done():
-				return
-			default:
+			if !exists {
+				// If product id does not exist in cache, skip update
+				// TODO: log product not found in cache - should not happen
+				continue
 			}
+
+			// Skip update if price has not changed
+			if assetQuote.QuotePrice.Price == updateMessage.Data.Price {
+				continue
+			}
+			m.mu.RUnlock()
+
+			// Price is different so update cache
+			m.mu.Lock()
+			defer m.mu.Unlock()
+
+			assetQuote.QuotePrice.Price = updateMessage.Data.Price
+			assetQuote.QuotePrice.Change = updateMessage.Data.Change
+			assetQuote.QuotePrice.ChangePercent = updateMessage.Data.ChangePercent
+			assetQuote.QuotePrice.PriceDayHigh = updateMessage.Data.PriceDayHigh
+			assetQuote.QuotePrice.PriceDayLow = updateMessage.Data.PriceDayLow
+			assetQuote.QuotePrice.PriceOpen = updateMessage.Data.PriceOpen
+			assetQuote.QuotePrice.PricePrevClose = updateMessage.Data.PricePrevClose
+
+		case <-m.ctx.Done():
+			return
+		default:
 		}
-	}()
+	}
 }

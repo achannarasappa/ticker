@@ -249,3 +249,9 @@ type AssetQuote struct {
 	Exchange      Exchange
 	Meta          Meta
 }
+
+type MessageUpdate[T any] struct {
+	Data     T
+	ID       string
+	Sequence int64
+}

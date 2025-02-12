@@ -222,6 +222,9 @@ func mergeAndDeduplicateProductIds(symbolsA, symbolsB []string) []string {
 func (m *MonitorCoinbase) handleUpdates() {
 	for {
 		select {
+		case <-m.chanStreamUpdateQuoteExtended:
+			// TODO: handle extended quote
+			continue
 		case updateMessage := <-m.chanStreamUpdateQuotePrice:
 
 			var assetQuote *c.AssetQuote

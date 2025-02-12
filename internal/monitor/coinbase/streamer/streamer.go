@@ -2,7 +2,6 @@ package streamer
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"sync"
@@ -135,10 +134,10 @@ func (s *Streamer) SetSymbolsAndUpdateSubscriptions(symbols []string) error {
 
 	s.symbols = symbols
 
-	err = s.unsubscribe()
-	if err != nil {
-		return err
-	}
+	// err = s.unsubscribe()
+	// if err != nil {
+	// 	return err
+	// }
 
 	err = s.subscribe(s.symbols)
 	if err != nil {
@@ -167,15 +166,14 @@ func (s *Streamer) readStreamQuote() {
 			return
 		default:
 			var message messagePriceTick
-			_, messageBytes, err := s.conn.ReadMessage()
+			err := s.conn.ReadJSON(&message)
 			if err != nil {
 				return
 			}
-			out := string(messageBytes)
-			fmt.Println("messageBytes", out)
-			err = json.Unmarshal(messageBytes, &message)
-			if err != nil {
-				return
+
+			// Only handle ticker messages; first message is a subscription confirmation
+			if message.Type != "ticker" {
+				continue
 			}
 
 			qp, qe := transformPriceTick(message)

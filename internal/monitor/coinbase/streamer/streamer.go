@@ -82,13 +82,13 @@ func (s *Streamer) Start() error {
 	}
 
 	// Create connection channel for result
-	connChan := make(chan *websocket.Conn)
-	errChan := make(chan error)
+	connChan := make(chan *websocket.Conn, 1)
+	errChan := make(chan error, 1)
 
 	// Connect the websocket address in a goroutine
 	go func() {
 		url := s.url
-		conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+		conn, _, err := websocket.DefaultDialer.DialContext(s.ctx, url, nil)
 		if err != nil {
 			errChan <- err
 			return
@@ -196,7 +196,6 @@ func (s *Streamer) writeStreamSubscription() {
 			if err != nil {
 				return
 			}
-		default:
 		}
 	}
 }

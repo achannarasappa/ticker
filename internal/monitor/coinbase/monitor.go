@@ -106,7 +106,11 @@ func WithRefreshInterval(interval time.Duration) Option {
 
 func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) []c.AssetQuote {
 	if len(ignoreCache) > 0 && ignoreCache[0] {
-		return m.unaryAPI.GetAssetQuotes(m.productIds)
+		assetQuotes, err := m.unaryAPI.GetAssetQuotes(m.productIds)
+		if err != nil {
+			return []c.AssetQuote{}
+		}
+		return assetQuotes
 	}
 
 	m.mu.RLock()
@@ -122,7 +126,9 @@ func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) []c.AssetQuote {
 	return assetQuotes
 }
 
-func (m *MonitorCoinbase) SetSymbols(productIds []string) {
+func (m *MonitorCoinbase) SetSymbols(productIds []string) error {
+
+	var err error
 
 	// Underlying symbols may also be explicitly set so merge and deduplicate
 	productIdsUnique := mergeAndDeduplicateProductIds(m.input.symbolsUnderlying, productIds)
@@ -137,11 +143,22 @@ func (m *MonitorCoinbase) SetSymbols(productIds []string) {
 	defer m.mu.Unlock()
 
 	// Execute one unary API call to get data not sent by streaming API and set initial prices
-	m.assetQuotesResponse = m.unaryAPI.GetAssetQuotes(m.productIds) // TODO: update to return and handle error
+	m.assetQuotesResponse, err = m.unaryAPI.GetAssetQuotes(m.productIds) // TODO: update to return and handle error
+
+	if err != nil {
+		return err
+	}
+
 	m.updateAssetQuotesCache(m.assetQuotesResponse)
 
 	// Coinbase steaming API for CBE (spot) only and not CDE (futures)
-	m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming) // TODO: update to return and handle error
+	err = m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming) // TODO: update to return and handle error
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 
 }
 
@@ -155,7 +172,11 @@ func (m *MonitorCoinbase) Start() error {
 	}
 
 	// On start, get initial quotes from unary API
-	m.assetQuotesResponse = m.unaryAPI.GetAssetQuotes(m.productIds)
+	m.assetQuotesResponse, err = m.unaryAPI.GetAssetQuotes(m.productIds)
+	if err != nil {
+		return err
+	}
+
 	m.updateAssetQuotesCache(m.assetQuotesResponse)
 
 	err = m.streamer.Start()
@@ -232,25 +253,25 @@ func (m *MonitorCoinbase) handleUpdates() {
 
 			// Check if cache exists and values have changed before acquiring write lock
 			m.mu.RLock()
-			defer m.mu.RUnlock()
 
 			assetQuote, exists = m.assetQuotesCache[updateMessage.ID]
 
 			if !exists {
 				// If product id does not exist in cache, skip update
 				// TODO: log product not found in cache - should not happen
+				m.mu.RUnlock()
 				continue
 			}
 
 			// Skip update if price has not changed
 			if assetQuote.QuotePrice.Price == updateMessage.Data.Price {
+				m.mu.RUnlock()
 				continue
 			}
 			m.mu.RUnlock()
 
 			// Price is different so update cache
 			m.mu.Lock()
-			defer m.mu.Unlock()
 
 			assetQuote.QuotePrice.Price = updateMessage.Data.Price
 			assetQuote.QuotePrice.Change = updateMessage.Data.Change
@@ -260,6 +281,8 @@ func (m *MonitorCoinbase) handleUpdates() {
 			assetQuote.QuotePrice.PriceOpen = updateMessage.Data.PriceOpen
 			assetQuote.QuotePrice.PricePrevClose = updateMessage.Data.PricePrevClose
 
+			m.mu.Unlock()
+			continue
 		case <-m.ctx.Done():
 			return
 		default:

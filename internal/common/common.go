@@ -84,7 +84,7 @@ type DependenciesHttpClients struct { //nolint:golint,stylecheck,revive
 type Monitor interface {
 	Start() error
 	GetAssetQuotes(useCache ...bool) []AssetQuote
-	SetSymbols(symbols []string)
+	SetSymbols(symbols []string) error
 	Stop() error
 }
 

@@ -183,17 +183,24 @@ func transformResponseQuotes(symbols []string, responseQuotes []ResponseQuote) [
 	return quotes
 }
 
-func (u *UnaryAPI) GetAssetQuotes(symbols []string) []c.AssetQuote {
+func (u *UnaryAPI) GetAssetQuotes(symbols []string) ([]c.AssetQuote, error) {
+
+	var err error
+	var res *resty.Response
 
 	if len(symbols) == 0 {
-		return []c.AssetQuote{}
+		return []c.AssetQuote{}, nil
 	}
 
-	res, _ := u.client.R().
+	res, err = u.client.R().
 		SetResult(Response{}).
 		SetQueryParamsFromValues(url.Values{"product_ids": symbols}).
 		Get("https://api.coinbase.com/api/v3/brokerage/market/products")
 
-	return transformResponseQuotes(symbols, res.Result().(*Response).Products) //nolint:forcetypeassert
+	if err != nil {
+		return []c.AssetQuote{}, err
+	}
+
+	return transformResponseQuotes(symbols, res.Result().(*Response).Products), nil //nolint:forcetypeassert
 
 }

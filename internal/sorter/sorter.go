@@ -7,7 +7,7 @@ import (
 )
 
 // Sorter represents a function that sorts quotes
-type Sorter func([]c.Asset) []c.Asset
+type Sorter func([]*c.Asset) []*c.Asset
 
 // NewSorter creates a sorting function
 func NewSorter(sort string) Sorter {
@@ -23,7 +23,7 @@ func NewSorter(sort string) Sorter {
 	return sortByChange
 }
 
-func sortByUser(assetsIn []c.Asset) []c.Asset {
+func sortByUser(assetsIn []*c.Asset) []*c.Asset {
 
 	assetCount := len(assetsIn)
 
@@ -31,7 +31,7 @@ func sortByUser(assetsIn []c.Asset) []c.Asset {
 		return assetsIn
 	}
 
-	assets := make([]c.Asset, assetCount)
+	assets := make([]*c.Asset, assetCount)
 	copy(assets, assetsIn)
 
 	sort.SliceStable(assets, func(i, j int) bool {
@@ -54,7 +54,7 @@ func sortByUser(assetsIn []c.Asset) []c.Asset {
 
 }
 
-func sortByAlpha(assetsIn []c.Asset) []c.Asset {
+func sortByAlpha(assetsIn []*c.Asset) []*c.Asset {
 
 	assetCount := len(assetsIn)
 
@@ -62,7 +62,7 @@ func sortByAlpha(assetsIn []c.Asset) []c.Asset {
 		return assetsIn
 	}
 
-	assets := make([]c.Asset, assetCount)
+	assets := make([]*c.Asset, assetCount)
 	copy(assets, assetsIn)
 
 	sort.SliceStable(assets, func(i, j int) bool {
@@ -72,7 +72,7 @@ func sortByAlpha(assetsIn []c.Asset) []c.Asset {
 	return assets
 }
 
-func sortByValue(assetsIn []c.Asset) []c.Asset {
+func sortByValue(assetsIn []*c.Asset) []*c.Asset {
 
 	assetCount := len(assetsIn)
 
@@ -80,7 +80,7 @@ func sortByValue(assetsIn []c.Asset) []c.Asset {
 		return assetsIn
 	}
 
-	assets := make([]c.Asset, assetCount)
+	assets := make([]*c.Asset, assetCount)
 	copy(assets, assetsIn)
 
 	activeAssets, inactiveAssets := splitActiveAssets(assets)
@@ -96,7 +96,7 @@ func sortByValue(assetsIn []c.Asset) []c.Asset {
 	return append(activeAssets, inactiveAssets...)
 }
 
-func sortByChange(assetsIn []c.Asset) []c.Asset {
+func sortByChange(assetsIn []*c.Asset) []*c.Asset {
 
 	assetCount := len(assetsIn)
 
@@ -104,7 +104,7 @@ func sortByChange(assetsIn []c.Asset) []c.Asset {
 		return assetsIn
 	}
 
-	assets := make([]c.Asset, assetCount)
+	assets := make([]*c.Asset, assetCount)
 	copy(assets, assetsIn)
 
 	activeAssets, inactiveAssets := splitActiveAssets(assets)
@@ -121,10 +121,10 @@ func sortByChange(assetsIn []c.Asset) []c.Asset {
 
 }
 
-func splitActiveAssets(assets []c.Asset) ([]c.Asset, []c.Asset) {
+func splitActiveAssets(assets []*c.Asset) ([]*c.Asset, []*c.Asset) {
 
-	activeAssets := make([]c.Asset, 0)
-	inactiveAssets := make([]c.Asset, 0)
+	activeAssets := make([]*c.Asset, 0)
+	inactiveAssets := make([]*c.Asset, 0)
 
 	for _, asset := range assets {
 		if asset.Exchange.IsActive {

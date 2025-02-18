@@ -34,6 +34,7 @@ type MonitorCoinbase struct {
 	ctx                           context.Context
 	cancel                        context.CancelFunc
 	isStarted                     bool
+	onUpdate                      func(symbol string, pq c.QuotePrice)
 }
 
 type input struct {
@@ -43,8 +44,7 @@ type input struct {
 
 // Config contains the required configuration for the Coinbase monitor
 type Config struct {
-	Client   resty.Client
-	OnUpdate func()
+	Client resty.Client
 }
 
 // Option defines an option for configuring the monitor
@@ -102,6 +102,11 @@ func WithRefreshInterval(interval time.Duration) Option {
 	return func(m *MonitorCoinbase) {
 		m.poller.SetRefreshInterval(interval)
 	}
+}
+
+// SetOnUpdate sets the onUpdate function for the monitor
+func (m *MonitorCoinbase) SetOnUpdate(onUpdate func(symbol string, pq c.QuotePrice)) {
+	m.onUpdate = onUpdate
 }
 
 func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) []c.AssetQuote {
@@ -282,6 +287,9 @@ func (m *MonitorCoinbase) handleUpdates() {
 			assetQuote.QuotePrice.PricePrevClose = updateMessage.Data.PricePrevClose
 
 			m.mu.Unlock()
+
+			m.onUpdate(assetQuote.Symbol, assetQuote.QuotePrice)
+
 			continue
 		case <-m.ctx.Done():
 			return

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	grid "github.com/achannarasappa/term-grid"
@@ -37,13 +38,14 @@ type Model struct {
 	getQuotes          func(c.AssetGroup) c.AssetGroupQuote
 	requestInterval    int
 	viewport           viewport.Model
-	watchlist          watchlist.Model
+	watchlist          *watchlist.Model
 	summary            summary.Model
 	lastUpdateTime     string
 	groupSelectedIndex int
 	groupMaxIndex      int
 	groupSelectedName  string
 	monitors           *mon.Monitor
+	mu                 sync.RWMutex
 }
 
 func getTime() string {
@@ -52,7 +54,7 @@ func getTime() string {
 	return fmt.Sprintf("%s %02d:%02d:%02d", t.Weekday().String(), t.Hour(), t.Minute(), t.Second())
 }
 
-func generateQuoteMsg(m Model, skipUpdate bool) tea.Cmd {
+func generateQuoteMsg(m *Model, skipUpdate bool) tea.Cmd {
 	return func() tea.Msg {
 		// Infer group change based on skipUpdate
 		if skipUpdate {
@@ -67,31 +69,26 @@ func generateQuoteMsg(m Model, skipUpdate bool) tea.Cmd {
 	}
 }
 
-func (m Model) updateQuotes() tea.Cmd {
+func (m *Model) updateQuotes() tea.Cmd {
 	return tea.Tick(time.Second*time.Duration(m.requestInterval), func(_ time.Time) tea.Msg {
 		return generateQuoteMsg(m, false)()
 	})
 }
 
 // NewModel is the constructor for UI model
-func NewModel(dep c.Dependencies, ctx c.Context) Model {
+func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
 
 	groupMaxIndex := len(ctx.Groups) - 1
 
-	monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
-		ClientHttp: dep.HttpClients.Default,
-		Reference:  ctx.Reference,
-		Config:     ctx.Config,
-		OnUpdate:   func() {},
-	})
+	w := watchlist.NewModel(ctx)
 
-	return Model{
+	return &Model{
 		ctx:                ctx,
 		headerHeight:       getVerticalMargin(ctx.Config),
 		ready:              false,
 		requestInterval:    ctx.Config.RefreshInterval,
 		getQuotes:          quote.GetAssetGroupQuote(monitors, &dep),
-		watchlist:          watchlist.NewModel(ctx),
+		watchlist:          w,
 		summary:            summary.NewModel(ctx),
 		groupMaxIndex:      groupMaxIndex,
 		groupSelectedIndex: 0,
@@ -101,11 +98,10 @@ func NewModel(dep c.Dependencies, ctx c.Context) Model {
 }
 
 // Init is the initialization hook for bubbletea
-func (m Model) Init() tea.Cmd {
-
+func (m *Model) Init() tea.Cmd {
 	(*m.monitors).Start()
 
-	m.monitors.SetSymbols(m.ctx.Groups[m.groupSelectedIndex])
+	(*m.monitors).SetSymbols(m.ctx.Groups[m.groupSelectedIndex])
 
 	return generateQuoteMsg(m, false)
 }
@@ -118,14 +114,16 @@ type quoteMsg struct {
 }
 
 // Update hook for bubbletea
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) { //nolint:ireturn,cyclop
-
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
 		switch msg.String() {
 
 		case "tab", "shift+tab":
+			m.mu.Lock()
+			defer m.mu.Unlock()
+
 			groupSelectedCursor := -1
 			if msg.String() == "tab" {
 				groupSelectedCursor = 1
@@ -144,29 +142,52 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) { //nolint:ireturn,cyclo
 		}
 
 	case tea.WindowSizeMsg:
+		m.mu.Lock()
+		defer m.mu.Unlock()
+
 		m.watchlist.Width = msg.Width
 		m.summary.Width = msg.Width
 		viewportHeight := msg.Height - m.headerHeight - footerHeight
 
 		if !m.ready {
-			m.viewport = viewport.Model{Width: msg.Width, Height: viewportHeight}
+			m.viewport = viewport.New(msg.Width, viewportHeight)
 			m.ready = true
 		} else {
 			m.viewport.Width = msg.Width
 			m.viewport.Height = viewportHeight
 		}
 
-		m.viewport.SetContent(m.watchlist.View())
+		return m, nil
+
+	case watchlist.SetAssetQuotePriceMsg:
+		m.mu.Lock()
+		defer m.mu.Unlock()
+
+		if m.ready {
+			m.watchlist.Update(watchlist.SetAssetQuotePriceMsg{
+				Symbol:     msg.Symbol,
+				QuotePrice: msg.QuotePrice,
+			})
+			m.lastUpdateTime = getTime()
+			m.viewport.SetContent(m.watchlist.View())
+			m.viewport, _ = m.viewport.Update(msg)
+		}
+
+		return m, nil
 
 	case quoteMsg:
+		m.mu.Lock()
+		defer m.mu.Unlock()
+
 		// Update UI only if data matches current group
 		if m.groupSelectedIndex == msg.assetGroupIndex {
 			assets, holdingSummary := asset.GetAssets(m.ctx, msg.assetGroupQuote)
-			m.watchlist.Assets = assets
+			m.watchlist.Update(watchlist.SetAssetsMsg(assets))
 			m.lastUpdateTime = msg.time
 			m.summary.Summary = holdingSummary
 			if m.ready {
 				m.viewport.SetContent(m.watchlist.View())
+				m.viewport, _ = m.viewport.Update(msg)
 			}
 		}
 
@@ -178,13 +199,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) { //nolint:ireturn,cyclo
 		return m, m.updateQuotes()
 	}
 
-	m.viewport, _ = m.viewport.Update(msg)
-
 	return m, nil
 }
 
 // View rendering hook for bubbletea
-func (m Model) View() string {
+func (m *Model) View() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	if !m.ready {
 		return "\n  Initializing..."
 	}

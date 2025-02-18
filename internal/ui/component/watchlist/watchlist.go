@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 	s "github.com/achannarasappa/ticker/v4/internal/sorter"
 	u "github.com/achannarasappa/ticker/v4/internal/ui/util"
 
 	grid "github.com/achannarasappa/term-grid"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 const (
@@ -25,7 +27,8 @@ const (
 // Model for watchlist section
 type Model struct {
 	Width                 int
-	Assets                []c.Asset
+	assets                []*c.Asset
+	assetsBySymbol        map[string]*c.Asset
 	Separate              bool
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
@@ -46,11 +49,21 @@ type cellWidthsContainer struct {
 	WidthVolumeMarketCap  int
 }
 
+// Messages for updating assets
+type SetAssetsMsg []c.Asset
+type SetAssetQuotePriceMsg struct {
+	Symbol     string
+	QuotePrice c.QuotePrice
+	Time       time.Time
+}
+
 // NewModel returns a model with default values
-func NewModel(ctx c.Context) Model {
-	return Model{
+func NewModel(ctx c.Context) *Model {
+	return &Model{
 		Width:                 80,
 		Context:               ctx,
+		assets:                make([]*c.Asset, 0),
+		assetsBySymbol:        make(map[string]*c.Asset),
 		Separate:              ctx.Config.Separate,
 		ExtraInfoExchange:     ctx.Config.ExtraInfoExchange,
 		ExtraInfoFundamentals: ctx.Config.ExtraInfoFundamentals,
@@ -59,18 +72,50 @@ func NewModel(ctx c.Context) Model {
 	}
 }
 
+// Init initializes the watchlist
+func (m *Model) Init() tea.Cmd {
+	return nil
+}
+
+// Update handles messages for the watchlist
+func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case SetAssetsMsg:
+		a := make([]*c.Asset, len(msg))
+		m.assetsBySymbol = make(map[string]*c.Asset)
+
+		for i := range msg {
+			a[i] = &msg[i]
+			m.assetsBySymbol[msg[i].Symbol] = &msg[i]
+		}
+
+		m.assets = a
+
+		return m, nil
+
+	case SetAssetQuotePriceMsg:
+		if asset, ok := m.assetsBySymbol[msg.Symbol]; ok {
+			asset.QuotePrice = msg.QuotePrice
+		}
+
+		return m, nil
+	}
+
+	return m, nil
+}
+
 // View rendering hook for bubbletea
-func (m Model) View() string {
+func (m *Model) View() string {
 
 	if m.Width < 80 {
 		return fmt.Sprintf("Terminal window too narrow to render content\nResize to fix (%d/80)", m.Width)
 	}
 
 	if (m.cellWidths == cellWidthsContainer{}) {
-		m.cellWidths = getCellWidths(m.Assets)
+		m.cellWidths = getCellWidths(m.assets)
 	}
 
-	assets := m.Sorter(m.Assets)
+	assets := m.Sorter(m.assets)
 	rows := make([]grid.Row, 0)
 	for _, asset := range assets {
 
@@ -108,7 +153,7 @@ func (m Model) View() string {
 	return grid.Render(grid.Grid{Rows: rows, GutterHorizontal: widthGutter})
 }
 
-func getCellWidths(assets []c.Asset) cellWidthsContainer {
+func getCellWidths(assets []*c.Asset) cellWidthsContainer {
 
 	cellMaxWidths := cellWidthsContainer{}
 
@@ -161,7 +206,7 @@ func getCellWidths(assets []c.Asset) cellWidthsContainer {
 
 }
 
-func buildCells(asset c.Asset, config c.Config, styles c.Styles, cellWidths cellWidthsContainer) []grid.Cell {
+func buildCells(asset *c.Asset, config c.Config, styles c.Styles, cellWidths cellWidthsContainer) []grid.Cell {
 
 	if !config.ExtraInfoFundamentals && !config.ShowHoldings {
 
@@ -267,7 +312,7 @@ func buildCells(asset c.Asset, config c.Config, styles c.Styles, cellWidths cell
 
 }
 
-func textName(asset c.Asset, styles c.Styles) string {
+func textName(asset *c.Asset, styles c.Styles) string {
 
 	if len(asset.Name) > 20 {
 		asset.Name = asset.Name[:20]
@@ -278,13 +323,13 @@ func textName(asset c.Asset, styles c.Styles) string {
 		styles.TextLabel(asset.Name)
 }
 
-func textQuote(asset c.Asset, styles c.Styles) string {
+func textQuote(asset *c.Asset, styles c.Styles) string {
 	return styles.Text(u.ConvertFloatToString(asset.QuotePrice.Price, asset.Meta.IsVariablePrecision)) +
 		"\n" +
 		quoteChangeText(asset.QuotePrice.Change, asset.QuotePrice.ChangePercent, asset.Meta.IsVariablePrecision, styles)
 }
 
-func textPosition(asset c.Asset, styles c.Styles) string {
+func textPosition(asset *c.Asset, styles c.Styles) string {
 
 	positionValue := ""
 	positionChange := ""
@@ -305,7 +350,7 @@ func textPosition(asset c.Asset, styles c.Styles) string {
 		positionChange
 }
 
-func textQuoteExtended(asset c.Asset, styles c.Styles) string {
+func textQuoteExtended(asset *c.Asset, styles c.Styles) string {
 
 	if asset.Class == c.AssetClassFuturesContract && asset.QuoteFutures.IndexPrice == 0.0 {
 		return ""
@@ -328,7 +373,7 @@ func textQuoteExtended(asset c.Asset, styles c.Styles) string {
 
 }
 
-func textQuoteExtendedLabels(asset c.Asset, styles c.Styles) string {
+func textQuoteExtendedLabels(asset *c.Asset, styles c.Styles) string {
 
 	if asset.Class == c.AssetClassFuturesContract && asset.QuoteFutures.IndexPrice == 0.0 {
 		return ""
@@ -350,7 +395,7 @@ func textQuoteExtendedLabels(asset c.Asset, styles c.Styles) string {
 		styles.TextLabel("Open:")
 }
 
-func textPositionExtended(asset c.Asset, styles c.Styles) string {
+func textPositionExtended(asset *c.Asset, styles c.Styles) string {
 
 	if asset.Holding.Quantity == 0.0 {
 		return ""
@@ -362,7 +407,7 @@ func textPositionExtended(asset c.Asset, styles c.Styles) string {
 
 }
 
-func textPositionExtendedLabels(asset c.Asset, styles c.Styles) string {
+func textPositionExtendedLabels(asset *c.Asset, styles c.Styles) string {
 
 	if asset.Holding.Quantity == 0.0 {
 		return ""
@@ -373,7 +418,7 @@ func textPositionExtendedLabels(asset c.Asset, styles c.Styles) string {
 		styles.TextLabel("Quantity:")
 }
 
-func textQuoteRange(asset c.Asset, styles c.Styles) string {
+func textQuoteRange(asset *c.Asset, styles c.Styles) string {
 
 	if asset.Class == c.AssetClassFuturesContract {
 
@@ -403,7 +448,7 @@ func textQuoteRange(asset c.Asset, styles c.Styles) string {
 
 }
 
-func textQuoteRangeLabels(asset c.Asset, styles c.Styles) string {
+func textQuoteRangeLabels(asset *c.Asset, styles c.Styles) string {
 
 	if asset.Class == c.AssetClassFuturesContract {
 
@@ -425,7 +470,7 @@ func textQuoteRangeLabels(asset c.Asset, styles c.Styles) string {
 	return ""
 }
 
-func textVolumeMarketCap(asset c.Asset) string {
+func textVolumeMarketCap(asset *c.Asset) string {
 
 	if asset.Class == c.AssetClassFuturesContract {
 		return u.ConvertFloatToString(asset.QuoteFutures.OpenInterest, true) +
@@ -438,7 +483,7 @@ func textVolumeMarketCap(asset c.Asset) string {
 		u.ConvertFloatToString(asset.QuoteExtended.Volume, true)
 }
 
-func textVolumeMarketCapLabels(asset c.Asset, styles c.Styles) string {
+func textVolumeMarketCapLabels(asset *c.Asset, styles c.Styles) string {
 
 	if asset.Class == c.AssetClassFuturesContract {
 		return styles.TextLabel("Open Interest:") +
@@ -455,7 +500,7 @@ func textSeparator(width int, styles c.Styles) string {
 	return styles.TextLine(strings.Repeat("─", width))
 }
 
-func textTags(asset c.Asset, styles c.Styles) string {
+func textTags(asset *c.Asset, styles c.Styles) string {
 
 	currencyText := asset.Currency.FromCurrencyCode
 
@@ -478,7 +523,7 @@ func formatTag(text string, style c.Styles) string {
 	return style.Tag(" " + text + " ")
 }
 
-func textMarketState(asset c.Asset, styles c.Styles) string {
+func textMarketState(asset *c.Asset, styles c.Styles) string {
 	if asset.Exchange.IsRegularTradingSession {
 		return styles.TextLabel(" ●  ")
 	}

@@ -19,28 +19,27 @@ type ConfigMonitor struct {
 	ClientWebsocket *websocket.Conn
 	Reference       c.Reference
 	Config          c.Config
-	OnUpdate        func()
 }
 
 // New creates a new instance of the Coinbase monitor
 func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
-
 	var coinbase *monitorCoinbase.MonitorCoinbase
 	coinbase = monitorCoinbase.NewMonitorCoinbase(
 		monitorCoinbase.Config{
-			Client:   *configMonitor.ClientHttp,
-			OnUpdate: configMonitor.OnUpdate,
+			Client: *configMonitor.ClientHttp,
 		},
 		monitorCoinbase.WithSymbolsUnderlying(configMonitor.Reference.SourceToUnderlyingAssetSymbols[c.QuoteSourceCoinbase]),
 		monitorCoinbase.WithStreamingURL("ws-feed.exchange.coinbase.com"),
 		monitorCoinbase.WithRefreshInterval(time.Duration(configMonitor.Config.RefreshInterval)*time.Second),
 	)
 
-	return &Monitor{
+	m := &Monitor{
 		monitors: map[c.QuoteSource]c.Monitor{
 			c.QuoteSourceCoinbase: coinbase,
 		},
-	}, nil
+	}
+
+	return m, nil
 }
 
 // SetSymbols sets the symbols for each monitor
@@ -52,6 +51,12 @@ func (m *Monitor) SetSymbols(assetGroup c.AssetGroup) {
 			monitor.SetSymbols(symbolBySource.Symbols)
 		}
 
+	}
+}
+
+func (m *Monitor) SetOnUpdate(onUpdate func(symbol string, quotePrice c.QuotePrice)) {
+	for _, monitor := range m.monitors {
+		monitor.SetOnUpdate(onUpdate)
 	}
 }
 

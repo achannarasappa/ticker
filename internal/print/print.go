@@ -143,8 +143,9 @@ func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Comm
 	return func(_ *cobra.Command, _ []string) {
 
 		monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
-			Config:    ctx.Config,
-			Reference: ctx.Reference,
+			ClientHttp: dep.HttpClients.Default,
+			Config:     ctx.Config,
+			Reference:  ctx.Reference,
 		})
 		assetGroupQuote := quote.GetAssetGroupQuote(monitors, dep)(ctx.Groups[0])
 		assets, _ := asset.GetAssets(*ctx, assetGroupQuote)
@@ -164,8 +165,9 @@ func RunSummary(dep *c.Dependencies, ctx *c.Context, options *Options) func(cmd 
 	return func(_ *cobra.Command, _ []string) {
 
 		monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
-			Config:    ctx.Config,
-			Reference: ctx.Reference,
+			ClientHttp: dep.HttpClients.Default,
+			Config:     ctx.Config,
+			Reference:  ctx.Reference,
 		})
 		assetGroupQuote := quote.GetAssetGroupQuote(monitors, dep)(ctx.Groups[0])
 		_, holdingSummary := asset.GetAssets(*ctx, assetGroupQuote)

@@ -43,7 +43,7 @@ var _ = Describe("Watchlist", func() {
 			},
 		})
 		m.Width = 175
-		m.Assets = []c.Asset{
+		setAssetsMsg := []c.Asset{
 			{
 				Symbol: "STOCK1", Name: "Stock 1 Inc. (gain)", QuoteExtended: c.QuoteExtended{MarketCap: 23467907, Volume: 4239786698},
 				QuotePrice: c.QuotePrice{Price: 105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
@@ -128,6 +128,8 @@ var _ = Describe("Watchlist", func() {
 				Exchange: c.Exchange{IsActive: false, IsRegularTradingSession: false},
 			},
 		}
+		m.Update(SetAssetsMsg(setAssetsMsg))
+
 		expected, _ := ioutil.ReadFile("./snapshots/watchlist-all-options.snap")
 		Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + string(expected)))
 	})
@@ -146,7 +148,7 @@ var _ = Describe("Watchlist", func() {
 						Sort:                  "",
 					},
 				})
-				m.Assets = []c.Asset{
+				setAssetsMsg := []c.Asset{
 					{
 
 						Symbol: "BTC-USD",
@@ -190,6 +192,7 @@ var _ = Describe("Watchlist", func() {
 						},
 					},
 				}
+				m.Update(SetAssetsMsg(setAssetsMsg))
 
 				expected := "────────────────────────────────────────────────────────────────────────────────"
 				Expect("\n" + getLine(removeFormatting(m.View()), 2)).To(Equal("\n" + expected))
@@ -207,7 +210,7 @@ var _ = Describe("Watchlist", func() {
 					ExtraInfoExchange: true,
 				},
 			})
-			m.Assets = []c.Asset{
+			setAssetsMsg := []c.Asset{
 				{
 
 					Symbol: "BTC-USD",
@@ -228,6 +231,8 @@ var _ = Describe("Watchlist", func() {
 					},
 				},
 			}
+			m.Update(SetAssetsMsg(setAssetsMsg))
+
 			expected := " USD   Real-Time   Cryptocurrency                                               "
 			Expect("\n" + getLine(removeFormatting(m.View()), 2)).To(Equal("\n" + expected))
 		})
@@ -240,7 +245,7 @@ var _ = Describe("Watchlist", func() {
 						ExtraInfoExchange: true,
 					},
 				})
-				m.Assets = []c.Asset{
+				setAssetsMsg := []c.Asset{
 					{
 						Symbol: "BTC-USD",
 						Name:   "Bitcoin",
@@ -260,6 +265,8 @@ var _ = Describe("Watchlist", func() {
 						},
 					},
 				}
+				m.Update(SetAssetsMsg(setAssetsMsg))
+
 				expected := " USD   Delayed 15min   Cryptocurrency                                           "
 				Expect("\n" + getLine(removeFormatting(m.View()), 2)).To(Equal("\n" + expected))
 			})
@@ -274,7 +281,7 @@ var _ = Describe("Watchlist", func() {
 						Currency:          "EUR",
 					},
 				})
-				m.Assets = []c.Asset{
+				setAssetsMsg := []c.Asset{
 					{
 						Symbol: "APPL",
 						Name:   "Apple, Inc",
@@ -295,6 +302,8 @@ var _ = Describe("Watchlist", func() {
 						},
 					},
 				}
+				m.Update(SetAssetsMsg(setAssetsMsg))
+
 				m.Context.Config.Currency = "EUR"
 				expected := " USD → EUR   Real-Time   NASDAQ                                                 "
 				Expect("\n" + getLine(removeFormatting(m.View()), 2)).To(Equal("\n" + expected))
@@ -312,7 +321,7 @@ var _ = Describe("Watchlist", func() {
 				},
 			})
 			m.Width = 165
-			m.Assets = []c.Asset{
+			setAssetsMsg := []c.Asset{
 				{
 					Symbol: "BTC-USD",
 					Name:   "Bitcoin",
@@ -338,7 +347,7 @@ var _ = Describe("Watchlist", func() {
 					},
 				},
 			}
-
+			m.Update(SetAssetsMsg(setAssetsMsg))
 			Expect(removeFormatting(m.View())).To(ContainSubstring("Day Range"))
 			Expect(removeFormatting(m.View())).To(ContainSubstring("52wk Range"))
 			Expect(removeFormatting(m.View())).To(ContainSubstring("100.00 - 200.00"))
@@ -354,7 +363,7 @@ var _ = Describe("Watchlist", func() {
 				},
 			})
 			m.Width = 135
-			m.Assets = []c.Asset{
+			setAssetsMsg := []c.Asset{
 				{
 					Symbol: "BTC-USD",
 					Name:   "Bitcoin",
@@ -371,7 +380,7 @@ var _ = Describe("Watchlist", func() {
 					},
 				},
 			}
-
+			m.Update(SetAssetsMsg(setAssetsMsg))
 			It("should not render the day range field", func() {
 				Expect(removeFormatting(m.View())).ToNot(ContainSubstring("Day Range"))
 				Expect(removeFormatting(m.View())).ToNot(ContainSubstring("52wk Range"))
@@ -394,7 +403,7 @@ var _ = Describe("Watchlist", func() {
 					},
 				})
 				m.Width = 150
-				m.Assets = []c.Asset{
+				setAssetsMsg := []c.Asset{
 					{
 						Symbol: "BIT-27DEC24-CDE",
 						Name:   "Nano Bitcoin Futures",
@@ -417,6 +426,8 @@ var _ = Describe("Watchlist", func() {
 						},
 					},
 				}
+				m.Update(SetAssetsMsg(setAssetsMsg))
+
 				Expect(removeFormatting(m.View())).To(ContainSubstring("50312"))
 				Expect(removeFormatting(m.View())).To(ContainSubstring("5d 10h"))
 				Expect(removeFormatting(m.View())).To(ContainSubstring("10.00%"))
@@ -431,7 +442,7 @@ var _ = Describe("Watchlist", func() {
 						},
 					})
 					m.Width = 150
-					m.Assets = []c.Asset{
+					setAssetsMsg := []c.Asset{
 						{
 							Symbol: "BIT-27DEC24-CDE",
 							Name:   "Nano Bitcoin Futures",
@@ -445,6 +456,8 @@ var _ = Describe("Watchlist", func() {
 							},
 						},
 					}
+					m.Update(SetAssetsMsg(setAssetsMsg))
+
 					Expect(removeFormatting(m.View())).ToNot(ContainSubstring("Index Price"))
 					Expect(removeFormatting(m.View())).ToNot(ContainSubstring("Basis"))
 				})
@@ -459,7 +472,7 @@ var _ = Describe("Watchlist", func() {
 						},
 					})
 					m.Width = 150
-					m.Assets = []c.Asset{
+					setAssetsMsg := []c.Asset{
 						{
 							Symbol: "BIT-27DEC24-CDE",
 							Name:   "Nano Bitcoin Futures",
@@ -478,6 +491,8 @@ var _ = Describe("Watchlist", func() {
 							},
 						},
 					}
+					m.Update(SetAssetsMsg(setAssetsMsg))
+
 					Expect(removeFormatting(m.View())).To(ContainSubstring("Day Range"))
 					Expect(removeFormatting(m.View())).To(ContainSubstring("49000.00 - 50500.00"))
 					Expect(removeFormatting(m.View())).To(ContainSubstring("Expiry"))
@@ -496,7 +511,7 @@ var _ = Describe("Watchlist", func() {
 				},
 			})
 			m.Width = 120
-			m.Assets = []c.Asset{
+			setAssetsMsg := []c.Asset{
 				{
 					Symbol: "PTON",
 					Name:   "Peloton",
@@ -518,6 +533,7 @@ var _ = Describe("Watchlist", func() {
 					},
 				},
 			}
+			m.Update(SetAssetsMsg(setAssetsMsg))
 			Expect(removeFormatting(m.View())).To(ContainSubstring("Quantity"))
 			Expect(removeFormatting(m.View())).To(ContainSubstring("Avg. Cost"))
 			Expect(removeFormatting(m.View())).To(ContainSubstring("100.00"))
@@ -533,7 +549,7 @@ var _ = Describe("Watchlist", func() {
 					},
 				})
 				m.Width = 120
-				m.Assets = []c.Asset{
+				setAssetsMsg := []c.Asset{
 					{
 						Symbol: "PENNY",
 						Name:   "A Penny Stock",
@@ -555,6 +571,7 @@ var _ = Describe("Watchlist", func() {
 						},
 					},
 				}
+				m.Update(SetAssetsMsg(setAssetsMsg))
 				Expect(removeFormatting(m.View())).To(ContainSubstring("Quantity"))
 				Expect(removeFormatting(m.View())).To(ContainSubstring("Avg. Cost"))
 				Expect(removeFormatting(m.View())).To(ContainSubstring("92709.00"))
@@ -571,7 +588,7 @@ var _ = Describe("Watchlist", func() {
 					},
 				})
 				m.Width = 120
-				m.Assets = []c.Asset{
+				setAssetsMsg := []c.Asset{
 					{
 						Symbol: "PTON",
 						Name:   "Peloton",
@@ -586,6 +603,7 @@ var _ = Describe("Watchlist", func() {
 						},
 					},
 				}
+				m.Update(SetAssetsMsg(setAssetsMsg))
 				Expect(removeFormatting(m.View())).ToNot(ContainSubstring("Quantity"))
 				Expect(removeFormatting(m.View())).ToNot(ContainSubstring("Avg. Cost"))
 			})

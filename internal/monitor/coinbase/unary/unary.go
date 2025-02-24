@@ -1,14 +1,15 @@
 package unary
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	"github.com/go-resty/resty/v2"
 )
 
 const (
@@ -20,29 +21,35 @@ type Response struct {
 	Products []ResponseQuote `json:"products"`
 }
 
+// ResponseQuoteFcmTradingSessionDetails represents the trading session details for a product
+type ResponseQuoteFcmTradingSessionDetails struct {
+	IsSessionOpen bool `json:"is_session_open"`
+}
+
+// ResponseQuoteFutureProductDetails represents the details specific to futures contracts
+type ResponseQuoteFutureProductDetails struct {
+	ContractDisplayName string `json:"contract_display_name"`
+	GroupDescription    string `json:"group_description"`
+	ContractRootUnit    string `json:"contract_root_unit"`
+	ExpirationDate      string `json:"contract_expiry"`
+	ExpirationTimezone  string `json:"expiration_timezone"`
+}
+
 // ResponseQuote represents a quote of a single product from the Coinbase API
 type ResponseQuote struct {
-	Symbol                   string `json:"base_display_symbol"`
-	ProductID                string `json:"product_id"`
-	ShortName                string `json:"base_name"`
-	Price                    string `json:"price"`
-	PriceChange24H           string `json:"price_percentage_change_24h"`
-	Volume24H                string `json:"volume_24h"`
-	DisplayName              string `json:"display_name"`
-	MarketState              string `json:"status"`
-	Currency                 string `json:"quote_currency_id"`
-	ExchangeName             string `json:"product_venue"`
-	FcmTradingSessionDetails struct {
-		IsSessionOpen bool `json:"is_session_open"`
-	} `json:"fcm_trading_session_details"`
-	FutureProductDetails struct {
-		ContractDisplayName string `json:"contract_display_name"`
-		GroupDescription    string `json:"group_description"`
-		ContractRootUnit    string `json:"contract_root_unit"`
-		ExpirationDate      string `json:"contract_expiry"`
-		ExpirationTimezone  string `json:"expiration_timezone"`
-	} `json:"future_product_details"`
-	ProductType string `json:"product_type"`
+	Symbol                   string                                `json:"base_display_symbol"`
+	ProductID                string                                `json:"product_id"`
+	ShortName                string                                `json:"base_name"`
+	Price                    string                                `json:"price"`
+	PriceChange24H           string                                `json:"price_percentage_change_24h"`
+	Volume24H                string                                `json:"volume_24h"`
+	DisplayName              string                                `json:"display_name"`
+	MarketState              string                                `json:"status"`
+	Currency                 string                                `json:"quote_currency_id"`
+	ExchangeName             string                                `json:"product_venue"`
+	FcmTradingSessionDetails ResponseQuoteFcmTradingSessionDetails `json:"fcm_trading_session_details"`
+	FutureProductDetails     ResponseQuoteFutureProductDetails     `json:"future_product_details"`
+	ProductType              string                                `json:"product_type"`
 }
 
 type AssetQuotesIndexed struct {
@@ -51,12 +58,14 @@ type AssetQuotesIndexed struct {
 }
 
 type UnaryAPI struct {
-	client resty.Client
+	client  *http.Client
+	baseURL string
 }
 
-func NewUnaryAPI(client resty.Client) *UnaryAPI {
+func NewUnaryAPI(baseURL string) *UnaryAPI {
 	return &UnaryAPI{
-		client: client,
+		client:  &http.Client{},
+		baseURL: baseURL,
 	}
 }
 
@@ -184,23 +193,33 @@ func transformResponseQuotes(symbols []string, responseQuotes []ResponseQuote) [
 }
 
 func (u *UnaryAPI) GetAssetQuotes(symbols []string) ([]c.AssetQuote, error) {
-
-	var err error
-	var res *resty.Response
-
 	if len(symbols) == 0 {
 		return []c.AssetQuote{}, nil
 	}
 
-	res, err = u.client.R().
-		SetResult(Response{}).
-		SetQueryParamsFromValues(url.Values{"product_ids": symbols}).
-		Get("https://api.coinbase.com/api/v3/brokerage/market/products")
+	// Build URL with query parameters
+	reqURL, _ := url.Parse(u.baseURL + "/api/v3/brokerage/market/products")
 
+	q := reqURL.Query()
+	q["product_ids"] = symbols
+	reqURL.RawQuery = q.Encode()
+
+	// Make request
+	resp, err := u.client.Get(reqURL.String())
 	if err != nil {
-		return []c.AssetQuote{}, err
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("request failed with status %d", resp.StatusCode)
 	}
 
-	return transformResponseQuotes(symbols, res.Result().(*Response).Products), nil //nolint:forcetypeassert
+	// Decode response
+	var result Response
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
 
+	return transformResponseQuotes(symbols, result.Products), nil
 }

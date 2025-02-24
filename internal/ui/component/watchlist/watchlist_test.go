@@ -134,6 +134,126 @@ var _ = Describe("Watchlist", func() {
 		Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + string(expected)))
 	})
 
+	When("the prices changes for a single symbol", func() {
+
+		It("should update the price for the symbol", func() {
+			m := NewModel(c.Context{
+				Reference: c.Reference{Styles: stylesFixture},
+				Config: c.Config{
+					ShowHoldings: false,
+					Sort:         "alpha",
+				},
+			})
+
+			// Initial state
+			initialAssets := []c.Asset{
+				{
+					Symbol: "AAPL",
+					Name:   "Apple Inc.",
+					QuotePrice: c.QuotePrice{
+						Price:         150.00,
+						Change:        5.00,
+						ChangePercent: 3.33,
+					},
+					Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: true},
+				},
+			}
+			m.Update(SetAssetsMsg(initialAssets))
+			initialView := m.View()
+
+			// Update price using SetAssetQuotePriceMsg
+			m.Update(SetAssetQuotePriceMsg{
+				Symbol: "AAPL",
+				QuotePrice: c.QuotePrice{
+					Price:         160.00,
+					Change:        10.00,
+					ChangePercent: 6.67,
+				},
+			})
+
+			updatedView := m.View()
+			Expect(removeFormatting(updatedView)).To(ContainSubstring("160.00"))
+			Expect(removeFormatting(updatedView)).To(ContainSubstring("10.00"))
+			Expect(removeFormatting(updatedView)).To(ContainSubstring("6.67%"))
+			Expect(removeFormatting(updatedView)).ToNot(Equal(removeFormatting(initialView)))
+		})
+
+		When("symbol is not already on the watchlist", func() {
+			It("should ignore that symbol", func() {
+				m := NewModel(c.Context{
+					Reference: c.Reference{Styles: stylesFixture},
+					Config: c.Config{
+						ShowHoldings: false,
+						Sort:         "alpha",
+					},
+				})
+
+				// Initial state
+				initialAssets := []c.Asset{
+					{
+						Symbol: "AAPL",
+						Name:   "Apple Inc.",
+						QuotePrice: c.QuotePrice{
+							Price:         150.00,
+							Change:        5.00,
+							ChangePercent: 3.33,
+						},
+						Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: true},
+					},
+				}
+				m.Update(SetAssetsMsg(initialAssets))
+				initialView := m.View()
+
+				// Try to update non-existent symbol
+				m.Update(SetAssetQuotePriceMsg{
+					Symbol: "MSFT",
+					QuotePrice: c.QuotePrice{
+						Price:         300.00,
+						Change:        10.00,
+						ChangePercent: 3.33,
+					},
+				})
+
+				Expect(removeFormatting(m.View())).To(Equal(removeFormatting(initialView)))
+			})
+		})
+	})
+
+	When("an unknown update message is received", func() {
+		It("should ignore the message", func() {
+			m := NewModel(c.Context{
+				Reference: c.Reference{Styles: stylesFixture},
+				Config: c.Config{
+					ShowHoldings: false,
+					Sort:         "alpha",
+				},
+			})
+
+			// Initial state
+			initialAssets := []c.Asset{
+				{
+					Symbol: "AAPL",
+					Name:   "Apple Inc.",
+					QuotePrice: c.QuotePrice{
+						Price:         150.00,
+						Change:        5.00,
+						ChangePercent: 3.33,
+					},
+					Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: true},
+				},
+			}
+			m.Update(SetAssetsMsg(initialAssets))
+			initialView := m.View()
+
+			// Send unknown message type
+			type UnknownMsg struct{ Data string }
+			m.Update(UnknownMsg{Data: "test"})
+
+			// View should remain unchanged
+			Expect(removeFormatting(m.View())).To(Equal(removeFormatting(initialView)))
+		})
+	})
+
 	When("there are more than one symbols on the watchlist", func() {
 
 		When("the show-separator layout flag is set", func() {
@@ -638,6 +758,23 @@ var _ = Describe("Watchlist", func() {
 			})
 			m.Width = 70
 			Expect(m.View()).To(Equal("Terminal window too narrow to render content\nResize to fix (70/80)"))
+		})
+	})
+
+	Describe("Init", func() {
+		It("should return nil command", func() {
+			m := NewModel(c.Context{
+				Reference: c.Reference{Styles: stylesFixture},
+				Config: c.Config{
+					ShowHoldings:          false,
+					ExtraInfoExchange:     false,
+					ExtraInfoFundamentals: false,
+					Sort:                  "alpha",
+				},
+			})
+
+			cmd := m.Init()
+			Expect(cmd).To(BeNil())
 		})
 	})
 })

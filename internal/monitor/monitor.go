@@ -29,7 +29,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 			Client: *configMonitor.ClientHttp,
 		},
 		monitorCoinbase.WithSymbolsUnderlying(configMonitor.Reference.SourceToUnderlyingAssetSymbols[c.QuoteSourceCoinbase]),
-		monitorCoinbase.WithStreamingURL("ws-feed.exchange.coinbase.com"),
+		monitorCoinbase.WithStreamingURL("wss://ws-feed.exchange.coinbase.com"),
 		monitorCoinbase.WithRefreshInterval(time.Duration(configMonitor.Config.RefreshInterval)*time.Second),
 	)
 

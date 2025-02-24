@@ -153,7 +153,7 @@ func (s *Streamer) SetURL(url string) error {
 		return fmt.Errorf("cannot set URL while streamer is connected")
 	}
 
-	s.url = "wss://" + url
+	s.url = url
 	return nil
 }
 

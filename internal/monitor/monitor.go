@@ -26,7 +26,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 	var coinbase *monitorCoinbase.MonitorCoinbase
 	coinbase = monitorCoinbase.NewMonitorCoinbase(
 		monitorCoinbase.Config{
-			Client: *configMonitor.ClientHttp,
+			UnaryURL: "https://api.coinbase.com",
 		},
 		monitorCoinbase.WithSymbolsUnderlying(configMonitor.Reference.SourceToUnderlyingAssetSymbols[c.QuoteSourceCoinbase]),
 		monitorCoinbase.WithStreamingURL("wss://ws-feed.exchange.coinbase.com"),

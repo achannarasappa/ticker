@@ -12,7 +12,6 @@ import (
 	poller "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/poller"
 	streamer "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/streamer"
 	unary "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/unary"
-	resty "github.com/go-resty/resty/v2"
 )
 
 type MonitorCoinbase struct {
@@ -44,7 +43,7 @@ type input struct {
 
 // Config contains the required configuration for the Coinbase monitor
 type Config struct {
-	Client resty.Client
+	UnaryURL string
 }
 
 // Option defines an option for configuring the monitor
@@ -54,7 +53,7 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	unaryAPI := unary.NewUnaryAPI(config.Client)
+	unaryAPI := unary.NewUnaryAPI(config.UnaryURL)
 
 	monitor := &MonitorCoinbase{
 		assetQuotesCache:              make(map[string]*c.AssetQuote),

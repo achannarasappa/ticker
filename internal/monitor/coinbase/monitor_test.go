@@ -1,25 +1,35 @@
 package monitorCoinbase_test
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/go-resty/resty/v2"
-	"github.com/jarcoal/httpmock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 	monitorCoinbase "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase"
+	unary "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/unary"
+	"github.com/onsi/gomega/ghttp"
 )
 
 var _ = Describe("Monitor Coinbase", func() {
+	var (
+		server *ghttp.Server
+	)
+
+	BeforeEach(func() {
+		server = ghttp.NewServer()
+	})
+
+	AfterEach(func() {
+		server.Close()
+	})
 
 	Describe("NewMonitorCoinbase", func() {
 		It("should return a new MonitorCoinbase", func() {
 			monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-				Client: *resty.New(),
+				UnaryURL: server.URL(),
 			})
 			Expect(monitor).NotTo(BeNil())
 		})
@@ -28,7 +38,7 @@ var _ = Describe("Monitor Coinbase", func() {
 			It("should set the underlying symbols", func() {
 				underlyingSymbols := []string{"BTC-USD"}
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-					Client: *resty.New(),
+					UnaryURL: server.URL(),
 				}, monitorCoinbase.WithSymbolsUnderlying(underlyingSymbols))
 
 				Expect(monitor).NotTo(BeNil())
@@ -39,7 +49,7 @@ var _ = Describe("Monitor Coinbase", func() {
 			It("should set the streaming URL", func() {
 				url := "wss://websocket-feed.exchange.coinbase.com"
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-					Client: *resty.New(),
+					UnaryURL: server.URL(),
 				}, monitorCoinbase.WithStreamingURL(url))
 
 				Expect(monitor).NotTo(BeNil())
@@ -50,7 +60,7 @@ var _ = Describe("Monitor Coinbase", func() {
 			It("should set the refresh interval", func() {
 				interval := 10 * time.Second
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-					Client: *resty.New(),
+					UnaryURL: server.URL(),
 				}, monitorCoinbase.WithRefreshInterval(interval))
 
 				Expect(monitor).NotTo(BeNil())
@@ -61,7 +71,7 @@ var _ = Describe("Monitor Coinbase", func() {
 			It("should set the onUpdate function", func() {
 				onUpdate := func(symbol string, pq c.QuotePrice) {}
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-					Client: *resty.New(),
+					UnaryURL: server.URL(),
 				})
 				monitor.SetOnUpdate(onUpdate)
 
@@ -71,35 +81,32 @@ var _ = Describe("Monitor Coinbase", func() {
 	})
 
 	Describe("GetAssetQuotes", func() {
-		BeforeEach(func() {
-			responseFixture := `{
-				"products": [
-					{
-						"base_display_symbol": "BTC",
-						"product_type": "SPOT",
-						"product_id": "BTC-USD",
-						"base_name": "Bitcoin",
-						"price": "50000.00",
-						"price_percentage_change_24h": "2.5",
-						"volume_24h": "1000.50",
-						"display_name": "Bitcoin",
-						"status": "online",
-						"quote_currency_id": "USD",
-						"product_venue": "CBE"
-					}
-				]
-			}`
-			responseUrl := `=~\/api\/v3\/brokerage\/market\/products.*product_ids\=BTC\-USD.*`
-			httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
-				resp := httpmock.NewStringResponse(200, responseFixture)
-				resp.Header.Set("Content-Type", "application/json")
-				return resp, nil
-			})
-		})
-
 		It("should return the asset quotes", func() {
+			server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BTC-USD"),
+					ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
+						Products: []unary.ResponseQuote{
+							{
+								Symbol:         "BTC",
+								ProductID:      "BTC-USD",
+								ShortName:      "Bitcoin",
+								Price:          "50000.00",
+								PriceChange24H: "2.5",
+								Volume24H:      "1000.50",
+								DisplayName:    "Bitcoin",
+								MarketState:    "online",
+								Currency:       "USD",
+								ExchangeName:   "CBE",
+								ProductType:    "SPOT",
+							},
+						},
+					}),
+				),
+			)
+
 			monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-				Client: *client,
+				UnaryURL: server.URL(),
 			})
 
 			monitor.SetSymbols([]string{"BTC-USD"})
@@ -114,13 +121,15 @@ var _ = Describe("Monitor Coinbase", func() {
 
 		When("the http request fails", func() {
 			It("should return an error", func() {
-				// Override the previous responder with an error response
-				responseUrl := `=~\/api\/v3\/brokerage\/market\/products.*product_ids\=BTC\-USD.*`
-				httpmock.RegisterResponder("GET", responseUrl,
-					httpmock.NewErrorResponder(fmt.Errorf("network error")))
+				server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BTC-USD"),
+						ghttp.RespondWith(http.StatusInternalServerError, ""),
+					),
+				)
 
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-					Client: *client,
+					UnaryURL: server.URL(),
 				})
 
 				monitor.SetSymbols([]string{"BTC-USD"})
@@ -132,40 +141,63 @@ var _ = Describe("Monitor Coinbase", func() {
 
 		When("the ignoreCache flag is set to true", func() {
 			It("should return the asset quotes from the cache", func() {
+				baseResponse := func() http.HandlerFunc {
+					return ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BTC-USD"),
+						ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
+							Products: []unary.ResponseQuote{
+								{
+									Symbol:         "BTC",
+									ProductID:      "BTC-USD",
+									ShortName:      "Bitcoin",
+									Price:          "50000.00",
+									PriceChange24H: "2.5",
+									Volume24H:      "1000.50",
+									DisplayName:    "Bitcoin",
+									MarketState:    "online",
+									Currency:       "USD",
+									ExchangeName:   "CBE",
+									ProductType:    "SPOT",
+								},
+							},
+						}),
+					)
+				}
+
+				// First response
+				server.AppendHandlers(
+					baseResponse(),
+					baseResponse(),
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BTC-USD"),
+						ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
+							Products: []unary.ResponseQuote{
+								{
+									Symbol:         "BTC",
+									ProductID:      "BTC-USD",
+									ShortName:      "Bitcoin",
+									Price:          "55000.00",
+									PriceChange24H: "5.0",
+									Volume24H:      "1000.50",
+									DisplayName:    "Bitcoin",
+									MarketState:    "online",
+									Currency:       "USD",
+									ExchangeName:   "CBE",
+									ProductType:    "SPOT",
+								},
+							},
+						}),
+					),
+				)
+
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-					Client: *client,
+					UnaryURL: server.URL(),
 				})
 
 				monitor.SetSymbols([]string{"BTC-USD"})
 
 				// First call to populate cache
 				firstQuotes := monitor.GetAssetQuotes(true)
-
-				// Modify the HTTP mock to return different data
-				responseFixture := `{
-					"products": [
-						{
-							"base_display_symbol": "BTC",
-							"product_type": "SPOT",
-							"product_id": "BTC-USD",
-							"base_name": "Bitcoin",
-							"price": "55000.00",
-							"price_percentage_change_24h": "5.0",
-							"volume_24h": "2000.50",
-							"display_name": "Bitcoin",
-							"status": "online",
-							"quote_currency_id": "USD",
-							"product_venue": "CBE"
-						}
-					]
-				}`
-				responseUrl := `=~\/api\/v3\/brokerage\/market\/products.*product_ids\=BTC\-USD.*`
-				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
-					resp := httpmock.NewStringResponse(200, responseFixture)
-					resp.Header.Set("Content-Type", "application/json")
-					return resp, nil
-				})
-
 				// Second call with ignoreCache=false should return cached data
 				secondQuotes := monitor.GetAssetQuotes(false)
 
@@ -179,7 +211,7 @@ var _ = Describe("Monitor Coinbase", func() {
 	Describe("Start", func() {
 		It("should start the monitor", func() {
 			monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-				Client: *client,
+				UnaryURL: server.URL(),
 			}, monitorCoinbase.WithRefreshInterval(10*time.Second))
 
 			err := monitor.Start()
@@ -189,7 +221,7 @@ var _ = Describe("Monitor Coinbase", func() {
 		When("the monitor is already started", func() {
 			It("should return an error", func() {
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-					Client: *client,
+					UnaryURL: server.URL(),
 				}, monitorCoinbase.WithRefreshInterval(10*time.Second))
 
 				err := monitor.Start()
@@ -202,22 +234,23 @@ var _ = Describe("Monitor Coinbase", func() {
 		})
 
 		When("the initial unary request for quotes fails", func() {
-			BeforeEach(func() {
-				responseUrl := `=~\/api\/v3\/brokerage\/market\/products.*product_ids\=BTC\-USD.*`
-				httpmock.RegisterResponder("GET", responseUrl,
-					httpmock.NewErrorResponder(fmt.Errorf("network error")))
-			})
-
 			It("should return an error", func() {
+				server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BTC-USD"),
+						ghttp.RespondWith(http.StatusInternalServerError, "network error"),
+					),
+				)
+
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-					Client: *client,
+					UnaryURL: server.URL(),
 				}, monitorCoinbase.WithRefreshInterval(10*time.Second))
 
 				monitor.SetSymbols([]string{"BTC-USD"})
 
 				err := monitor.Start()
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("network error"))
+				Expect(err.Error()).To(ContainSubstring("request failed with status 500"))
 			})
 		})
 
@@ -249,7 +282,7 @@ var _ = Describe("Monitor Coinbase", func() {
 
 		It("should stop the monitor", func() {
 			monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-				Client: *client,
+				UnaryURL: server.URL(),
 			}, monitorCoinbase.WithRefreshInterval(10*time.Second))
 
 			err := monitor.Start()
@@ -262,7 +295,7 @@ var _ = Describe("Monitor Coinbase", func() {
 		When("the monitor is not started", func() {
 			It("should return an error", func() {
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-					Client: *client,
+					UnaryURL: server.URL(),
 				})
 
 				err := monitor.Stop()

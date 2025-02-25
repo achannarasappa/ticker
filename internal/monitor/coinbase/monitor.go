@@ -156,11 +156,7 @@ func (m *MonitorCoinbase) SetSymbols(productIds []string) error {
 	m.updateAssetQuotesCache(m.assetQuotesResponse)
 
 	// Coinbase steaming API for CBE (spot) only and not CDE (futures)
-	err = m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming) // TODO: update to return and handle error
-
-	if err != nil {
-		return err
-	}
+	m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming)
 
 	return nil
 

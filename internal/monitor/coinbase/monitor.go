@@ -54,6 +54,11 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	unaryAPI := unary.NewUnaryAPI(config.UnaryURL)
+	pollerConfig := poller.PollerConfig{
+		ChanUpdateQuotePrice:    make(chan c.MessageUpdate[c.QuotePrice]),
+		ChanUpdateQuoteExtended: make(chan c.MessageUpdate[c.QuoteExtended]),
+	}
+	p := poller.NewPoller(ctx, pollerConfig)
 
 	monitor := &MonitorCoinbase{
 		assetQuotesCache:              make(map[string]*c.AssetQuote),
@@ -62,7 +67,7 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 		chanStreamUpdateQuoteExtended: make(chan c.MessageUpdate[c.QuoteExtended]),
 		chanStreamUpdateExchange:      make(chan c.MessageUpdate[c.Exchange]),
 		chanPollUpdateAssetQuote:      make(chan c.MessageUpdate[c.AssetQuote]),
-		poller:                        poller.NewPoller(ctx, unaryAPI),
+		poller:                        p,
 		unaryAPI:                      unaryAPI,
 		ctx:                           ctx,
 		cancel:                        cancel,
@@ -157,6 +162,7 @@ func (m *MonitorCoinbase) SetSymbols(productIds []string) error {
 
 	// Coinbase steaming API for CBE (spot) only and not CDE (futures)
 	m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming)
+	m.poller.SetSymbols(m.productIdsPolling)
 
 	return nil
 
@@ -283,6 +289,7 @@ func (m *MonitorCoinbase) handleUpdates() {
 
 			m.mu.Unlock()
 
+			// TODO: set min update publish frequency
 			m.onUpdate(assetQuote.Symbol, assetQuote.QuotePrice)
 
 			continue

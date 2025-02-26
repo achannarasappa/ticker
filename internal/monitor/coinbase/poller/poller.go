@@ -1,31 +1,42 @@
-package monitorCoinbase
+package poller
 
 import (
 	"context"
 	"fmt"
 	"time"
 
+	c "github.com/achannarasappa/ticker/v4/internal/common"
 	"github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/unary"
 )
 
 type Poller struct {
-	refreshInterval time.Duration
-	symbols         []string
-	isStarted       bool
-	ctx             context.Context
-	cancel          context.CancelFunc
-	unaryAPI        *unary.UnaryAPI
+	refreshInterval         time.Duration
+	symbols                 []string
+	isStarted               bool
+	ctx                     context.Context
+	cancel                  context.CancelFunc
+	unaryAPI                *unary.UnaryAPI
+	chanUpdateQuotePrice    chan c.MessageUpdate[c.QuotePrice]
+	chanUpdateQuoteExtended chan c.MessageUpdate[c.QuoteExtended]
 }
 
-func NewPoller(ctx context.Context, unaryAPI *unary.UnaryAPI) *Poller {
+type PollerConfig struct {
+	UnaryAPI                *unary.UnaryAPI
+	ChanUpdateQuotePrice    chan c.MessageUpdate[c.QuotePrice]
+	ChanUpdateQuoteExtended chan c.MessageUpdate[c.QuoteExtended]
+}
+
+func NewPoller(ctx context.Context, config PollerConfig) *Poller {
 	ctx, cancel := context.WithCancel(ctx)
 
 	return &Poller{
-		refreshInterval: 0,
-		isStarted:       false,
-		ctx:             ctx,
-		cancel:          cancel,
-		unaryAPI:        unaryAPI,
+		refreshInterval:         0,
+		isStarted:               false,
+		ctx:                     ctx,
+		cancel:                  cancel,
+		unaryAPI:                config.UnaryAPI,
+		chanUpdateQuotePrice:    config.ChanUpdateQuotePrice,
+		chanUpdateQuoteExtended: config.ChanUpdateQuoteExtended,
 	}
 }
 
@@ -61,13 +72,29 @@ func (p *Poller) Start() error {
 
 		for {
 			select {
+			case <-p.ctx.Done():
+				return
 			case <-ticker.C:
 				if len(p.symbols) == 0 {
 					continue
 				}
-				p.unaryAPI.GetAssetQuotes(p.symbols)
-			case <-p.ctx.Done():
-				return
+				assetQuotes, err := p.unaryAPI.GetAssetQuotes(p.symbols)
+				if err != nil {
+					// TODO: send error to error channel
+					continue
+				}
+
+				for _, assetQuote := range assetQuotes {
+					p.chanUpdateQuotePrice <- c.MessageUpdate[c.QuotePrice]{
+						ID:   assetQuote.Meta.SymbolInSourceAPI,
+						Data: assetQuote.QuotePrice,
+					}
+
+					p.chanUpdateQuoteExtended <- c.MessageUpdate[c.QuoteExtended]{
+						ID:   assetQuote.Meta.SymbolInSourceAPI,
+						Data: assetQuote.QuoteExtended,
+					}
+				}
 			default:
 			}
 		}

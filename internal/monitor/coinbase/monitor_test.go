@@ -106,18 +106,46 @@ var _ = Describe("Monitor Coinbase", func() {
 				),
 			)
 
+			server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BIT-28MAR25-CDE"),
+					ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
+						Products: []unary.ResponseQuote{
+							{
+								Symbol:         "BIT-28MAR25-CDE",
+								ProductID:      "BIT-28MAR25-CDE",
+								ShortName:      "Nano Bitcoin Futures",
+								Price:          "50000.00",
+								PriceChange24H: "2.5",
+								Volume24H:      "1000.50",
+								DisplayName:    "Nano Bitcoin Futures",
+								MarketState:    "online",
+								Currency:       "USD",
+								ExchangeName:   "CDE",
+								ProductType:    "FUTURE",
+								FutureProductDetails: unary.ResponseQuoteFutureProductDetails{
+									GroupDescription:   "Nano Bitcoin Futures",
+									ContractRootUnit:   "BTC",
+									ExpirationDate:     "2025-03-28T16:00:00Z",
+									ExpirationTimezone: "America/New_York",
+								},
+							},
+						},
+					}),
+				),
+			)
+
 			monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 				UnaryURL: server.URL(),
 			})
 
-			monitor.SetSymbols([]string{"BTC-USD"})
-
+			monitor.SetSymbols([]string{"BIT-28MAR25-CDE"})
 			assetQuotes := monitor.GetAssetQuotes(true)
+
 			Expect(assetQuotes).To(HaveLen(1))
-			Expect(assetQuotes[0].Symbol).To(Equal("BTC"))
-			Expect(assetQuotes[0].Name).To(Equal("Bitcoin"))
-			Expect(assetQuotes[0].QuotePrice.Price).To(Equal(50000.00))
-			Expect(assetQuotes[0].QuotePrice.ChangePercent).To(Equal(2.5))
+			Expect(assetQuotes[0].Symbol).To(Equal("BIT-28MAR25-CDE"))
+			Expect(assetQuotes[0].Name).To(Equal("Nano Bitcoin Futures"))
+			Expect(assetQuotes[0].Class).To(Equal(c.AssetClassFuturesContract))
 		})
 
 		When("the http request fails", func() {
@@ -294,7 +322,41 @@ var _ = Describe("Monitor Coinbase", func() {
 		})
 
 		When("the poller fails to start", func() {
-			PIt("should return an error", func() {})
+			It("should return an error", func() {
+
+				server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=ETH-USD"),
+						ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
+							Products: []unary.ResponseQuote{
+								{
+									Symbol:         "ETH",
+									ProductID:      "ETH-USD",
+									ShortName:      "Ethereum",
+									Price:          "1285.22",
+									PriceChange24H: "2.5",
+									Volume24H:      "245532.79",
+									DisplayName:    "Ethereum",
+									MarketState:    "online",
+									Currency:       "USD",
+									ExchangeName:   "CBE",
+									ProductType:    "SPOT",
+								},
+							},
+						}),
+					),
+				)
+
+				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
+					UnaryURL: server.URL(),
+				})
+
+				monitor.SetSymbols([]string{"ETH-USD"})
+
+				err := monitor.Start()
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("refresh interval is not set"))
+			})
 		})
 
 		When("there is a price update", func() {

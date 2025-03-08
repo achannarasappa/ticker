@@ -35,17 +35,6 @@ var _ = Describe("Monitor Coinbase", func() {
 			Expect(monitor).NotTo(BeNil())
 		})
 
-		When("the underlying symbols are set", func() {
-			It("should set the underlying symbols", func() {
-				underlyingSymbols := []string{"BTC-USD"}
-				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-					UnaryURL: server.URL(),
-				}, monitorCoinbase.WithSymbolsUnderlying(underlyingSymbols))
-
-				Expect(monitor).NotTo(BeNil())
-			})
-		})
-
 		When("the streaming URL is set", func() {
 			It("should set the streaming URL", func() {
 				url := "wss://websocket-feed.exchange.coinbase.com"
@@ -70,11 +59,11 @@ var _ = Describe("Monitor Coinbase", func() {
 
 		When("the onUpdate function is set", func() {
 			It("should set the onUpdate function", func() {
-				onUpdate := func(symbol string, pq c.QuotePrice) {}
+				onUpdate := func(symbol string, asset c.Asset) {}
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL: server.URL(),
 				})
-				monitor.SetOnUpdate(onUpdate)
+				monitor.SetOnUpdateAsset(onUpdate)
 
 				Expect(monitor).NotTo(BeNil())
 			})
@@ -83,53 +72,68 @@ var _ = Describe("Monitor Coinbase", func() {
 
 	Describe("GetAssetQuotes", func() {
 		It("should return the asset quotes", func() {
-			server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
+
+			quoteFutures := unary.ResponseQuote{
+				Symbol:         "BIT-31JAN25-CDE",
+				ProductID:      "BIT-31JAN25-CDE",
+				ShortName:      "Bitcoin Futures",
+				Price:          "60000.00",
+				PriceChange24H: "5.00",
+				Volume24H:      "1000000.00",
+				MarketState:    "online",
+				Currency:       "USD",
+				ExchangeName:   "CDE",
+				ProductType:    "FUTURE",
+				FutureProductDetails: unary.ResponseQuoteFutureProductDetails{
+					ContractRootUnit:   "BTC",
+					GroupDescription:   "Bitcoin January 2025 Future",
+					ExpirationDate:     "2025-01-31",
+					ExpirationTimezone: "America/New_York",
+				},
+			}
+			quoteSpotBTC := unary.ResponseQuote{
+				Symbol:         "BTC",
+				ProductID:      "BTC-USD",
+				ShortName:      "Bitcoin",
+				Price:          "50000.00",
+				PriceChange24H: "5.00",
+				Volume24H:      "1000000.00",
+				MarketState:    "online",
+				Currency:       "USD",
+				ExchangeName:   "CBE",
+				ProductType:    "SPOT",
+			}
+			quoteSpotETH := unary.ResponseQuote{
+				Symbol:         "ETH",
+				ProductID:      "ETH-USD",
+				ShortName:      "Ethereum",
+				Price:          "1000.00",
+				PriceChange24H: "10.00",
+				Volume24H:      "10000.00",
+				MarketState:    "online",
+				Currency:       "USD",
+				ExchangeName:   "CBE",
+				ProductType:    "SPOT",
+			}
+
+			server.AppendHandlers(
+				// First call within SetSymbols checks for symbols with underlying assets
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BTC-USD"),
+					ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BIT-31JAN25-CDE"),
 					ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
 						Products: []unary.ResponseQuote{
-							{
-								Symbol:         "BTC",
-								ProductID:      "BTC-USD",
-								ShortName:      "Bitcoin",
-								Price:          "50000.00",
-								PriceChange24H: "2.5",
-								Volume24H:      "1000.50",
-								DisplayName:    "Bitcoin",
-								MarketState:    "online",
-								Currency:       "USD",
-								ExchangeName:   "CBE",
-								ProductType:    "SPOT",
-							},
+							quoteFutures,
 						},
 					}),
 				),
-			)
-
-			server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
+				// Second call within SetSymbolsgets quotes for all symbols
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BIT-28MAR25-CDE"),
+					ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BIT-31JAN25-CDE&product_ids=BTC-USD&product_ids=ETH-USD"),
 					ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
 						Products: []unary.ResponseQuote{
-							{
-								Symbol:         "BIT-28MAR25-CDE",
-								ProductID:      "BIT-28MAR25-CDE",
-								ShortName:      "Nano Bitcoin Futures",
-								Price:          "50000.00",
-								PriceChange24H: "2.5",
-								Volume24H:      "1000.50",
-								DisplayName:    "Nano Bitcoin Futures",
-								MarketState:    "online",
-								Currency:       "USD",
-								ExchangeName:   "CDE",
-								ProductType:    "FUTURE",
-								FutureProductDetails: unary.ResponseQuoteFutureProductDetails{
-									GroupDescription:   "Nano Bitcoin Futures",
-									ContractRootUnit:   "BTC",
-									ExpirationDate:     "2025-03-28T16:00:00Z",
-									ExpirationTimezone: "America/New_York",
-								},
-							},
+							quoteFutures,
+							quoteSpotBTC,
+							quoteSpotETH,
 						},
 					}),
 				),
@@ -139,13 +143,16 @@ var _ = Describe("Monitor Coinbase", func() {
 				UnaryURL: server.URL(),
 			})
 
-			monitor.SetSymbols([]string{"BIT-28MAR25-CDE"})
-			assetQuotes := monitor.GetAssetQuotes(true)
+			monitor.SetSymbols([]string{"BIT-31JAN25-CDE", "ETH-USD"})
+			assetQuotes := monitor.GetAssetQuotes()
 
-			Expect(assetQuotes).To(HaveLen(1))
-			Expect(assetQuotes[0].Symbol).To(Equal("BIT-28MAR25-CDE"))
-			Expect(assetQuotes[0].Name).To(Equal("Nano Bitcoin Futures"))
+			Expect(assetQuotes).To(HaveLen(2))
+			Expect(assetQuotes[0].Symbol).To(Equal("BIT-31JAN25-CDE"))
+			Expect(assetQuotes[0].Name).To(Equal("Bitcoin January 2025 Future"))
 			Expect(assetQuotes[0].Class).To(Equal(c.AssetClassFuturesContract))
+			Expect(assetQuotes[1].Symbol).To(Equal("ETH"))
+			Expect(assetQuotes[1].Name).To(Equal("Ethereum"))
+			Expect(assetQuotes[1].Class).To(Equal(c.AssetClassCryptocurrency))
 		})
 
 		When("the http request fails", func() {
@@ -406,25 +413,25 @@ var _ = Describe("Monitor Coinbase", func() {
 				inputServer := testWs.NewTestServer([]string{inputTick})
 
 				outputCalled := false
-				outputQuotePrice := c.QuotePrice{}
+				outputAsset := c.Asset{}
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL: server.URL(),
 				}, monitorCoinbase.WithRefreshInterval(10*time.Second),
 					monitorCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
-				monitor.SetOnUpdate(func(symbol string, pq c.QuotePrice) {
+				monitor.SetOnUpdateAsset(func(symbol string, asset c.Asset) {
 					outputCalled = true
-					outputQuotePrice = pq
+					outputAsset = asset
 				})
 
-				monitor.Start()
 				monitor.SetSymbols([]string{"ETH-USD"})
+				monitor.Start()
 
 				Eventually(func() bool {
 					return outputCalled
 				}, 5*time.Second).Should(BeTrue())
 
-				Expect(outputQuotePrice.Price).To(Equal(1300.00))
+				Expect(outputAsset.QuotePrice.Price).To(Equal(1300.00))
 			})
 
 			When("the price has not changed", func() {
@@ -458,7 +465,7 @@ var _ = Describe("Monitor Coinbase", func() {
 						"price": "1300.00",
 						"time": "2022-10-19T23:28:22.061769Z"
 					}`
-					inputServer := testWs.NewTestServer([]string{inputTick})
+					inputServer := testWs.NewTestServer([]string{inputTick, inputTick})
 
 					outputCalled := false
 					monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
@@ -466,7 +473,7 @@ var _ = Describe("Monitor Coinbase", func() {
 					}, monitorCoinbase.WithRefreshInterval(10*time.Second),
 						monitorCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
-					monitor.SetOnUpdate(func(symbol string, pq c.QuotePrice) {
+					monitor.SetOnUpdateAsset(func(symbol string, asset c.Asset) {
 						outputCalled = true
 					})
 
@@ -518,7 +525,7 @@ var _ = Describe("Monitor Coinbase", func() {
 					}, monitorCoinbase.WithRefreshInterval(10*time.Second),
 						monitorCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
-					monitor.SetOnUpdate(func(symbol string, pq c.QuotePrice) {
+					monitor.SetOnUpdateAsset(func(symbol string, asset c.Asset) {
 						outputCalled = true
 					})
 

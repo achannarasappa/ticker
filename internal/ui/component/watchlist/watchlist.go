@@ -51,6 +51,11 @@ type cellWidthsContainer struct {
 
 // Messages for updating assets
 type SetAssetsMsg []c.Asset
+type SetAssetMsg struct {
+	Symbol string
+	Asset  c.Asset
+	Time   time.Time
+}
 type SetAssetQuotePriceMsg struct {
 	Symbol     string
 	QuotePrice c.QuotePrice
@@ -92,11 +97,10 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 		m.assets = a
 
 		return m, nil
-
-	case SetAssetQuotePriceMsg:
-		if asset, ok := m.assetsBySymbol[msg.Symbol]; ok {
-			asset.QuotePrice = msg.QuotePrice
-		}
+	case SetAssetMsg:
+		// if asset, ok := m.assetsBySymbol[msg.Symbol]; ok {
+		// 	asset.Asset = msg.Asset
+		// }
 
 		return m, nil
 	}

@@ -113,6 +113,17 @@ type quoteMsg struct {
 	time            string
 }
 
+type SetAssetMsg struct {
+	symbol        string
+	asset         c.Asset
+	assetGroupIdx int
+}
+
+type SetAssetsMsg struct {
+	assets        []c.Asset
+	assetGroupIdx int
+}
+
 // Update hook for bubbletea
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {

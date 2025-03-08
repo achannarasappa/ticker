@@ -21,6 +21,11 @@ type ConfigMonitor struct {
 	Config          c.Config
 }
 
+type ConfigUpdateFns struct {
+	OnUpdateAsset  func(symbol string, asset c.Asset)
+	OnUpdateAssets func(assets []c.Asset)
+}
+
 // New creates a new instance of the Coinbase monitor
 func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 	var coinbase *monitorCoinbase.MonitorCoinbase
@@ -28,7 +33,6 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 		monitorCoinbase.Config{
 			UnaryURL: "https://api.coinbase.com",
 		},
-		monitorCoinbase.WithSymbolsUnderlying(configMonitor.Reference.SourceToUnderlyingAssetSymbols[c.QuoteSourceCoinbase]),
 		monitorCoinbase.WithStreamingURL("wss://ws-feed.exchange.coinbase.com"),
 		monitorCoinbase.WithRefreshInterval(time.Duration(configMonitor.Config.RefreshInterval)*time.Second),
 	)
@@ -54,9 +58,10 @@ func (m *Monitor) SetSymbols(assetGroup c.AssetGroup) {
 	}
 }
 
-func (m *Monitor) SetOnUpdate(onUpdate func(symbol string, quotePrice c.QuotePrice)) {
+func (m *Monitor) SetOnUpdate(config ConfigUpdateFns) {
 	for _, monitor := range m.monitors {
-		monitor.SetOnUpdate(onUpdate)
+		monitor.SetOnUpdateAsset(config.OnUpdateAsset)
+		monitor.SetOnUpdateAssets(config.OnUpdateAssets)
 	}
 }
 

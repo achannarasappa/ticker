@@ -33,6 +33,7 @@ type ResponseQuoteFutureProductDetails struct {
 	ContractRootUnit    string `json:"contract_root_unit"`
 	ExpirationDate      string `json:"contract_expiry"`
 	ExpirationTimezone  string `json:"expiration_timezone"`
+	NonCrypto           bool   `json:"non_crypto"`
 }
 
 // ResponseQuote represents a quote of a single product from the Coinbase API
@@ -83,7 +84,7 @@ func formatExpiry(expirationDate time.Time) string {
 	return fmt.Sprintf("%dd %dh", days, hours)
 }
 
-func transformResponseQuote(responseQuote ResponseQuote, responseQuoteUnderlying ResponseQuote) c.AssetQuote {
+func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 	price, _ := strconv.ParseFloat(responseQuote.Price, 64)
 	volume, _ := strconv.ParseFloat(responseQuote.Volume24H, 64)
 	changePercent, _ := strconv.ParseFloat(responseQuote.PriceChange24H, 64)
@@ -107,16 +108,8 @@ func transformResponseQuote(responseQuote ResponseQuote, responseQuoteUnderlying
 		expirationDate, _ := time.ParseInLocation(time.RFC3339, responseQuote.FutureProductDetails.ExpirationDate, expirationTimezone)
 
 		quoteFutures = c.QuoteFutures{
-			SymbolUnderlying: responseQuote.FutureProductDetails.ContractRootUnit,
+			SymbolUnderlying: responseQuote.FutureProductDetails.ContractRootUnit + "-USD",
 			Expiry:           formatExpiry(expirationDate),
-		}
-
-		// TODO: move this up to the monitor level since streaming prices for underlying assets may change by streaming while contracts are still polling based
-		// If there is a quote for the underlying asset, calculate the index price and basis
-		if responseQuoteUnderlying != (ResponseQuote{}) {
-			priceUnderlying, _ := strconv.ParseFloat(responseQuoteUnderlying.Price, 64)
-			quoteFutures.IndexPrice = priceUnderlying
-			quoteFutures.Basis = (priceUnderlying - price) / price
 		}
 	}
 
@@ -150,51 +143,24 @@ func transformResponseQuote(responseQuote ResponseQuote, responseQuoteUnderlying
 	}
 }
 
-func transformResponseQuotes(symbols []string, responseQuotes []ResponseQuote) []c.AssetQuote {
+func transformResponseQuotes(responseQuotes []ResponseQuote) ([]c.AssetQuote, map[string]*c.AssetQuote) {
 	quotes := make([]c.AssetQuote, 0)
-	responseQuotesBySymbol := make(map[string]ResponseQuote)
-	symbolsMap := make(map[string]bool)
-
-	// Create map of explicitly requested symbols
-	for _, symbol := range symbols {
-		symbolsMap[symbol] = true
-	}
-
-	// Index quotes by symbol
-	for _, responseQuote := range responseQuotes {
-		responseQuotesBySymbol[responseQuote.ProductID] = responseQuote
-	}
+	quotesByProductId := make(map[string]*c.AssetQuote)
 
 	// Transform quotes
 	for _, responseQuote := range responseQuotes {
 
-		// Skip quotes only used for lookup purposes (futures contracts underlying asset quote)
-		if _, exists := symbolsMap[responseQuote.ProductID]; !exists {
-			continue
-		}
-
-		responseQuoteUnderlying := ResponseQuote{}
-		symbolUnderlying := responseQuote.FutureProductDetails.ContractRootUnit + "-USD"
-
-		// Lookup underlying asset quote for futures contracts
-		if responseQuote.ProductType == productTypeFuture {
-
-			// Skip futures contracts without a price quote (underlying assets of some CDE contracts are not listed on CBE)
-			if _, exists := responseQuotesBySymbol[symbolUnderlying]; exists {
-				responseQuoteUnderlying = responseQuotesBySymbol[symbolUnderlying]
-			}
-		}
-
-		quote := transformResponseQuote(responseQuote, responseQuoteUnderlying)
+		quote := transformResponseQuote(responseQuote)
 		quotes = append(quotes, quote)
+		quotesByProductId[quote.Meta.SymbolInSourceAPI] = &quote
 	}
 
-	return quotes
+	return quotes, quotesByProductId
 }
 
-func (u *UnaryAPI) GetAssetQuotes(symbols []string) ([]c.AssetQuote, error) {
+func (u *UnaryAPI) GetAssetQuotes(symbols []string) ([]c.AssetQuote, map[string]*c.AssetQuote, error) {
 	if len(symbols) == 0 {
-		return []c.AssetQuote{}, nil
+		return nil, nil, nil
 	}
 
 	// Build URL with query parameters
@@ -207,19 +173,21 @@ func (u *UnaryAPI) GetAssetQuotes(symbols []string) ([]c.AssetQuote, error) {
 	// Make request
 	resp, err := u.client.Get(reqURL.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to make request: %w", err)
+		return nil, nil, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("request failed with status %d", resp.StatusCode)
+		return nil, nil, fmt.Errorf("request failed with status %d", resp.StatusCode)
 	}
 
 	// Decode response
 	var result Response
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		return nil, nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return transformResponseQuotes(symbols, result.Products), nil
+	quotes, quotesByProductId := transformResponseQuotes(result.Products)
+
+	return quotes, quotesByProductId, nil
 }

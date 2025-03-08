@@ -78,7 +78,7 @@ func (p *Poller) Start() error {
 				if len(p.symbols) == 0 {
 					continue
 				}
-				assetQuotes, err := p.unaryAPI.GetAssetQuotes(p.symbols)
+				assetQuotes, _, err := p.unaryAPI.GetAssetQuotes(p.symbols)
 				if err != nil {
 					// TODO: send error to error channel
 					continue

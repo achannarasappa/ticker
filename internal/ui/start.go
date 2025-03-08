@@ -23,11 +23,16 @@ func Start(dep *c.Dependencies, ctx *c.Context) func() error {
 			tea.WithAltScreen(),
 		)
 
-		monitors.SetOnUpdate(func(symbol string, quotePrice c.QuotePrice) {
-			p.Send(watchlist.SetAssetQuotePriceMsg{
-				Symbol:     symbol,
-				QuotePrice: quotePrice,
-			})
+		monitors.SetOnUpdate(mon.ConfigUpdateFns{
+			OnUpdateAsset: func(symbol string, asset c.Asset) {
+				p.Send(watchlist.SetAssetMsg{
+					Symbol: symbol,
+					Asset:  asset,
+				})
+			},
+			OnUpdateAssets: func(assets []c.Asset) {
+				p.Send(watchlist.SetAssetsMsg(assets))
+			},
 		})
 
 		_, err := p.Run()

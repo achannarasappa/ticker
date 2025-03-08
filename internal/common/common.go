@@ -85,7 +85,8 @@ type Monitor interface {
 	Start() error
 	GetAssetQuotes(useCache ...bool) []AssetQuote
 	SetSymbols(symbols []string) error
-	SetOnUpdate(onUpdate func(symbol string, quotePrice QuotePrice))
+	SetOnUpdateAsset(onUpdate func(symbol string, asset Asset))
+	SetOnUpdateAssets(onUpdate func(assets []Asset))
 	Stop() error
 }
 

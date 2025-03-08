@@ -15,30 +15,32 @@ import (
 )
 
 type MonitorCoinbase struct {
-	unaryAPI                      *unary.UnaryAPI
-	streamer                      *streamer.Streamer
-	poller                        *poller.Poller
-	unary                         *unary.UnaryAPI
-	input                         input
-	productIds                    []string // Coinbase APIs refer to trading pairs as Product IDs which symbols ticker accepts with a -USD suffix
-	productIdsStreaming           []string
-	productIdsPolling             []string
-	assetQuotesResponse           []c.AssetQuote           // Asset quotes filtered to the productIds set in input.productIds
-	assetQuotesCache              map[string]*c.AssetQuote // Asset quotes for all assets retrieved at least once
-	chanStreamUpdateQuotePrice    chan c.MessageUpdate[c.QuotePrice]
-	chanStreamUpdateQuoteExtended chan c.MessageUpdate[c.QuoteExtended]
-	chanStreamUpdateExchange      chan c.MessageUpdate[c.Exchange]
-	chanPollUpdateAssetQuote      chan c.MessageUpdate[c.AssetQuote]
-	mu                            sync.RWMutex
-	ctx                           context.Context
-	cancel                        context.CancelFunc
-	isStarted                     bool
-	onUpdate                      func(symbol string, pq c.QuotePrice)
+	unaryAPI                         *unary.UnaryAPI
+	streamer                         *streamer.Streamer
+	poller                           *poller.Poller
+	unary                            *unary.UnaryAPI
+	input                            input
+	productIds                       []string // Coinbase APIs refer to trading pairs as Product IDs which symbols ticker accepts with a -USD suffix
+	productIdsStreaming              []string
+	productIdsPolling                []string
+	productIdsToUnderlyingProductIds map[string]string        // Product IDs which are only underlying assets of explicit requested assets (e.g. BTC-USD is an underlying asset of BIT-31JAN25-CDE)
+	assetQuotesCache                 []c.AssetQuote           // Asset quotes for all assets retrieved at start or on symbol change
+	assetQuotesCacheLookup           map[string]*c.AssetQuote // Asset quotes for all assets retrieved at least once (symbol change does not remove symbols)
+	chanStreamUpdateQuotePrice       chan c.MessageUpdate[c.QuotePrice]
+	chanStreamUpdateQuoteExtended    chan c.MessageUpdate[c.QuoteExtended]
+	chanStreamUpdateExchange         chan c.MessageUpdate[c.Exchange]
+	chanPollUpdateAssetQuote         chan c.MessageUpdate[c.AssetQuote]
+	mu                               sync.RWMutex
+	ctx                              context.Context
+	cancel                           context.CancelFunc
+	isStarted                        bool
+	onUpdateAsset                    func(symbol string, asset c.Asset)
+	onUpdateAssets                   func(assets []c.Asset)
 }
 
 type input struct {
-	productIds        []string
-	symbolsUnderlying []string
+	productIds       []string
+	productIdsLookup map[string]bool
 }
 
 // Config contains the required configuration for the Coinbase monitor
@@ -55,22 +57,24 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 
 	unaryAPI := unary.NewUnaryAPI(config.UnaryURL)
 	pollerConfig := poller.PollerConfig{
+		// TODO: pass in channel
 		ChanUpdateQuotePrice:    make(chan c.MessageUpdate[c.QuotePrice]),
 		ChanUpdateQuoteExtended: make(chan c.MessageUpdate[c.QuoteExtended]),
 	}
 	p := poller.NewPoller(ctx, pollerConfig)
 
 	monitor := &MonitorCoinbase{
-		assetQuotesCache:              make(map[string]*c.AssetQuote),
-		assetQuotesResponse:           make([]c.AssetQuote, 0),
-		chanStreamUpdateQuotePrice:    make(chan c.MessageUpdate[c.QuotePrice]),
-		chanStreamUpdateQuoteExtended: make(chan c.MessageUpdate[c.QuoteExtended]),
-		chanStreamUpdateExchange:      make(chan c.MessageUpdate[c.Exchange]),
-		chanPollUpdateAssetQuote:      make(chan c.MessageUpdate[c.AssetQuote]),
-		poller:                        p,
-		unaryAPI:                      unaryAPI,
-		ctx:                           ctx,
-		cancel:                        cancel,
+		assetQuotesCacheLookup:           make(map[string]*c.AssetQuote),
+		assetQuotesCache:                 make([]c.AssetQuote, 0),
+		productIdsToUnderlyingProductIds: make(map[string]string),
+		chanStreamUpdateQuotePrice:       make(chan c.MessageUpdate[c.QuotePrice]),
+		chanStreamUpdateQuoteExtended:    make(chan c.MessageUpdate[c.QuoteExtended]),
+		chanStreamUpdateExchange:         make(chan c.MessageUpdate[c.Exchange]),
+		chanPollUpdateAssetQuote:         make(chan c.MessageUpdate[c.AssetQuote]),
+		poller:                           p,
+		unaryAPI:                         unaryAPI,
+		ctx:                              ctx,
+		cancel:                           cancel,
 	}
 
 	streamerConfig := streamer.StreamerConfig{
@@ -85,13 +89,6 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 	}
 
 	return monitor
-}
-
-// WithSymbolsUnderlying sets the underlying symbols for the monitor
-func WithSymbolsUnderlying(symbols []string) Option {
-	return func(m *MonitorCoinbase) {
-		m.input.symbolsUnderlying = symbols
-	}
 }
 
 // WithStreamingURL sets the streaming URL for the monitor
@@ -109,13 +106,18 @@ func WithRefreshInterval(interval time.Duration) Option {
 }
 
 // SetOnUpdate sets the onUpdate function for the monitor
-func (m *MonitorCoinbase) SetOnUpdate(onUpdate func(symbol string, pq c.QuotePrice)) {
-	m.onUpdate = onUpdate
+func (m *MonitorCoinbase) SetOnUpdateAsset(onUpdate func(symbol string, asset c.Asset)) {
+	m.onUpdateAsset = onUpdate
+}
+
+func (m *MonitorCoinbase) SetOnUpdateAssets(onUpdate func(assets []c.Asset)) {
+	m.onUpdateAssets = onUpdate
 }
 
 func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) []c.AssetQuote {
 	if len(ignoreCache) > 0 && ignoreCache[0] {
-		assetQuotes, err := m.unaryAPI.GetAssetQuotes(m.productIds)
+		assetQuotes, err := m.getAssetQuotesAndReplaceCache()
+		// TODO: return error
 		if err != nil {
 			return []c.AssetQuote{}
 		}
@@ -125,44 +127,48 @@ func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) []c.AssetQuote {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	assetQuotes := make([]c.AssetQuote, 0, len(m.productIds))
-	for _, productId := range m.productIds {
-		if quote, exists := m.assetQuotesCache[productId]; exists {
-			assetQuotes = append(assetQuotes, *quote)
-		}
-	}
-
-	return assetQuotes
+	return m.assetQuotesCache
 }
 
 func (m *MonitorCoinbase) SetSymbols(productIds []string) error {
 
 	var err error
 
-	// Underlying symbols may also be explicitly set so merge and deduplicate
-	productIdsUnique := mergeAndDeduplicateProductIds(m.input.symbolsUnderlying, productIds)
-
-	m.productIdsStreaming, m.productIdsPolling = partitionProductIds(productIdsUnique)
-
-	m.input.productIds = productIds
-	m.productIds = productIdsUnique
-
-	// Lock updates to asset quotes while symbols are changed and subscriptions updates. ensure data from unary call supercedes potentially oudated streaming data
 	m.mu.Lock()
-	defer m.mu.Unlock()
 
-	// Execute one unary API call to get data not sent by streaming API and set initial prices
-	m.assetQuotesResponse, err = m.unaryAPI.GetAssetQuotes(m.productIds) // TODO: update to return and handle error
+	// Deduplicate productIds since input may have duplicates
+	slices.Sort(productIds)
+	m.productIds = slices.Compact(productIds)
+	m.input.productIds = productIds
+	m.input.productIdsLookup = make(map[string]bool)
+	for _, productId := range productIds {
+		m.input.productIdsLookup[productId] = true
+	}
 
+	m.mu.Unlock()
+
+	err = m.getUnderlyingAssetsAndUpdateProductIds()
 	if err != nil {
 		return err
 	}
 
-	m.updateAssetQuotesCache(m.assetQuotesResponse)
+	m.mu.RLock()
+
+	m.productIdsStreaming, m.productIdsPolling = partitionProductIds(m.productIds)
+
+	m.mu.RUnlock()
+
+	_, err = m.getAssetQuotesAndReplaceCache()
+	if err != nil {
+		return err
+	}
 
 	// Coinbase steaming API for CBE (spot) only and not CDE (futures)
 	m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming)
 	m.poller.SetSymbols(m.productIdsPolling)
+
+	// TODO: implement
+	// m.onUpdate([]c.Asset{})
 
 	return nil
 
@@ -178,12 +184,10 @@ func (m *MonitorCoinbase) Start() error {
 	}
 
 	// On start, get initial quotes from unary API
-	m.assetQuotesResponse, err = m.unaryAPI.GetAssetQuotes(m.productIds)
+	_, err = m.getAssetQuotesAndReplaceCache()
 	if err != nil {
 		return err
 	}
-
-	m.updateAssetQuotesCache(m.assetQuotesResponse)
 
 	err = m.streamer.Start()
 	if err != nil {
@@ -212,15 +216,12 @@ func (m *MonitorCoinbase) Stop() error {
 	return nil
 }
 
-func (m *MonitorCoinbase) updateAssetQuotesCache(assetQuotes []c.AssetQuote) {
-	for _, quote := range assetQuotes {
-		// quote.Symbol is the base symbol so index by trading pair / product ID
-		m.assetQuotesCache[quote.Meta.SymbolInSourceAPI] = &quote
-	}
+func isStreamingProductId(productId string) bool {
+	return !hasUnderlyingProductId(productId)
 }
 
-func isStreamingProductId(productId string) bool {
-	return !strings.HasSuffix(productId, "-CDE") && !strings.HasPrefix(productId, "CDE")
+func hasUnderlyingProductId(productId string) bool {
+	return strings.HasSuffix(productId, "-CDE") || strings.HasPrefix(productId, "CDE")
 }
 
 func partitionProductIds(productIds []string) (productIdsStreaming []string, productIdsPolling []string) {
@@ -238,12 +239,12 @@ func partitionProductIds(productIds []string) (productIdsStreaming []string, pro
 	return productIdsStreaming, productIdsPolling
 }
 
-func mergeAndDeduplicateProductIds(symbolsA, symbolsB []string) []string {
+func mergeProductIds(symbolsA, symbolsB []string) []string {
 	merged := make([]string, 0, len(symbolsA)+len(symbolsB))
 	merged = append(merged, symbolsA...)
 	merged = append(merged, symbolsB...)
 	slices.Sort(merged)
-	return slices.Compact(merged)
+	return merged
 }
 
 func (m *MonitorCoinbase) handleUpdates() {
@@ -260,7 +261,7 @@ func (m *MonitorCoinbase) handleUpdates() {
 			// Check if cache exists and values have changed before acquiring write lock
 			m.mu.RLock()
 
-			assetQuote, exists = m.assetQuotesCache[updateMessage.ID]
+			assetQuote, exists = m.assetQuotesCacheLookup[updateMessage.ID]
 
 			if !exists {
 				// If product id does not exist in cache, skip update
@@ -290,7 +291,7 @@ func (m *MonitorCoinbase) handleUpdates() {
 			m.mu.Unlock()
 
 			// TODO: set min update publish frequency
-			m.onUpdate(assetQuote.Symbol, assetQuote.QuotePrice)
+			// m.onUpdateAsset(assetQuote.Symbol, assetQuote.Asset)
 
 			continue
 		case <-m.ctx.Done():
@@ -298,4 +299,97 @@ func (m *MonitorCoinbase) handleUpdates() {
 		default:
 		}
 	}
+}
+
+// Get asset quotes from unary API, add futures quotes, filter out assets not explicitly requested, and replace the asset quotes cache
+func (m *MonitorCoinbase) getAssetQuotesAndReplaceCache() ([]c.AssetQuote, error) {
+
+	assetQuotes, assetQuotesByProductId, err := m.unaryAPI.GetAssetQuotes(m.productIds)
+	if err != nil {
+		return []c.AssetQuote{}, err
+	}
+
+	// Filter asset quotes to only include explicitly requested ones
+	assetQuotesEnriched := make([]c.AssetQuote, 0, len(m.input.productIds))
+
+	for _, quote := range assetQuotes {
+		// Check if this quote is explicitly requested and if not, skip
+		if !m.input.productIdsLookup[quote.Meta.SymbolInSourceAPI] {
+			continue
+		}
+
+		// Check if quote is a futures contract and if yes add properties based on the underlying asset quote
+		if quote.Class == c.AssetClassFuturesContract {
+
+			// Check if there is a quote for the underlying asset
+			if quoteUnderlying, exists := assetQuotesByProductId[quote.QuoteFutures.SymbolUnderlying]; exists {
+				quote.QuoteFutures.IndexPrice = quoteUnderlying.QuotePrice.Price
+				quote.QuoteFutures.Basis = (quoteUnderlying.QuotePrice.Price - quote.QuotePrice.Price) / quote.QuotePrice.Price
+			}
+		}
+
+		assetQuotesEnriched = append(assetQuotesEnriched, quote)
+
+	}
+
+	// Lock updates to asset quotes while symbols are changed and subscriptions updates. ensure data from unary call supercedes potentially oudated streaming data
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.assetQuotesCache = assetQuotesEnriched
+	m.assetQuotesCacheLookup = assetQuotesByProductId
+
+	return m.assetQuotesCache, nil
+}
+
+func (m *MonitorCoinbase) getUnderlyingAssetsAndUpdateProductIds() error {
+
+	underlyingSymbolsResponse := make([]string, 0)
+	symbolsWithUnderlying := make([]string, 0)
+
+	m.mu.RLock()
+
+	// Filter productIds to only include those that have underlying assets
+	for _, productId := range m.productIds {
+
+		// Skip if productId has already been mapped to an underlying symbol
+		if _, exists := m.productIdsToUnderlyingProductIds[productId]; exists {
+			continue
+		}
+
+		// Append productId for productIds that have underlying assets and have not been mapped yet
+		if hasUnderlyingProductId(productId) {
+			symbolsWithUnderlying = append(symbolsWithUnderlying, productId)
+		}
+	}
+
+	m.mu.RUnlock()
+
+	// No new symbols with underlying assets so return early
+	if len(symbolsWithUnderlying) == 0 {
+		return nil
+	}
+
+	// Get new quotes for symbols with underlying assets in order to get their underlying symbols
+	underlyingAssetQuotes, _, err := m.unaryAPI.GetAssetQuotes(symbolsWithUnderlying)
+	if err != nil {
+		return err
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for _, quote := range underlyingAssetQuotes {
+		// Add mapping between symbol and underlying symbol to map for lookup
+		m.productIdsToUnderlyingProductIds[quote.Meta.SymbolInSourceAPI] = quote.QuoteFutures.SymbolUnderlying
+
+		// Append underlying symbol to list of all symbols
+		underlyingSymbolsResponse = append(underlyingSymbolsResponse, quote.QuoteFutures.SymbolUnderlying)
+	}
+
+	// Merge and deduplicate productIds since and underlying symbol could also have been explicitly requested
+	m.productIds = mergeProductIds(m.productIds, underlyingSymbolsResponse)
+	m.productIds = slices.Compact(m.productIds)
+
+	return nil
 }

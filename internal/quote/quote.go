@@ -27,7 +27,7 @@ func getQuoteBySource(monitors *mon.Monitor, dep *c.Dependencies, symbolBySource
 
 	if symbolBySource.Source == c.QuoteSourceCoinbase {
 		// (*monitors.Coinbase).SetSymbols(symbolBySource.Symbols) this will force a refresh
-		x := monitors.GetMonitor(c.QuoteSourceCoinbase).GetAssetQuotes()
+		x, _ := monitors.GetMonitor(c.QuoteSourceCoinbase).GetAssetQuotes()
 		return x
 	}
 

@@ -144,8 +144,15 @@ var _ = Describe("Monitor Coinbase", func() {
 				UnaryURL: server.URL(),
 			})
 
+			outputAssetQuotes := []c.AssetQuote{}
+			monitor.SetOnUpdateAssetQuotes(func(assetQuotes []c.AssetQuote) {
+				outputAssetQuotes = assetQuotes
+			})
+
 			monitor.SetSymbols([]string{"BIT-31JAN25-CDE", "ETH-USD"})
-			assetQuotes := monitor.GetAssetQuotes()
+
+			assetQuotes, err := monitor.GetAssetQuotes()
+			Expect(err).NotTo(HaveOccurred())
 
 			Expect(assetQuotes).To(HaveLen(2))
 			Expect(assetQuotes[0].Symbol).To(Equal("BIT-31JAN25-CDE"))
@@ -154,6 +161,13 @@ var _ = Describe("Monitor Coinbase", func() {
 			Expect(assetQuotes[1].Symbol).To(Equal("ETH"))
 			Expect(assetQuotes[1].Name).To(Equal("Ethereum"))
 			Expect(assetQuotes[1].Class).To(Equal(c.AssetClassCryptocurrency))
+			Expect(outputAssetQuotes).To(HaveLen(2))
+			Expect(outputAssetQuotes[0].Symbol).To(Equal("BIT-31JAN25-CDE"))
+			Expect(outputAssetQuotes[0].Name).To(Equal("Bitcoin January 2025 Future"))
+			Expect(outputAssetQuotes[0].Class).To(Equal(c.AssetClassFuturesContract))
+			Expect(outputAssetQuotes[1].Symbol).To(Equal("ETH"))
+			Expect(outputAssetQuotes[1].Name).To(Equal("Ethereum"))
+			Expect(outputAssetQuotes[1].Class).To(Equal(c.AssetClassCryptocurrency))
 		})
 
 		When("the http request fails", func() {
@@ -171,7 +185,8 @@ var _ = Describe("Monitor Coinbase", func() {
 
 				monitor.SetSymbols([]string{"BTC-USD"})
 
-				assetQuotes := monitor.GetAssetQuotes(true)
+				assetQuotes, err := monitor.GetAssetQuotes(true)
+				Expect(err).To(HaveOccurred())
 				Expect(assetQuotes).To(BeEmpty())
 			})
 		})
@@ -234,9 +249,11 @@ var _ = Describe("Monitor Coinbase", func() {
 				monitor.SetSymbols([]string{"BTC-USD"})
 
 				// First call to populate cache
-				firstQuotes := monitor.GetAssetQuotes(true)
+				firstQuotes, err := monitor.GetAssetQuotes(true)
+				Expect(err).NotTo(HaveOccurred())
 				// Second call with ignoreCache=false should return cached data
-				secondQuotes := monitor.GetAssetQuotes(false)
+				secondQuotes, err := monitor.GetAssetQuotes(false)
+				Expect(err).NotTo(HaveOccurred())
 
 				Expect(secondQuotes).To(HaveLen(1))
 				Expect(secondQuotes[0].QuotePrice.Price).To(Equal(firstQuotes[0].QuotePrice.Price))

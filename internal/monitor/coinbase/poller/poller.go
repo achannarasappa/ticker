@@ -17,11 +17,13 @@ type Poller struct {
 	cancel               context.CancelFunc
 	unaryAPI             *unary.UnaryAPI
 	chanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
+	chanError            chan error
 }
 
 type PollerConfig struct {
 	UnaryAPI             *unary.UnaryAPI
 	ChanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
+	ChanError            chan error
 }
 
 func NewPoller(ctx context.Context, config PollerConfig) *Poller {
@@ -34,6 +36,7 @@ func NewPoller(ctx context.Context, config PollerConfig) *Poller {
 		cancel:               cancel,
 		unaryAPI:             config.UnaryAPI,
 		chanUpdateAssetQuote: config.ChanUpdateAssetQuote,
+		chanError:            config.ChanError,
 	}
 }
 
@@ -77,7 +80,7 @@ func (p *Poller) Start() error {
 				}
 				assetQuotes, _, err := p.unaryAPI.GetAssetQuotes(p.symbols)
 				if err != nil {
-					// TODO: send error to error channel
+					p.chanError <- err
 					continue
 				}
 

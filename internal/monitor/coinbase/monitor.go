@@ -31,6 +31,7 @@ type MonitorCoinbase struct {
 	chanStreamUpdateQuoteExtended    chan c.MessageUpdate[c.QuoteExtended]
 	chanStreamUpdateExchange         chan c.MessageUpdate[c.Exchange]
 	chanPollUpdateAssetQuote         chan c.MessageUpdate[c.AssetQuote]
+	chanError                        chan error
 	mu                               sync.RWMutex
 	ctx                              context.Context
 	cancel                           context.CancelFunc
@@ -46,7 +47,8 @@ type input struct {
 
 // Config contains the required configuration for the Coinbase monitor
 type Config struct {
-	UnaryURL string
+	UnaryURL  string
+	ChanError chan error
 }
 
 // Option defines an option for configuring the monitor
@@ -66,6 +68,7 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 		chanStreamUpdateQuoteExtended:    make(chan c.MessageUpdate[c.QuoteExtended]),
 		chanStreamUpdateExchange:         make(chan c.MessageUpdate[c.Exchange]),
 		chanPollUpdateAssetQuote:         make(chan c.MessageUpdate[c.AssetQuote]),
+		chanError:                        config.ChanError,
 		unaryAPI:                         unaryAPI,
 		ctx:                              ctx,
 		cancel:                           cancel,
@@ -75,6 +78,7 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 
 	pollerConfig := poller.PollerConfig{
 		ChanUpdateAssetQuote: monitor.chanPollUpdateAssetQuote,
+		ChanError:            monitor.chanError,
 		UnaryAPI:             unaryAPI,
 	}
 	monitor.poller = poller.NewPoller(ctx, pollerConfig)
@@ -116,20 +120,19 @@ func (m *MonitorCoinbase) SetOnUpdateAssetQuotes(onUpdate func(assetQuotes []c.A
 	m.onUpdateAssetQuotes = onUpdate
 }
 
-func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) []c.AssetQuote {
+func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, error) {
 	if len(ignoreCache) > 0 && ignoreCache[0] {
 		assetQuotes, err := m.getAssetQuotesAndReplaceCache()
-		// TODO: return error
 		if err != nil {
-			return []c.AssetQuote{}
+			return []c.AssetQuote{}, err
 		}
-		return assetQuotes
+		return assetQuotes, nil
 	}
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	return m.assetQuotesCache
+	return m.assetQuotesCache, nil
 }
 
 func (m *MonitorCoinbase) SetSymbols(productIds []string) error {
@@ -251,6 +254,8 @@ func mergeProductIds(symbolsA, symbolsB []string) []string {
 func (m *MonitorCoinbase) handleUpdates() {
 	for {
 		select {
+		case <-m.ctx.Done():
+			return
 		case <-m.chanStreamUpdateQuoteExtended:
 			// TODO: handle extended quote
 			continue
@@ -344,8 +349,6 @@ func (m *MonitorCoinbase) handleUpdates() {
 			m.onUpdateAssetQuote(assetQuote.Symbol, *assetQuote)
 
 			continue
-		case <-m.ctx.Done():
-			return
 		default:
 		}
 	}

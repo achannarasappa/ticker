@@ -83,7 +83,7 @@ type DependenciesHttpClients struct { //nolint:golint,stylecheck,revive
 
 type Monitor interface {
 	Start() error
-	GetAssetQuotes(useCache ...bool) []AssetQuote
+	GetAssetQuotes(useCache ...bool) ([]AssetQuote, error)
 	SetSymbols(symbols []string) error
 	SetOnUpdateAssetQuote(onUpdate func(symbol string, assetQuote AssetQuote))
 	SetOnUpdateAssetQuotes(onUpdate func(assetQuotes []AssetQuote))

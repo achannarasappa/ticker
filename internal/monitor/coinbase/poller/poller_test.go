@@ -2,6 +2,7 @@ package poller_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -154,6 +155,87 @@ var _ = Describe("Poller", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Consistently(inputChanUpdateAssetQuote).ShouldNot(Receive())
+			})
+		})
+
+		When("the unary API returns an error", func() {
+			It("should return an error", func() {
+
+				requestCount := 0
+
+				server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BTC-USD"),
+						func(w http.ResponseWriter, r *http.Request) {
+							requestCount++
+							if requestCount > 3 {
+								w.WriteHeader(http.StatusInternalServerError)
+							} else {
+								w.WriteHeader(http.StatusOK)
+								json.NewEncoder(w).Encode(unary.Response{
+									Products: []unary.ResponseQuote{
+										{
+											Symbol:         "BTC",
+											ProductID:      "BTC-USD",
+											ShortName:      "Bitcoin",
+											Price:          "50000.00",
+											PriceChange24H: "5.00",
+											Volume24H:      "1000000.00",
+											MarketState:    "online",
+											Currency:       "USD",
+											ExchangeName:   "CBE",
+											ProductType:    "SPOT",
+										},
+									},
+								})
+							}
+						},
+					),
+				)
+
+				outputChanError := make(chan error, 1)
+
+				p := poller.NewPoller(context.Background(), poller.PollerConfig{
+					UnaryAPI:             unary.NewUnaryAPI(server.URL()),
+					ChanUpdateAssetQuote: make(chan c.MessageUpdate[c.AssetQuote], 5),
+					ChanError:            outputChanError,
+				})
+				p.SetSymbols([]string{"BTC-USD"})
+				p.SetRefreshInterval(time.Millisecond * 20)
+
+				err := p.Start()
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(outputChanError).Should(Receive(
+					MatchError("request failed with status 500"),
+				))
+
+			})
+		})
+
+		When("the context is cancelled", func() {
+			It("should stop the polling process", func() {
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+
+				outputChanUpdateAssetQuote := make(chan c.MessageUpdate[c.AssetQuote], 5)
+				outputChanError := make(chan error, 5)
+
+				p := poller.NewPoller(ctx, poller.PollerConfig{
+					UnaryAPI:             unary.NewUnaryAPI(server.URL()),
+					ChanUpdateAssetQuote: outputChanUpdateAssetQuote,
+					ChanError:            outputChanError,
+				})
+				p.SetSymbols([]string{"BTC-USD"})
+				p.SetRefreshInterval(time.Millisecond * 20)
+
+				err := p.Start()
+				Expect(err).NotTo(HaveOccurred())
+
+				cancel()
+
+				Consistently(outputChanUpdateAssetQuote).ShouldNot(Receive())
+				Consistently(outputChanError).ShouldNot(Receive())
 			})
 		})
 

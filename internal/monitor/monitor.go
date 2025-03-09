@@ -31,7 +31,8 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 	var coinbase *monitorCoinbase.MonitorCoinbase
 	coinbase = monitorCoinbase.NewMonitorCoinbase(
 		monitorCoinbase.Config{
-			UnaryURL: "https://api.coinbase.com",
+			UnaryURL:  "https://api.coinbase.com",
+			ChanError: make(chan error, 5),
 		},
 		monitorCoinbase.WithStreamingURL("wss://ws-feed.exchange.coinbase.com"),
 		monitorCoinbase.WithRefreshInterval(time.Duration(configMonitor.Config.RefreshInterval)*time.Second),

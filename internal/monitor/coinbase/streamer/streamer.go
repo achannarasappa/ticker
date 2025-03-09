@@ -49,11 +49,13 @@ type Streamer struct {
 	cancel                        context.CancelFunc
 	chanStreamUpdateQuotePrice    chan c.MessageUpdate[c.QuotePrice]
 	chanStreamUpdateQuoteExtended chan c.MessageUpdate[c.QuoteExtended]
+	chanError                     chan error
 }
 
 type StreamerConfig struct {
 	ChanStreamUpdateQuotePrice    chan c.MessageUpdate[c.QuotePrice]
 	ChanStreamUpdateQuoteExtended chan c.MessageUpdate[c.QuoteExtended]
+	ChanError                     chan error
 }
 
 func NewStreamer(ctx context.Context, config StreamerConfig) *Streamer {
@@ -62,6 +64,7 @@ func NewStreamer(ctx context.Context, config StreamerConfig) *Streamer {
 	s := &Streamer{
 		chanStreamUpdateQuotePrice:    config.ChanStreamUpdateQuotePrice,
 		chanStreamUpdateQuoteExtended: config.ChanStreamUpdateQuoteExtended,
+		chanError:                     config.ChanError,
 		ctx:                           ctx,
 		cancel:                        cancel,
 		wg:                            sync.WaitGroup{},
@@ -134,6 +137,7 @@ func (s *Streamer) SetSymbolsAndUpdateSubscriptions(symbols []string) error {
 
 	s.symbols = symbols
 
+	// TODO: fix symbol change
 	// err = s.unsubscribe()
 	// if err != nil {
 	// 	return err
@@ -168,6 +172,7 @@ func (s *Streamer) readStreamQuote() {
 			var message messagePriceTick
 			err := s.conn.ReadJSON(&message)
 			if err != nil {
+				s.chanError <- err
 				return
 			}
 
@@ -194,6 +199,7 @@ func (s *Streamer) writeStreamSubscription() {
 
 			err := s.conn.WriteJSON(message)
 			if err != nil {
+				s.chanError <- err
 				return
 			}
 		}

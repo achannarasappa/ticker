@@ -59,11 +59,11 @@ var _ = Describe("Monitor Coinbase", func() {
 
 		When("the onUpdate function is set", func() {
 			It("should set the onUpdate function", func() {
-				onUpdate := func(symbol string, asset c.Asset) {}
+				onUpdate := func(symbol string, assetQuote c.AssetQuote) {}
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL: server.URL(),
 				})
-				monitor.SetOnUpdateAsset(onUpdate)
+				monitor.SetOnUpdateAssetQuote(onUpdate)
 
 				Expect(monitor).NotTo(BeNil())
 			})
@@ -413,15 +413,15 @@ var _ = Describe("Monitor Coinbase", func() {
 				inputServer := testWs.NewTestServer([]string{inputTick})
 
 				outputCalled := false
-				outputAsset := c.Asset{}
+				outputAssetQuote := c.AssetQuote{}
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL: server.URL(),
 				}, monitorCoinbase.WithRefreshInterval(10*time.Second),
 					monitorCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
-				monitor.SetOnUpdateAsset(func(symbol string, asset c.Asset) {
+				monitor.SetOnUpdateAssetQuotes(func(assetQuotes []c.AssetQuote) {
 					outputCalled = true
-					outputAsset = asset
+					outputAssetQuote = assetQuotes[0]
 				})
 
 				monitor.SetSymbols([]string{"ETH-USD"})
@@ -431,7 +431,7 @@ var _ = Describe("Monitor Coinbase", func() {
 					return outputCalled
 				}, 5*time.Second).Should(BeTrue())
 
-				Expect(outputAsset.QuotePrice.Price).To(Equal(1300.00))
+				Expect(outputAssetQuote.QuotePrice.Price).To(Equal(1300.00))
 			})
 
 			When("the price has not changed", func() {
@@ -473,7 +473,7 @@ var _ = Describe("Monitor Coinbase", func() {
 					}, monitorCoinbase.WithRefreshInterval(10*time.Second),
 						monitorCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
-					monitor.SetOnUpdateAsset(func(symbol string, asset c.Asset) {
+					monitor.SetOnUpdateAssetQuote(func(symbol string, assetQuote c.AssetQuote) {
 						outputCalled = true
 					})
 
@@ -525,7 +525,7 @@ var _ = Describe("Monitor Coinbase", func() {
 					}, monitorCoinbase.WithRefreshInterval(10*time.Second),
 						monitorCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
-					monitor.SetOnUpdateAsset(func(symbol string, asset c.Asset) {
+					monitor.SetOnUpdateAssetQuote(func(symbol string, assetQuote c.AssetQuote) {
 						outputCalled = true
 					})
 

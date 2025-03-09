@@ -3,7 +3,6 @@ package ui
 import (
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 	mon "github.com/achannarasappa/ticker/v4/internal/monitor"
-	"github.com/achannarasappa/ticker/v4/internal/ui/component/watchlist"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -24,14 +23,18 @@ func Start(dep *c.Dependencies, ctx *c.Context) func() error {
 		)
 
 		monitors.SetOnUpdate(mon.ConfigUpdateFns{
-			OnUpdateAsset: func(symbol string, asset c.Asset) {
-				p.Send(watchlist.SetAssetMsg{
-					Symbol: symbol,
-					Asset:  asset,
+			OnUpdateAssetQuote: func(symbol string, assetQuote c.AssetQuote) {
+				p.Send(SetAssetQuoteMsg{
+					symbol:     symbol,
+					assetQuote: assetQuote,
 				})
+				return
 			},
-			OnUpdateAssets: func(assets []c.Asset) {
-				p.Send(watchlist.SetAssetsMsg(assets))
+			OnUpdateAssetQuotes: func(assetQuotes []c.AssetQuote) {
+				p.Send(SetAssetQuotesMsg{
+					assetQuotes: assetQuotes,
+				})
+				return
 			},
 		})
 

@@ -86,21 +86,27 @@ func (m *Model) Init() tea.Cmd {
 func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SetAssetsMsg:
-		a := make([]*c.Asset, len(msg))
-		m.assetsBySymbol = make(map[string]*c.Asset)
+		// Convert []c.Asset to []*c.Asset and update assetsBySymbol map
+		assets := make([]*c.Asset, len(msg))
+		assetsBySymbol := make(map[string]*c.Asset)
 
 		for i := range msg {
-			a[i] = &msg[i]
-			m.assetsBySymbol[msg[i].Symbol] = &msg[i]
+			assets[i] = &msg[i]
+			assetsBySymbol[msg[i].Symbol] = assets[i]
 		}
 
-		m.assets = a
+		m.assets = assets
+		m.assetsBySymbol = assetsBySymbol
 
 		return m, nil
 	case SetAssetMsg:
-		// if asset, ok := m.assetsBySymbol[msg.Symbol]; ok {
-		// 	asset.Asset = msg.Asset
-		// }
+		if asset, ok := m.assetsBySymbol[msg.Symbol]; ok {
+			asset.Holding = msg.Asset.Holding
+			asset.QuotePrice = msg.Asset.QuotePrice
+			asset.QuoteExtended = msg.Asset.QuoteExtended
+			asset.QuoteFutures = msg.Asset.QuoteFutures
+			asset.Meta.OrderIndex = msg.Asset.Meta.OrderIndex
+		}
 
 		return m, nil
 	}

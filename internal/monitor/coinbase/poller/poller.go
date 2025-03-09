@@ -10,33 +10,30 @@ import (
 )
 
 type Poller struct {
-	refreshInterval         time.Duration
-	symbols                 []string
-	isStarted               bool
-	ctx                     context.Context
-	cancel                  context.CancelFunc
-	unaryAPI                *unary.UnaryAPI
-	chanUpdateQuotePrice    chan c.MessageUpdate[c.QuotePrice]
-	chanUpdateQuoteExtended chan c.MessageUpdate[c.QuoteExtended]
+	refreshInterval      time.Duration
+	symbols              []string
+	isStarted            bool
+	ctx                  context.Context
+	cancel               context.CancelFunc
+	unaryAPI             *unary.UnaryAPI
+	chanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
 }
 
 type PollerConfig struct {
-	UnaryAPI                *unary.UnaryAPI
-	ChanUpdateQuotePrice    chan c.MessageUpdate[c.QuotePrice]
-	ChanUpdateQuoteExtended chan c.MessageUpdate[c.QuoteExtended]
+	UnaryAPI             *unary.UnaryAPI
+	ChanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
 }
 
 func NewPoller(ctx context.Context, config PollerConfig) *Poller {
 	ctx, cancel := context.WithCancel(ctx)
 
 	return &Poller{
-		refreshInterval:         0,
-		isStarted:               false,
-		ctx:                     ctx,
-		cancel:                  cancel,
-		unaryAPI:                config.UnaryAPI,
-		chanUpdateQuotePrice:    config.ChanUpdateQuotePrice,
-		chanUpdateQuoteExtended: config.ChanUpdateQuoteExtended,
+		refreshInterval:      0,
+		isStarted:            false,
+		ctx:                  ctx,
+		cancel:               cancel,
+		unaryAPI:             config.UnaryAPI,
+		chanUpdateAssetQuote: config.ChanUpdateAssetQuote,
 	}
 }
 
@@ -85,14 +82,9 @@ func (p *Poller) Start() error {
 				}
 
 				for _, assetQuote := range assetQuotes {
-					p.chanUpdateQuotePrice <- c.MessageUpdate[c.QuotePrice]{
+					p.chanUpdateAssetQuote <- c.MessageUpdate[c.AssetQuote]{
 						ID:   assetQuote.Meta.SymbolInSourceAPI,
-						Data: assetQuote.QuotePrice,
-					}
-
-					p.chanUpdateQuoteExtended <- c.MessageUpdate[c.QuoteExtended]{
-						ID:   assetQuote.Meta.SymbolInSourceAPI,
-						Data: assetQuote.QuoteExtended,
+						Data: assetQuote,
 					}
 				}
 			default:

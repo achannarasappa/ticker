@@ -36,7 +36,12 @@ type Model struct {
 	ready              bool
 	headerHeight       int
 	getQuotes          func(c.AssetGroup) c.AssetGroupQuote
+	nonce              int
 	requestInterval    int
+	assets             []c.Asset
+	assetQuotes        []c.AssetQuote
+	assetQuotesLookup  map[string]int
+	holdingSummary     asset.HoldingSummary
 	viewport           viewport.Model
 	watchlist          *watchlist.Model
 	summary            summary.Model
@@ -48,31 +53,19 @@ type Model struct {
 	mu                 sync.RWMutex
 }
 
-func getTime() string {
-	t := time.Now()
-
-	return fmt.Sprintf("%s %02d:%02d:%02d", t.Weekday().String(), t.Hour(), t.Minute(), t.Second())
+type tickMsg struct {
+	nonce int
 }
 
-func generateQuoteMsg(m *Model, skipUpdate bool) tea.Cmd {
-	return func() tea.Msg {
-		// Infer group change based on skipUpdate
-		if skipUpdate {
-			m.monitors.SetSymbols(m.ctx.Groups[m.groupSelectedIndex])
-		}
-		return quoteMsg{
-			assetGroupIndex: m.groupSelectedIndex,
-			assetGroupQuote: m.getQuotes(m.ctx.Groups[m.groupSelectedIndex]),
-			skipUpdate:      skipUpdate,
-			time:            getTime(),
-		}
-	}
+type SetAssetQuoteMsg struct {
+	symbol        string
+	assetQuote    c.AssetQuote
+	assetGroupIdx int
 }
 
-func (m *Model) updateQuotes() tea.Cmd {
-	return tea.Tick(time.Second*time.Duration(m.requestInterval), func(_ time.Time) tea.Msg {
-		return generateQuoteMsg(m, false)()
-	})
+type SetAssetQuotesMsg struct {
+	assetQuotes   []c.AssetQuote
+	assetGroupIdx int
 }
 
 // NewModel is the constructor for UI model
@@ -88,6 +81,11 @@ func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
 		ready:              false,
 		requestInterval:    ctx.Config.RefreshInterval,
 		getQuotes:          quote.GetAssetGroupQuote(monitors, &dep),
+		nonce:              0,
+		assets:             make([]c.Asset, 0),
+		assetQuotes:        make([]c.AssetQuote, 0),
+		assetQuotesLookup:  make(map[string]int),
+		holdingSummary:     asset.HoldingSummary{},
 		watchlist:          w,
 		summary:            summary.NewModel(ctx),
 		groupMaxIndex:      groupMaxIndex,
@@ -101,27 +99,14 @@ func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
 func (m *Model) Init() tea.Cmd {
 	(*m.monitors).Start()
 
-	(*m.monitors).SetSymbols(m.ctx.Groups[m.groupSelectedIndex])
-
-	return generateQuoteMsg(m, false)
-}
-
-type quoteMsg struct {
-	assetGroupIndex int
-	assetGroupQuote c.AssetGroupQuote
-	skipUpdate      bool
-	time            string
-}
-
-type SetAssetMsg struct {
-	symbol        string
-	asset         c.Asset
-	assetGroupIdx int
-}
-
-type SetAssetsMsg struct {
-	assets        []c.Asset
-	assetGroupIdx int
+	// Start renderer and set symbols in parallel
+	return tea.Batch(
+		tick(0),
+		func() tea.Msg {
+			(*m.monitors).SetSymbols(m.ctx.Groups[m.groupSelectedIndex])
+			return nil
+		},
+	)
 }
 
 // Update hook for bubbletea
@@ -143,7 +128,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.groupSelectedIndex = (m.groupSelectedIndex + groupSelectedCursor + m.groupMaxIndex + 1) % (m.groupMaxIndex + 1)
 			m.groupSelectedName = m.ctx.Groups[m.groupSelectedIndex].Name
 
-			return m, generateQuoteMsg(m, true)
+			// Increment the nonce which will invalidate all previous ticks
+			m.nonce++
+
+			return m, tickImmediate(m.nonce)
 		case "ctrl+c":
 			fallthrough
 		case "esc":
@@ -170,44 +158,59 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return m, nil
 
-	case watchlist.SetAssetQuotePriceMsg:
-		m.mu.Lock()
-		defer m.mu.Unlock()
+	// Trigger component re-render if data has changed
+	case tickMsg:
 
+		// Do not re-render if nonce has changed and do not start a new timer with this nonce
+		if msg.nonce != m.nonce {
+			return m, nil
+		}
+
+		m.watchlist.Update(watchlist.SetAssetsMsg(m.assets))
+		m.lastUpdateTime = getTime()
+		m.summary.Summary = m.holdingSummary
 		if m.ready {
-			m.watchlist.Update(watchlist.SetAssetQuotePriceMsg{
-				Symbol:     msg.Symbol,
-				QuotePrice: msg.QuotePrice,
-			})
-			m.lastUpdateTime = getTime()
 			m.viewport.SetContent(m.watchlist.View())
 			m.viewport, _ = m.viewport.Update(msg)
 		}
 
-		return m, nil
+		return m, tick(msg.nonce)
 
-	case quoteMsg:
-		m.mu.Lock()
-		defer m.mu.Unlock()
+	case SetAssetQuotesMsg:
 
-		// Update UI only if data matches current group
-		if m.groupSelectedIndex == msg.assetGroupIndex {
-			assets, holdingSummary := asset.GetAssets(m.ctx, msg.assetGroupQuote)
-			m.watchlist.Update(watchlist.SetAssetsMsg(assets))
-			m.lastUpdateTime = msg.time
-			m.summary.Summary = holdingSummary
-			if m.ready {
-				m.viewport.SetContent(m.watchlist.View())
-				m.viewport, _ = m.viewport.Update(msg)
-			}
+		m.updateAssetsAndHoldingSummary(msg.assetQuotes)
+
+		for i, assetQuote := range m.assetQuotes {
+			m.assetQuotesLookup[assetQuote.Symbol] = i
 		}
 
-		// Do not start a new timer to update
-		if msg.skipUpdate {
+		return m, nil
+
+	case SetAssetQuoteMsg:
+
+		var i int
+		var ok bool
+
+		// Check if this symbol is in the lookup
+		if i, ok = m.assetQuotesLookup[msg.symbol]; !ok {
 			return m, nil
 		}
 
-		return m, m.updateQuotes()
+		// Check if the index is out of bounds
+		if i >= len(m.assetQuotes) {
+			return m, nil
+		}
+
+		// Check if the symbol is the same
+		if m.assetQuotes[i].Symbol != msg.symbol {
+			return m, nil
+		}
+
+		// Update the asset quote and generate a new holding summary
+		m.assetQuotes[i] = msg.assetQuote
+		m.updateAssetsAndHoldingSummary(m.assetQuotes)
+
+		return m, nil
 	}
 
 	return m, nil
@@ -232,6 +235,28 @@ func (m *Model) View() string {
 		m.viewport.View() + "\n" +
 		footer(m.viewport.Width, m.lastUpdateTime, m.groupSelectedName)
 
+}
+
+func (m *Model) updateAssetsAndHoldingSummary(assetQuotes []c.AssetQuote) {
+	m.mu.RLock()
+	assetGroup := m.ctx.Groups[m.groupSelectedIndex]
+	m.mu.RUnlock()
+
+	assetGroupQuote := c.AssetGroupQuote{
+		AssetQuotes: assetQuotes,
+		AssetGroup:  assetGroup,
+	}
+
+	assets, holdingSummary := asset.GetAssets(m.ctx, assetGroupQuote)
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.assets = assets
+	m.holdingSummary = holdingSummary
+	m.assetQuotes = assetQuotes
+
+	return
 }
 
 func footer(width int, time string, groupSelectedName string) string {
@@ -266,4 +291,29 @@ func getVerticalMargin(config c.Config) int {
 	}
 
 	return 0
+}
+
+// Send a new tick message with the nonce 100ms from now
+func tick(nonce int) tea.Cmd {
+	return tea.Tick(time.Second/10, func(time.Time) tea.Msg {
+		return tickMsg{
+			nonce: nonce,
+		}
+	})
+}
+
+// Send a new tick message immediately
+func tickImmediate(nonce int) tea.Cmd {
+
+	return func() tea.Msg {
+		return tickMsg{
+			nonce: nonce,
+		}
+	}
+}
+
+func getTime() string {
+	t := time.Now()
+
+	return fmt.Sprintf("%s %02d:%02d:%02d", t.Weekday().String(), t.Hour(), t.Minute(), t.Second())
 }

@@ -52,9 +52,8 @@ var _ = Describe("Poller", func() {
 	Describe("NewPoller", func() {
 		It("should create a new poller instance", func() {
 			p := poller.NewPoller(context.Background(), poller.PollerConfig{
-				UnaryAPI:                unary.NewUnaryAPI(server.URL()),
-				ChanUpdateQuotePrice:    make(chan c.MessageUpdate[c.QuotePrice], 5),
-				ChanUpdateQuoteExtended: make(chan c.MessageUpdate[c.QuoteExtended], 5),
+				UnaryAPI:             unary.NewUnaryAPI(server.URL()),
+				ChanUpdateAssetQuote: make(chan c.MessageUpdate[c.AssetQuote], 5),
 			})
 			Expect(p).NotTo(BeNil())
 		})
@@ -63,13 +62,11 @@ var _ = Describe("Poller", func() {
 	Describe("Start", func() {
 		It("should start polling for price updates", func() {
 
-			inputChanUpdateQuotePrice := make(chan c.MessageUpdate[c.QuotePrice], 5)
-			inputChanUpdateQuoteExtended := make(chan c.MessageUpdate[c.QuoteExtended], 5)
+			inputChanUpdateAssetQuote := make(chan c.MessageUpdate[c.AssetQuote], 5)
 
 			p := poller.NewPoller(context.Background(), poller.PollerConfig{
-				UnaryAPI:                unary.NewUnaryAPI(server.URL()),
-				ChanUpdateQuotePrice:    inputChanUpdateQuotePrice,
-				ChanUpdateQuoteExtended: inputChanUpdateQuoteExtended,
+				UnaryAPI:             unary.NewUnaryAPI(server.URL()),
+				ChanUpdateAssetQuote: inputChanUpdateAssetQuote,
 			})
 			p.SetSymbols([]string{"BTC-USD"})
 			p.SetRefreshInterval(time.Millisecond * 250)
@@ -77,19 +74,11 @@ var _ = Describe("Poller", func() {
 			err := p.Start()
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(inputChanUpdateQuotePrice).Should(Receive(
+			Eventually(inputChanUpdateAssetQuote).Should(Receive(
 				g.MatchFields(g.IgnoreExtras, g.Fields{
 					"ID": Equal("BTC-USD"),
 					"Data": g.MatchFields(g.IgnoreExtras, g.Fields{
 						"Price": Equal(50000.00),
-					}),
-				}),
-			))
-			Eventually(inputChanUpdateQuoteExtended).Should(Receive(
-				g.MatchFields(g.IgnoreExtras, g.Fields{
-					"ID": Equal("BTC-USD"),
-					"Data": g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Volume": Equal(1000000.00),
 					}),
 				}),
 			))
@@ -99,9 +88,8 @@ var _ = Describe("Poller", func() {
 			When("and the poller is started again", func() {
 				It("should return an error", func() {
 					p := poller.NewPoller(context.Background(), poller.PollerConfig{
-						UnaryAPI:                unary.NewUnaryAPI(server.URL()),
-						ChanUpdateQuotePrice:    make(chan c.MessageUpdate[c.QuotePrice], 5),
-						ChanUpdateQuoteExtended: make(chan c.MessageUpdate[c.QuoteExtended], 5),
+						UnaryAPI:             unary.NewUnaryAPI(server.URL()),
+						ChanUpdateAssetQuote: make(chan c.MessageUpdate[c.AssetQuote], 5),
 					})
 					p.SetSymbols([]string{"BTC-USD"})
 					p.SetRefreshInterval(time.Second * 1)
@@ -118,9 +106,8 @@ var _ = Describe("Poller", func() {
 			When("and the refresh interval is set again", func() {
 				It("should return an error", func() {
 					p := poller.NewPoller(context.Background(), poller.PollerConfig{
-						UnaryAPI:                unary.NewUnaryAPI(server.URL()),
-						ChanUpdateQuotePrice:    make(chan c.MessageUpdate[c.QuotePrice], 5),
-						ChanUpdateQuoteExtended: make(chan c.MessageUpdate[c.QuoteExtended], 5),
+						UnaryAPI:             unary.NewUnaryAPI(server.URL()),
+						ChanUpdateAssetQuote: make(chan c.MessageUpdate[c.AssetQuote], 5),
 					})
 					p.SetSymbols([]string{"BTC-USD"})
 					p.SetRefreshInterval(time.Second * 1)
@@ -139,9 +126,8 @@ var _ = Describe("Poller", func() {
 		When("the refresh interval is not set", func() {
 			It("should return an error", func() {
 				p := poller.NewPoller(context.Background(), poller.PollerConfig{
-					UnaryAPI:                unary.NewUnaryAPI(server.URL()),
-					ChanUpdateQuotePrice:    make(chan c.MessageUpdate[c.QuotePrice], 5),
-					ChanUpdateQuoteExtended: make(chan c.MessageUpdate[c.QuoteExtended], 5),
+					UnaryAPI:             unary.NewUnaryAPI(server.URL()),
+					ChanUpdateAssetQuote: make(chan c.MessageUpdate[c.AssetQuote], 5),
 				})
 				p.SetSymbols([]string{"BTC-USD"})
 
@@ -154,21 +140,18 @@ var _ = Describe("Poller", func() {
 		When("the symbols are not set", func() {
 			It("should not return any price updates", func() {
 
-				inputChanUpdateQuotePrice := make(chan c.MessageUpdate[c.QuotePrice], 5)
-				inputChanUpdateQuoteExtended := make(chan c.MessageUpdate[c.QuoteExtended], 5)
+				inputChanUpdateAssetQuote := make(chan c.MessageUpdate[c.AssetQuote], 5)
 
 				p := poller.NewPoller(context.Background(), poller.PollerConfig{
-					UnaryAPI:                unary.NewUnaryAPI(server.URL()),
-					ChanUpdateQuotePrice:    make(chan c.MessageUpdate[c.QuotePrice], 5),
-					ChanUpdateQuoteExtended: make(chan c.MessageUpdate[c.QuoteExtended], 5),
+					UnaryAPI:             unary.NewUnaryAPI(server.URL()),
+					ChanUpdateAssetQuote: inputChanUpdateAssetQuote,
 				})
 				p.SetRefreshInterval(time.Millisecond * 100)
 
 				err := p.Start()
 				Expect(err).NotTo(HaveOccurred())
 
-				Consistently(inputChanUpdateQuotePrice).ShouldNot(Receive())
-				Consistently(inputChanUpdateQuoteExtended).ShouldNot(Receive())
+				Consistently(inputChanUpdateAssetQuote).ShouldNot(Receive())
 			})
 		})
 

@@ -22,8 +22,8 @@ type ConfigMonitor struct {
 }
 
 type ConfigUpdateFns struct {
-	OnUpdateAsset  func(symbol string, asset c.Asset)
-	OnUpdateAssets func(assets []c.Asset)
+	OnUpdateAssetQuote  func(symbol string, assetQuote c.AssetQuote)
+	OnUpdateAssetQuotes func(assetQuotes []c.AssetQuote)
 }
 
 // New creates a new instance of the Coinbase monitor
@@ -60,8 +60,8 @@ func (m *Monitor) SetSymbols(assetGroup c.AssetGroup) {
 
 func (m *Monitor) SetOnUpdate(config ConfigUpdateFns) {
 	for _, monitor := range m.monitors {
-		monitor.SetOnUpdateAsset(config.OnUpdateAsset)
-		monitor.SetOnUpdateAssets(config.OnUpdateAssets)
+		monitor.SetOnUpdateAssetQuote(config.OnUpdateAssetQuote)
+		monitor.SetOnUpdateAssetQuotes(config.OnUpdateAssetQuotes)
 	}
 }
 

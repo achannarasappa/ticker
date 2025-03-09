@@ -23,7 +23,8 @@ type MonitorCoinbase struct {
 	productIds                       []string // Coinbase APIs refer to trading pairs as Product IDs which symbols ticker accepts with a -USD suffix
 	productIdsStreaming              []string
 	productIdsPolling                []string
-	productIdsToUnderlyingProductIds map[string]string        // Product IDs which are only underlying assets of explicit requested assets (e.g. BTC-USD is an underlying asset of BIT-31JAN25-CDE)
+	productIdsToUnderlyingProductIds map[string]string        // Map of productIds to underlying productIds
+	productIdsUnderlyingOnly         map[string]bool          // Product IDs which are only underlying assets of explicit requested assets (e.g. BTC-USD is an underlying asset of BIT-31JAN25-CDE)
 	assetQuotesCache                 []c.AssetQuote           // Asset quotes for all assets retrieved at start or on symbol change
 	assetQuotesCacheLookup           map[string]*c.AssetQuote // Asset quotes for all assets retrieved at least once (symbol change does not remove symbols)
 	chanStreamUpdateQuotePrice       chan c.MessageUpdate[c.QuotePrice]
@@ -34,8 +35,8 @@ type MonitorCoinbase struct {
 	ctx                              context.Context
 	cancel                           context.CancelFunc
 	isStarted                        bool
-	onUpdateAsset                    func(symbol string, asset c.Asset)
-	onUpdateAssets                   func(assets []c.Asset)
+	onUpdateAssetQuote               func(symbol string, assetQuote c.AssetQuote)
+	onUpdateAssetQuotes              func(assetQuotes []c.AssetQuote)
 }
 
 type input struct {
@@ -56,12 +57,6 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	unaryAPI := unary.NewUnaryAPI(config.UnaryURL)
-	pollerConfig := poller.PollerConfig{
-		// TODO: pass in channel
-		ChanUpdateQuotePrice:    make(chan c.MessageUpdate[c.QuotePrice]),
-		ChanUpdateQuoteExtended: make(chan c.MessageUpdate[c.QuoteExtended]),
-	}
-	p := poller.NewPoller(ctx, pollerConfig)
 
 	monitor := &MonitorCoinbase{
 		assetQuotesCacheLookup:           make(map[string]*c.AssetQuote),
@@ -71,11 +66,16 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 		chanStreamUpdateQuoteExtended:    make(chan c.MessageUpdate[c.QuoteExtended]),
 		chanStreamUpdateExchange:         make(chan c.MessageUpdate[c.Exchange]),
 		chanPollUpdateAssetQuote:         make(chan c.MessageUpdate[c.AssetQuote]),
-		poller:                           p,
 		unaryAPI:                         unaryAPI,
 		ctx:                              ctx,
 		cancel:                           cancel,
 	}
+
+	pollerConfig := poller.PollerConfig{
+		ChanUpdateAssetQuote: monitor.chanPollUpdateAssetQuote,
+		UnaryAPI:             unaryAPI,
+	}
+	monitor.poller = poller.NewPoller(ctx, pollerConfig)
 
 	streamerConfig := streamer.StreamerConfig{
 		ChanStreamUpdateQuotePrice:    monitor.chanStreamUpdateQuotePrice,
@@ -106,12 +106,12 @@ func WithRefreshInterval(interval time.Duration) Option {
 }
 
 // SetOnUpdate sets the onUpdate function for the monitor
-func (m *MonitorCoinbase) SetOnUpdateAsset(onUpdate func(symbol string, asset c.Asset)) {
-	m.onUpdateAsset = onUpdate
+func (m *MonitorCoinbase) SetOnUpdateAssetQuote(onUpdate func(symbol string, assetQuote c.AssetQuote)) {
+	m.onUpdateAssetQuote = onUpdate
 }
 
-func (m *MonitorCoinbase) SetOnUpdateAssets(onUpdate func(assets []c.Asset)) {
-	m.onUpdateAssets = onUpdate
+func (m *MonitorCoinbase) SetOnUpdateAssetQuotes(onUpdate func(assetQuotes []c.AssetQuote)) {
+	m.onUpdateAssetQuotes = onUpdate
 }
 
 func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) []c.AssetQuote {
@@ -167,8 +167,7 @@ func (m *MonitorCoinbase) SetSymbols(productIds []string) error {
 	m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming)
 	m.poller.SetSymbols(m.productIdsPolling)
 
-	// TODO: implement
-	// m.onUpdate([]c.Asset{})
+	m.onUpdateAssetQuotes(m.assetQuotesCache)
 
 	return nil
 
@@ -253,6 +252,54 @@ func (m *MonitorCoinbase) handleUpdates() {
 		case <-m.chanStreamUpdateQuoteExtended:
 			// TODO: handle extended quote
 			continue
+
+		case updateMessage := <-m.chanPollUpdateAssetQuote:
+
+			// Check if cache exists and values have changed before acquiring write lock
+			m.mu.RLock()
+
+			assetQuote, exists := m.assetQuotesCacheLookup[updateMessage.ID]
+
+			if !exists {
+				// If product id does not exist in cache, skip update
+				// TODO: log product not found in cache - should not happen
+				m.mu.RUnlock()
+				continue
+			}
+
+			// Skip update if nothing has changed
+			if assetQuote.QuotePrice.Price == updateMessage.Data.QuotePrice.Price &&
+				assetQuote.Exchange.IsActive == updateMessage.Data.Exchange.IsActive &&
+				assetQuote.QuotePrice.PriceDayHigh == updateMessage.Data.QuotePrice.PriceDayHigh {
+
+				m.mu.RUnlock()
+				continue
+			}
+			m.mu.RUnlock()
+
+			// Price is different so update cache
+			m.mu.Lock()
+
+			assetQuote.QuotePrice.Price = updateMessage.Data.QuotePrice.Price
+			assetQuote.QuotePrice.Change = updateMessage.Data.QuotePrice.Change
+			assetQuote.QuotePrice.ChangePercent = updateMessage.Data.QuotePrice.ChangePercent
+			assetQuote.QuotePrice.PriceDayHigh = updateMessage.Data.QuotePrice.PriceDayHigh
+			assetQuote.QuotePrice.PriceDayLow = updateMessage.Data.QuotePrice.PriceDayLow
+			assetQuote.QuotePrice.PriceOpen = updateMessage.Data.QuotePrice.PriceOpen
+			assetQuote.QuotePrice.PricePrevClose = updateMessage.Data.QuotePrice.PricePrevClose
+			assetQuote.QuoteExtended.FiftyTwoWeekHigh = updateMessage.Data.QuoteExtended.FiftyTwoWeekHigh
+			assetQuote.QuoteExtended.FiftyTwoWeekLow = updateMessage.Data.QuoteExtended.FiftyTwoWeekLow
+			assetQuote.QuoteExtended.MarketCap = updateMessage.Data.QuoteExtended.MarketCap
+			assetQuote.QuoteExtended.Volume = updateMessage.Data.QuoteExtended.Volume
+			assetQuote.Exchange.IsActive = updateMessage.Data.Exchange.IsActive
+			assetQuote.Exchange.IsRegularTradingSession = updateMessage.Data.Exchange.IsRegularTradingSession
+
+			m.mu.Unlock()
+
+			m.onUpdateAssetQuote(assetQuote.Symbol, *assetQuote)
+
+			continue
+
 		case updateMessage := <-m.chanStreamUpdateQuotePrice:
 
 			var assetQuote *c.AssetQuote
@@ -290,8 +337,9 @@ func (m *MonitorCoinbase) handleUpdates() {
 
 			m.mu.Unlock()
 
-			// TODO: set min update publish frequency
-			// m.onUpdateAsset(assetQuote.Symbol, assetQuote.Asset)
+			// TODO: when underlying asset price changes, callback to update basis else skip
+
+			m.onUpdateAssetQuote(assetQuote.Symbol, *assetQuote)
 
 			continue
 		case <-m.ctx.Done():

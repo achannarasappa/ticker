@@ -144,16 +144,14 @@ func getReference(config c.Config, assetGroups []c.AssetGroup, client *resty.Cli
 	}
 
 	styles := util.GetColorScheme(config.ColorScheme)
-	sourceToUnderlyingAssetSymbols, err := quote.GetAssetGroupUnderlyingAssetSymbols(client, assetGroups)
 
 	if err != nil {
 		return c.Reference{}, err
 	}
 
 	return c.Reference{
-		CurrencyRates:                  currencyRates,
-		SourceToUnderlyingAssetSymbols: sourceToUnderlyingAssetSymbols,
-		Styles:                         styles,
+		CurrencyRates: currencyRates,
+		Styles:        styles,
 	}, err
 
 }

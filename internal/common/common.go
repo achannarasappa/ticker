@@ -64,9 +64,8 @@ type AssetGroupQuote struct {
 
 // Reference represents derived configuration for internal use from user defined configuration
 type Reference struct {
-	CurrencyRates                  CurrencyRates
-	SourceToUnderlyingAssetSymbols map[QuoteSource][]string
-	Styles                         Styles
+	CurrencyRates CurrencyRates
+	Styles        Styles
 }
 
 // Dependencies represents references to external dependencies

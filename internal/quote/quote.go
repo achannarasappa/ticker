@@ -4,7 +4,6 @@ import (
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 
 	mon "github.com/achannarasappa/ticker/v4/internal/monitor"
-	quoteCoinbase "github.com/achannarasappa/ticker/v4/internal/quote/coinbase"
 	quoteCoincap "github.com/achannarasappa/ticker/v4/internal/quote/coincap"
 	quoteCoingecko "github.com/achannarasappa/ticker/v4/internal/quote/coingecko"
 	quoteYahoo "github.com/achannarasappa/ticker/v4/internal/quote/yahoo"
@@ -109,20 +108,4 @@ func GetAssetGroupsCurrencyRates(client *resty.Client, assetGroups []c.AssetGrou
 	}
 
 	return currencyRates, err
-}
-
-// GetAssetGroupUnderlyingAssetSymbols retrieves the underlying asset symbol for Coinbase futures contracts that are not already on the watchlist
-func GetAssetGroupUnderlyingAssetSymbols(client *resty.Client, assetGroups []c.AssetGroup) (map[c.QuoteSource][]string, error) {
-	var err error
-	sourceToUnderlyingAssetSymbols := make(map[c.QuoteSource][]string)
-	uniqueSymbolsBySource := getUniqueSymbolsBySource(assetGroups)
-
-	for _, source := range uniqueSymbolsBySource {
-		if source.Source == c.QuoteSourceCoinbase && err == nil {
-			sourceToUnderlyingAssetSymbols[c.QuoteSourceCoinbase], err = quoteCoinbase.GetUnderlyingAssetSymbols(*client, source.Symbols)
-		}
-	}
-
-	return sourceToUnderlyingAssetSymbols, err
-
 }

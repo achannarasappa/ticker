@@ -69,6 +69,8 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 		unaryAPI:                         unaryAPI,
 		ctx:                              ctx,
 		cancel:                           cancel,
+		onUpdateAssetQuote:               func(symbol string, assetQuote c.AssetQuote) {},
+		onUpdateAssetQuotes:              func(assetQuotes []c.AssetQuote) {},
 	}
 
 	pollerConfig := poller.PollerConfig{
@@ -437,6 +439,7 @@ func (m *MonitorCoinbase) getUnderlyingAssetsAndUpdateProductIds() error {
 
 	// Merge and deduplicate productIds since and underlying symbol could also have been explicitly requested
 	m.productIds = mergeProductIds(m.productIds, underlyingSymbolsResponse)
+	slices.Sort(m.productIds)
 	m.productIds = slices.Compact(m.productIds)
 
 	return nil

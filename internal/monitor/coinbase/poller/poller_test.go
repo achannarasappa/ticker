@@ -78,7 +78,9 @@ var _ = Describe("Poller", func() {
 				g.MatchFields(g.IgnoreExtras, g.Fields{
 					"ID": Equal("BTC-USD"),
 					"Data": g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Price": Equal(50000.00),
+						"QuotePrice": g.MatchFields(g.IgnoreExtras, g.Fields{
+							"Price": Equal(50000.00),
+						}),
 					}),
 				}),
 			))

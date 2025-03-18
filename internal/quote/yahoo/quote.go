@@ -1,6 +1,7 @@
 package yahoo
 
 import (
+	"encoding/json"
 	"strings"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
@@ -46,19 +47,37 @@ type ResponseFieldFloat struct {
 	Fmt string  `json:"fmt"`
 }
 
+// ResponseFieldString handles both object format and string format responses
 type ResponseFieldString struct {
 	Raw string `json:"raw"`
 	Fmt string `json:"fmt"`
 }
 
-func getAssetClass(assetClass string) c.AssetClass {
+// UnmarshalJSON handles both string and object formats from Yahoo API
+func (r *ResponseFieldString) UnmarshalJSON(data []byte) error {
+	if len(data) == 0 {
+		return nil
+	}
+	if data[0] == '"' {
+		var s string
+		if err := json.Unmarshal(data, &s); err == nil {
+			r.Raw = s
+			r.Fmt = s
 
+			return nil
+		}
+	}
+	type alias ResponseFieldString
+
+	return json.Unmarshal(data, (*alias)(r))
+}
+
+func getAssetClass(assetClass string) c.AssetClass {
 	if assetClass == "CRYPTOCURRENCY" {
 		return c.AssetClassCryptocurrency
 	}
 
 	return c.AssetClassStock
-
 }
 
 // Response represents the container object from the API response

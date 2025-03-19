@@ -32,7 +32,6 @@ var _ = Describe("Unary", func() {
 	})
 
 	Describe("GetAssetQuotes", func() {
-
 		It("should return a list of asset quotes", func() {
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
@@ -194,8 +193,6 @@ var _ = Describe("Unary", func() {
 
 			When("the response is invalid", func() {
 				It("should return an error", func() {
-					server.Reset()
-
 					server.AppendHandlers(
 						ghttp.CombineHandlers(
 							ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products"),

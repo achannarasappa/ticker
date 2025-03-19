@@ -144,12 +144,11 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 }
 
 func transformResponseQuotes(responseQuotes []ResponseQuote) ([]c.AssetQuote, map[string]*c.AssetQuote) {
-	quotes := make([]c.AssetQuote, 0)
-	quotesByProductId := make(map[string]*c.AssetQuote)
+	quotes := make([]c.AssetQuote, 0, len(responseQuotes))
+	quotesByProductId := make(map[string]*c.AssetQuote, len(responseQuotes))
 
 	// Transform quotes
 	for _, responseQuote := range responseQuotes {
-
 		quote := transformResponseQuote(responseQuote)
 		quotes = append(quotes, quote)
 		quotesByProductId[quote.Meta.SymbolInSourceAPI] = &quote
@@ -160,14 +159,13 @@ func transformResponseQuotes(responseQuotes []ResponseQuote) ([]c.AssetQuote, ma
 
 func (u *UnaryAPI) GetAssetQuotes(symbols []string) ([]c.AssetQuote, map[string]*c.AssetQuote, error) {
 	if len(symbols) == 0 {
-		return nil, nil, nil
+		return []c.AssetQuote{}, make(map[string]*c.AssetQuote), nil
 	}
 
 	// Build URL with query parameters
 	reqURL, _ := url.Parse(u.baseURL + "/api/v3/brokerage/market/products")
-
 	q := reqURL.Query()
-	q["product_ids"] = symbols
+	q.Set("product_ids", strings.Join(symbols, ","))
 	reqURL.RawQuery = q.Encode()
 
 	// Make request

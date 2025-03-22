@@ -9,7 +9,6 @@ import (
 	"github.com/achannarasappa/ticker/v4/internal/asset"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 	mon "github.com/achannarasappa/ticker/v4/internal/monitor"
-	quote "github.com/achannarasappa/ticker/v4/internal/quote"
 	"github.com/achannarasappa/ticker/v4/internal/ui/component/summary"
 	"github.com/achannarasappa/ticker/v4/internal/ui/component/watchlist"
 
@@ -35,7 +34,6 @@ type Model struct {
 	ctx                c.Context
 	ready              bool
 	headerHeight       int
-	getQuotes          func(c.AssetGroup) c.AssetGroupQuote
 	nonce              int
 	requestInterval    int
 	assets             []c.Asset
@@ -80,7 +78,6 @@ func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
 		headerHeight:       getVerticalMargin(ctx.Config),
 		ready:              false,
 		requestInterval:    ctx.Config.RefreshInterval,
-		getQuotes:          quote.GetAssetGroupQuote(monitors, &dep),
 		nonce:              0,
 		assets:             make([]c.Asset, 0),
 		assetQuotes:        make([]c.AssetQuote, 0),
@@ -293,9 +290,9 @@ func getVerticalMargin(config c.Config) int {
 	return 0
 }
 
-// Send a new tick message with the nonce 100ms from now
+// Send a new tick message with the nonce 200ms from now
 func tick(nonce int) tea.Cmd {
-	return tea.Tick(time.Second/10, func(time.Time) tea.Msg {
+	return tea.Tick(time.Second/5, func(time.Time) tea.Msg {
 		return tickMsg{
 			nonce: nonce,
 		}

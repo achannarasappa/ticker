@@ -7,8 +7,6 @@ import (
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 	monitorCoinbase "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase"
 	monitorYahoo "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo"
-	"github.com/go-resty/resty/v2"
-	"github.com/gorilla/websocket"
 )
 
 // Monitor represents an overall monitor which manages API specific monitors
@@ -19,10 +17,8 @@ type Monitor struct {
 
 // ConfigMonitor represents the configuration for the main monitor
 type ConfigMonitor struct {
-	ClientHttp      *resty.Client
-	ClientWebsocket *websocket.Conn
-	Reference       c.Reference
-	Config          c.Config
+	Reference c.Reference
+	Config    c.Config
 }
 
 // ConfigUpdateFns represents the callback functions for when asset quotes are updated
@@ -93,14 +89,27 @@ func (m *Monitor) SetOnUpdate(config ConfigUpdateFns) error {
 	return nil
 }
 
-// GetMonitor returns the monitor for a given source
-func (m *Monitor) GetMonitor(source c.QuoteSource) c.Monitor {
-	return m.monitors[source]
-}
-
 // Start starts all monitors
 func (m *Monitor) Start() {
 	for _, monitor := range m.monitors {
 		monitor.Start()
+	}
+}
+
+// GetAssetGroupQuote synchronously gets price quotes a group of assets across all sources
+func (m *Monitor) GetAssetGroupQuote(assetGroup c.AssetGroup) c.AssetGroupQuote {
+
+	assetQuotesFromAllSources := make([]c.AssetQuote, 0)
+
+	for _, symbolBySource := range assetGroup.SymbolsBySource {
+
+		assetQuotes, _ := m.monitors[symbolBySource.Source].GetAssetQuotes(true)
+		assetQuotesFromAllSources = append(assetQuotesFromAllSources, assetQuotes...)
+
+	}
+
+	return c.AssetGroupQuote{
+		AssetQuotes: assetQuotesFromAllSources,
+		AssetGroup:  assetGroup,
 	}
 }

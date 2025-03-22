@@ -24,12 +24,6 @@ func getQuoteBySource(monitors *mon.Monitor, dep *c.Dependencies, symbolBySource
 		return quoteCoincap.GetAssetQuotes(*dep.HttpClients.Default, symbolBySource.Symbols)
 	}
 
-	if symbolBySource.Source == c.QuoteSourceCoinbase {
-		// (*monitors.Coinbase).SetSymbols(symbolBySource.Symbols) this will force a refresh
-		x, _ := monitors.GetMonitor(c.QuoteSourceCoinbase).GetAssetQuotes()
-		return x
-	}
-
 	return []c.AssetQuote{}
 }
 

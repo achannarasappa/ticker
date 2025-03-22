@@ -11,9 +11,8 @@ func Start(dep *c.Dependencies, ctx *c.Context) func() error {
 	return func() error {
 
 		monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
-			ClientHttp: dep.HttpClients.Default,
-			Reference:  ctx.Reference,
-			Config:     ctx.Config,
+			Reference: ctx.Reference,
+			Config:    ctx.Config,
 		})
 
 		p := tea.NewProgram(

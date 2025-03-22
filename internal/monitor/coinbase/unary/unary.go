@@ -93,7 +93,7 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 	change := price * (changePercent / 100)
 
 	name := responseQuote.ShortName
-	symbol := responseQuote.Symbol
+	symbol := responseQuote.Symbol + ".CB"
 	isActive := responseQuote.MarketState == "online"
 	class := c.AssetClassCryptocurrency
 	quoteFutures := c.QuoteFutures{}
@@ -101,7 +101,7 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 	if responseQuote.ProductType == productTypeFuture {
 
 		name = responseQuote.FutureProductDetails.GroupDescription
-		symbol = responseQuote.ProductID
+		symbol = responseQuote.ProductID + ".CB"
 		isActive = responseQuote.FcmTradingSessionDetails.IsSessionOpen
 		class = c.AssetClassFuturesContract
 		expirationTimezone, _ := time.LoadLocation(responseQuote.FutureProductDetails.ExpirationTimezone)

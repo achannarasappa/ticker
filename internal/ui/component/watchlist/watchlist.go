@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 	s "github.com/achannarasappa/ticker/v4/internal/sorter"
@@ -51,16 +50,6 @@ type cellWidthsContainer struct {
 
 // Messages for updating assets
 type SetAssetsMsg []c.Asset
-type SetAssetMsg struct {
-	Symbol string
-	Asset  c.Asset
-	Time   time.Time
-}
-type SetAssetQuotePriceMsg struct {
-	Symbol     string
-	QuotePrice c.QuotePrice
-	Time       time.Time
-}
 
 // NewModel returns a model with default values
 func NewModel(ctx c.Context) *Model {
@@ -99,16 +88,7 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 		m.assetsBySymbol = assetsBySymbol
 
 		return m, nil
-	case SetAssetMsg:
-		if asset, ok := m.assetsBySymbol[msg.Symbol]; ok {
-			asset.Holding = msg.Asset.Holding
-			asset.QuotePrice = msg.Asset.QuotePrice
-			asset.QuoteExtended = msg.Asset.QuoteExtended
-			asset.QuoteFutures = msg.Asset.QuoteFutures
-			asset.Meta.OrderIndex = msg.Asset.Meta.OrderIndex
-		}
 
-		return m, nil
 	}
 
 	return m, nil

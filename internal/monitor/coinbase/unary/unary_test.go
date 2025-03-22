@@ -59,7 +59,7 @@ var _ = Describe("Unary", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(quotes).To(HaveLen(1))
-			Expect(quotes[0].Symbol).To(Equal("BTC"))
+			Expect(quotes[0].Symbol).To(Equal("BTC.CB"))
 			Expect(quotes[0].QuotePrice.Price).To(Equal(50000.00))
 		})
 
@@ -107,7 +107,7 @@ var _ = Describe("Unary", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(quotes).To(HaveLen(2))
-				Expect(quotes[0].Symbol).To(Equal("BIT-31JAN25-CDE"))
+				Expect(quotes[0].Symbol).To(Equal("BIT-31JAN25-CDE.CB"))
 				Expect(quotes[0].QuotePrice.Price).To(Equal(60000.00))
 				Expect(quotes[0].QuoteFutures.SymbolUnderlying).To(Equal("BTC-USD"))
 				Expect(quotes[0].QuoteFutures.IndexPrice).To(Equal(0.00))
@@ -164,7 +164,7 @@ var _ = Describe("Unary", func() {
 
 					Expect(err).NotTo(HaveOccurred())
 					Expect(quotes).To(HaveLen(2))
-					Expect(quotes[0].Symbol).To(Equal(productId))
+					Expect(quotes[0].Symbol).To(Equal(productId + ".CB"))
 					Expect(quotes[0].QuoteFutures.Expiry).To(MatchRegexp(`-?\d+h`))
 					Expect(quotes[0].QuoteFutures.Expiry).To(MatchRegexp(`-?\d+min`))
 					Expect(quotes[0].QuoteFutures.Expiry).NotTo(MatchRegexp(`-?\d+d`))

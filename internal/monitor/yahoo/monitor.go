@@ -12,6 +12,7 @@ import (
 	unary "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"
 )
 
+// MonitorYahoo represents a Yahoo Finance monitor
 type MonitorYahoo struct {
 	unaryAPI                 *unary.UnaryAPI
 	poller                   *poller.Poller
@@ -31,6 +32,7 @@ type MonitorYahoo struct {
 	onUpdateAssetQuotes      func(assetQuotes []c.AssetQuote)
 }
 
+// input represents user input for the Yahoo monitor with any transformation
 type input struct {
 	productIds       []string
 	productIdsLookup map[string]bool
@@ -84,16 +86,20 @@ func WithRefreshInterval(interval time.Duration) Option {
 	}
 }
 
-// SetOnUpdate sets the onUpdate function for the monitor
+// SetOnUpdate sets the callback function for when a single asset quote is updated
 func (m *MonitorYahoo) SetOnUpdateAssetQuote(onUpdate func(symbol string, assetQuote c.AssetQuote)) {
 	m.onUpdateAssetQuote = onUpdate
 }
 
+// SetOnUpdateAssetQuotes sets the callback function for when all asset quotes are updated i.e. when monitored symbols are replaced with new symbols
 func (m *MonitorYahoo) SetOnUpdateAssetQuotes(onUpdate func(assetQuotes []c.AssetQuote)) {
 	m.onUpdateAssetQuotes = onUpdate
 }
 
+// GetAssetQuotes returns the asset quotes either from the cache or from the unary API if ignoreCache is set
 func (m *MonitorYahoo) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, error) {
+
+	// If ignoreCache is set, get the asset quotes from the unary API and update the cache
 	if len(ignoreCache) > 0 && ignoreCache[0] {
 		assetQuotes, err := m.getAssetQuotesAndReplaceCache()
 		if err != nil {
@@ -102,12 +108,14 @@ func (m *MonitorYahoo) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, erro
 		return assetQuotes, nil
 	}
 
+	// If ignoreCache is not set, return the asset quotes from the cache without making a HTTP request
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	return m.assetQuotesCache, nil
 }
 
+// SetSymbols sets the symbols to monitor
 func (m *MonitorYahoo) SetSymbols(productIds []string) error {
 
 	var err error
@@ -126,13 +134,16 @@ func (m *MonitorYahoo) SetSymbols(productIds []string) error {
 
 	m.mu.Unlock()
 
+	// Since the symbols have changed, make a synchronous call to get price quotes for the new symbols
 	_, err = m.getAssetQuotesAndReplaceCache()
 	if err != nil {
 		return err
 	}
 
+	// Set the symbols to monitor on the poller
 	m.poller.SetSymbols(m.productIdsPolling)
 
+	// Call the callback function for when all asset quotes are updated
 	m.onUpdateAssetQuotes(m.assetQuotesCache)
 
 	return nil
@@ -154,11 +165,13 @@ func (m *MonitorYahoo) Start() error {
 		return err
 	}
 
+	// Start polling for price quotes
 	err = m.poller.Start()
 	if err != nil {
 		return err
 	}
 
+	// Start listening for price quote updates
 	go m.handleUpdates()
 
 	m.isStarted = true
@@ -166,6 +179,7 @@ func (m *MonitorYahoo) Start() error {
 	return nil
 }
 
+// Stop the monitor
 func (m *MonitorYahoo) Stop() error {
 
 	if !m.isStarted {
@@ -176,6 +190,7 @@ func (m *MonitorYahoo) Stop() error {
 	return nil
 }
 
+// handleUpdates listens for asset quote change messages and updates the cache
 func (m *MonitorYahoo) handleUpdates() {
 	for {
 		select {
@@ -188,8 +203,8 @@ func (m *MonitorYahoo) handleUpdates() {
 
 			assetQuote, exists := m.assetQuotesCacheLookup[updateMessage.ID]
 
+			// If product id does not exist in cache, skip update (this would happen if the API returns a price for a symbol that was not requested)
 			if !exists {
-				// If product id does not exist in cache, skip update
 				// TODO: log product not found in cache - should not happen
 				m.mu.RUnlock()
 				continue
@@ -208,6 +223,7 @@ func (m *MonitorYahoo) handleUpdates() {
 			// Price is different so update cache
 			m.mu.Lock()
 
+			// Update properties on the asset quote which may have changed
 			assetQuote.QuotePrice.Price = updateMessage.Data.QuotePrice.Price
 			assetQuote.QuotePrice.Change = updateMessage.Data.QuotePrice.Change
 			assetQuote.QuotePrice.ChangePercent = updateMessage.Data.QuotePrice.ChangePercent
@@ -224,6 +240,7 @@ func (m *MonitorYahoo) handleUpdates() {
 
 			m.mu.Unlock()
 
+			// Call the callback function for when a single asset quote is updated
 			m.onUpdateAssetQuote(assetQuote.Symbol, *assetQuote)
 
 			continue
@@ -236,23 +253,17 @@ func (m *MonitorYahoo) handleUpdates() {
 // Get asset quotes from unary API, add futures quotes, filter out assets not explicitly requested, and replace the asset quotes cache
 func (m *MonitorYahoo) getAssetQuotesAndReplaceCache() ([]c.AssetQuote, error) {
 
+	// Make a synchronous call to get price quotes
 	assetQuotes, assetQuotesByProductId, err := m.unaryAPI.GetAssetQuotes(m.productIds)
 	if err != nil {
 		return []c.AssetQuote{}, err
 	}
 
-	// Filter asset quotes to only include explicitly requested ones
-	assetQuotesEnriched := make([]c.AssetQuote, 0, len(m.input.productIds))
-
-	for _, quote := range assetQuotes {
-		assetQuotesEnriched = append(assetQuotesEnriched, quote)
-	}
-
-	// Lock updates to asset quotes while symbols are changed and subscriptions updates. ensure data from unary call supercedes potentially oudated streaming data
+	// Replace the cache with new sets of asset quotes
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.assetQuotesCache = assetQuotesEnriched
+	m.assetQuotesCache = assetQuotes
 	m.assetQuotesCacheLookup = assetQuotesByProductId
 
 	return m.assetQuotesCache, nil

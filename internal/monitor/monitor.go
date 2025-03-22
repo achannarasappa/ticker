@@ -10,12 +10,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Monitor represents a Coinbase market data monitor
+// Monitor represents an overall monitor which manages API specific monitors
 type Monitor struct {
 	monitors  map[c.QuoteSource]c.Monitor
 	chanError chan error
 }
 
+// ConfigMonitor represents the configuration for the main monitor
 type ConfigMonitor struct {
 	ClientHttp      *resty.Client
 	ClientWebsocket *websocket.Conn
@@ -23,6 +24,7 @@ type ConfigMonitor struct {
 	Config          c.Config
 }
 
+// ConfigUpdateFns represents the callback functions for when asset quotes are updated
 type ConfigUpdateFns struct {
 	OnUpdateAssetQuote  func(symbol string, assetQuote c.AssetQuote)
 	OnUpdateAssetQuotes func(assetQuotes []c.AssetQuote)
@@ -75,17 +77,27 @@ func (m *Monitor) SetSymbols(assetGroup c.AssetGroup) {
 	}
 }
 
-func (m *Monitor) SetOnUpdate(config ConfigUpdateFns) {
+// SetOnUpdate sets the callback functions for when asset quotes are updated
+func (m *Monitor) SetOnUpdate(config ConfigUpdateFns) error {
+
+	if config.OnUpdateAssetQuote == nil || config.OnUpdateAssetQuotes == nil {
+		return fmt.Errorf("onUpdateAssetQuote and onUpdateAssetQuotes must be set")
+	}
+
 	for _, monitor := range m.monitors {
 		monitor.SetOnUpdateAssetQuote(config.OnUpdateAssetQuote)
 		monitor.SetOnUpdateAssetQuotes(config.OnUpdateAssetQuotes)
 	}
+
+	return nil
 }
 
+// GetMonitor returns the monitor for a given source
 func (m *Monitor) GetMonitor(source c.QuoteSource) c.Monitor {
 	return m.monitors[source]
 }
 
+// Start starts all monitors
 func (m *Monitor) Start() {
 	for _, monitor := range m.monitors {
 		monitor.Start()

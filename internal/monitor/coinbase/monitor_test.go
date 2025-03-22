@@ -127,7 +127,7 @@ var _ = Describe("Monitor Coinbase", func() {
 						},
 					}),
 				),
-				// Second call within SetSymbolsgets quotes for all symbols
+				// Second call within SetSymbols gets quotes for all symbols
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BIT-31JAN25-CDE&product_ids=BTC-USD&product_ids=ETH-USD"),
 					ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{

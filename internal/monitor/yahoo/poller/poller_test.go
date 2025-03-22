@@ -154,6 +154,7 @@ var _ = Describe("Poller", func() {
 				})
 
 				p.SetRefreshInterval(time.Millisecond * 100)
+				p.SetSymbols([]string{})
 
 				err := p.Start()
 				Expect(err).NotTo(HaveOccurred())
@@ -161,12 +162,6 @@ var _ = Describe("Poller", func() {
 				Consistently(inputChanUpdateAssetQuote).ShouldNot(Receive())
 				Consistently(inputChanError).ShouldNot(Receive())
 
-			})
-		})
-
-		When("the unary API returns an error", func() {
-			It("should return an error", func() {
-				// Test implementation will go here
 			})
 		})
 
@@ -197,7 +192,24 @@ var _ = Describe("Poller", func() {
 
 	Describe("Stop", func() {
 		It("should stop the polling process", func() {
-			// Test implementation will go here
+
+			p := poller.NewPoller(ctx, poller.PollerConfig{
+				UnaryAPI:             inputUnaryAPI,
+				ChanUpdateAssetQuote: inputChanUpdateAssetQuote,
+				ChanError:            inputChanError,
+			})
+
+			p.SetSymbols([]string{"NET"})
+			p.SetRefreshInterval(time.Millisecond * 100)
+
+			err := p.Start()
+			Expect(err).NotTo(HaveOccurred())
+
+			err = p.Stop()
+			Expect(err).NotTo(HaveOccurred())
+
+			Consistently(inputChanUpdateAssetQuote).ShouldNot(Receive())
+			Consistently(inputChanError).ShouldNot(Receive())
 		})
 	})
 })

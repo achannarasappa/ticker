@@ -9,6 +9,7 @@ import (
 	"github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"
 )
 
+// Poller represents a poller for Yahoo Finance
 type Poller struct {
 	refreshInterval      time.Duration
 	symbols              []string
@@ -20,12 +21,14 @@ type Poller struct {
 	chanError            chan error
 }
 
+// PollerConfig represents the configuration for the poller
 type PollerConfig struct {
 	UnaryAPI             *unary.UnaryAPI
 	ChanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
 	ChanError            chan error
 }
 
+// NewPoller creates a new poller
 func NewPoller(ctx context.Context, config PollerConfig) *Poller {
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -40,10 +43,12 @@ func NewPoller(ctx context.Context, config PollerConfig) *Poller {
 	}
 }
 
+// SetSymbols sets the symbols to poll
 func (p *Poller) SetSymbols(symbols []string) {
 	p.symbols = symbols
 }
 
+// SetRefreshInterval sets the refresh interval for the poller
 func (p *Poller) SetRefreshInterval(interval time.Duration) error {
 
 	if p.isStarted {
@@ -54,6 +59,7 @@ func (p *Poller) SetRefreshInterval(interval time.Duration) error {
 	return nil
 }
 
+// Start starts the poller
 func (p *Poller) Start() error {
 	if p.isStarted {
 		return fmt.Errorf("poller already started")
@@ -75,9 +81,12 @@ func (p *Poller) Start() error {
 			case <-p.ctx.Done():
 				return
 			case <-ticker.C:
+				// Skip making a HTTP request if no symbols are set
 				if len(p.symbols) == 0 {
 					continue
 				}
+
+				// Make a HTTP request to get the asset quotes
 				assetQuotes, _, err := p.unaryAPI.GetAssetQuotes(p.symbols)
 
 				if err != nil {
@@ -85,6 +94,7 @@ func (p *Poller) Start() error {
 					continue
 				}
 
+				// Send the asset quotes to the update channel
 				for _, assetQuote := range assetQuotes {
 					p.chanUpdateAssetQuote <- c.MessageUpdate[c.AssetQuote]{
 						ID:   assetQuote.Meta.SymbolInSourceAPI,
@@ -96,5 +106,11 @@ func (p *Poller) Start() error {
 		}
 	}()
 
+	return nil
+}
+
+// Stop stops the poller
+func (p *Poller) Stop() error {
+	p.cancel()
 	return nil
 }

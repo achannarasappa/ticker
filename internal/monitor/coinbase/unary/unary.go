@@ -165,7 +165,9 @@ func (u *UnaryAPI) GetAssetQuotes(symbols []string) ([]c.AssetQuote, map[string]
 	// Build URL with query parameters
 	reqURL, _ := url.Parse(u.baseURL + "/api/v3/brokerage/market/products")
 	q := reqURL.Query()
-	q.Set("product_ids", strings.Join(symbols, ","))
+	for _, symbol := range symbols {
+		q.Add("product_ids", symbol)
+	}
 	reqURL.RawQuery = q.Encode()
 
 	// Make request

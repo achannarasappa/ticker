@@ -757,10 +757,10 @@ var _ = Describe("Monitor Coinbase", func() {
 						),
 					)
 
-					// Set up a channel to detect if onUpdate is called
+					// Detect if the onUpdate function is called
 					outputCalled := false
 
-					// Create a monitor with a short refresh interval for testing
+					// Create a monitor with a short refresh interval
 					monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 						UnaryURL: server.URL(),
 					}, monitorCoinbase.WithRefreshInterval(100*time.Millisecond))

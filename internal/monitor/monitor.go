@@ -5,13 +5,15 @@ import (
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 	monitorCoinbase "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase"
+	monitorYahoo "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo"
 	"github.com/go-resty/resty/v2"
 	"github.com/gorilla/websocket"
 )
 
 // Monitor represents a Coinbase market data monitor
 type Monitor struct {
-	monitors map[c.QuoteSource]c.Monitor
+	monitors  map[c.QuoteSource]c.Monitor
+	chanError chan error
 }
 
 type ConfigMonitor struct {
@@ -28,20 +30,34 @@ type ConfigUpdateFns struct {
 
 // New creates a new instance of the Coinbase monitor
 func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
+
+	chanError := make(chan error, 5)
+
 	var coinbase *monitorCoinbase.MonitorCoinbase
 	coinbase = monitorCoinbase.NewMonitorCoinbase(
 		monitorCoinbase.Config{
 			UnaryURL:  "https://api.coinbase.com",
-			ChanError: make(chan error, 5),
+			ChanError: chanError,
 		},
 		monitorCoinbase.WithStreamingURL("wss://ws-feed.exchange.coinbase.com"),
 		monitorCoinbase.WithRefreshInterval(time.Duration(configMonitor.Config.RefreshInterval)*time.Second),
 	)
 
+	var yahoo *monitorYahoo.MonitorYahoo
+	yahoo = monitorYahoo.NewMonitorYahoo(
+		monitorYahoo.Config{
+			UnaryURL:  "https://query1.finance.yahoo.com",
+			ChanError: chanError,
+		},
+		monitorYahoo.WithRefreshInterval(time.Duration(configMonitor.Config.RefreshInterval)*time.Second),
+	)
+
 	m := &Monitor{
 		monitors: map[c.QuoteSource]c.Monitor{
 			c.QuoteSourceCoinbase: coinbase,
+			c.QuoteSourceYahoo:    yahoo,
 		},
+		chanError: chanError,
 	}
 
 	return m, nil

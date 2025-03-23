@@ -1,7 +1,9 @@
 package monitor
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -19,12 +21,16 @@ type Monitor struct {
 	onUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote)
 	assetGroupNonce         int
 	mu                      sync.RWMutex
+	errorLogger             *log.Logger
+	ctx                     context.Context
+	cancel                  context.CancelFunc
 }
 
 // ConfigMonitor represents the configuration for the main monitor
 type ConfigMonitor struct {
-	Reference c.Reference
-	Config    c.Config
+	Reference   c.Reference
+	Config      c.Config
+	ErrorLogger *log.Logger
 }
 
 // ConfigUpdateFns represents the callback functions for when asset quotes are updated
@@ -39,9 +45,12 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 	chanError := make(chan error, 5)
 	chanUpdateAssetQuote := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	var coinbase *monitorCoinbase.MonitorCoinbase
 	coinbase = monitorCoinbase.NewMonitorCoinbase(
 		monitorCoinbase.Config{
+			Ctx:                  ctx,
 			UnaryURL:             "https://api.coinbase.com",
 			ChanError:            chanError,
 			ChanUpdateAssetQuote: chanUpdateAssetQuote,
@@ -53,6 +62,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 	var yahoo *monitorYahoo.MonitorYahoo
 	yahoo = monitorYahoo.NewMonitorYahoo(
 		monitorYahoo.Config{
+			Ctx:                  ctx,
 			UnaryURL:             "https://query1.finance.yahoo.com",
 			ChanError:            chanError,
 			ChanUpdateAssetQuote: chanUpdateAssetQuote,
@@ -69,6 +79,9 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 		chanError:               chanError,
 		onUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote) {},
 		onUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote) {},
+		errorLogger:             configMonitor.ErrorLogger,
+		ctx:                     ctx,
+		cancel:                  cancel,
 	}
 
 	return m, nil
@@ -142,7 +155,6 @@ func (m *Monitor) Start() {
 	}
 
 	go m.handleUpdates()
-
 }
 
 // GetAssetGroupQuote synchronously gets price quotes a group of assets across all sources
@@ -167,6 +179,8 @@ func (m *Monitor) GetAssetGroupQuote(assetGroup c.AssetGroup, ignoreCache ...boo
 func (m *Monitor) handleUpdates() {
 	for {
 		select {
+		case <-m.ctx.Done():
+			return
 		case update := <-m.chanUpdateAssetQuote:
 
 			m.mu.RLock()
@@ -181,9 +195,21 @@ func (m *Monitor) handleUpdates() {
 			m.onUpdateAssetQuote(update.Data.Symbol, update.Data)
 
 		case err := <-m.chanError:
-			// Handle errors from monitors
-			// TODO: replace with file logging
-			fmt.Printf("Monitor error: %v\n", err)
+			// Log errors using the configured logger if one is set
+			if m.errorLogger != nil {
+				m.errorLogger.Printf("%v", err)
+			}
 		}
 	}
+}
+
+// Stop stops all monitors and cancels the context
+func (m *Monitor) Stop() {
+
+	for _, monitor := range m.monitors {
+		monitor.Stop()
+	}
+
+	m.cancel()
+
 }

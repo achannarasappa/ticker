@@ -46,6 +46,7 @@ type input struct {
 
 // Config contains the required configuration for the Coinbase monitor
 type Config struct {
+	Ctx                  context.Context
 	UnaryURL             string
 	ChanError            chan error
 	ChanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
@@ -56,7 +57,7 @@ type Option func(*MonitorCoinbase)
 
 func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(config.Ctx)
 
 	unaryAPI := unary.NewUnaryAPI(config.UnaryURL)
 

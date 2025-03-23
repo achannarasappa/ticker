@@ -40,6 +40,7 @@ type input struct {
 
 // Config contains the required configuration for the Yahoo monitor
 type Config struct {
+	Ctx                  context.Context
 	UnaryURL             string
 	ChanError            chan error
 	ChanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
@@ -50,7 +51,7 @@ type Option func(*MonitorYahoo)
 
 func NewMonitorYahoo(config Config, opts ...Option) *MonitorYahoo {
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(config.Ctx)
 
 	unaryAPI := unary.NewUnaryAPI(config.UnaryURL)
 

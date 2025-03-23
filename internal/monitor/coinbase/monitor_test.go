@@ -1,6 +1,7 @@
 package monitorCoinbase_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -32,6 +33,7 @@ var _ = Describe("Monitor Coinbase", func() {
 		It("should return a new MonitorCoinbase", func() {
 			monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 				UnaryURL: server.URL(),
+				Ctx:      context.Background(),
 			})
 			Expect(monitor).NotTo(BeNil())
 		})
@@ -41,6 +43,7 @@ var _ = Describe("Monitor Coinbase", func() {
 				url := "wss://websocket-feed.exchange.coinbase.com"
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				}, monitorCoinbase.WithStreamingURL(url))
 
 				Expect(monitor).NotTo(BeNil())
@@ -52,6 +55,7 @@ var _ = Describe("Monitor Coinbase", func() {
 				interval := 10 * time.Second
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				}, monitorCoinbase.WithRefreshInterval(interval))
 
 				Expect(monitor).NotTo(BeNil())
@@ -130,6 +134,7 @@ var _ = Describe("Monitor Coinbase", func() {
 
 			monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 				UnaryURL: server.URL(),
+				Ctx:      context.Background(),
 			})
 
 			monitor.SetSymbols([]string{"BIT-31JAN25-CDE", "ETH-USD"}, 0)
@@ -157,6 +162,7 @@ var _ = Describe("Monitor Coinbase", func() {
 
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				})
 
 				monitor.SetSymbols([]string{"BTC-USD"}, 0)
@@ -220,6 +226,7 @@ var _ = Describe("Monitor Coinbase", func() {
 
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				})
 
 				monitor.SetSymbols([]string{"BTC-USD"}, 0)
@@ -242,6 +249,7 @@ var _ = Describe("Monitor Coinbase", func() {
 		It("should start the monitor", func() {
 			monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 				UnaryURL: server.URL(),
+				Ctx:      context.Background(),
 			}, monitorCoinbase.WithRefreshInterval(10*time.Second))
 
 			err := monitor.Start()
@@ -252,6 +260,7 @@ var _ = Describe("Monitor Coinbase", func() {
 			It("should return an error", func() {
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				}, monitorCoinbase.WithRefreshInterval(10*time.Second))
 
 				err := monitor.Start()
@@ -274,6 +283,7 @@ var _ = Describe("Monitor Coinbase", func() {
 
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				}, monitorCoinbase.WithRefreshInterval(10*time.Second))
 
 				monitor.SetSymbols([]string{"BTC-USD"}, 0)
@@ -311,6 +321,7 @@ var _ = Describe("Monitor Coinbase", func() {
 
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				}, monitorCoinbase.WithRefreshInterval(10*time.Second),
 					monitorCoinbase.WithStreamingURL("wssss://invalid-url"))
 
@@ -350,6 +361,7 @@ var _ = Describe("Monitor Coinbase", func() {
 
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				})
 
 				monitor.SetSymbols([]string{"ETH-USD"}, 0)
@@ -412,6 +424,7 @@ var _ = Describe("Monitor Coinbase", func() {
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL:             server.URL(),
 					ChanUpdateAssetQuote: updateChan,
+					Ctx:                  context.Background(),
 				}, monitorCoinbase.WithRefreshInterval(10*time.Second),
 					monitorCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
@@ -472,6 +485,7 @@ var _ = Describe("Monitor Coinbase", func() {
 					monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 						UnaryURL:             server.URL(),
 						ChanUpdateAssetQuote: updateChan,
+						Ctx:                  context.Background(),
 					}, monitorCoinbase.WithRefreshInterval(100*time.Millisecond),
 						monitorCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
@@ -531,6 +545,7 @@ var _ = Describe("Monitor Coinbase", func() {
 					monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 						UnaryURL:             server.URL(),
 						ChanUpdateAssetQuote: updateChan,
+						Ctx:                  context.Background(),
 					}, monitorCoinbase.WithRefreshInterval(100*time.Millisecond),
 						monitorCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
@@ -634,6 +649,7 @@ var _ = Describe("Monitor Coinbase", func() {
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL:             server.URL(),
 					ChanUpdateAssetQuote: updateChan,
+					Ctx:                  context.Background(),
 				}, monitorCoinbase.WithRefreshInterval(100*time.Millisecond))
 
 				monitor.SetSymbols([]string{"BIT-31JAN25-CDE", "BTC-USD"}, 0)
@@ -688,6 +704,7 @@ var _ = Describe("Monitor Coinbase", func() {
 					monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 						UnaryURL:             server.URL(),
 						ChanUpdateAssetQuote: updateChan,
+						Ctx:                  context.Background(),
 					}, monitorCoinbase.WithRefreshInterval(100*time.Millisecond))
 
 					monitor.SetSymbols([]string{"BTC-USD"}, 0)
@@ -763,6 +780,7 @@ var _ = Describe("Monitor Coinbase", func() {
 					monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 						UnaryURL:             server.URL(),
 						ChanUpdateAssetQuote: updateChan,
+						Ctx:                  context.Background(),
 					}, monitorCoinbase.WithRefreshInterval(100*time.Millisecond))
 
 					monitor.SetSymbols([]string{"ETH-USD"}, 0) // Only set ETH-USD in cache
@@ -825,6 +843,7 @@ var _ = Describe("Monitor Coinbase", func() {
 		It("should stop the monitor", func() {
 			monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 				UnaryURL: server.URL(),
+				Ctx:      context.Background(),
 			}, monitorCoinbase.WithRefreshInterval(10*time.Second))
 
 			err := monitor.Start()
@@ -838,6 +857,7 @@ var _ = Describe("Monitor Coinbase", func() {
 			It("should return an error", func() {
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				})
 
 				err := monitor.Stop()

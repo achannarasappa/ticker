@@ -1,6 +1,7 @@
 package monitorYahoo_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -32,6 +33,7 @@ var _ = Describe("Monitor Yahoo", func() {
 		It("should return a new MonitorYahoo", func() {
 			monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
 				UnaryURL: server.URL(),
+				Ctx:      context.Background(),
 			})
 			Expect(monitor).NotTo(BeNil())
 		})
@@ -49,6 +51,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 			monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
 				UnaryURL: server.URL(),
+				Ctx:      context.Background(),
 			}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
 
 			monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -75,6 +78,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -110,6 +114,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				})
 
 				monitor.SetSymbols([]string{"GOOG", "NET"}, 0)
@@ -140,6 +145,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 			monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
 				UnaryURL: server.URL(),
+				Ctx:      context.Background(),
 			}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
 
 			monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -160,6 +166,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -184,6 +191,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -205,6 +213,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				})
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -251,6 +260,7 @@ var _ = Describe("Monitor Yahoo", func() {
 				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
 					UnaryURL:             server.URL(),
 					ChanUpdateAssetQuote: updateChan,
+					Ctx:                  context.Background(),
 				}, monitorYahoo.WithRefreshInterval(100*time.Millisecond))
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -290,6 +300,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
 						UnaryURL:             server.URL(),
 						ChanUpdateAssetQuote: updateChan,
+						Ctx:                  context.Background(),
 					}, monitorYahoo.WithRefreshInterval(100*time.Millisecond))
 
 					monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -347,6 +358,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
 						UnaryURL:             server.URL(),
 						ChanUpdateAssetQuote: updateChan,
+						Ctx:                  context.Background(),
 					}, monitorYahoo.WithRefreshInterval(100*time.Millisecond))
 
 					monitor.SetSymbols([]string{"GOOG", "NET"}, 0)
@@ -381,6 +393,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 			monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
 				UnaryURL: server.URL(),
+				Ctx:      context.Background(),
 			}, monitorYahoo.WithRefreshInterval(10*time.Second))
 
 			monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -403,6 +416,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
 					UnaryURL: server.URL(),
+					Ctx:      context.Background(),
 				})
 
 				err := monitor.Stop()

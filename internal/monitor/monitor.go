@@ -17,8 +17,8 @@ type Monitor struct {
 	monitors                map[c.QuoteSource]c.Monitor
 	chanError               chan error
 	chanUpdateAssetQuote    chan c.MessageUpdate[c.AssetQuote]
-	onUpdateAssetQuote      func(symbol string, assetQuote c.AssetQuote)
-	onUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote)
+	onUpdateAssetQuote      func(symbol string, assetQuote c.AssetQuote, nonce int)
+	onUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote, nonce int)
 	assetGroupNonce         int
 	mu                      sync.RWMutex
 	errorLogger             *log.Logger
@@ -35,8 +35,8 @@ type ConfigMonitor struct {
 
 // ConfigUpdateFns represents the callback functions for when asset quotes are updated
 type ConfigUpdateFns struct {
-	OnUpdateAssetQuote      func(symbol string, assetQuote c.AssetQuote)
-	OnUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote)
+	OnUpdateAssetQuote      func(symbol string, assetQuote c.AssetQuote, nonce int)
+	OnUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote, nonce int)
 }
 
 // New creates a new instance of the Coinbase monitor
@@ -77,8 +77,8 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 		},
 		chanUpdateAssetQuote:    chanUpdateAssetQuote,
 		chanError:               chanError,
-		onUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote) {},
-		onUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote) {},
+		onUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, nonce int) {},
+		onUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote, nonce int) {},
 		errorLogger:             configMonitor.ErrorLogger,
 		ctx:                     ctx,
 		cancel:                  cancel,
@@ -104,6 +104,7 @@ func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, nonce int) {
 				if err != nil {
 					m.chanError <- err
 				}
+				return
 			}(monitor, symbolBySource.Symbols)
 		}
 	}
@@ -132,7 +133,8 @@ func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, nonce int) {
 	// Get asset quotes for all sources
 	assetGroupQuote := m.GetAssetGroupQuote(assetGroup)
 
-	m.onUpdateAssetGroupQuote(assetGroupQuote)
+	// Run the callback in a goroutine to avoid blocking
+	go m.onUpdateAssetGroupQuote(assetGroupQuote, nonce)
 }
 
 // SetOnUpdate sets the callback functions for when asset quotes are updated
@@ -184,15 +186,16 @@ func (m *Monitor) handleUpdates() {
 		case update := <-m.chanUpdateAssetQuote:
 
 			m.mu.RLock()
-			defer m.mu.RUnlock()
 
 			// Skip updates from previous asset groups
 			if update.Nonce != m.assetGroupNonce {
+				m.mu.RUnlock()
 				continue
 			}
+			m.mu.RUnlock()
 
 			// Call the callback function for individual asset quote updates
-			m.onUpdateAssetQuote(update.Data.Symbol, update.Data)
+			go m.onUpdateAssetQuote(update.Data.Symbol, update.Data, update.Nonce)
 
 		case err := <-m.chanError:
 			// Log errors using the configured logger if one is set

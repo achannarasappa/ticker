@@ -115,7 +115,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "tab", "shift+tab":
 			m.mu.Lock()
-			defer m.mu.Unlock()
 
 			groupSelectedCursor := -1
 			if msg.String() == "tab" {
@@ -125,12 +124,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.groupSelectedIndex = (m.groupSelectedIndex + groupSelectedCursor + m.groupMaxIndex + 1) % (m.groupMaxIndex + 1)
 			m.groupSelectedName = m.ctx.Groups[m.groupSelectedIndex].Name
 
+			// Invalidate all previous ticks, incremental price updates, and full price updates
+			m.nonce++
+
+			m.mu.Unlock()
+
 			// Set the new set of symbols in the monitors and initiate a request to refresh all price quotes
 			// Eventually, SetAssetGroupQuoteMsg message will be sent with the new quotes once all of the HTTP request complete
 			m.monitors.SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.nonce)
-
-			// Invalidate all previous ticks, incremental price updates, and full price updates
-			m.nonce++
 
 			return m, tickImmediate(m.nonce)
 		case "ctrl+c":

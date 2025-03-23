@@ -22,16 +22,18 @@ func Start(dep *c.Dependencies, ctx *c.Context) func() error {
 		)
 
 		monitors.SetOnUpdate(mon.ConfigUpdateFns{
-			OnUpdateAssetQuote: func(symbol string, assetQuote c.AssetQuote) {
+			OnUpdateAssetQuote: func(symbol string, assetQuote c.AssetQuote, nonce int) {
 				p.Send(SetAssetQuoteMsg{
 					symbol:     symbol,
 					assetQuote: assetQuote,
+					nonce:      nonce,
 				})
 				return
 			},
-			OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote) {
+			OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, nonce int) {
 				p.Send(SetAssetGroupQuoteMsg{
 					assetGroupQuote: assetGroupQuote,
+					nonce:           nonce,
 				})
 				return
 			},

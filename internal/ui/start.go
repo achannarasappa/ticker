@@ -29,9 +29,9 @@ func Start(dep *c.Dependencies, ctx *c.Context) func() error {
 				})
 				return
 			},
-			OnUpdateAssetQuotes: func(assetQuotes []c.AssetQuote) {
-				p.Send(SetAssetQuotesMsg{
-					assetQuotes: assetQuotes,
+			OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote) {
+				p.Send(SetAssetGroupQuoteMsg{
+					assetGroupQuote: assetGroupQuote,
 				})
 				return
 			},

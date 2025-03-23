@@ -82,10 +82,8 @@ type DependenciesHttpClients struct { //nolint:golint,stylecheck,revive
 
 type Monitor interface {
 	Start() error
-	GetAssetQuotes(useCache ...bool) ([]AssetQuote, error)
-	SetSymbols(symbols []string) error
-	SetOnUpdateAssetQuote(onUpdate func(symbol string, assetQuote AssetQuote))
-	SetOnUpdateAssetQuotes(onUpdate func(assetQuotes []AssetQuote))
+	GetAssetQuotes(ignoreCache ...bool) ([]AssetQuote, error)
+	SetSymbols(symbols []string, nonce int) error
 	Stop() error
 }
 
@@ -255,4 +253,5 @@ type MessageUpdate[T any] struct {
 	Data     T
 	ID       string
 	Sequence int64
+	Nonce    int
 }

@@ -19,6 +19,7 @@ type Poller struct {
 	unaryAPI             *unary.UnaryAPI
 	chanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
 	chanError            chan error
+	nonce                int
 }
 
 // PollerConfig represents the configuration for the poller
@@ -40,12 +41,14 @@ func NewPoller(ctx context.Context, config PollerConfig) *Poller {
 		unaryAPI:             config.UnaryAPI,
 		chanUpdateAssetQuote: config.ChanUpdateAssetQuote,
 		chanError:            config.ChanError,
+		nonce:                0,
 	}
 }
 
 // SetSymbols sets the symbols to poll
-func (p *Poller) SetSymbols(symbols []string) {
+func (p *Poller) SetSymbols(symbols []string, nonce int) {
 	p.symbols = symbols
+	p.nonce = nonce
 }
 
 // SetRefreshInterval sets the refresh interval for the poller
@@ -86,6 +89,8 @@ func (p *Poller) Start() error {
 					continue
 				}
 
+				nonce := p.nonce
+
 				// Make a HTTP request to get the asset quotes
 				assetQuotes, _, err := p.unaryAPI.GetAssetQuotes(p.symbols)
 
@@ -97,8 +102,9 @@ func (p *Poller) Start() error {
 				// Send the asset quotes to the update channel
 				for _, assetQuote := range assetQuotes {
 					p.chanUpdateAssetQuote <- c.MessageUpdate[c.AssetQuote]{
-						ID:   assetQuote.Meta.SymbolInSourceAPI,
-						Data: assetQuote,
+						ID:    assetQuote.Meta.SymbolInSourceAPI,
+						Data:  assetQuote,
+						Nonce: nonce,
 					}
 				}
 			default:

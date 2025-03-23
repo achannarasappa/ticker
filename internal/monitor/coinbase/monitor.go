@@ -36,8 +36,7 @@ type MonitorCoinbase struct {
 	ctx                              context.Context
 	cancel                           context.CancelFunc
 	isStarted                        bool
-	onUpdateAssetQuote               func(symbol string, assetQuote c.AssetQuote)
-	onUpdateAssetQuotes              func(assetQuotes []c.AssetQuote)
+	chanUpdateAssetQuote             chan c.MessageUpdate[c.AssetQuote]
 }
 
 type input struct {
@@ -47,8 +46,9 @@ type input struct {
 
 // Config contains the required configuration for the Coinbase monitor
 type Config struct {
-	UnaryURL  string
-	ChanError chan error
+	UnaryURL             string
+	ChanError            chan error
+	ChanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
 }
 
 // Option defines an option for configuring the monitor
@@ -72,8 +72,7 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 		unaryAPI:                         unaryAPI,
 		ctx:                              ctx,
 		cancel:                           cancel,
-		onUpdateAssetQuote:               func(symbol string, assetQuote c.AssetQuote) {},
-		onUpdateAssetQuotes:              func(assetQuotes []c.AssetQuote) {},
+		chanUpdateAssetQuote:             config.ChanUpdateAssetQuote,
 	}
 
 	pollerConfig := poller.PollerConfig{
@@ -111,15 +110,6 @@ func WithRefreshInterval(interval time.Duration) Option {
 	}
 }
 
-// SetOnUpdate sets the onUpdate function for the monitor
-func (m *MonitorCoinbase) SetOnUpdateAssetQuote(onUpdate func(symbol string, assetQuote c.AssetQuote)) {
-	m.onUpdateAssetQuote = onUpdate
-}
-
-func (m *MonitorCoinbase) SetOnUpdateAssetQuotes(onUpdate func(assetQuotes []c.AssetQuote)) {
-	m.onUpdateAssetQuotes = onUpdate
-}
-
 func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, error) {
 	if len(ignoreCache) > 0 && ignoreCache[0] {
 		assetQuotes, err := m.getAssetQuotesAndReplaceCache()
@@ -135,7 +125,7 @@ func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, e
 	return m.assetQuotesCache, nil
 }
 
-func (m *MonitorCoinbase) SetSymbols(productIds []string) error {
+func (m *MonitorCoinbase) SetSymbols(productIds []string, nonce int) error {
 
 	var err error
 
@@ -157,22 +147,21 @@ func (m *MonitorCoinbase) SetSymbols(productIds []string) error {
 		return err
 	}
 
-	m.mu.RLock()
+	m.mu.Lock()
 
 	m.productIdsStreaming, m.productIdsPolling = partitionProductIds(m.productIds)
 
-	m.mu.RUnlock()
+	m.mu.Unlock()
 
+	// Since the symbols have changed, make a synchronous call to get price quotes for the new symbols
 	_, err = m.getAssetQuotesAndReplaceCache()
 	if err != nil {
 		return err
 	}
 
 	// Coinbase steaming API for CBE (spot) only and not CDE (futures)
-	m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming)
-	m.poller.SetSymbols(m.productIdsPolling)
-
-	m.onUpdateAssetQuotes(m.assetQuotesCache)
+	m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming, nonce)
+	m.poller.SetSymbols(m.productIdsPolling, nonce)
 
 	return nil
 
@@ -303,7 +292,12 @@ func (m *MonitorCoinbase) handleUpdates() {
 
 			m.mu.Unlock()
 
-			m.onUpdateAssetQuote(assetQuote.Symbol, *assetQuote)
+			// Send a message with an updated quote
+			m.chanUpdateAssetQuote <- c.MessageUpdate[c.AssetQuote]{
+				ID:    assetQuote.Symbol,
+				Data:  *assetQuote,
+				Nonce: updateMessage.Nonce,
+			}
 
 			continue
 
@@ -346,7 +340,12 @@ func (m *MonitorCoinbase) handleUpdates() {
 
 			// TODO: when underlying asset price changes, callback to update basis else skip
 
-			m.onUpdateAssetQuote(assetQuote.Symbol, *assetQuote)
+			// Send a message with an updated quote
+			m.chanUpdateAssetQuote <- c.MessageUpdate[c.AssetQuote]{
+				ID:    assetQuote.Symbol,
+				Data:  *assetQuote,
+				Nonce: updateMessage.Nonce,
+			}
 
 			continue
 		default:

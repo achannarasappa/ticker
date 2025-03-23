@@ -188,13 +188,13 @@ var _ = Describe("Streamer", func() {
 			err := s.Start()
 			Expect(err).NotTo(HaveOccurred())
 
-			err = s.SetSymbolsAndUpdateSubscriptions([]string{"BTC-USD"})
+			err = s.SetSymbolsAndUpdateSubscriptions([]string{"BTC-USD"}, 0)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		When("the streamer is not started", func() {
 			It("should return early without error", func() {
-				err := s.SetSymbolsAndUpdateSubscriptions([]string{"BTC-USD"})
+				err := s.SetSymbolsAndUpdateSubscriptions([]string{"BTC-USD"}, 0)
 				Expect(err).NotTo(HaveOccurred())
 			})
 		})

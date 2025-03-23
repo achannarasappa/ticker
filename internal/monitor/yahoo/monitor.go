@@ -23,13 +23,13 @@ type MonitorYahoo struct {
 	assetQuotesCache         []c.AssetQuote           // Asset quotes for all assets retrieved at start or on symbol change
 	assetQuotesCacheLookup   map[string]*c.AssetQuote // Asset quotes for all assets retrieved at least once (symbol change does not remove symbols)
 	chanPollUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
-	chanError                chan error
-	mu                       sync.RWMutex
-	ctx                      context.Context
-	cancel                   context.CancelFunc
-	isStarted                bool
-	onUpdateAssetQuote       func(symbol string, assetQuote c.AssetQuote)
-	onUpdateAssetQuotes      func(assetQuotes []c.AssetQuote)
+
+	chanError            chan error
+	mu                   sync.RWMutex
+	ctx                  context.Context
+	cancel               context.CancelFunc
+	isStarted            bool
+	chanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
 }
 
 // input represents user input for the Yahoo monitor with any transformation
@@ -40,8 +40,9 @@ type input struct {
 
 // Config contains the required configuration for the Yahoo monitor
 type Config struct {
-	UnaryURL  string
-	ChanError chan error
+	UnaryURL             string
+	ChanError            chan error
+	ChanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
 }
 
 // Option defines an option for configuring the monitor
@@ -61,8 +62,7 @@ func NewMonitorYahoo(config Config, opts ...Option) *MonitorYahoo {
 		unaryAPI:                 unaryAPI,
 		ctx:                      ctx,
 		cancel:                   cancel,
-		onUpdateAssetQuote:       func(symbol string, assetQuote c.AssetQuote) {},
-		onUpdateAssetQuotes:      func(assetQuotes []c.AssetQuote) {},
+		chanUpdateAssetQuote:     config.ChanUpdateAssetQuote,
 	}
 
 	pollerConfig := poller.PollerConfig{
@@ -86,16 +86,6 @@ func WithRefreshInterval(interval time.Duration) Option {
 	}
 }
 
-// SetOnUpdate sets the callback function for when a single asset quote is updated
-func (m *MonitorYahoo) SetOnUpdateAssetQuote(onUpdate func(symbol string, assetQuote c.AssetQuote)) {
-	m.onUpdateAssetQuote = onUpdate
-}
-
-// SetOnUpdateAssetQuotes sets the callback function for when all asset quotes are updated i.e. when monitored symbols are replaced with new symbols
-func (m *MonitorYahoo) SetOnUpdateAssetQuotes(onUpdate func(assetQuotes []c.AssetQuote)) {
-	m.onUpdateAssetQuotes = onUpdate
-}
-
 // GetAssetQuotes returns the asset quotes either from the cache or from the unary API if ignoreCache is set
 func (m *MonitorYahoo) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, error) {
 
@@ -116,7 +106,7 @@ func (m *MonitorYahoo) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, erro
 }
 
 // SetSymbols sets the symbols to monitor
-func (m *MonitorYahoo) SetSymbols(productIds []string) error {
+func (m *MonitorYahoo) SetSymbols(productIds []string, nonce int) error {
 
 	var err error
 
@@ -141,10 +131,7 @@ func (m *MonitorYahoo) SetSymbols(productIds []string) error {
 	}
 
 	// Set the symbols to monitor on the poller
-	m.poller.SetSymbols(m.productIdsPolling)
-
-	// Call the callback function for when all asset quotes are updated
-	m.onUpdateAssetQuotes(m.assetQuotesCache)
+	m.poller.SetSymbols(m.productIdsPolling, nonce)
 
 	return nil
 
@@ -240,8 +227,12 @@ func (m *MonitorYahoo) handleUpdates() {
 
 			m.mu.Unlock()
 
-			// Call the callback function for when a single asset quote is updated
-			m.onUpdateAssetQuote(assetQuote.Symbol, *assetQuote)
+			// Send a message with an updated quote
+			m.chanUpdateAssetQuote <- c.MessageUpdate[c.AssetQuote]{
+				ID:    assetQuote.Symbol,
+				Data:  *assetQuote,
+				Nonce: updateMessage.Nonce,
+			}
 
 			continue
 

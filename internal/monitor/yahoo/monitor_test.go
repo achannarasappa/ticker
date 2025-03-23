@@ -51,12 +51,7 @@ var _ = Describe("Monitor Yahoo", func() {
 				UnaryURL: server.URL(),
 			}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
 
-			outputAssetQuotes := []c.AssetQuote{}
-			monitor.SetOnUpdateAssetQuotes(func(assetQuotes []c.AssetQuote) {
-				outputAssetQuotes = assetQuotes
-			})
-
-			monitor.SetSymbols([]string{"NET", "GOOG"})
+			monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 
 			assetQuotes, err := monitor.GetAssetQuotes()
 
@@ -66,13 +61,6 @@ var _ = Describe("Monitor Yahoo", func() {
 			Expect(assetQuotes[1].Symbol).To(Equal("GOOG"))
 			Expect(assetQuotes[0].QuotePrice.Price).To(Equal(84.98))
 			Expect(assetQuotes[1].QuotePrice.Price).To(Equal(166.25))
-			Expect(outputAssetQuotes).To(HaveLen(2))
-			Expect(outputAssetQuotes[0].Symbol).To(Equal("NET"))
-			Expect(outputAssetQuotes[0].Name).To(Equal("Cloudflare, Inc."))
-			Expect(outputAssetQuotes[0].Class).To(Equal(c.AssetClassStock))
-			Expect(outputAssetQuotes[1].Symbol).To(Equal("GOOG"))
-			Expect(outputAssetQuotes[1].Name).To(Equal("Google Inc."))
-			Expect(outputAssetQuotes[1].Class).To(Equal(c.AssetClassStock))
 		})
 
 		When("the http request fails", func() {
@@ -89,7 +77,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					UnaryURL: server.URL(),
 				}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
 
-				monitor.SetSymbols([]string{"NET", "GOOG"})
+				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 
 				assetQuotes, err := monitor.GetAssetQuotes(true)
 				Expect(err).To(HaveOccurred())
@@ -124,7 +112,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					UnaryURL: server.URL(),
 				})
 
-				monitor.SetSymbols([]string{"GOOG", "NET"})
+				monitor.SetSymbols([]string{"GOOG", "NET"}, 0)
 
 				// First call to populate cache
 				firstQuotes, err := monitor.GetAssetQuotes(true)
@@ -154,7 +142,7 @@ var _ = Describe("Monitor Yahoo", func() {
 				UnaryURL: server.URL(),
 			}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
 
-			monitor.SetSymbols([]string{"NET", "GOOG"})
+			monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 
 			err := monitor.Start()
 			Expect(err).NotTo(HaveOccurred())
@@ -174,7 +162,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					UnaryURL: server.URL(),
 				}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
 
-				monitor.SetSymbols([]string{"NET", "GOOG"})
+				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 
 				err := monitor.Start()
 				Expect(err).NotTo(HaveOccurred())
@@ -198,7 +186,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					UnaryURL: server.URL(),
 				}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
 
-				monitor.SetSymbols([]string{"NET", "GOOG"})
+				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 
 				err := monitor.Start()
 				Expect(err).To(HaveOccurred())
@@ -219,7 +207,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					UnaryURL: server.URL(),
 				})
 
-				monitor.SetSymbols([]string{"NET", "GOOG"})
+				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 
 				err := monitor.Start()
 				Expect(err).To(HaveOccurred())
@@ -228,7 +216,7 @@ var _ = Describe("Monitor Yahoo", func() {
 		})
 
 		When("there is a polling asset update", func() {
-			It("should call the onUpdate function with the updated asset quote", func() {
+			It("should send the updated asset quote to the channel", func() {
 
 				responseQuote1 := responseQuote1Fixture
 
@@ -256,35 +244,37 @@ var _ = Describe("Monitor Yahoo", func() {
 					),
 				)
 
-				var outputAssetQuote c.AssetQuote
-				var outputCalled bool
+				// Create a channel to receive updates
+				updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
 				// Create a monitor with a short refresh interval for testing
 				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
-					UnaryURL: server.URL(),
+					UnaryURL:             server.URL(),
+					ChanUpdateAssetQuote: updateChan,
 				}, monitorYahoo.WithRefreshInterval(100*time.Millisecond))
 
-				monitor.SetOnUpdateAssetQuote(func(symbol string, assetQuote c.AssetQuote) {
-					outputAssetQuote = assetQuote
-					outputCalled = true
-				})
-
-				monitor.SetSymbols([]string{"NET", "GOOG"})
+				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 				monitor.Start()
 
-				// Wait for the update to be called
-				Eventually(func() bool {
-					return outputCalled
-				}, 2*time.Second).Should(BeTrue())
-				Expect(outputAssetQuote.QuotePrice.Price).To(Equal(310.00))
-				Expect(outputAssetQuote.Symbol).To(Equal("NET"))
+				// Wait for the update to be received on the channel
+				var receivedQuote c.AssetQuote
+				Eventually(func() float64 {
+					select {
+					case update := <-updateChan:
+						receivedQuote = update.Data
+						return receivedQuote.QuotePrice.Price
+					default:
+						return 0
+					}
+				}, 2*time.Second).Should(Equal(310.00))
+
+				Expect(receivedQuote.Symbol).To(Equal("NET"))
 
 				monitor.Stop()
-
 			})
 
 			When("the price has not changed", func() {
-				It("should not call the onUpdate function", func() {
+				It("should not send updates to the channel", func() {
 
 					// Set up initial request handler
 					server.RouteToHandler("GET", "/v7/finance/quote",
@@ -293,24 +283,26 @@ var _ = Describe("Monitor Yahoo", func() {
 						),
 					)
 
-					// Detect if the onUpdate function is called
-					outputCalled := false
+					// Create a channel to receive updates
+					updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
 					// Create a monitor with a short refresh interval
 					monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
-						UnaryURL: server.URL(),
+						UnaryURL:             server.URL(),
+						ChanUpdateAssetQuote: updateChan,
 					}, monitorYahoo.WithRefreshInterval(100*time.Millisecond))
 
-					monitor.SetOnUpdateAssetQuote(func(symbol string, assetQuote c.AssetQuote) {
-						outputCalled = true
-					})
-
-					monitor.SetSymbols([]string{"NET", "GOOG"})
+					monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 					monitor.Start()
 
-					// Wait a bit to ensure the polling happens
+					// Check that no updates are sent to the channel
 					Consistently(func() bool {
-						return outputCalled
+						select {
+						case <-updateChan:
+							return true
+						default:
+							return false
+						}
 					}, 500*time.Millisecond).Should(BeFalse())
 
 					monitor.Stop()
@@ -318,7 +310,7 @@ var _ = Describe("Monitor Yahoo", func() {
 			})
 
 			When("the product does not exist in the cache", func() {
-				It("should not call the onUpdate function", func() {
+				It("should not send updates for that product", func() {
 					responseQuote1 := unary.Response{
 						QuoteResponse: unary.ResponseQuoteResponse{
 							Quotes: []unary.ResponseQuote{
@@ -329,7 +321,7 @@ var _ = Describe("Monitor Yahoo", func() {
 						},
 					}
 
-					outputSymbols := make(map[string]bool)
+					receivedSymbols := make(map[string]bool)
 					calledCount := 0
 
 					server.RouteToHandler("GET", "/v7/finance/quote",
@@ -348,22 +340,31 @@ var _ = Describe("Monitor Yahoo", func() {
 							},
 						),
 					)
+
+					// Create a channel to receive updates
+					updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
+
 					monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
-						UnaryURL: server.URL(),
+						UnaryURL:             server.URL(),
+						ChanUpdateAssetQuote: updateChan,
 					}, monitorYahoo.WithRefreshInterval(100*time.Millisecond))
 
-					monitor.SetOnUpdateAssetQuote(func(symbol string, assetQuote c.AssetQuote) {
-						outputSymbols[symbol] = true
-					})
-
-					monitor.SetSymbols([]string{"GOOG", "NET"})
-
+					monitor.SetSymbols([]string{"GOOG", "NET"}, 0)
 					monitor.Start()
 
+					// Check for updates and record which symbols we receive
+					go func() {
+						for update := range updateChan {
+							receivedSymbols[update.Data.Symbol] = true
+						}
+					}()
+
 					Consistently(func() bool {
-						_, hasFB := outputSymbols["FB"]
+						_, hasFB := receivedSymbols["FB"]
 						return hasFB
 					}, 2*time.Second).Should(BeFalse())
+
+					monitor.Stop()
 				})
 			})
 		})
@@ -382,7 +383,7 @@ var _ = Describe("Monitor Yahoo", func() {
 				UnaryURL: server.URL(),
 			}, monitorYahoo.WithRefreshInterval(10*time.Second))
 
-			monitor.SetSymbols([]string{"NET", "GOOG"})
+			monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 
 			err := monitor.Start()
 			Expect(err).NotTo(HaveOccurred())

@@ -56,14 +56,14 @@ type tickMsg struct {
 }
 
 type SetAssetQuoteMsg struct {
-	symbol        string
-	assetQuote    c.AssetQuote
-	assetGroupIdx int
+	symbol     string
+	assetQuote c.AssetQuote
+	nonce      int
 }
 
-type SetAssetQuotesMsg struct {
-	assetQuotes   []c.AssetQuote
-	assetGroupIdx int
+type SetAssetGroupQuoteMsg struct {
+	assetGroupQuote c.AssetGroupQuote
+	nonce           int
 }
 
 // NewModel is the constructor for UI model
@@ -100,7 +100,7 @@ func (m *Model) Init() tea.Cmd {
 	return tea.Batch(
 		tick(0),
 		func() tea.Msg {
-			(*m.monitors).SetSymbols(m.ctx.Groups[m.groupSelectedIndex])
+			(*m.monitors).SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.nonce)
 			return nil
 		},
 	)
@@ -125,7 +125,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.groupSelectedIndex = (m.groupSelectedIndex + groupSelectedCursor + m.groupMaxIndex + 1) % (m.groupMaxIndex + 1)
 			m.groupSelectedName = m.ctx.Groups[m.groupSelectedIndex].Name
 
-			// Increment the nonce which will invalidate all previous ticks
+			// Set the new set of symbols in the monitors and initiate a request to refresh all price quotes
+			// Eventually, SetAssetGroupQuoteMsg message will be sent with the new quotes once all of the HTTP request complete
+			m.monitors.SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.nonce)
+
+			// Invalidate all previous ticks, incremental price updates, and full price updates
 			m.nonce++
 
 			return m, tickImmediate(m.nonce)
@@ -158,6 +162,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Trigger component re-render if data has changed
 	case tickMsg:
 
+		m.mu.Lock()
+		defer m.mu.Unlock()
+
 		// Do not re-render if nonce has changed and do not start a new timer with this nonce
 		if msg.nonce != m.nonce {
 			return m, nil
@@ -173,10 +180,22 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return m, tick(msg.nonce)
 
-	case SetAssetQuotesMsg:
+	case SetAssetGroupQuoteMsg:
 
-		m.updateAssetsAndHoldingSummary(msg.assetQuotes)
+		m.mu.Lock()
+		defer m.mu.Unlock()
 
+		// Do not update the assets and holding summary if the nonce has changed
+		if msg.nonce != m.nonce {
+			return m, nil
+		}
+
+		assets, holdingSummary := asset.GetAssets(m.ctx, msg.assetGroupQuote)
+
+		m.assets = assets
+		m.holdingSummary = holdingSummary
+
+		m.assetQuotes = msg.assetGroupQuote.AssetQuotes
 		for i, assetQuote := range m.assetQuotes {
 			m.assetQuotesLookup[assetQuote.Symbol] = i
 		}
@@ -187,6 +206,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		var i int
 		var ok bool
+
+		m.mu.Lock()
+		defer m.mu.Unlock()
+
+		if msg.nonce != m.nonce {
+			return m, nil
+		}
 
 		// Check if this symbol is in the lookup
 		if i, ok = m.assetQuotesLookup[msg.symbol]; !ok {
@@ -205,7 +231,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Update the asset quote and generate a new holding summary
 		m.assetQuotes[i] = msg.assetQuote
-		m.updateAssetsAndHoldingSummary(m.assetQuotes)
+
+		assetGroupQuote := c.AssetGroupQuote{
+			AssetQuotes: m.assetQuotes,
+			AssetGroup:  m.ctx.Groups[m.groupSelectedIndex],
+		}
+
+		assets, holdingSummary := asset.GetAssets(m.ctx, assetGroupQuote)
+
+		m.assets = assets
+		m.holdingSummary = holdingSummary
 
 		return m, nil
 	}
@@ -232,28 +267,6 @@ func (m *Model) View() string {
 		m.viewport.View() + "\n" +
 		footer(m.viewport.Width, m.lastUpdateTime, m.groupSelectedName)
 
-}
-
-func (m *Model) updateAssetsAndHoldingSummary(assetQuotes []c.AssetQuote) {
-	m.mu.RLock()
-	assetGroup := m.ctx.Groups[m.groupSelectedIndex]
-	m.mu.RUnlock()
-
-	assetGroupQuote := c.AssetGroupQuote{
-		AssetQuotes: assetQuotes,
-		AssetGroup:  assetGroup,
-	}
-
-	assets, holdingSummary := asset.GetAssets(m.ctx, assetGroupQuote)
-
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.assets = assets
-	m.holdingSummary = holdingSummary
-	m.assetQuotes = assetQuotes
-
-	return
 }
 
 func footer(width int, time string, groupSelectedName string) string {

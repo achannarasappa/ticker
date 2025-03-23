@@ -69,7 +69,7 @@ var _ = Describe("Poller", func() {
 				UnaryAPI:             unary.NewUnaryAPI(server.URL()),
 				ChanUpdateAssetQuote: inputChanUpdateAssetQuote,
 			})
-			p.SetSymbols([]string{"BTC-USD"})
+			p.SetSymbols([]string{"BTC-USD"}, 0)
 			p.SetRefreshInterval(time.Millisecond * 250)
 
 			err := p.Start()
@@ -94,7 +94,7 @@ var _ = Describe("Poller", func() {
 						UnaryAPI:             unary.NewUnaryAPI(server.URL()),
 						ChanUpdateAssetQuote: make(chan c.MessageUpdate[c.AssetQuote], 5),
 					})
-					p.SetSymbols([]string{"BTC-USD"})
+					p.SetSymbols([]string{"BTC-USD"}, 0)
 					p.SetRefreshInterval(time.Second * 1)
 
 					err := p.Start()
@@ -112,7 +112,7 @@ var _ = Describe("Poller", func() {
 						UnaryAPI:             unary.NewUnaryAPI(server.URL()),
 						ChanUpdateAssetQuote: make(chan c.MessageUpdate[c.AssetQuote], 5),
 					})
-					p.SetSymbols([]string{"BTC-USD"})
+					p.SetSymbols([]string{"BTC-USD"}, 0)
 					p.SetRefreshInterval(time.Second * 1)
 
 					err := p.Start()
@@ -132,7 +132,7 @@ var _ = Describe("Poller", func() {
 					UnaryAPI:             unary.NewUnaryAPI(server.URL()),
 					ChanUpdateAssetQuote: make(chan c.MessageUpdate[c.AssetQuote], 5),
 				})
-				p.SetSymbols([]string{"BTC-USD"})
+				p.SetSymbols([]string{"BTC-USD"}, 0)
 
 				err := p.Start()
 				Expect(err).To(HaveOccurred())
@@ -200,7 +200,7 @@ var _ = Describe("Poller", func() {
 					ChanUpdateAssetQuote: make(chan c.MessageUpdate[c.AssetQuote], 5),
 					ChanError:            outputChanError,
 				})
-				p.SetSymbols([]string{"BTC-USD"})
+				p.SetSymbols([]string{"BTC-USD"}, 0)
 				p.SetRefreshInterval(time.Millisecond * 20)
 
 				err := p.Start()
@@ -226,7 +226,7 @@ var _ = Describe("Poller", func() {
 					ChanUpdateAssetQuote: outputChanUpdateAssetQuote,
 					ChanError:            outputChanError,
 				})
-				p.SetSymbols([]string{"BTC-USD"})
+				p.SetSymbols([]string{"BTC-USD"}, 0)
 				p.SetRefreshInterval(time.Millisecond * 20)
 
 				err := p.Start()

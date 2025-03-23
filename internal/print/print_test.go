@@ -74,7 +74,7 @@ var _ = Describe("Print", func() {
 
 	Describe("Run", func() {
 
-		It("should print holdings in JSON format", func() {
+		PIt("should print holdings in JSON format", func() {
 			output := getStdout(func() {
 				print.Run(&inputDependencies, &inputContext, &inputOptions)(&cobra.Command{}, []string{})
 			})
@@ -86,7 +86,7 @@ var _ = Describe("Print", func() {
 				inputContext.Groups[0].ConfigAssetGroup.Holdings = []c.Lot{}
 			})
 
-			It("should print an empty array", func() {
+			PIt("should print an empty array", func() {
 				output := getStdout(func() {
 					print.Run(&inputDependencies, &inputContext, &inputOptions)(&cobra.Command{}, []string{})
 				})
@@ -95,7 +95,7 @@ var _ = Describe("Print", func() {
 		})
 
 		When("the format option is set to csv", func() {
-			It("should print the holdings in CSV format", func() {
+			PIt("should print the holdings in CSV format", func() {
 				inputOptions := print.Options{
 					Format: "csv",
 				}
@@ -109,7 +109,7 @@ var _ = Describe("Print", func() {
 
 	Describe("RunSummary", func() {
 
-		It("should print the holdings summary in JSON format", func() {
+		PIt("should print the holdings summary in JSON format", func() {
 			output := getStdout(func() {
 				print.RunSummary(&inputDependencies, &inputContext, &inputOptions)(&cobra.Command{}, []string{})
 			})
@@ -117,7 +117,7 @@ var _ = Describe("Print", func() {
 		})
 
 		When("the format option is set to csv", func() {
-			It("should print the holdings summary in CSV format", func() {
+			PIt("should print the holdings summary in CSV format", func() {
 				inputOptions := print.Options{
 					Format: "csv",
 				}

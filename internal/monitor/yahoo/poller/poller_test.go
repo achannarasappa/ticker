@@ -67,7 +67,7 @@ var _ = Describe("Poller", func() {
 				ChanError:            inputChanError,
 			})
 
-			p.SetSymbols([]string{"NET"})
+			p.SetSymbols([]string{"NET"}, 0)
 			p.SetRefreshInterval(time.Millisecond * 100)
 
 			err := p.Start()
@@ -96,7 +96,7 @@ var _ = Describe("Poller", func() {
 						ChanError:            inputChanError,
 					})
 
-					p.SetSymbols([]string{"NET"})
+					p.SetSymbols([]string{"NET"}, 0)
 					p.SetRefreshInterval(time.Millisecond * 100)
 
 					err := p.Start()
@@ -116,7 +116,7 @@ var _ = Describe("Poller", func() {
 						ChanError:            inputChanError,
 					})
 
-					p.SetSymbols([]string{"NET"})
+					p.SetSymbols([]string{"NET"}, 0)
 					p.SetRefreshInterval(time.Millisecond * 100)
 
 					err := p.Start()
@@ -137,7 +137,7 @@ var _ = Describe("Poller", func() {
 					ChanError:            inputChanError,
 				})
 
-				p.SetSymbols([]string{"NET"})
+				p.SetSymbols([]string{"NET"}, 0)
 
 				err := p.Start()
 				Expect(err).To(HaveOccurred())
@@ -154,7 +154,7 @@ var _ = Describe("Poller", func() {
 				})
 
 				p.SetRefreshInterval(time.Millisecond * 100)
-				p.SetSymbols([]string{})
+				p.SetSymbols([]string{}, 0)
 
 				err := p.Start()
 				Expect(err).NotTo(HaveOccurred())
@@ -173,7 +173,7 @@ var _ = Describe("Poller", func() {
 					ChanError:            inputChanError,
 				})
 
-				p.SetSymbols([]string{"NET"})
+				p.SetSymbols([]string{"NET"}, 0)
 				p.SetRefreshInterval(time.Millisecond * 100)
 
 				err := p.Start()
@@ -199,7 +199,7 @@ var _ = Describe("Poller", func() {
 				ChanError:            inputChanError,
 			})
 
-			p.SetSymbols([]string{"NET"})
+			p.SetSymbols([]string{"NET"}, 0)
 			p.SetRefreshInterval(time.Millisecond * 100)
 
 			err := p.Start()

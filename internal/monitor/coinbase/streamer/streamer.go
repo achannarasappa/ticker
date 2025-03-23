@@ -50,6 +50,7 @@ type Streamer struct {
 	chanStreamUpdateQuotePrice    chan c.MessageUpdate[c.QuotePrice]
 	chanStreamUpdateQuoteExtended chan c.MessageUpdate[c.QuoteExtended]
 	chanError                     chan error
+	nonce                         int
 }
 
 type StreamerConfig struct {
@@ -69,6 +70,7 @@ func NewStreamer(ctx context.Context, config StreamerConfig) *Streamer {
 		cancel:                        cancel,
 		wg:                            sync.WaitGroup{},
 		subscriptionChan:              make(chan messageSubscription),
+		nonce:                         0,
 	}
 
 	return s
@@ -127,7 +129,7 @@ func (s *Streamer) Start() error {
 	return nil
 }
 
-func (s *Streamer) SetSymbolsAndUpdateSubscriptions(symbols []string) error {
+func (s *Streamer) SetSymbolsAndUpdateSubscriptions(symbols []string, nonce int) error {
 
 	var err error
 
@@ -136,6 +138,7 @@ func (s *Streamer) SetSymbolsAndUpdateSubscriptions(symbols []string) error {
 	}
 
 	s.symbols = symbols
+	s.nonce = nonce
 
 	// TODO: fix symbol change
 	// err = s.unsubscribe()
@@ -181,7 +184,7 @@ func (s *Streamer) readStreamQuote() {
 				continue
 			}
 
-			qp, qe := transformPriceTick(message)
+			qp, qe := transformPriceTick(message, s.nonce)
 			s.chanStreamUpdateQuotePrice <- qp
 			s.chanStreamUpdateQuoteExtended <- qe
 		}
@@ -229,7 +232,7 @@ func (s *Streamer) unsubscribe() error {
 	return nil
 }
 
-func transformPriceTick(message messagePriceTick) (qp c.MessageUpdate[c.QuotePrice], qe c.MessageUpdate[c.QuoteExtended]) {
+func transformPriceTick(message messagePriceTick, nonce int) (qp c.MessageUpdate[c.QuotePrice], qe c.MessageUpdate[c.QuoteExtended]) {
 
 	price, _ := strconv.ParseFloat(message.Price, 64)
 	priceOpen, _ := strconv.ParseFloat(message.Open24h, 64)
@@ -241,6 +244,7 @@ func transformPriceTick(message messagePriceTick) (qp c.MessageUpdate[c.QuotePri
 	qp = c.MessageUpdate[c.QuotePrice]{
 		ID:       message.ProductID,
 		Sequence: message.Sequence,
+		Nonce:    nonce,
 		Data: c.QuotePrice{
 			Price:          price,
 			PricePrevClose: priceOpen,
@@ -257,6 +261,7 @@ func transformPriceTick(message messagePriceTick) (qp c.MessageUpdate[c.QuotePri
 	qe = c.MessageUpdate[c.QuoteExtended]{
 		ID:       message.ProductID,
 		Sequence: message.Sequence,
+		Nonce:    nonce,
 		Data: c.QuoteExtended{
 			Volume: volume,
 		},

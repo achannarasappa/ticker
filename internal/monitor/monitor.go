@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
@@ -11,8 +12,13 @@ import (
 
 // Monitor represents an overall monitor which manages API specific monitors
 type Monitor struct {
-	monitors  map[c.QuoteSource]c.Monitor
-	chanError chan error
+	monitors                map[c.QuoteSource]c.Monitor
+	chanError               chan error
+	chanUpdateAssetQuote    chan c.MessageUpdate[c.AssetQuote]
+	onUpdateAssetQuote      func(symbol string, assetQuote c.AssetQuote)
+	onUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote)
+	assetGroupNonce         int
+	mu                      sync.RWMutex
 }
 
 // ConfigMonitor represents the configuration for the main monitor
@@ -23,20 +29,22 @@ type ConfigMonitor struct {
 
 // ConfigUpdateFns represents the callback functions for when asset quotes are updated
 type ConfigUpdateFns struct {
-	OnUpdateAssetQuote  func(symbol string, assetQuote c.AssetQuote)
-	OnUpdateAssetQuotes func(assetQuotes []c.AssetQuote)
+	OnUpdateAssetQuote      func(symbol string, assetQuote c.AssetQuote)
+	OnUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote)
 }
 
 // New creates a new instance of the Coinbase monitor
 func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 
 	chanError := make(chan error, 5)
+	chanUpdateAssetQuote := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
 	var coinbase *monitorCoinbase.MonitorCoinbase
 	coinbase = monitorCoinbase.NewMonitorCoinbase(
 		monitorCoinbase.Config{
-			UnaryURL:  "https://api.coinbase.com",
-			ChanError: chanError,
+			UnaryURL:             "https://api.coinbase.com",
+			ChanError:            chanError,
+			ChanUpdateAssetQuote: chanUpdateAssetQuote,
 		},
 		monitorCoinbase.WithStreamingURL("wss://ws-feed.exchange.coinbase.com"),
 		monitorCoinbase.WithRefreshInterval(time.Duration(configMonitor.Config.RefreshInterval)*time.Second),
@@ -45,8 +53,9 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 	var yahoo *monitorYahoo.MonitorYahoo
 	yahoo = monitorYahoo.NewMonitorYahoo(
 		monitorYahoo.Config{
-			UnaryURL:  "https://query1.finance.yahoo.com",
-			ChanError: chanError,
+			UnaryURL:             "https://query1.finance.yahoo.com",
+			ChanError:            chanError,
+			ChanUpdateAssetQuote: chanUpdateAssetQuote,
 		},
 		monitorYahoo.WithRefreshInterval(time.Duration(configMonitor.Config.RefreshInterval)*time.Second),
 	)
@@ -56,35 +65,72 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 			c.QuoteSourceCoinbase: coinbase,
 			c.QuoteSourceYahoo:    yahoo,
 		},
-		chanError: chanError,
+		chanUpdateAssetQuote:    chanUpdateAssetQuote,
+		chanError:               chanError,
+		onUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote) {},
+		onUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote) {},
 	}
 
 	return m, nil
 }
 
-// SetSymbols sets the symbols for each monitor
-func (m *Monitor) SetSymbols(assetGroup c.AssetGroup) {
+// SetAssetGroup sets the asset group for the monitor
+func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, nonce int) {
+	var wg sync.WaitGroup
 
+	// Create a channel for timeout
+	done := make(chan bool)
+
+	// Concurrently set symbols for each monitor (execute a synchronous call to update quotes for each monitor)
 	for _, symbolBySource := range assetGroup.SymbolsBySource {
-
 		if monitor, exists := m.monitors[symbolBySource.Source]; exists {
-			monitor.SetSymbols(symbolBySource.Symbols)
+			wg.Add(1)
+			go func(mon c.Monitor, symbols []string) {
+				defer wg.Done()
+				err := mon.SetSymbols(symbols, nonce)
+				if err != nil {
+					m.chanError <- err
+				}
+			}(monitor, symbolBySource.Symbols)
 		}
-
 	}
+
+	// Wait for the waitgroup to finish in the background
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	// Continue when the waitgroup is finished or a timeout is reached
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		// Emit an error if not all monitors have completed setting symbols but continue
+		// The monitors that have not completed may return stale asset quotes
+		m.chanError <- fmt.Errorf("timeout waiting for monitors to set symbols on monitors")
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Update the nonce so that any messages from the previous asset group can be ignored
+	m.assetGroupNonce = nonce
+
+	// Get asset quotes for all sources
+	assetGroupQuote := m.GetAssetGroupQuote(assetGroup)
+
+	m.onUpdateAssetGroupQuote(assetGroupQuote)
 }
 
 // SetOnUpdate sets the callback functions for when asset quotes are updated
 func (m *Monitor) SetOnUpdate(config ConfigUpdateFns) error {
 
-	if config.OnUpdateAssetQuote == nil || config.OnUpdateAssetQuotes == nil {
-		return fmt.Errorf("onUpdateAssetQuote and onUpdateAssetQuotes must be set")
+	if config.OnUpdateAssetQuote == nil || config.OnUpdateAssetGroupQuote == nil {
+		return fmt.Errorf("onUpdateAssetQuote and onUpdateAssetGroupQuote must be set")
 	}
 
-	for _, monitor := range m.monitors {
-		monitor.SetOnUpdateAssetQuote(config.OnUpdateAssetQuote)
-		monitor.SetOnUpdateAssetQuotes(config.OnUpdateAssetQuotes)
-	}
+	m.onUpdateAssetQuote = config.OnUpdateAssetQuote
+	m.onUpdateAssetGroupQuote = config.OnUpdateAssetGroupQuote
 
 	return nil
 }
@@ -94,16 +140,19 @@ func (m *Monitor) Start() {
 	for _, monitor := range m.monitors {
 		monitor.Start()
 	}
+
+	go m.handleUpdates()
+
 }
 
 // GetAssetGroupQuote synchronously gets price quotes a group of assets across all sources
-func (m *Monitor) GetAssetGroupQuote(assetGroup c.AssetGroup) c.AssetGroupQuote {
+func (m *Monitor) GetAssetGroupQuote(assetGroup c.AssetGroup, ignoreCache ...bool) c.AssetGroupQuote {
 
 	assetQuotesFromAllSources := make([]c.AssetQuote, 0)
 
 	for _, symbolBySource := range assetGroup.SymbolsBySource {
 
-		assetQuotes, _ := m.monitors[symbolBySource.Source].GetAssetQuotes(true)
+		assetQuotes, _ := m.monitors[symbolBySource.Source].GetAssetQuotes(ignoreCache...)
 		assetQuotesFromAllSources = append(assetQuotesFromAllSources, assetQuotes...)
 
 	}
@@ -111,5 +160,30 @@ func (m *Monitor) GetAssetGroupQuote(assetGroup c.AssetGroup) c.AssetGroupQuote 
 	return c.AssetGroupQuote{
 		AssetQuotes: assetQuotesFromAllSources,
 		AssetGroup:  assetGroup,
+	}
+}
+
+// handleUpdates listens for asset quote updates and errors from monitors
+func (m *Monitor) handleUpdates() {
+	for {
+		select {
+		case update := <-m.chanUpdateAssetQuote:
+
+			m.mu.RLock()
+			defer m.mu.RUnlock()
+
+			// Skip updates from previous asset groups
+			if update.Nonce != m.assetGroupNonce {
+				continue
+			}
+
+			// Call the callback function for individual asset quote updates
+			m.onUpdateAssetQuote(update.Data.Symbol, update.Data)
+
+		case err := <-m.chanError:
+			// Handle errors from monitors
+			// TODO: replace with file logging
+			fmt.Printf("Monitor error: %v\n", err)
+		}
 	}
 }

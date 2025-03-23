@@ -57,18 +57,6 @@ var _ = Describe("Monitor Coinbase", func() {
 				Expect(monitor).NotTo(BeNil())
 			})
 		})
-
-		When("the onUpdate function is set", func() {
-			It("should set the onUpdate function", func() {
-				onUpdate := func(symbol string, assetQuote c.AssetQuote) {}
-				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-					UnaryURL: server.URL(),
-				})
-				monitor.SetOnUpdateAssetQuote(onUpdate)
-
-				Expect(monitor).NotTo(BeNil())
-			})
-		})
 	})
 
 	Describe("GetAssetQuotes", func() {
@@ -144,12 +132,7 @@ var _ = Describe("Monitor Coinbase", func() {
 				UnaryURL: server.URL(),
 			})
 
-			outputAssetQuotes := []c.AssetQuote{}
-			monitor.SetOnUpdateAssetQuotes(func(assetQuotes []c.AssetQuote) {
-				outputAssetQuotes = assetQuotes
-			})
-
-			monitor.SetSymbols([]string{"BIT-31JAN25-CDE", "ETH-USD"})
+			monitor.SetSymbols([]string{"BIT-31JAN25-CDE", "ETH-USD"}, 0)
 
 			assetQuotes, err := monitor.GetAssetQuotes()
 			Expect(err).NotTo(HaveOccurred())
@@ -161,13 +144,6 @@ var _ = Describe("Monitor Coinbase", func() {
 			Expect(assetQuotes[1].Symbol).To(Equal("ETH.CB"))
 			Expect(assetQuotes[1].Name).To(Equal("Ethereum"))
 			Expect(assetQuotes[1].Class).To(Equal(c.AssetClassCryptocurrency))
-			Expect(outputAssetQuotes).To(HaveLen(2))
-			Expect(outputAssetQuotes[0].Symbol).To(Equal("BIT-31JAN25-CDE.CB"))
-			Expect(outputAssetQuotes[0].Name).To(Equal("Bitcoin January 2025 Future"))
-			Expect(outputAssetQuotes[0].Class).To(Equal(c.AssetClassFuturesContract))
-			Expect(outputAssetQuotes[1].Symbol).To(Equal("ETH.CB"))
-			Expect(outputAssetQuotes[1].Name).To(Equal("Ethereum"))
-			Expect(outputAssetQuotes[1].Class).To(Equal(c.AssetClassCryptocurrency))
 		})
 
 		When("the http request fails", func() {
@@ -183,7 +159,7 @@ var _ = Describe("Monitor Coinbase", func() {
 					UnaryURL: server.URL(),
 				})
 
-				monitor.SetSymbols([]string{"BTC-USD"})
+				monitor.SetSymbols([]string{"BTC-USD"}, 0)
 
 				assetQuotes, err := monitor.GetAssetQuotes(true)
 				Expect(err).To(HaveOccurred())
@@ -246,7 +222,7 @@ var _ = Describe("Monitor Coinbase", func() {
 					UnaryURL: server.URL(),
 				})
 
-				monitor.SetSymbols([]string{"BTC-USD"})
+				monitor.SetSymbols([]string{"BTC-USD"}, 0)
 
 				// First call to populate cache
 				firstQuotes, err := monitor.GetAssetQuotes(true)
@@ -300,7 +276,7 @@ var _ = Describe("Monitor Coinbase", func() {
 					UnaryURL: server.URL(),
 				}, monitorCoinbase.WithRefreshInterval(10*time.Second))
 
-				monitor.SetSymbols([]string{"BTC-USD"})
+				monitor.SetSymbols([]string{"BTC-USD"}, 0)
 
 				err := monitor.Start()
 				Expect(err).To(HaveOccurred())
@@ -338,7 +314,7 @@ var _ = Describe("Monitor Coinbase", func() {
 				}, monitorCoinbase.WithRefreshInterval(10*time.Second),
 					monitorCoinbase.WithStreamingURL("wssss://invalid-url"))
 
-				monitor.SetSymbols([]string{"ETH-USD"})
+				monitor.SetSymbols([]string{"ETH-USD"}, 0)
 
 				err := monitor.Start()
 				Expect(err).To(HaveOccurred())
@@ -376,7 +352,7 @@ var _ = Describe("Monitor Coinbase", func() {
 					UnaryURL: server.URL(),
 				})
 
-				monitor.SetSymbols([]string{"ETH-USD"})
+				monitor.SetSymbols([]string{"ETH-USD"}, 0)
 
 				err := monitor.Start()
 				Expect(err).To(HaveOccurred())
@@ -385,7 +361,7 @@ var _ = Describe("Monitor Coinbase", func() {
 		})
 
 		When("there is a streaming price update", func() {
-			It("should call the onUpdate function with the updated price quote", func() {
+			It("should send the updated price quote to the channel", func() {
 				server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=ETH-USD"),
@@ -430,31 +406,35 @@ var _ = Describe("Monitor Coinbase", func() {
 				}`
 				inputServer := testWs.NewTestServer([]string{inputTick})
 
-				outputCalled := false
-				outputAssetQuote := c.AssetQuote{}
+				// Create a channel to receive updates
+				updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
+
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-					UnaryURL: server.URL(),
+					UnaryURL:             server.URL(),
+					ChanUpdateAssetQuote: updateChan,
 				}, monitorCoinbase.WithRefreshInterval(10*time.Second),
 					monitorCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
-				monitor.SetOnUpdateAssetQuote(func(symbol string, assetQuote c.AssetQuote) {
-					outputCalled = true
-					outputAssetQuote = assetQuote
-				})
-
-				monitor.SetSymbols([]string{"ETH-USD"})
+				monitor.SetSymbols([]string{"ETH-USD"}, 0)
 				monitor.Start()
 
-				Eventually(func() bool {
-					return outputCalled
-				}, 5*time.Second).Should(BeTrue())
+				// Wait for the update to be received on the channel
+				var receivedQuote c.AssetQuote
+				Eventually(func() float64 {
+					select {
+					case update := <-updateChan:
+						receivedQuote = update.Data
+						return receivedQuote.QuotePrice.Price
+					default:
+						return 0
+					}
+				}, 5*time.Second).Should(Equal(1300.00))
 
-				Expect(outputAssetQuote.QuotePrice.Price).To(Equal(1300.00))
-
+				Expect(receivedQuote.Symbol).To(Equal("ETH.CB"))
 			})
 
 			When("the price has not changed", func() {
-				It("should not call the onUpdate function", func() {
+				It("should not send updates to the channel", func() {
 					server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
 						ghttp.CombineHandlers(
 							ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=ETH-USD"),
@@ -486,26 +466,33 @@ var _ = Describe("Monitor Coinbase", func() {
 					}`
 					inputServer := testWs.NewTestServer([]string{inputTick, inputTick})
 
-					outputCalled := false
+					// Create a channel to receive updates
+					updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
+
 					monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-						UnaryURL: server.URL(),
-					}, monitorCoinbase.WithRefreshInterval(10*time.Second),
+						UnaryURL:             server.URL(),
+						ChanUpdateAssetQuote: updateChan,
+					}, monitorCoinbase.WithRefreshInterval(100*time.Millisecond),
 						monitorCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
-					monitor.SetOnUpdateAssetQuote(func(symbol string, assetQuote c.AssetQuote) {
-						outputCalled = true
-					})
-
 					monitor.Start()
-					monitor.SetSymbols([]string{"ETH-USD"})
+					monitor.SetSymbols([]string{"ETH-USD"}, 0)
 
 					Consistently(func() bool {
-						return outputCalled
-					}, 2*time.Second).Should(BeFalse())
+						select {
+						case <-updateChan:
+							return true
+						default:
+							return false
+						}
+					}, 1*time.Second).Should(BeFalse())
+
+					monitor.Stop()
 				})
 			})
+
 			When("the product does not exist in the cache", func() {
-				It("should not call the onUpdate function", func() {
+				It("should not send updates to the channel", func() {
 					server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
 						ghttp.CombineHandlers(
 							ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=ETH-USD"),
@@ -538,28 +525,34 @@ var _ = Describe("Monitor Coinbase", func() {
 					}`
 					inputServer := testWs.NewTestServer([]string{inputTick})
 
-					outputCalled := false
+					// Create a channel to receive updates
+					updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
+
 					monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-						UnaryURL: server.URL(),
-					}, monitorCoinbase.WithRefreshInterval(10*time.Second),
+						UnaryURL:             server.URL(),
+						ChanUpdateAssetQuote: updateChan,
+					}, monitorCoinbase.WithRefreshInterval(100*time.Millisecond),
 						monitorCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
-					monitor.SetOnUpdateAssetQuote(func(symbol string, assetQuote c.AssetQuote) {
-						outputCalled = true
-					})
-
 					monitor.Start()
-					monitor.SetSymbols([]string{"ETH-USD"}) // Only set ETH-USD in cache
+					monitor.SetSymbols([]string{"ETH-USD"}, 0) // Only set ETH-USD in cache
 
 					Consistently(func() bool {
-						return outputCalled
-					}, 2*time.Second).Should(BeFalse())
+						select {
+						case <-updateChan:
+							return true
+						default:
+							return false
+						}
+					}, 1*time.Second).Should(BeFalse())
+
+					monitor.Stop()
 				})
 			})
 		})
 
 		When("there is a polling asset update", func() {
-			It("should call the onUpdate function with the updated asset quote", func() {
+			It("should send the updated asset quote to the channel", func() {
 
 				quoteFutures := unary.ResponseQuote{
 					Symbol:         "BIT-31JAN25-CDE",
@@ -634,34 +627,37 @@ var _ = Describe("Monitor Coinbase", func() {
 					),
 				)
 
-				var outputAssetQuote c.AssetQuote
-				var outputCalled bool
+				// Create a channel to receive updates
+				updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
 				// Create a monitor with a short refresh interval for testing
 				monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-					UnaryURL: server.URL(),
-				}, monitorCoinbase.WithRefreshInterval(500*time.Millisecond))
+					UnaryURL:             server.URL(),
+					ChanUpdateAssetQuote: updateChan,
+				}, monitorCoinbase.WithRefreshInterval(100*time.Millisecond))
 
-				monitor.SetOnUpdateAssetQuote(func(symbol string, assetQuote c.AssetQuote) {
-					outputAssetQuote = assetQuote
-					outputCalled = true
-				})
-
-				monitor.SetSymbols([]string{"BIT-31JAN25-CDE"})
+				monitor.SetSymbols([]string{"BIT-31JAN25-CDE", "BTC-USD"}, 0)
 				monitor.Start()
 
-				// Wait for the update to be called
-				Eventually(func() bool {
-					return outputCalled
-				}, 2*time.Second).Should(BeTrue())
-				Expect(outputAssetQuote.QuotePrice.Price).To(Equal(75000.00))
-				Expect(outputAssetQuote.Symbol).To(Equal("BIT-31JAN25-CDE.CB"))
+				// Wait for the update to be received on the channel
+				var receivedQuote c.AssetQuote
+				Eventually(func() float64 {
+					select {
+					case update := <-updateChan:
+						receivedQuote = update.Data
+						return receivedQuote.QuotePrice.Price
+					default:
+						return 0
+					}
+				}, 1*time.Second).Should(Equal(75000.00))
+
+				Expect(receivedQuote.Symbol).To(Equal("BIT-31JAN25-CDE.CB"))
 
 				monitor.Stop()
 			})
 
 			When("the price has not changed", func() {
-				It("should not call the onUpdate function", func() {
+				It("should not send updates to the channel", func() {
 					// Initial response to set up the cache
 					server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
 						ghttp.CombineHandlers(
@@ -685,19 +681,16 @@ var _ = Describe("Monitor Coinbase", func() {
 						),
 					)
 
-					// Set up a channel to detect if onUpdate is called
-					outputCalled := false
+					// Create a channel to receive updates
+					updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
 					// Create a monitor with a short refresh interval for testing
 					monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-						UnaryURL: server.URL(),
+						UnaryURL:             server.URL(),
+						ChanUpdateAssetQuote: updateChan,
 					}, monitorCoinbase.WithRefreshInterval(100*time.Millisecond))
 
-					monitor.SetOnUpdateAssetQuote(func(symbol string, assetQuote c.AssetQuote) {
-						outputCalled = true
-					})
-
-					monitor.SetSymbols([]string{"BTC-USD"})
+					monitor.SetSymbols([]string{"BTC-USD"}, 0)
 					monitor.Start()
 
 					// Set up the second response with the same price
@@ -723,9 +716,14 @@ var _ = Describe("Monitor Coinbase", func() {
 						),
 					)
 
-					// Wait a bit to ensure the polling happens
+					// Check that no updates are sent to the channel
 					Consistently(func() bool {
-						return outputCalled
+						select {
+						case <-updateChan:
+							return true
+						default:
+							return false
+						}
 					}, 500*time.Millisecond).Should(BeFalse())
 
 					monitor.Stop()
@@ -733,7 +731,7 @@ var _ = Describe("Monitor Coinbase", func() {
 			})
 
 			When("the product does not exist in the cache", func() {
-				It("should not call the onUpdate function", func() {
+				It("should not send updates for that product", func() {
 					// Initial response to set up the cache with ETH-USD
 					server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
 						ghttp.CombineHandlers(
@@ -757,22 +755,17 @@ var _ = Describe("Monitor Coinbase", func() {
 						),
 					)
 
-					// Detect if the onUpdate function is called
-					outputCalled := false
+					// Create a channel to receive updates
+					updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
+					receivedSymbols := make(map[string]bool)
 
 					// Create a monitor with a short refresh interval
 					monitor := monitorCoinbase.NewMonitorCoinbase(monitorCoinbase.Config{
-						UnaryURL: server.URL(),
+						UnaryURL:             server.URL(),
+						ChanUpdateAssetQuote: updateChan,
 					}, monitorCoinbase.WithRefreshInterval(100*time.Millisecond))
 
-					monitor.SetOnUpdateAssetQuote(func(symbol string, assetQuote c.AssetQuote) {
-						// Only mark as called if we get an update for BTC-USD
-						if symbol == "BTC" {
-							outputCalled = true
-						}
-					})
-
-					monitor.SetSymbols([]string{"ETH-USD"}) // Only set ETH-USD in cache
+					monitor.SetSymbols([]string{"ETH-USD"}, 0) // Only set ETH-USD in cache
 					monitor.Start()
 
 					// Set up the second response with BTC-USD which is not in the cache
@@ -810,19 +803,21 @@ var _ = Describe("Monitor Coinbase", func() {
 						),
 					)
 
-					// Wait a bit to ensure the polling happens
+					// Check for updates and record which symbols we receive
+					go func() {
+						for update := range updateChan {
+							receivedSymbols[update.Data.Symbol] = true
+						}
+					}()
+
 					Consistently(func() bool {
-						return outputCalled
+						_, hasBTC := receivedSymbols["BTC.CB"]
+						return hasBTC
 					}, 500*time.Millisecond).Should(BeFalse())
 
 					monitor.Stop()
 				})
 			})
-		})
-
-		When("there is a extended quote update", func() {
-			PIt("should call the onUpdate function", func() {})
-			PIt("should update the asset quote cache", func() {})
 		})
 	})
 

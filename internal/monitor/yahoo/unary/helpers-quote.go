@@ -6,6 +6,11 @@ import (
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 )
 
+//nolint:gochecknoglobals
+var (
+	postMarketStatuses = map[string]bool{"POST": true, "POSTPOST": true}
+)
+
 // transformResponseQuote transforms a single quote returned by the API into an AssetQuote
 func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 

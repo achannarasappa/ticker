@@ -42,6 +42,9 @@ type input struct {
 type Config struct {
 	Ctx                  context.Context
 	UnaryURL             string
+	SessionRootURL       string
+	SessionCrumbURL      string
+	SessionConsentURL    string
 	ChanError            chan error
 	ChanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
 }
@@ -53,7 +56,12 @@ func NewMonitorYahoo(config Config, opts ...Option) *MonitorYahoo {
 
 	ctx, cancel := context.WithCancel(config.Ctx)
 
-	unaryAPI := unary.NewUnaryAPI(config.UnaryURL)
+	unaryAPI := unary.NewUnaryAPI(unary.Config{
+		BaseURL:           config.UnaryURL,
+		SessionRootURL:    config.SessionRootURL,
+		SessionCrumbURL:   config.SessionCrumbURL,
+		SessionConsentURL: config.SessionConsentURL,
+	})
 
 	monitor := &MonitorYahoo{
 		assetQuotesCacheLookup:   make(map[string]*c.AssetQuote),

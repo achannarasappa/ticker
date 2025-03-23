@@ -64,6 +64,9 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 		monitorYahoo.Config{
 			Ctx:                  ctx,
 			UnaryURL:             "https://query1.finance.yahoo.com",
+			SessionRootURL:       "https://finance.yahoo.com",
+			SessionCrumbURL:      "https://query2.finance.yahoo.com",
+			SessionConsentURL:    "https://consent.yahoo.com",
 			ChanError:            chanError,
 			ChanUpdateAssetQuote: chanUpdateAssetQuote,
 		},

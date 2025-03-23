@@ -28,7 +28,12 @@ var _ = Describe("Unary", func() {
 
 	Describe("NewUnaryAPI", func() {
 		It("should return a new UnaryAPI", func() {
-			client := unary.NewUnaryAPI(server.URL())
+			client := unary.NewUnaryAPI(unary.Config{
+				BaseURL:           server.URL(),
+				SessionRootURL:    server.URL(),
+				SessionCrumbURL:   server.URL(),
+				SessionConsentURL: server.URL(),
+			})
 			Expect(client).NotTo(BeNil())
 		})
 	})
@@ -43,7 +48,12 @@ var _ = Describe("Unary", func() {
 				),
 			)
 
-			client := unary.NewUnaryAPI(server.URL())
+			client := unary.NewUnaryAPI(unary.Config{
+				BaseURL:           server.URL(),
+				SessionRootURL:    server.URL(),
+				SessionCrumbURL:   server.URL(),
+				SessionConsentURL: server.URL(),
+			})
 			outputSlice, outputMap, outputError := client.GetAssetQuotes([]string{"NET"})
 			Expect(outputSlice).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 				"0": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -72,7 +82,12 @@ var _ = Describe("Unary", func() {
 
 		When("no symbols are provided", func() {
 			It("should return an error", func() {
-				client := unary.NewUnaryAPI(server.URL())
+				client := unary.NewUnaryAPI(unary.Config{
+					BaseURL:           server.URL(),
+					SessionRootURL:    server.URL(),
+					SessionCrumbURL:   server.URL(),
+					SessionConsentURL: server.URL(),
+				})
 				outputSlice, outputMap, outputError := client.GetAssetQuotes([]string{})
 				Expect(outputSlice).To(BeEmpty())
 				Expect(outputMap).To(BeEmpty())
@@ -89,12 +104,41 @@ var _ = Describe("Unary", func() {
 						),
 					)
 
-					client := unary.NewUnaryAPI(server.URL())
+					client := unary.NewUnaryAPI(unary.Config{
+						BaseURL:           server.URL(),
+						SessionRootURL:    server.URL(),
+						SessionCrumbURL:   server.URL(),
+						SessionConsentURL: server.URL(),
+					})
 					outputSlice, outputMap, outputError := client.GetAssetQuotes([]string{"NET"})
 					Expect(outputSlice).To(BeEmpty())
 					Expect(outputMap).To(BeEmpty())
 					Expect(outputError).To(HaveOccurred())
 				})
+
+				When("the request is invalid", func() {
+
+					It("should return an error", func() {
+						server.AppendHandlers(
+							ghttp.CombineHandlers(
+								ghttp.RespondWithJSONEncoded(http.StatusInternalServerError, ""),
+							),
+						)
+
+						client := unary.NewUnaryAPI(unary.Config{
+							BaseURL:           string([]byte("0x0D")),
+							SessionRootURL:    server.URL(),
+							SessionCrumbURL:   server.URL(),
+							SessionConsentURL: server.URL(),
+						})
+						outputSlice, outputMap, outputError := client.GetAssetQuotes([]string{"NET"})
+						Expect(outputSlice).To(BeEmpty())
+						Expect(outputMap).To(BeEmpty())
+						Expect(outputError).To(HaveOccurred())
+					})
+
+				})
+
 			})
 
 			When("the response is invalid", func() {
@@ -105,7 +149,12 @@ var _ = Describe("Unary", func() {
 						),
 					)
 
-					client := unary.NewUnaryAPI(server.URL())
+					client := unary.NewUnaryAPI(unary.Config{
+						BaseURL:           server.URL(),
+						SessionRootURL:    server.URL(),
+						SessionCrumbURL:   server.URL(),
+						SessionConsentURL: server.URL(),
+					})
 					outputSlice, outputMap, outputError := client.GetAssetQuotes([]string{"NET"})
 					Expect(outputSlice).To(BeEmpty())
 					Expect(outputMap).To(BeEmpty())
@@ -115,7 +164,12 @@ var _ = Describe("Unary", func() {
 
 			When("the request is invalid", func() {
 				It("should return an error", func() {
-					client := unary.NewUnaryAPI("invalid")
+					client := unary.NewUnaryAPI(unary.Config{
+						BaseURL:           "invalid",
+						SessionRootURL:    server.URL(),
+						SessionCrumbURL:   server.URL(),
+						SessionConsentURL: server.URL(),
+					})
 					outputSlice, outputMap, outputError := client.GetAssetQuotes([]string{"NET"})
 					Expect(outputSlice).To(BeEmpty())
 					Expect(outputMap).To(BeEmpty())
@@ -137,7 +191,12 @@ var _ = Describe("Unary", func() {
 						),
 					)
 
-					client := unary.NewUnaryAPI(server.URL())
+					client := unary.NewUnaryAPI(unary.Config{
+						BaseURL:           server.URL(),
+						SessionRootURL:    server.URL(),
+						SessionCrumbURL:   server.URL(),
+						SessionConsentURL: server.URL(),
+					})
 					outputSlice, _, outputError := client.GetAssetQuotes([]string{"NET"})
 					Expect(outputSlice).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 						"0": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -165,7 +224,12 @@ var _ = Describe("Unary", func() {
 						),
 					)
 
-					client := unary.NewUnaryAPI(server.URL())
+					client := unary.NewUnaryAPI(unary.Config{
+						BaseURL:           server.URL(),
+						SessionRootURL:    server.URL(),
+						SessionCrumbURL:   server.URL(),
+						SessionConsentURL: server.URL(),
+					})
 					outputSlice, _, outputError := client.GetAssetQuotes([]string{"NET"})
 					Expect(outputSlice).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 						"0": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -198,7 +262,12 @@ var _ = Describe("Unary", func() {
 							),
 						)
 
-						client := unary.NewUnaryAPI(server.URL())
+						client := unary.NewUnaryAPI(unary.Config{
+							BaseURL:           server.URL(),
+							SessionRootURL:    server.URL(),
+							SessionCrumbURL:   server.URL(),
+							SessionConsentURL: server.URL(),
+						})
 						outputSlice, _, outputError := client.GetAssetQuotes([]string{"NET"})
 						Expect(outputSlice).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 							"0": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -230,7 +299,12 @@ var _ = Describe("Unary", func() {
 							),
 						)
 
-						client := unary.NewUnaryAPI(server.URL())
+						client := unary.NewUnaryAPI(unary.Config{
+							BaseURL:           server.URL(),
+							SessionRootURL:    server.URL(),
+							SessionCrumbURL:   server.URL(),
+							SessionConsentURL: server.URL(),
+						})
 						outputSlice, _, outputError := client.GetAssetQuotes([]string{"NET"})
 						Expect(outputSlice).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 							"0": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -265,7 +339,12 @@ var _ = Describe("Unary", func() {
 						),
 					)
 
-					client := unary.NewUnaryAPI(server.URL())
+					client := unary.NewUnaryAPI(unary.Config{
+						BaseURL:           server.URL(),
+						SessionRootURL:    server.URL(),
+						SessionCrumbURL:   server.URL(),
+						SessionConsentURL: server.URL(),
+					})
 					outputSlice, _, outputError := client.GetAssetQuotes([]string{"NET"})
 					Expect(outputSlice).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 						"0": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -298,7 +377,12 @@ var _ = Describe("Unary", func() {
 							),
 						)
 
-						client := unary.NewUnaryAPI(server.URL())
+						client := unary.NewUnaryAPI(unary.Config{
+							BaseURL:           server.URL(),
+							SessionRootURL:    server.URL(),
+							SessionCrumbURL:   server.URL(),
+							SessionConsentURL: server.URL(),
+						})
 						outputSlice, _, outputError := client.GetAssetQuotes([]string{"NET"})
 						Expect(outputSlice).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 							"0": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -330,7 +414,12 @@ var _ = Describe("Unary", func() {
 						),
 					)
 
-					client := unary.NewUnaryAPI(server.URL())
+					client := unary.NewUnaryAPI(unary.Config{
+						BaseURL:           server.URL(),
+						SessionRootURL:    server.URL(),
+						SessionCrumbURL:   server.URL(),
+						SessionConsentURL: server.URL(),
+					})
 					outputSlice, _, outputError := client.GetAssetQuotes([]string{"NET"})
 					Expect(outputSlice).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 						"0": g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -360,7 +449,12 @@ var _ = Describe("Unary", func() {
 						),
 					)
 
-					client := unary.NewUnaryAPI(server.URL())
+					client := unary.NewUnaryAPI(unary.Config{
+						BaseURL:           server.URL(),
+						SessionRootURL:    server.URL(),
+						SessionCrumbURL:   server.URL(),
+						SessionConsentURL: server.URL(),
+					})
 					outputSlice, _, outputError := client.GetAssetQuotes([]string{"NET"})
 					Expect(outputSlice).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 						"0": g.MatchFields(g.IgnoreExtras, g.Fields{

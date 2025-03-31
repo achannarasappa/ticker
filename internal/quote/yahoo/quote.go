@@ -191,17 +191,46 @@ func transformResponseQuotes(responseQuotes []ResponseQuote) []c.AssetQuote {
 
 }
 
-// GetAssetQuotes issues a HTTP request to retrieve quotes from the API and process the response
+const (
+	// MaxSymbolsPerRequest is the maximum number of symbols Yahoo Finance API allows per request
+	MaxSymbolsPerRequest = 50
+)
+
+// fetchQuoteBatch fetches a single batch of quotes from Yahoo Finance API
+func fetchQuoteBatch(client resty.Client, symbols []string) []ResponseQuote {
+	symbolsString := strings.Join(symbols, ",")
+
+	res, err := client.R().
+		SetResult(Response{}).
+		SetQueryParam("fields", "shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap").
+		SetQueryParam("symbols", symbolsString).
+		Get("/v7/finance/quote")
+
+	if err != nil {
+		return []ResponseQuote{}
+	}
+
+	return (res.Result().(*Response)).QuoteResponse.Quotes //nolint:forcetypeassert
+}
+
+// GetAssetQuotes issues HTTP requests to retrieve quotes from the API and process the response
+// It splits the symbols into batches of MaxSymbolsPerRequest to avoid API limitations
 func GetAssetQuotes(client resty.Client, symbols []string) func() []c.AssetQuote {
 	return func() []c.AssetQuote {
-		symbolsString := strings.Join(symbols, ",")
+		var allQuotes []ResponseQuote
 
-		res, _ := client.R().
-			SetResult(Response{}).
-			SetQueryParam("fields", "shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap").
-			SetQueryParam("symbols", symbolsString).
-			Get("/v7/finance/quote")
+		// Process symbols in batches of MaxSymbolsPerRequest
+		for i := 0; i < len(symbols); i += MaxSymbolsPerRequest {
+			end := i + MaxSymbolsPerRequest
+			if end > len(symbols) {
+				end = len(symbols)
+			}
+			
+			batchSymbols := symbols[i:end]
+			batchQuotes := fetchQuoteBatch(client, batchSymbols)
+			allQuotes = append(allQuotes, batchQuotes...)
+		}
 
-		return transformResponseQuotes((res.Result().(*Response)).QuoteResponse.Quotes) //nolint:forcetypeassert
+		return transformResponseQuotes(allQuotes)
 	}
 }

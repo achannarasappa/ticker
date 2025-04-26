@@ -44,7 +44,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 			server.RouteToHandler(http.MethodGet, "/v7/finance/quote",
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=GOOG,NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap"),
+					ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=GOOG,NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"),
 					ghttp.RespondWithJSONEncoded(http.StatusOK, responseQuote1Fixture),
 				),
 			)
@@ -71,7 +71,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 				server.RouteToHandler("GET", "/v7/finance/quote",
 					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=GOOG,NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap"),
+						ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=GOOG,NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"),
 						ghttp.RespondWith(http.StatusInternalServerError, ""),
 					),
 				)
@@ -138,7 +138,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 			server.RouteToHandler(http.MethodGet, "/v7/finance/quote",
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=GOOG,NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap"),
+					ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=GOOG,NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"),
 					ghttp.RespondWithJSONEncoded(http.StatusOK, responseQuote1Fixture),
 				),
 			)
@@ -159,7 +159,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 				server.RouteToHandler(http.MethodGet, "/v7/finance/quote",
 					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=GOOG,NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap"),
+						ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=GOOG,NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"),
 						ghttp.RespondWithJSONEncoded(http.StatusOK, responseQuote1Fixture),
 					),
 				)
@@ -184,7 +184,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 				server.RouteToHandler(http.MethodGet, "/v7/finance/quote",
 					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=GOOG,NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap"),
+						ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=GOOG,NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"),
 						ghttp.RespondWith(http.StatusInternalServerError, ""),
 					),
 				)
@@ -206,7 +206,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 				server.RouteToHandler(http.MethodGet, "/v7/finance/quote",
 					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=GOOG,NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap"),
+						ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=GOOG,NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"),
 						ghttp.RespondWithJSONEncoded(http.StatusOK, responseQuote1Fixture),
 					),
 				)

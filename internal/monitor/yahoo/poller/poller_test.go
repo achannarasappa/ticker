@@ -31,7 +31,7 @@ var _ = Describe("Poller", func() {
 
 		server.RouteToHandler("GET", "/v7/finance/quote",
 			ghttp.CombineHandlers(
-				ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap"),
+				ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=NET&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"),
 				ghttp.RespondWithJSONEncoded(http.StatusOK, responseQuote1Fixture),
 			),
 		)
@@ -40,7 +40,12 @@ var _ = Describe("Poller", func() {
 		inputChanError = make(chan error, 5)
 		ctx, cancel = context.WithCancel(context.Background())
 
-		inputUnaryAPI = unary.NewUnaryAPI(server.URL())
+		inputUnaryAPI = unary.NewUnaryAPI(unary.Config{
+			BaseURL:           server.URL(),
+			SessionRootURL:    server.URL(),
+			SessionCrumbURL:   server.URL(),
+			SessionConsentURL: server.URL(),
+		})
 	})
 
 	AfterEach(func() {

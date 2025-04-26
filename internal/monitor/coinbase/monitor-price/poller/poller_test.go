@@ -12,7 +12,7 @@ import (
 	g "github.com/onsi/gomega/gstruct"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	poller "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/poller"
+	poller "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/monitor-price/poller"
 	unary "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/unary"
 )
 

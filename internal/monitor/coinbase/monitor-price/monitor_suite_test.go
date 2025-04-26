@@ -1,4 +1,4 @@
-package monitorCoinbase_test
+package monitorPriceCoinbase_test
 
 import (
 	"testing"

@@ -1,4 +1,4 @@
-package monitorCoinbase
+package monitorPriceCoinbase
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"time"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	poller "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/poller"
-	streamer "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/streamer"
+	poller "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/monitor-price/poller"
+	streamer "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/monitor-price/streamer"
 	unary "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/unary"
 )
 

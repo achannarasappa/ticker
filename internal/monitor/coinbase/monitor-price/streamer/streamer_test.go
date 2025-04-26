@@ -10,7 +10,7 @@ import (
 	g "github.com/onsi/gomega/gstruct"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	"github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/streamer"
+	streamer "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/monitor-price/streamer"
 	testWs "github.com/achannarasappa/ticker/v4/test/websocket"
 )
 

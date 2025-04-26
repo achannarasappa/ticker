@@ -8,7 +8,7 @@ import (
 	"time"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	monitorCoinbase "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase"
+	monitorPriceCoinbase "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/monitor-price"
 	monitorPriceYahoo "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/monitor-price"
 )
 
@@ -46,16 +46,16 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	var coinbase *monitorCoinbase.MonitorCoinbase
-	coinbase = monitorCoinbase.NewMonitorCoinbase(
-		monitorCoinbase.Config{
+	var coinbase *monitorPriceCoinbase.MonitorCoinbase
+	coinbase = monitorPriceCoinbase.NewMonitorCoinbase(
+		monitorPriceCoinbase.Config{
 			Ctx:                  ctx,
 			UnaryURL:             "https://api.coinbase.com",
 			ChanError:            chanError,
 			ChanUpdateAssetQuote: chanUpdateAssetQuote,
 		},
-		monitorCoinbase.WithStreamingURL("wss://ws-feed.exchange.coinbase.com"),
-		monitorCoinbase.WithRefreshInterval(time.Duration(configMonitor.RefreshInterval)*time.Second),
+		monitorPriceCoinbase.WithStreamingURL("wss://ws-feed.exchange.coinbase.com"),
+		monitorPriceCoinbase.WithRefreshInterval(time.Duration(configMonitor.RefreshInterval)*time.Second),
 	)
 
 	var yahoo *monitorPriceYahoo.MonitorYahoo

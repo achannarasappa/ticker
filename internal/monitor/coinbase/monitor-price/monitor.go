@@ -14,7 +14,7 @@ import (
 	unary "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/unary"
 )
 
-type MonitorCoinbase struct {
+type MonitorPriceCoinbase struct {
 	unaryAPI                         *unary.UnaryAPI
 	streamer                         *streamer.Streamer
 	poller                           *poller.Poller
@@ -53,15 +53,15 @@ type Config struct {
 }
 
 // Option defines an option for configuring the monitor
-type Option func(*MonitorCoinbase)
+type Option func(*MonitorPriceCoinbase)
 
-func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
+func NewMonitorPriceCoinbase(config Config, opts ...Option) *MonitorPriceCoinbase {
 
 	ctx, cancel := context.WithCancel(config.Ctx)
 
 	unaryAPI := unary.NewUnaryAPI(config.UnaryURL)
 
-	monitor := &MonitorCoinbase{
+	monitor := &MonitorPriceCoinbase{
 		assetQuotesCacheLookup:           make(map[string]*c.AssetQuote),
 		assetQuotesCache:                 make([]c.AssetQuote, 0),
 		productIdsToUnderlyingProductIds: make(map[string]string),
@@ -99,19 +99,19 @@ func NewMonitorCoinbase(config Config, opts ...Option) *MonitorCoinbase {
 
 // WithStreamingURL sets the streaming URL for the monitor
 func WithStreamingURL(url string) Option {
-	return func(m *MonitorCoinbase) {
+	return func(m *MonitorPriceCoinbase) {
 		m.streamer.SetURL(url)
 	}
 }
 
 // WithRefreshInterval sets the refresh interval for the monitor
 func WithRefreshInterval(interval time.Duration) Option {
-	return func(m *MonitorCoinbase) {
+	return func(m *MonitorPriceCoinbase) {
 		m.poller.SetRefreshInterval(interval)
 	}
 }
 
-func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, error) {
+func (m *MonitorPriceCoinbase) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, error) {
 	if len(ignoreCache) > 0 && ignoreCache[0] {
 		assetQuotes, err := m.getAssetQuotesAndReplaceCache()
 		if err != nil {
@@ -126,7 +126,7 @@ func (m *MonitorCoinbase) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, e
 	return m.assetQuotesCache, nil
 }
 
-func (m *MonitorCoinbase) SetSymbols(productIds []string, nonce int) error {
+func (m *MonitorPriceCoinbase) SetSymbols(productIds []string, nonce int) error {
 
 	var err error
 
@@ -169,7 +169,7 @@ func (m *MonitorCoinbase) SetSymbols(productIds []string, nonce int) error {
 }
 
 // Start the monitor
-func (m *MonitorCoinbase) Start() error {
+func (m *MonitorPriceCoinbase) Start() error {
 
 	var err error
 
@@ -200,7 +200,7 @@ func (m *MonitorCoinbase) Start() error {
 	return nil
 }
 
-func (m *MonitorCoinbase) Stop() error {
+func (m *MonitorPriceCoinbase) Stop() error {
 
 	if !m.isStarted {
 		return fmt.Errorf("monitor not started")
@@ -241,7 +241,7 @@ func mergeProductIds(symbolsA, symbolsB []string) []string {
 	return merged
 }
 
-func (m *MonitorCoinbase) handleUpdates() {
+func (m *MonitorPriceCoinbase) handleUpdates() {
 	for {
 		select {
 		case <-m.ctx.Done():
@@ -355,7 +355,7 @@ func (m *MonitorCoinbase) handleUpdates() {
 }
 
 // Get asset quotes from unary API, add futures quotes, filter out assets not explicitly requested, and replace the asset quotes cache
-func (m *MonitorCoinbase) getAssetQuotesAndReplaceCache() ([]c.AssetQuote, error) {
+func (m *MonitorPriceCoinbase) getAssetQuotesAndReplaceCache() ([]c.AssetQuote, error) {
 
 	assetQuotes, assetQuotesByProductId, err := m.unaryAPI.GetAssetQuotes(m.productIds)
 	if err != nil {
@@ -395,7 +395,7 @@ func (m *MonitorCoinbase) getAssetQuotesAndReplaceCache() ([]c.AssetQuote, error
 	return m.assetQuotesCache, nil
 }
 
-func (m *MonitorCoinbase) getUnderlyingAssetsAndUpdateProductIds() error {
+func (m *MonitorPriceCoinbase) getUnderlyingAssetsAndUpdateProductIds() error {
 
 	underlyingSymbolsResponse := make([]string, 0)
 	symbolsWithUnderlying := make([]string, 0)

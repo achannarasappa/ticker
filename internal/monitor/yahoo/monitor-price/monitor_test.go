@@ -29,9 +29,9 @@ var _ = Describe("Monitor Yahoo", func() {
 		server.Close()
 	})
 
-	Describe("NewMonitorYahoo", func() {
+	Describe("NewMonitorPriceYahoo", func() {
 		It("should return a new MonitorYahoo", func() {
-			monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
+			monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 				UnaryURL: server.URL(),
 				Ctx:      context.Background(),
 			})
@@ -49,7 +49,7 @@ var _ = Describe("Monitor Yahoo", func() {
 				),
 			)
 
-			monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
+			monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 				UnaryURL: server.URL(),
 				Ctx:      context.Background(),
 			}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
@@ -76,7 +76,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					),
 				)
 
-				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 					UnaryURL: server.URL(),
 					Ctx:      context.Background(),
 				}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
@@ -112,7 +112,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					),
 				)
 
-				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 					UnaryURL: server.URL(),
 					Ctx:      context.Background(),
 				})
@@ -143,7 +143,7 @@ var _ = Describe("Monitor Yahoo", func() {
 				),
 			)
 
-			monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
+			monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 				UnaryURL: server.URL(),
 				Ctx:      context.Background(),
 			}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
@@ -164,7 +164,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					),
 				)
 
-				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 					UnaryURL: server.URL(),
 					Ctx:      context.Background(),
 				}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
@@ -189,7 +189,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					),
 				)
 
-				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 					UnaryURL: server.URL(),
 					Ctx:      context.Background(),
 				}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
@@ -211,7 +211,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					),
 				)
 
-				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 					UnaryURL: server.URL(),
 					Ctx:      context.Background(),
 				})
@@ -257,7 +257,7 @@ var _ = Describe("Monitor Yahoo", func() {
 				updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
 				// Create a monitor with a short refresh interval for testing
-				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 					UnaryURL:             server.URL(),
 					ChanUpdateAssetQuote: updateChan,
 					Ctx:                  context.Background(),
@@ -297,7 +297,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
 					// Create a monitor with a short refresh interval
-					monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
+					monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 						UnaryURL:             server.URL(),
 						ChanUpdateAssetQuote: updateChan,
 						Ctx:                  context.Background(),
@@ -355,7 +355,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					// Create a channel to receive updates
 					updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
-					monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
+					monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 						UnaryURL:             server.URL(),
 						ChanUpdateAssetQuote: updateChan,
 						Ctx:                  context.Background(),
@@ -391,7 +391,7 @@ var _ = Describe("Monitor Yahoo", func() {
 				),
 			)
 
-			monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
+			monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 				UnaryURL: server.URL(),
 				Ctx:      context.Background(),
 			}, monitorPriceYahoo.WithRefreshInterval(10*time.Second))
@@ -414,7 +414,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					),
 				)
 
-				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 					UnaryURL: server.URL(),
 					Ctx:      context.Background(),
 				})

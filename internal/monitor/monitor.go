@@ -46,8 +46,8 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	var coinbase *monitorPriceCoinbase.MonitorCoinbase
-	coinbase = monitorPriceCoinbase.NewMonitorCoinbase(
+	var coinbase *monitorPriceCoinbase.MonitorPriceCoinbase
+	coinbase = monitorPriceCoinbase.NewMonitorPriceCoinbase(
 		monitorPriceCoinbase.Config{
 			Ctx:                  ctx,
 			UnaryURL:             "https://api.coinbase.com",
@@ -58,8 +58,8 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 		monitorPriceCoinbase.WithRefreshInterval(time.Duration(configMonitor.RefreshInterval)*time.Second),
 	)
 
-	var yahoo *monitorPriceYahoo.MonitorYahoo
-	yahoo = monitorPriceYahoo.NewMonitorYahoo(
+	var yahoo *monitorPriceYahoo.MonitorPriceYahoo
+	yahoo = monitorPriceYahoo.NewMonitorPriceYahoo(
 		monitorPriceYahoo.Config{
 			Ctx:                  ctx,
 			UnaryURL:             "https://query1.finance.yahoo.com",

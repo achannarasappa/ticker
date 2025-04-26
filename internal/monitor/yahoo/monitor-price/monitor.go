@@ -12,8 +12,8 @@ import (
 	unary "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"
 )
 
-// MonitorYahoo represents a Yahoo Finance monitor
-type MonitorYahoo struct {
+// MonitorPriceYahoo represents a Yahoo Finance monitor
+type MonitorPriceYahoo struct {
 	unaryAPI                 *unary.UnaryAPI
 	poller                   *poller.Poller
 	unary                    *unary.UnaryAPI
@@ -49,9 +49,9 @@ type Config struct {
 }
 
 // Option defines an option for configuring the monitor
-type Option func(*MonitorYahoo)
+type Option func(*MonitorPriceYahoo)
 
-func NewMonitorYahoo(config Config, opts ...Option) *MonitorYahoo {
+func NewMonitorPriceYahoo(config Config, opts ...Option) *MonitorPriceYahoo {
 
 	ctx, cancel := context.WithCancel(config.Ctx)
 
@@ -62,7 +62,7 @@ func NewMonitorYahoo(config Config, opts ...Option) *MonitorYahoo {
 		SessionConsentURL: config.SessionConsentURL,
 	})
 
-	monitor := &MonitorYahoo{
+	monitor := &MonitorPriceYahoo{
 		assetQuotesCacheLookup:   make(map[string]*c.AssetQuote),
 		symbolToCurrency:         make(map[string]string),
 		assetQuotesCache:         make([]c.AssetQuote, 0),
@@ -90,13 +90,13 @@ func NewMonitorYahoo(config Config, opts ...Option) *MonitorYahoo {
 
 // WithRefreshInterval sets the refresh interval for the monitor
 func WithRefreshInterval(interval time.Duration) Option {
-	return func(m *MonitorYahoo) {
+	return func(m *MonitorPriceYahoo) {
 		m.poller.SetRefreshInterval(interval)
 	}
 }
 
 // GetAssetQuotes returns the asset quotes either from the cache or from the unary API if ignoreCache is set
-func (m *MonitorYahoo) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, error) {
+func (m *MonitorPriceYahoo) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, error) {
 
 	// If ignoreCache is set, get the asset quotes from the unary API and update the cache
 	if len(ignoreCache) > 0 && ignoreCache[0] {
@@ -115,7 +115,7 @@ func (m *MonitorYahoo) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, erro
 }
 
 // SetSymbols sets the symbols to monitor
-func (m *MonitorYahoo) SetSymbols(symbols []string, nonce int) error {
+func (m *MonitorPriceYahoo) SetSymbols(symbols []string, nonce int) error {
 
 	var err error
 
@@ -153,7 +153,7 @@ func (m *MonitorYahoo) SetSymbols(symbols []string, nonce int) error {
 }
 
 // Start the monitor
-func (m *MonitorYahoo) Start() error {
+func (m *MonitorPriceYahoo) Start() error {
 
 	var err error
 
@@ -182,7 +182,7 @@ func (m *MonitorYahoo) Start() error {
 }
 
 // Stop the monitor
-func (m *MonitorYahoo) Stop() error {
+func (m *MonitorPriceYahoo) Stop() error {
 
 	if !m.isStarted {
 		return fmt.Errorf("monitor not started")
@@ -193,7 +193,7 @@ func (m *MonitorYahoo) Stop() error {
 }
 
 // handleUpdates listens for asset quote change messages and updates the cache
-func (m *MonitorYahoo) handleUpdates() {
+func (m *MonitorPriceYahoo) handleUpdates() {
 	for {
 		select {
 		case <-m.ctx.Done():
@@ -257,7 +257,7 @@ func (m *MonitorYahoo) handleUpdates() {
 }
 
 // Get asset quotes from unary API, add futures quotes, filter out assets not explicitly requested, and replace the asset quotes cache
-func (m *MonitorYahoo) getAssetQuotesAndReplaceCache() ([]c.AssetQuote, error) {
+func (m *MonitorPriceYahoo) getAssetQuotesAndReplaceCache() ([]c.AssetQuote, error) {
 
 	// Make a synchronous call to get price quotes
 	assetQuotes, assetQuotesByProductId, err := m.unaryAPI.GetAssetQuotes(m.symbols)
@@ -275,7 +275,7 @@ func (m *MonitorYahoo) getAssetQuotesAndReplaceCache() ([]c.AssetQuote, error) {
 	return m.assetQuotesCache, nil
 }
 
-func (m *MonitorYahoo) getCurrencyForEachSymbolAndUpdateCurrencyMap() error {
+func (m *MonitorPriceYahoo) getCurrencyForEachSymbolAndUpdateCurrencyMap() error {
 	// No need to process if no symbols are provided
 	if len(m.symbols) == 0 {
 		return nil
@@ -305,16 +305,4 @@ func (m *MonitorYahoo) getCurrencyForEachSymbolAndUpdateCurrencyMap() error {
 	}
 
 	return nil
-}
-
-// GetCurrencyRates accepts an array of ISO 4217 currency codes and a target ISO 4217 currency code and returns a conversion rate for each of the input currencies to the target currency
-func (m *MonitorYahoo) GetCurrencyRates(inputCurrencies []string, targetCurrency string) (c.CurrencyRates, error) {
-
-	// currencyRates, err := m.unaryAPI.GetCurrencyRates(inputCurrencies, targetCurrency)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to get currency rates: %w", err)
-	// }
-
-	// return currencyRates, nil
-	return nil, nil
 }

@@ -75,13 +75,11 @@ func (u *UnaryAPI) getCookie() ([]*http.Cookie, error) {
 func (u *UnaryAPI) getCookieEU() ([]*http.Cookie, error) {
 	var cookies []*http.Cookie
 
+	// Create a client with a redirect limit of 3 instead of the default of 1
 	client1 := u.createClientWithRedirectLimit(3)
 
 	// First request to get redirected to consent page
-	req1, err := http.NewRequest("GET", u.sessionRootURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error creating EU consent request: %w", err)
-	}
+	req1, _ := http.NewRequest("GET", u.sessionRootURL, nil)
 
 	req1.Header.Set("authority", "finance.yahoo.com")
 	req1.Header.Set("accept", defaultAcceptValue)
@@ -90,7 +88,7 @@ func (u *UnaryAPI) getCookieEU() ([]*http.Cookie, error) {
 
 	resp1, err := client1.Do(req1)
 	if err != nil {
-		return nil, fmt.Errorf("error attempting to get Yahoo API session id: %w", err)
+		return nil, fmt.Errorf("error refreshing EU session: %w", err)
 	}
 	defer resp1.Body.Close()
 
@@ -107,7 +105,7 @@ func (u *UnaryAPI) getCookieEU() ([]*http.Cookie, error) {
 	// Get GUCS cookie
 	gucsCookies := resp1.Cookies()
 	if len(gucsCookies) == 0 {
-		return nil, errors.New("session refresh error: no cookies set by finance.yahoo.com")
+		return nil, errors.New("session refresh error: GUCS cookie missing from response")
 	}
 
 	// Submit consent form
@@ -151,7 +149,7 @@ func (u *UnaryAPI) getCookieEU() ([]*http.Cookie, error) {
 
 	resp2, err := client2.Do(req2)
 	if err != nil {
-		return nil, fmt.Errorf("error attempting to agree to EU consent request: %w", err)
+		return nil, fmt.Errorf("HTTP protocol error attempting to agree to EU consent request: %w", err)
 	}
 	defer resp2.Body.Close()
 
@@ -193,12 +191,10 @@ func (u *UnaryAPI) getCrumb() (string, error) {
 	}
 
 	// Read crumb from response body
-	crumbBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("error reading crumb response: %w", err)
-	}
+	crumbBytes, _ := io.ReadAll(resp.Body)
+	crumb := string(crumbBytes)
 
-	return string(crumbBytes), nil
+	return crumb, nil
 }
 
 // createClientWithRedirectLimit returns a new http.Client with the specified redirect limit
@@ -215,7 +211,7 @@ func (a *UnaryAPI) createClientWithRedirectLimit(limit int) *http.Client {
 
 // isEUConsentRedirect checks if the response is a redirect to the EU consent page
 func isEUConsentRedirect(resp *http.Response) bool {
-	return strings.Contains(resp.Header.Get("Location"), "guce.yahoo.com") &&
+	return strings.Contains(resp.Header.Get("Location"), "/consent") &&
 		resp.StatusCode >= 300 && resp.StatusCode < 400
 }
 

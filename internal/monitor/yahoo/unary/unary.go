@@ -57,10 +57,48 @@ func (u *UnaryAPI) GetAssetQuotes(symbols []string) ([]c.AssetQuote, map[string]
 		return []c.AssetQuote{}, make(map[string]*c.AssetQuote), errors.New("no symbols provided")
 	}
 
+	result, err := u.getQuotes(symbols, []string{"shortName", "regularMarketChange", "regularMarketChangePercent", "regularMarketPrice", "regularMarketPreviousClose", "regularMarketOpen", "regularMarketDayRange", "regularMarketDayHigh", "regularMarketDayLow", "regularMarketVolume", "postMarketChange", "postMarketChangePercent", "postMarketPrice", "preMarketChange", "preMarketChangePercent", "preMarketPrice", "fiftyTwoWeekHigh", "fiftyTwoWeekLow", "marketCap"})
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get quotes: %w", err)
+	}
+
+	quotes, quotesBySymbol := transformResponseQuotes(result.QuoteResponse.Quotes)
+
+	return quotes, quotesBySymbol, nil
+}
+
+// GetCurrencyRates retrieves the currency rates to convert from each currency for the given Yahoo symbols to the target currency
+func (u *UnaryAPI) GetCurrencyRates(symbols []string, targetCurrency string) (c.CurrencyRates, error) {
+	if targetCurrency == "" {
+		targetCurrency = "USD"
+	}
+
+	// Get currency pair symbols
+	currencyPairSymbols, err := u.getCurrencyPairSymbols(symbols, targetCurrency)
+	if err != nil {
+		return c.CurrencyRates{}, fmt.Errorf("failed to get currency pair symbols: %w", err)
+	}
+
+	if len(currencyPairSymbols) == 0 {
+		return c.CurrencyRates{}, nil
+	}
+
+	// Get currency rates from currency pair symbols
+	currencyRates, err := u.getCurrencyRatesFromCurrencyPairSymbols(currencyPairSymbols)
+	if err != nil {
+		return c.CurrencyRates{}, fmt.Errorf("failed to get currency rates: %w", err)
+	}
+
+	return currencyRates, nil
+}
+
+func (u *UnaryAPI) getQuotes(symbols []string, fields []string) (Response, error) {
+
 	// Build URL with query parameters
 	reqURL, _ := url.Parse(u.baseURL + "/v7/finance/quote")
 	q := reqURL.Query()
-	q.Set("fields", "shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap")
+	q.Set("fields", strings.Join(fields, ","))
 	q.Set("symbols", strings.Join(symbols, ","))
 
 	// Add common Yahoo Finance query parameters
@@ -79,14 +117,14 @@ func (u *UnaryAPI) GetAssetQuotes(symbols []string) ([]c.AssetQuote, map[string]
 	// Create request
 	req, err := http.NewRequest("GET", reqURL.String(), nil)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create request: %w", err)
+		return Response{}, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	// Set common headers
 	req.Header.Set("authority", "query1.finance.yahoo.com")
 	req.Header.Set("accept", "*/*")
 	req.Header.Set("accept-language", defaultAcceptLang)
-	req.Header.Set("origin", u.sessionRootURL)
+	req.Header.Set("origin", u.baseURL)
 	req.Header.Set("user-agent", defaultUserAgent)
 
 	// Add cookies if available
@@ -99,28 +137,31 @@ func (u *UnaryAPI) GetAssetQuotes(symbols []string) ([]c.AssetQuote, map[string]
 	// Make request
 	resp, err := u.client.Do(req)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to make request: %w", err)
+		return Response{}, fmt.Errorf("failed to make request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Handle non-200 responses
-	if resp.StatusCode != http.StatusOK {
+	// Handle not ok responses
+	if resp.StatusCode >= 400 {
 		// Try to refresh session and retry once
 		if err := u.refreshSession(); err != nil {
-			return nil, nil, fmt.Errorf("session refresh failed: %w", err)
+			return Response{}, fmt.Errorf("session refresh failed: %w", err)
 		}
 
 		// Retry request with refreshed session
-		return u.GetAssetQuotes(symbols)
+		return u.getQuotes(symbols, fields)
+	}
+
+	// Handle unexpected responses
+	if resp.StatusCode != http.StatusOK && resp.StatusCode < 400 {
+		return Response{}, fmt.Errorf("unexpected response: %d", resp.StatusCode)
 	}
 
 	// Decode response
 	var result Response
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, nil, fmt.Errorf("failed to decode response: %w", err)
+		return Response{}, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	quotes, quotesBySymbol := transformResponseQuotes(result.QuoteResponse.Quotes)
-
-	return quotes, quotesBySymbol, nil
+	return result, nil
 }

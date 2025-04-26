@@ -1,4 +1,4 @@
-package monitorYahoo
+package monitorPriceYahoo
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"time"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	poller "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/poller"
+	poller "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/monitor-price/poller"
 	unary "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"
 )
 
@@ -18,24 +18,23 @@ type MonitorYahoo struct {
 	poller                   *poller.Poller
 	unary                    *unary.UnaryAPI
 	input                    input
-	productIds               []string // Yahoo APIs refer to trading pairs as Product IDs which symbols ticker accepts with a -USD suffix
-	productIdsPolling        []string
+	symbols                  []string
+	symbolToCurrency         map[string]string        // Map of symbols to currency
 	assetQuotesCache         []c.AssetQuote           // Asset quotes for all assets retrieved at start or on symbol change
 	assetQuotesCacheLookup   map[string]*c.AssetQuote // Asset quotes for all assets retrieved at least once (symbol change does not remove symbols)
 	chanPollUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
-
-	chanError            chan error
-	mu                   sync.RWMutex
-	ctx                  context.Context
-	cancel               context.CancelFunc
-	isStarted            bool
-	chanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
+	chanError                chan error
+	mu                       sync.RWMutex
+	ctx                      context.Context
+	cancel                   context.CancelFunc
+	isStarted                bool
+	chanUpdateAssetQuote     chan c.MessageUpdate[c.AssetQuote]
 }
 
 // input represents user input for the Yahoo monitor with any transformation
 type input struct {
-	productIds       []string
-	productIdsLookup map[string]bool
+	symbols       []string
+	symbolsLookup map[string]bool
 }
 
 // Config contains the required configuration for the Yahoo monitor
@@ -65,6 +64,7 @@ func NewMonitorYahoo(config Config, opts ...Option) *MonitorYahoo {
 
 	monitor := &MonitorYahoo{
 		assetQuotesCacheLookup:   make(map[string]*c.AssetQuote),
+		symbolToCurrency:         make(map[string]string),
 		assetQuotesCache:         make([]c.AssetQuote, 0),
 		chanPollUpdateAssetQuote: make(chan c.MessageUpdate[c.AssetQuote]),
 		chanError:                config.ChanError,
@@ -115,23 +115,29 @@ func (m *MonitorYahoo) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote, erro
 }
 
 // SetSymbols sets the symbols to monitor
-func (m *MonitorYahoo) SetSymbols(productIds []string, nonce int) error {
+func (m *MonitorYahoo) SetSymbols(symbols []string, nonce int) error {
 
 	var err error
 
 	m.mu.Lock()
 
-	// Deduplicate productIds since input may have duplicates
-	slices.Sort(productIds)
-	m.productIds = slices.Compact(productIds)
-	m.productIdsPolling = m.productIds
-	m.input.productIds = productIds
-	m.input.productIdsLookup = make(map[string]bool)
-	for _, productId := range productIds {
-		m.input.productIdsLookup[productId] = true
+	// Deduplicate symbols since input may have duplicates
+	slices.Sort(symbols)
+	m.symbols = slices.Compact(symbols)
+	m.input.symbols = symbols
+	m.input.symbolsLookup = make(map[string]bool)
+	for _, symbol := range symbols {
+		m.input.symbolsLookup[symbol] = true
 	}
 
 	m.mu.Unlock()
+
+	// Check for symbols which don't have a known currency and retrieve the currency for those symbols
+	// TODO: conditionally bypass if currency conversion is not enabled
+	// err = m.getCurrencyForEachSymbolAndUpdateCurrencyMap()
+	// if err != nil {
+	// 	return err
+	// }
 
 	// Since the symbols have changed, make a synchronous call to get price quotes for the new symbols
 	_, err = m.getAssetQuotesAndReplaceCache()
@@ -140,7 +146,7 @@ func (m *MonitorYahoo) SetSymbols(productIds []string, nonce int) error {
 	}
 
 	// Set the symbols to monitor on the poller
-	m.poller.SetSymbols(m.productIdsPolling, nonce)
+	m.poller.SetSymbols(m.symbols, nonce)
 
 	return nil
 
@@ -254,7 +260,7 @@ func (m *MonitorYahoo) handleUpdates() {
 func (m *MonitorYahoo) getAssetQuotesAndReplaceCache() ([]c.AssetQuote, error) {
 
 	// Make a synchronous call to get price quotes
-	assetQuotes, assetQuotesByProductId, err := m.unaryAPI.GetAssetQuotes(m.productIds)
+	assetQuotes, assetQuotesByProductId, err := m.unaryAPI.GetAssetQuotes(m.symbols)
 	if err != nil {
 		return []c.AssetQuote{}, err
 	}
@@ -267,4 +273,48 @@ func (m *MonitorYahoo) getAssetQuotesAndReplaceCache() ([]c.AssetQuote, error) {
 	m.assetQuotesCacheLookup = assetQuotesByProductId
 
 	return m.assetQuotesCache, nil
+}
+
+func (m *MonitorYahoo) getCurrencyForEachSymbolAndUpdateCurrencyMap() error {
+	// No need to process if no symbols are provided
+	if len(m.symbols) == 0 {
+		return nil
+	}
+
+	symbolsWithoutCurrency := make([]string, 0)
+
+	// Check if symbols already have a currency mapping
+	for _, symbol := range m.symbols {
+		if _, exists := m.symbolToCurrency[symbol]; !exists {
+			symbolsWithoutCurrency = append(symbolsWithoutCurrency, symbol)
+		}
+	}
+
+	// Get currency information for each symbol
+	symbolToCurrency, err := m.unaryAPI.GetCurrencyMap(symbolsWithoutCurrency)
+	if err != nil {
+		return fmt.Errorf("failed to get currency information: %w", err)
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Update currency information in the existing asset quotes cache
+	for symbol, currency := range symbolToCurrency {
+		m.symbolToCurrency[symbol] = currency.FromCurrency
+	}
+
+	return nil
+}
+
+// GetCurrencyRates accepts an array of ISO 4217 currency codes and a target ISO 4217 currency code and returns a conversion rate for each of the input currencies to the target currency
+func (m *MonitorYahoo) GetCurrencyRates(inputCurrencies []string, targetCurrency string) (c.CurrencyRates, error) {
+
+	// currencyRates, err := m.unaryAPI.GetCurrencyRates(inputCurrencies, targetCurrency)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to get currency rates: %w", err)
+	// }
+
+	// return currencyRates, nil
+	return nil, nil
 }

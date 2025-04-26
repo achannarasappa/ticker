@@ -1,4 +1,4 @@
-package monitorYahoo_test
+package monitorPriceYahoo_test
 
 import (
 	"github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"

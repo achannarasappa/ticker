@@ -1,4 +1,4 @@
-package monitorYahoo_test
+package monitorPriceYahoo_test
 
 import (
 	"testing"

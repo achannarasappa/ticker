@@ -155,6 +155,8 @@ type Currency struct {
 	FromCurrencyCode string
 	// CodeConverted is the currency code that pricing and values have been converted into
 	ToCurrencyCode string
+	// Rate is the conversion rate from the original currency to the converted currency
+	Rate float64
 }
 
 type QuotePrice struct {

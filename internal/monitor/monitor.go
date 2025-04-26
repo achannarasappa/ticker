@@ -9,7 +9,7 @@ import (
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 	monitorCoinbase "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase"
-	monitorYahoo "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo"
+	monitorPriceYahoo "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/monitor-price"
 )
 
 // Monitor represents an overall monitor which manages API specific monitors
@@ -28,9 +28,8 @@ type Monitor struct {
 
 // ConfigMonitor represents the configuration for the main monitor
 type ConfigMonitor struct {
-	Reference   c.Reference
-	Config      c.Config
-	ErrorLogger *log.Logger
+	RefreshInterval int
+	ErrorLogger     *log.Logger
 }
 
 // ConfigUpdateFns represents the callback functions for when asset quotes are updated
@@ -56,12 +55,12 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 			ChanUpdateAssetQuote: chanUpdateAssetQuote,
 		},
 		monitorCoinbase.WithStreamingURL("wss://ws-feed.exchange.coinbase.com"),
-		monitorCoinbase.WithRefreshInterval(time.Duration(configMonitor.Config.RefreshInterval)*time.Second),
+		monitorCoinbase.WithRefreshInterval(time.Duration(configMonitor.RefreshInterval)*time.Second),
 	)
 
-	var yahoo *monitorYahoo.MonitorYahoo
-	yahoo = monitorYahoo.NewMonitorYahoo(
-		monitorYahoo.Config{
+	var yahoo *monitorPriceYahoo.MonitorYahoo
+	yahoo = monitorPriceYahoo.NewMonitorYahoo(
+		monitorPriceYahoo.Config{
 			Ctx:                  ctx,
 			UnaryURL:             "https://query1.finance.yahoo.com",
 			SessionRootURL:       "https://finance.yahoo.com",
@@ -70,7 +69,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 			ChanError:            chanError,
 			ChanUpdateAssetQuote: chanUpdateAssetQuote,
 		},
-		monitorYahoo.WithRefreshInterval(time.Duration(configMonitor.Config.RefreshInterval)*time.Second),
+		monitorPriceYahoo.WithRefreshInterval(time.Duration(configMonitor.RefreshInterval)*time.Second),
 	)
 
 	m := &Monitor{

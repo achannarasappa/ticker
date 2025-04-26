@@ -30,6 +30,11 @@ type Config struct {
 	SessionConsentURL string
 }
 
+type SymbolToCurrency struct {
+	Symbol       string
+	FromCurrency string
+}
+
 // NewUnaryAPI creates a new client
 func NewUnaryAPI(config Config) *UnaryAPI {
 	// Create client with limited redirects
@@ -69,28 +74,52 @@ func (u *UnaryAPI) GetAssetQuotes(symbols []string) ([]c.AssetQuote, map[string]
 }
 
 // GetCurrencyRates retrieves the currency rates to convert from each currency for the given Yahoo symbols to the target currency
-func (u *UnaryAPI) GetCurrencyRates(symbols []string, targetCurrency string) (c.CurrencyRates, error) {
-	if targetCurrency == "" {
-		targetCurrency = "USD"
+// func (u *UnaryAPI) GetCurrencyRates(symbols []string, targetCurrency string) (c.CurrencyRates, error) {
+// 	if targetCurrency == "" {
+// 		targetCurrency = "USD"
+// 	}
+
+// 	// Get currency pair symbols
+// 	currencyPairSymbols, err := u.getCurrencyPairSymbols(symbols, targetCurrency)
+// 	if err != nil {
+// 		return c.CurrencyRates{}, fmt.Errorf("failed to get currency pair symbols: %w", err)
+// 	}
+
+// 	if len(currencyPairSymbols) == 0 {
+// 		return c.CurrencyRates{}, nil
+// 	}
+
+// 	// Get currency rates from currency pair symbols
+// 	currencyRates, err := u.getCurrencyRatesFromCurrencyPairSymbols(currencyPairSymbols)
+// 	if err != nil {
+// 		return c.CurrencyRates{}, fmt.Errorf("failed to get currency rates: %w", err)
+// 	}
+
+// 	return currencyRates, nil
+// }
+
+// GetCurrencyMap retrieves the currency which the price quote will be denominated in for the given symbols
+func (u *UnaryAPI) GetCurrencyMap(symbols []string) (map[string]SymbolToCurrency, error) {
+	if len(symbols) == 0 {
+		return map[string]SymbolToCurrency{}, nil
 	}
 
-	// Get currency pair symbols
-	currencyPairSymbols, err := u.getCurrencyPairSymbols(symbols, targetCurrency)
+	result, err := u.getQuotes(symbols, []string{"regularMarketPrice", "currency"})
+
 	if err != nil {
-		return c.CurrencyRates{}, fmt.Errorf("failed to get currency pair symbols: %w", err)
+		return map[string]SymbolToCurrency{}, err
 	}
 
-	if len(currencyPairSymbols) == 0 {
-		return c.CurrencyRates{}, nil
+	symbolToCurrency := make(map[string]SymbolToCurrency)
+
+	for _, quote := range result.QuoteResponse.Quotes {
+		symbolToCurrency[quote.Symbol] = SymbolToCurrency{
+			Symbol:       quote.Symbol,
+			FromCurrency: quote.Currency,
+		}
 	}
 
-	// Get currency rates from currency pair symbols
-	currencyRates, err := u.getCurrencyRatesFromCurrencyPairSymbols(currencyPairSymbols)
-	if err != nil {
-		return c.CurrencyRates{}, fmt.Errorf("failed to get currency rates: %w", err)
-	}
-
-	return currencyRates, nil
+	return symbolToCurrency, nil
 }
 
 func (u *UnaryAPI) getQuotes(symbols []string, fields []string) (Response, error) {

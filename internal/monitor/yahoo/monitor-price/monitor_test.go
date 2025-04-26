@@ -1,4 +1,4 @@
-package monitorYahoo_test
+package monitorPriceYahoo_test
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	monitorYahoo "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo"
+	monitorPriceYahoo "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/monitor-price"
 	"github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"
 
 	"github.com/onsi/gomega/ghttp"
@@ -31,7 +31,7 @@ var _ = Describe("Monitor Yahoo", func() {
 
 	Describe("NewMonitorYahoo", func() {
 		It("should return a new MonitorYahoo", func() {
-			monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
+			monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
 				UnaryURL: server.URL(),
 				Ctx:      context.Background(),
 			})
@@ -49,10 +49,10 @@ var _ = Describe("Monitor Yahoo", func() {
 				),
 			)
 
-			monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
+			monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
 				UnaryURL: server.URL(),
 				Ctx:      context.Background(),
-			}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
+			}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
 
 			monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 
@@ -76,10 +76,10 @@ var _ = Describe("Monitor Yahoo", func() {
 					),
 				)
 
-				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
 					UnaryURL: server.URL(),
 					Ctx:      context.Background(),
-				}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
+				}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 
@@ -112,7 +112,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					),
 				)
 
-				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
 					UnaryURL: server.URL(),
 					Ctx:      context.Background(),
 				})
@@ -143,10 +143,10 @@ var _ = Describe("Monitor Yahoo", func() {
 				),
 			)
 
-			monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
+			monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
 				UnaryURL: server.URL(),
 				Ctx:      context.Background(),
-			}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
+			}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
 
 			monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 
@@ -164,10 +164,10 @@ var _ = Describe("Monitor Yahoo", func() {
 					),
 				)
 
-				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
 					UnaryURL: server.URL(),
 					Ctx:      context.Background(),
-				}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
+				}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 
@@ -189,10 +189,10 @@ var _ = Describe("Monitor Yahoo", func() {
 					),
 				)
 
-				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
 					UnaryURL: server.URL(),
 					Ctx:      context.Background(),
-				}, monitorYahoo.WithRefreshInterval(time.Millisecond*100))
+				}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 
@@ -211,7 +211,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					),
 				)
 
-				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
 					UnaryURL: server.URL(),
 					Ctx:      context.Background(),
 				})
@@ -257,11 +257,11 @@ var _ = Describe("Monitor Yahoo", func() {
 				updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
 				// Create a monitor with a short refresh interval for testing
-				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
 					UnaryURL:             server.URL(),
 					ChanUpdateAssetQuote: updateChan,
 					Ctx:                  context.Background(),
-				}, monitorYahoo.WithRefreshInterval(100*time.Millisecond))
+				}, monitorPriceYahoo.WithRefreshInterval(100*time.Millisecond))
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 				monitor.Start()
@@ -297,11 +297,11 @@ var _ = Describe("Monitor Yahoo", func() {
 					updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
 					// Create a monitor with a short refresh interval
-					monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
+					monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
 						UnaryURL:             server.URL(),
 						ChanUpdateAssetQuote: updateChan,
 						Ctx:                  context.Background(),
-					}, monitorYahoo.WithRefreshInterval(100*time.Millisecond))
+					}, monitorPriceYahoo.WithRefreshInterval(100*time.Millisecond))
 
 					monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 					monitor.Start()
@@ -355,11 +355,11 @@ var _ = Describe("Monitor Yahoo", func() {
 					// Create a channel to receive updates
 					updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
-					monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
+					monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
 						UnaryURL:             server.URL(),
 						ChanUpdateAssetQuote: updateChan,
 						Ctx:                  context.Background(),
-					}, monitorYahoo.WithRefreshInterval(100*time.Millisecond))
+					}, monitorPriceYahoo.WithRefreshInterval(100*time.Millisecond))
 
 					monitor.SetSymbols([]string{"GOOG", "NET"}, 0)
 					monitor.Start()
@@ -391,10 +391,10 @@ var _ = Describe("Monitor Yahoo", func() {
 				),
 			)
 
-			monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
+			monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
 				UnaryURL: server.URL(),
 				Ctx:      context.Background(),
-			}, monitorYahoo.WithRefreshInterval(10*time.Second))
+			}, monitorPriceYahoo.WithRefreshInterval(10*time.Second))
 
 			monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
 
@@ -414,7 +414,7 @@ var _ = Describe("Monitor Yahoo", func() {
 					),
 				)
 
-				monitor := monitorYahoo.NewMonitorYahoo(monitorYahoo.Config{
+				monitor := monitorPriceYahoo.NewMonitorYahoo(monitorPriceYahoo.Config{
 					UnaryURL: server.URL(),
 					Ctx:      context.Background(),
 				})

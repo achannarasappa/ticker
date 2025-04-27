@@ -7,7 +7,6 @@ import (
 
 	"github.com/achannarasappa/ticker/v4/internal/cli/symbol"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	yahooClient "github.com/achannarasappa/ticker/v4/internal/quote/yahoo/client"
 	"github.com/achannarasappa/ticker/v4/internal/ui/util"
 
 	"github.com/adrg/xdg"
@@ -69,9 +68,7 @@ func GetDependencies() c.Dependencies {
 	return c.Dependencies{
 		Fs: afero.NewOsFs(),
 		HttpClients: c.DependenciesHttpClients{
-			Default:      resty.New(),
-			Yahoo:        yahooClient.New(resty.New(), resty.New()),
-			YahooSession: resty.New(),
+			Default: resty.New(),
 		},
 	}
 
@@ -85,8 +82,6 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		err       error
 	)
 
-	err = yahooClient.RefreshSession(d.HttpClients.Yahoo, d.HttpClients.YahooSession)
-
 	if err != nil {
 		return c.Context{}, err
 	}
@@ -97,7 +92,7 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		return c.Context{}, err
 	}
 
-	reference, err = getReference(config, groups, d.HttpClients.Yahoo) // TODO: pass in default client for non-currency conversion requests
+	reference, err = getReference(config, groups)
 
 	if err != nil {
 		return c.Context{}, err
@@ -135,13 +130,9 @@ func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {
 	return config, nil
 }
 
-func getReference(config c.Config, assetGroups []c.AssetGroup, client *resty.Client) (c.Reference, error) {
+func getReference(config c.Config, assetGroups []c.AssetGroup) (c.Reference, error) {
 
 	var err error
-	// currencyRates, err := quote.GetAssetGroupsCurrencyRates(client, assetGroups, config.Currency)
-	// if err != nil {
-	// 	return c.Reference{}, err
-	// }
 
 	styles := util.GetColorScheme(config.ColorScheme)
 
@@ -150,7 +141,6 @@ func getReference(config c.Config, assetGroups []c.AssetGroup, client *resty.Cli
 	}
 
 	return c.Reference{
-		// CurrencyRates: currencyRates,
 		Styles: styles,
 	}, err
 
@@ -170,7 +160,6 @@ func GetConfig(dep c.Dependencies, configPath string, options Options) (c.Config
 
 	if len(config.Proxy) > 0 {
 		dep.HttpClients.Default.SetProxy(config.Proxy)
-		dep.HttpClients.Yahoo.SetProxy(config.Proxy)
 	}
 
 	config.RefreshInterval = getRefreshInterval(options.RefreshInterval, config.RefreshInterval)

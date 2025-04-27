@@ -85,18 +85,18 @@ var _ = Describe("Asset", func() {
 					Currency: "EUR",
 				},
 				Reference: c.Reference{
-					CurrencyRates: map[string]c.CurrencyRate{
-						"USD": {
-							FromCurrency: "USD",
-							ToCurrency:   "EUR",
-							Rate:         1.5,
-						},
-						"GBP": {
-							FromCurrency: "GBP",
-							ToCurrency:   "EUR",
-							Rate:         2,
-						},
-					},
+					// CurrencyRates: map[string]c.CurrencyRate{
+					// 	"USD": {
+					// 		FromCurrency: "USD",
+					// 		ToCurrency:   "EUR",
+					// 		Rate:         1.5,
+					// 	},
+					// 	"GBP": {
+					// 		FromCurrency: "GBP",
+					// 		ToCurrency:   "EUR",
+					// 		Rate:         2,
+					// 	},
+					// },
 				},
 			}
 			inputAssetGroupQuote := fixtureAssetGroupQuote
@@ -214,13 +214,13 @@ var _ = Describe("Asset", func() {
 
 				inputContext := c.Context{
 					Reference: c.Reference{
-						CurrencyRates: map[string]c.CurrencyRate{
-							"EUR": {
-								FromCurrency: "EUR",
-								ToCurrency:   "USD",
-								Rate:         0.5,
-							},
-						},
+						// CurrencyRates: map[string]c.CurrencyRate{
+						// 	"EUR": {
+						// 		FromCurrency: "EUR",
+						// 		ToCurrency:   "USD",
+						// 		Rate:         0.5,
+						// 	},
+						// },
 					},
 				}
 				inputAssetGroupQuote := fixtureAssetGroupQuote

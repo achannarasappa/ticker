@@ -34,7 +34,6 @@ var _ = Describe("Print", func() {
 		inputDependencies = c.Dependencies{
 			HttpClients: c.DependenciesHttpClients{
 				Default: client,
-				Yahoo:   client,
 			},
 		}
 	)

@@ -64,8 +64,7 @@ type AssetGroupQuote struct {
 
 // Reference represents derived configuration for internal use from user defined configuration
 type Reference struct {
-	CurrencyRates CurrencyRates
-	Styles        Styles
+	Styles Styles
 }
 
 // Dependencies represents references to external dependencies
@@ -75,9 +74,7 @@ type Dependencies struct {
 }
 
 type DependenciesHttpClients struct { //nolint:golint,stylecheck,revive
-	Default      *resty.Client
-	Yahoo        *resty.Client
-	YahooSession *resty.Client
+	Default *resty.Client
 }
 
 type Monitor interface {

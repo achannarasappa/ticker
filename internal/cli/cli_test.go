@@ -67,9 +67,7 @@ var _ = Describe("Cli", func() {
 		dep = c.Dependencies{
 			Fs: afero.NewMemMapFs(),
 			HttpClients: c.DependenciesHttpClients{
-				Default:      client,
-				Yahoo:        client,
-				YahooSession: client,
+				Default: client,
 			},
 		}
 
@@ -475,7 +473,6 @@ var _ = Describe("Cli", func() {
 					Fs: afero.NewMemMapFs(),
 					HttpClients: c.DependenciesHttpClients{
 						Default: client,
-						Yahoo:   client,
 					},
 				}
 				afero.WriteFile(depLocal.Fs, ".ticker.yaml", []byte("watchlist:\n  - NOK"), 0644)

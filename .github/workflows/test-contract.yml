@@ -19,5 +19,5 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go-version }}
-    - name: Test
-      run: go run github.com/onsi/ginkgo/ginkgo@v1.16.5 -r -v ./internal/quote/yahoo/ -focus "GetQuotes Response"
+    - name: Test Quote API
+      run: go run github.com/onsi/ginkgo/ginkgo@v1.16.5 -r -v ./test/contract/yahoo/ -focus "GetAssetQuotes Response"

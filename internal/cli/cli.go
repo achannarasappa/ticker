@@ -7,7 +7,6 @@ import (
 
 	"github.com/achannarasappa/ticker/v4/internal/cli/symbol"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	"github.com/achannarasappa/ticker/v4/internal/quote"
 	yahooClient "github.com/achannarasappa/ticker/v4/internal/quote/yahoo/client"
 	"github.com/achannarasappa/ticker/v4/internal/ui/util"
 
@@ -138,10 +137,11 @@ func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {
 
 func getReference(config c.Config, assetGroups []c.AssetGroup, client *resty.Client) (c.Reference, error) {
 
-	currencyRates, err := quote.GetAssetGroupsCurrencyRates(client, assetGroups, config.Currency)
-	if err != nil {
-		return c.Reference{}, err
-	}
+	var err error
+	// currencyRates, err := quote.GetAssetGroupsCurrencyRates(client, assetGroups, config.Currency)
+	// if err != nil {
+	// 	return c.Reference{}, err
+	// }
 
 	styles := util.GetColorScheme(config.ColorScheme)
 
@@ -150,8 +150,8 @@ func getReference(config c.Config, assetGroups []c.AssetGroup, client *resty.Cli
 	}
 
 	return c.Reference{
-		CurrencyRates: currencyRates,
-		Styles:        styles,
+		// CurrencyRates: currencyRates,
+		Styles: styles,
 	}, err
 
 }

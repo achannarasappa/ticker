@@ -71,11 +71,11 @@ var _ = Describe("Unary", func() {
 		})
 
 		When("no symbols are provided", func() {
-			It("should return an error", func() {
+			It("should not return an error", func() {
 				outputSlice, outputMap, outputError := client.GetAssetQuotes([]string{})
 				Expect(outputSlice).To(BeEmpty())
 				Expect(outputMap).To(BeEmpty())
-				Expect(outputError).To(MatchError("no symbols provided"))
+				Expect(outputError).To(BeNil())
 			})
 		})
 

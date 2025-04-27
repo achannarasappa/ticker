@@ -14,6 +14,10 @@ import (
 	unary "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/unary"
 )
 
+const (
+	fromCurrencyCode = "USD"
+)
+
 type MonitorPriceCoinbase struct {
 	unaryAPI                         *unary.UnaryAPI
 	streamer                         *streamer.Streamer
@@ -25,18 +29,23 @@ type MonitorPriceCoinbase struct {
 	productIdsPolling                []string
 	productIdsToUnderlyingProductIds map[string]string        // Map of productIds to underlying productIds
 	productIdsUnderlyingOnly         map[string]bool          // Product IDs which are only underlying assets of explicit requested assets (e.g. BTC-USD is an underlying asset of BIT-31JAN25-CDE)
-	assetQuotesCache                 []c.AssetQuote           // Asset quotes for all assets retrieved at start or on symbol change
+	assetQuotesCache                 []*c.AssetQuote          // Asset quotes for all assets retrieved at start or on symbol change
 	assetQuotesCacheLookup           map[string]*c.AssetQuote // Asset quotes for all assets retrieved at least once (symbol change does not remove symbols)
+	currencyRatesCache               c.CurrencyRates          // Cache of currency rates
+	currencyHasRequestedRates        bool                     // Whether the currency rates have been requested; this is used in place of map of every trading pair to currency since there is a single default currency of USD
 	chanStreamUpdateQuotePrice       chan c.MessageUpdate[c.QuotePrice]
 	chanStreamUpdateQuoteExtended    chan c.MessageUpdate[c.QuoteExtended]
 	chanStreamUpdateExchange         chan c.MessageUpdate[c.Exchange]
 	chanPollUpdateAssetQuote         chan c.MessageUpdate[c.AssetQuote]
 	chanError                        chan error
 	mu                               sync.RWMutex
+	muCurrencyRates                  sync.RWMutex
 	ctx                              context.Context
 	cancel                           context.CancelFunc
 	isStarted                        bool
 	chanUpdateAssetQuote             chan c.MessageUpdate[c.AssetQuote]
+	chanUpdateCurrencyRates          chan c.CurrencyRates // Channel for currency rate updates
+	chanRequestCurrencyRates         chan []string        // Channel for currency rate requests
 }
 
 type input struct {
@@ -46,24 +55,25 @@ type input struct {
 
 // Config contains the required configuration for the Coinbase monitor
 type Config struct {
-	Ctx                  context.Context
-	UnaryURL             string
-	ChanError            chan error
-	ChanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
+	Ctx                      context.Context
+	UnaryURL                 string
+	ChanError                chan error
+	ChanUpdateAssetQuote     chan c.MessageUpdate[c.AssetQuote]
+	ChanUpdateCurrencyRates  chan c.CurrencyRates
+	ChanRequestCurrencyRates chan []string
 }
 
 // Option defines an option for configuring the monitor
 type Option func(*MonitorPriceCoinbase)
 
 func NewMonitorPriceCoinbase(config Config, opts ...Option) *MonitorPriceCoinbase {
-
 	ctx, cancel := context.WithCancel(config.Ctx)
 
 	unaryAPI := unary.NewUnaryAPI(config.UnaryURL)
 
 	monitor := &MonitorPriceCoinbase{
 		assetQuotesCacheLookup:           make(map[string]*c.AssetQuote),
-		assetQuotesCache:                 make([]c.AssetQuote, 0),
+		assetQuotesCache:                 make([]*c.AssetQuote, 0),
 		productIdsToUnderlyingProductIds: make(map[string]string),
 		chanStreamUpdateQuotePrice:       make(chan c.MessageUpdate[c.QuotePrice]),
 		chanStreamUpdateQuoteExtended:    make(chan c.MessageUpdate[c.QuoteExtended]),
@@ -74,6 +84,8 @@ func NewMonitorPriceCoinbase(config Config, opts ...Option) *MonitorPriceCoinbas
 		ctx:                              ctx,
 		cancel:                           cancel,
 		chanUpdateAssetQuote:             config.ChanUpdateAssetQuote,
+		chanUpdateCurrencyRates:          config.ChanUpdateCurrencyRates,
+		chanRequestCurrencyRates:         config.ChanRequestCurrencyRates,
 	}
 
 	pollerConfig := poller.PollerConfig{
@@ -117,13 +129,22 @@ func (m *MonitorPriceCoinbase) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuo
 		if err != nil {
 			return []c.AssetQuote{}, err
 		}
-		return assetQuotes, nil
+
+		result := make([]c.AssetQuote, len(assetQuotes))
+		for i, quote := range assetQuotes {
+			result[i] = *quote
+		}
+		return result, nil
 	}
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	return m.assetQuotesCache, nil
+	result := make([]c.AssetQuote, len(m.assetQuotesCache))
+	for i, quote := range m.assetQuotesCache {
+		result[i] = *quote
+	}
+	return result, nil
 }
 
 func (m *MonitorPriceCoinbase) SetSymbols(productIds []string, nonce int) error {
@@ -139,6 +160,13 @@ func (m *MonitorPriceCoinbase) SetSymbols(productIds []string, nonce int) error 
 	m.input.productIdsLookup = make(map[string]bool)
 	for _, productId := range productIds {
 		m.input.productIdsLookup[productId] = true
+	}
+
+	// Check if the default currency (USD) has been requested; replace with symbol specific currency requests for non USD markets
+	if !m.currencyHasRequestedRates {
+		// Request the default currency (USD) once
+		m.chanRequestCurrencyRates <- []string{fromCurrencyCode}
+		m.currencyHasRequestedRates = true
 	}
 
 	m.mu.Unlock()
@@ -168,9 +196,8 @@ func (m *MonitorPriceCoinbase) SetSymbols(productIds []string, nonce int) error 
 
 }
 
-// Start the monitor
+// Start the monitor, adding support for currency rate requests
 func (m *MonitorPriceCoinbase) Start() error {
-
 	var err error
 
 	if m.isStarted {
@@ -349,23 +376,48 @@ func (m *MonitorPriceCoinbase) handleUpdates() {
 			}
 
 			continue
+
+		case currencyRates := <-m.chanUpdateCurrencyRates:
+			m.muCurrencyRates.Lock()
+			m.currencyRatesCache = currencyRates
+			m.muCurrencyRates.Unlock()
+
+			// Map over each asset quote and update the currency rate
+			// TODO: make this more efficient by selectively updating based on changes in rates
+			_, err := m.getAssetQuotesAndReplaceCache()
+			if err != nil {
+				m.chanError <- err
+			}
+
 		default:
 		}
 	}
 }
 
 // Get asset quotes from unary API, add futures quotes, filter out assets not explicitly requested, and replace the asset quotes cache
-func (m *MonitorPriceCoinbase) getAssetQuotesAndReplaceCache() ([]c.AssetQuote, error) {
+func (m *MonitorPriceCoinbase) getAssetQuotesAndReplaceCache() ([]*c.AssetQuote, error) {
+
+	lookup := make(map[string]*c.AssetQuote)
 
 	assetQuotes, assetQuotesByProductId, err := m.unaryAPI.GetAssetQuotes(m.productIds)
 	if err != nil {
-		return []c.AssetQuote{}, err
+		return []*c.AssetQuote{}, err
 	}
 
 	// Filter asset quotes to only include explicitly requested ones
-	assetQuotesEnriched := make([]c.AssetQuote, 0, len(m.input.productIds))
+	assetQuotesEnriched := make([]*c.AssetQuote, 0, len(m.input.productIds))
+
+	m.muCurrencyRates.RLock()
 
 	for _, quote := range assetQuotes {
+
+		// Set the currency rate if available
+		if currencyRate, exists := m.currencyRatesCache[fromCurrencyCode]; exists {
+			quote.Currency.Rate = currencyRate.Rate
+			quote.Currency.FromCurrencyCode = fromCurrencyCode
+			quote.Currency.ToCurrencyCode = currencyRate.ToCurrency
+		}
+
 		// Check if this quote is explicitly requested and if not, skip
 		if !m.input.productIdsLookup[quote.Meta.SymbolInSourceAPI] {
 			continue
@@ -381,16 +433,19 @@ func (m *MonitorPriceCoinbase) getAssetQuotesAndReplaceCache() ([]c.AssetQuote, 
 			}
 		}
 
-		assetQuotesEnriched = append(assetQuotesEnriched, quote)
+		lookup[quote.Meta.SymbolInSourceAPI] = &quote
+		assetQuotesEnriched = append(assetQuotesEnriched, &quote)
 
 	}
+
+	m.muCurrencyRates.RUnlock()
 
 	// Lock updates to asset quotes while symbols are changed and subscriptions updates. ensure data from unary call supercedes potentially oudated streaming data
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	m.assetQuotesCache = assetQuotesEnriched
-	m.assetQuotesCacheLookup = assetQuotesByProductId
+	m.assetQuotesCacheLookup = lookup
 
 	return m.assetQuotesCache, nil
 }

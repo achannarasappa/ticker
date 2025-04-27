@@ -2,7 +2,6 @@ package unary
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -59,7 +58,7 @@ func NewUnaryAPI(config Config) *UnaryAPI {
 // GetAssetQuotes issues a HTTP request to retrieve quotes from the API and process the response
 func (u *UnaryAPI) GetAssetQuotes(symbols []string) ([]c.AssetQuote, map[string]*c.AssetQuote, error) {
 	if len(symbols) == 0 {
-		return []c.AssetQuote{}, make(map[string]*c.AssetQuote), errors.New("no symbols provided")
+		return []c.AssetQuote{}, make(map[string]*c.AssetQuote), nil
 	}
 
 	result, err := u.getQuotes(symbols, []string{"shortName", "regularMarketChange", "regularMarketChangePercent", "regularMarketPrice", "regularMarketPreviousClose", "regularMarketOpen", "regularMarketDayRange", "regularMarketDayHigh", "regularMarketDayLow", "regularMarketVolume", "postMarketChange", "postMarketChangePercent", "postMarketPrice", "preMarketChange", "preMarketChangePercent", "preMarketPrice", "fiftyTwoWeekHigh", "fiftyTwoWeekLow", "marketCap"})
@@ -72,31 +71,6 @@ func (u *UnaryAPI) GetAssetQuotes(symbols []string) ([]c.AssetQuote, map[string]
 
 	return quotes, quotesBySymbol, nil
 }
-
-// GetCurrencyRates retrieves the currency rates to convert from each currency for the given Yahoo symbols to the target currency
-// func (u *UnaryAPI) GetCurrencyRates(symbols []string, targetCurrency string) (c.CurrencyRates, error) {
-// 	if targetCurrency == "" {
-// 		targetCurrency = "USD"
-// 	}
-
-// 	// Get currency pair symbols
-// 	currencyPairSymbols, err := u.getCurrencyPairSymbols(symbols, targetCurrency)
-// 	if err != nil {
-// 		return c.CurrencyRates{}, fmt.Errorf("failed to get currency pair symbols: %w", err)
-// 	}
-
-// 	if len(currencyPairSymbols) == 0 {
-// 		return c.CurrencyRates{}, nil
-// 	}
-
-// 	// Get currency rates from currency pair symbols
-// 	currencyRates, err := u.getCurrencyRatesFromCurrencyPairSymbols(currencyPairSymbols)
-// 	if err != nil {
-// 		return c.CurrencyRates{}, fmt.Errorf("failed to get currency rates: %w", err)
-// 	}
-
-// 	return currencyRates, nil
-// }
 
 // GetCurrencyMap retrieves the currency which the price quote will be denominated in for the given symbols
 func (u *UnaryAPI) GetCurrencyMap(symbols []string) (map[string]SymbolToCurrency, error) {
@@ -115,11 +89,68 @@ func (u *UnaryAPI) GetCurrencyMap(symbols []string) (map[string]SymbolToCurrency
 	for _, quote := range result.QuoteResponse.Quotes {
 		symbolToCurrency[quote.Symbol] = SymbolToCurrency{
 			Symbol:       quote.Symbol,
-			FromCurrency: quote.Currency,
+			FromCurrency: strings.ToUpper(quote.Currency),
 		}
 	}
 
 	return symbolToCurrency, nil
+}
+
+// GetCurrencyRates accepts an array of ISO 4217 currency codes and a target ISO 4217 currency code and returns a conversion rate for each of the input currencies to the target currency
+func (u *UnaryAPI) GetCurrencyRates(fromCurrencies []string, toCurrency string) (c.CurrencyRates, error) {
+	if toCurrency == "" {
+		toCurrency = "USD"
+	}
+
+	if len(fromCurrencies) == 0 {
+		return c.CurrencyRates{}, nil
+	}
+
+	// Create currency pair symbols in format "FROMTO=X" (e.g., "EURUSD=X")
+	currencyPairSymbols := make([]string, 0)
+	currencyPairSymbolsUnique := make(map[string]bool)
+
+	for _, fromCurrency := range fromCurrencies {
+
+		if fromCurrency == "" {
+			continue
+		}
+
+		if fromCurrency == toCurrency {
+			continue
+		}
+
+		pair := strings.ToUpper(fromCurrency) + toCurrency + "=X"
+
+		if _, exists := currencyPairSymbolsUnique[pair]; !exists {
+			currencyPairSymbolsUnique[pair] = true
+			currencyPairSymbols = append(currencyPairSymbols, pair)
+		}
+	}
+
+	if len(currencyPairSymbols) == 0 {
+		return c.CurrencyRates{}, nil
+	}
+
+	// Get quotes for currency pairs
+	result, err := u.getQuotes(currencyPairSymbols, []string{"currency", "regularMarketPrice"})
+	if err != nil {
+		return c.CurrencyRates{}, fmt.Errorf("failed to get currency rates: %w", err)
+	}
+
+	// Transform result to currency rates
+	currencyRates := make(map[string]c.CurrencyRate)
+
+	for _, quote := range result.QuoteResponse.Quotes {
+		fromCurrency := strings.TrimSuffix(strings.TrimSuffix(quote.Symbol, "=X"), toCurrency)
+		currencyRates[fromCurrency] = c.CurrencyRate{
+			FromCurrency: fromCurrency,
+			ToCurrency:   toCurrency,
+			Rate:         quote.RegularMarketPrice.Raw,
+		}
+	}
+
+	return currencyRates, nil
 }
 
 func (u *UnaryAPI) getQuotes(symbols []string, fields []string) (Response, error) {

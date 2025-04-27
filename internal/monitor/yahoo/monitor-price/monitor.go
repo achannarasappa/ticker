@@ -19,16 +19,20 @@ type MonitorPriceYahoo struct {
 	unary                    *unary.UnaryAPI
 	input                    input
 	symbols                  []string
-	symbolToCurrency         map[string]string        // Map of symbols to currency
-	assetQuotesCache         []c.AssetQuote           // Asset quotes for all assets retrieved at start or on symbol change
-	assetQuotesCacheLookup   map[string]*c.AssetQuote // Asset quotes for all assets retrieved at least once (symbol change does not remove symbols)
+	symbolToCurrency         map[string]string         // Map of symbols to currency
+	assetQuotesCache         []*c.AssetQuote           // Asset quotes for all assets retrieved at start or on symbol change
+	assetQuotesCacheLookup   map[string]*c.AssetQuote  // Asset quotes for all assets retrieved at least once (symbol change does not remove symbols)
+	currencyRatesCache       map[string]c.CurrencyRate // Cache of currency rates
 	chanPollUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
 	chanError                chan error
 	mu                       sync.RWMutex
+	muCurrencyRates          sync.RWMutex
 	ctx                      context.Context
 	cancel                   context.CancelFunc
 	isStarted                bool
 	chanUpdateAssetQuote     chan c.MessageUpdate[c.AssetQuote]
+	chanUpdateCurrencyRates  chan c.CurrencyRates
+	chanRequestCurrencyRates chan []string
 }
 
 // input represents user input for the Yahoo monitor with any transformation
@@ -39,45 +43,38 @@ type input struct {
 
 // Config contains the required configuration for the Yahoo monitor
 type Config struct {
-	Ctx                  context.Context
-	UnaryURL             string
-	SessionRootURL       string
-	SessionCrumbURL      string
-	SessionConsentURL    string
-	ChanError            chan error
-	ChanUpdateAssetQuote chan c.MessageUpdate[c.AssetQuote]
+	Ctx                      context.Context
+	UnaryAPI                 *unary.UnaryAPI
+	ChanError                chan error
+	ChanUpdateAssetQuote     chan c.MessageUpdate[c.AssetQuote]
+	ChanUpdateCurrencyRates  chan c.CurrencyRates
+	ChanRequestCurrencyRates chan []string
 }
 
 // Option defines an option for configuring the monitor
 type Option func(*MonitorPriceYahoo)
 
 func NewMonitorPriceYahoo(config Config, opts ...Option) *MonitorPriceYahoo {
-
 	ctx, cancel := context.WithCancel(config.Ctx)
-
-	unaryAPI := unary.NewUnaryAPI(unary.Config{
-		BaseURL:           config.UnaryURL,
-		SessionRootURL:    config.SessionRootURL,
-		SessionCrumbURL:   config.SessionCrumbURL,
-		SessionConsentURL: config.SessionConsentURL,
-	})
 
 	monitor := &MonitorPriceYahoo{
 		assetQuotesCacheLookup:   make(map[string]*c.AssetQuote),
 		symbolToCurrency:         make(map[string]string),
-		assetQuotesCache:         make([]c.AssetQuote, 0),
+		assetQuotesCache:         make([]*c.AssetQuote, 0),
 		chanPollUpdateAssetQuote: make(chan c.MessageUpdate[c.AssetQuote]),
 		chanError:                config.ChanError,
-		unaryAPI:                 unaryAPI,
+		unaryAPI:                 config.UnaryAPI,
 		ctx:                      ctx,
 		cancel:                   cancel,
 		chanUpdateAssetQuote:     config.ChanUpdateAssetQuote,
+		chanUpdateCurrencyRates:  config.ChanUpdateCurrencyRates,
+		chanRequestCurrencyRates: config.ChanRequestCurrencyRates,
 	}
 
 	pollerConfig := poller.PollerConfig{
 		ChanUpdateAssetQuote: monitor.chanPollUpdateAssetQuote,
 		ChanError:            monitor.chanError,
-		UnaryAPI:             unaryAPI,
+		UnaryAPI:             config.UnaryAPI,
 	}
 	monitor.poller = poller.NewPoller(ctx, pollerConfig)
 
@@ -104,14 +101,22 @@ func (m *MonitorPriceYahoo) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote,
 		if err != nil {
 			return []c.AssetQuote{}, err
 		}
-		return assetQuotes, nil
+		result := make([]c.AssetQuote, len(assetQuotes))
+		for i, quote := range assetQuotes {
+			result[i] = *quote
+		}
+		return result, nil
 	}
 
 	// If ignoreCache is not set, return the asset quotes from the cache without making a HTTP request
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	return m.assetQuotesCache, nil
+	result := make([]c.AssetQuote, len(m.assetQuotesCache))
+	for i, quote := range m.assetQuotesCache {
+		result[i] = *quote
+	}
+	return result, nil
 }
 
 // SetSymbols sets the symbols to monitor
@@ -134,10 +139,10 @@ func (m *MonitorPriceYahoo) SetSymbols(symbols []string, nonce int) error {
 
 	// Check for symbols which don't have a known currency and retrieve the currency for those symbols
 	// TODO: conditionally bypass if currency conversion is not enabled
-	// err = m.getCurrencyForEachSymbolAndUpdateCurrencyMap()
-	// if err != nil {
-	// 	return err
-	// }
+	err = m.getCurrencyForEachSymbolAndUpdateCurrencyMap()
+	if err != nil {
+		return err
+	}
 
 	// Since the symbols have changed, make a synchronous call to get price quotes for the new symbols
 	_, err = m.getAssetQuotesAndReplaceCache()
@@ -250,27 +255,52 @@ func (m *MonitorPriceYahoo) handleUpdates() {
 			}
 
 			continue
+		case currencyRates := <-m.chanUpdateCurrencyRates:
+			m.muCurrencyRates.Lock()
+			m.currencyRatesCache = currencyRates
+			m.muCurrencyRates.Unlock()
 
+			// Map over each asset quote and update the currency rate
+			// TODO: make this more efficient by selectively updating based on changes in rates
+			_, err := m.getAssetQuotesAndReplaceCache()
+			if err != nil {
+				m.chanError <- err
+			}
 		default:
 		}
 	}
 }
 
 // Get asset quotes from unary API, add futures quotes, filter out assets not explicitly requested, and replace the asset quotes cache
-func (m *MonitorPriceYahoo) getAssetQuotesAndReplaceCache() ([]c.AssetQuote, error) {
+func (m *MonitorPriceYahoo) getAssetQuotesAndReplaceCache() ([]*c.AssetQuote, error) {
+
+	lookup := make(map[string]*c.AssetQuote)
+	cache := make([]*c.AssetQuote, 0)
 
 	// Make a synchronous call to get price quotes
-	assetQuotes, assetQuotesByProductId, err := m.unaryAPI.GetAssetQuotes(m.symbols)
+	assetQuotes, _, err := m.unaryAPI.GetAssetQuotes(m.symbols)
 	if err != nil {
-		return []c.AssetQuote{}, err
+		return []*c.AssetQuote{}, err
 	}
+
+	// Add currency rate to each price quote
+	m.muCurrencyRates.RLock()
+	for _, quote := range assetQuotes {
+		if currencyRate, exists := m.currencyRatesCache[quote.Currency.FromCurrencyCode]; exists {
+			quote.Currency.Rate = currencyRate.Rate
+			quote.Currency.ToCurrencyCode = currencyRate.ToCurrency
+		}
+		lookup[quote.Meta.SymbolInSourceAPI] = &quote
+		cache = append(cache, &quote)
+	}
+	m.muCurrencyRates.RUnlock()
 
 	// Replace the cache with new sets of asset quotes
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.assetQuotesCache = assetQuotes
-	m.assetQuotesCacheLookup = assetQuotesByProductId
+	m.assetQuotesCache = cache
+	m.assetQuotesCacheLookup = lookup
 
 	return m.assetQuotesCache, nil
 }
@@ -284,25 +314,36 @@ func (m *MonitorPriceYahoo) getCurrencyForEachSymbolAndUpdateCurrencyMap() error
 	symbolsWithoutCurrency := make([]string, 0)
 
 	// Check if symbols already have a currency mapping
+	m.muCurrencyRates.RLock()
 	for _, symbol := range m.symbols {
 		if _, exists := m.symbolToCurrency[symbol]; !exists {
 			symbolsWithoutCurrency = append(symbolsWithoutCurrency, symbol)
 		}
 	}
+	m.muCurrencyRates.RUnlock()
 
-	// Get currency information for each symbol
+	// Get the currency each symbol's price quote will be denominated in
 	symbolToCurrency, err := m.unaryAPI.GetCurrencyMap(symbolsWithoutCurrency)
 	if err != nil {
 		return fmt.Errorf("failed to get currency information: %w", err)
 	}
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.muCurrencyRates.Lock()
 
-	// Update currency information in the existing asset quotes cache
+	fromCurrenciesToRequest := make([]string, 0)
+
 	for symbol, currency := range symbolToCurrency {
+		// Add price quote currency denomination to the currency map
 		m.symbolToCurrency[symbol] = currency.FromCurrency
+
+		// Add currencies for new symbols to request list of currencies to retrieve currency rates (duplicate are okay)
+		// TODO: confirm symbols would not be missed by only incrementally adding currencies rather than requesting everything not in m.currencyRatesCache
+		fromCurrenciesToRequest = append(fromCurrenciesToRequest, currency.FromCurrency)
 	}
+
+	m.muCurrencyRates.Unlock()
+
+	m.chanRequestCurrencyRates <- fromCurrenciesToRequest
 
 	return nil
 }

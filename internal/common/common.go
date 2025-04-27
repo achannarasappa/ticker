@@ -87,6 +87,12 @@ type Monitor interface {
 	Stop() error
 }
 
+type MonitorCurrencyRate interface {
+	Start() error
+	SetTargetCurrency(targetCurrency string)
+	Stop() error
+}
+
 // Lot represents a cost basis lot
 type Lot struct {
 	Symbol    string  `yaml:"symbol"`
@@ -256,4 +262,10 @@ type MessageUpdate[T any] struct {
 	ID       string
 	Sequence int64
 	Nonce    int
+}
+
+type MessageRequest[T any] struct {
+	Data  T
+	ID    string
+	Nonce int
 }

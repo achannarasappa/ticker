@@ -9,26 +9,33 @@ import (
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 	monitorPriceCoinbase "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/monitor-price"
+	monitorCurrencyRate "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/monitor-currency-rates"
 	monitorPriceYahoo "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/monitor-price"
+	unaryClientYahoo "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"
 )
 
 // Monitor represents an overall monitor which manages API specific monitors
 type Monitor struct {
-	monitors                map[c.QuoteSource]c.Monitor
-	chanError               chan error
-	chanUpdateAssetQuote    chan c.MessageUpdate[c.AssetQuote]
-	onUpdateAssetQuote      func(symbol string, assetQuote c.AssetQuote, nonce int)
-	onUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote, nonce int)
-	assetGroupNonce         int
-	mu                      sync.RWMutex
-	errorLogger             *log.Logger
-	ctx                     context.Context
-	cancel                  context.CancelFunc
+	monitors                       map[c.QuoteSource]c.Monitor
+	monitorCurrencyRate            c.MonitorCurrencyRate
+	chanError                      chan error
+	chanUpdateAssetQuote           chan c.MessageUpdate[c.AssetQuote]
+	chanUpdateCurrencyRates        chan c.CurrencyRates
+	chanUpdateCurrencyRateYahoo    chan c.CurrencyRates
+	chanUpdateCurrencyRateCoinbase chan c.CurrencyRates
+	onUpdateAssetQuote             func(symbol string, assetQuote c.AssetQuote, nonce int)
+	onUpdateAssetGroupQuote        func(assetGroupQuote c.AssetGroupQuote, nonce int)
+	assetGroupNonce                int
+	mu                             sync.RWMutex
+	errorLogger                    *log.Logger
+	ctx                            context.Context
+	cancel                         context.CancelFunc
 }
 
 // ConfigMonitor represents the configuration for the main monitor
 type ConfigMonitor struct {
 	RefreshInterval int
+	TargetCurrency  string
 	ErrorLogger     *log.Logger
 }
 
@@ -43,47 +50,77 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 
 	chanError := make(chan error, 5)
 	chanUpdateAssetQuote := make(chan c.MessageUpdate[c.AssetQuote], 10)
+	chanUpdateCurrencyRate := make(chan c.CurrencyRates, 10)
+	chanUpdateCurrencyRateYahoo := make(chan c.CurrencyRates, 10)
+	chanUpdateCurrencyRateCoinbase := make(chan c.CurrencyRates, 10)
+	chanRequestCurrencyRate := make(chan []string, 10)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	var coinbase *monitorPriceCoinbase.MonitorPriceCoinbase
 	coinbase = monitorPriceCoinbase.NewMonitorPriceCoinbase(
 		monitorPriceCoinbase.Config{
-			Ctx:                  ctx,
-			UnaryURL:             "https://api.coinbase.com",
-			ChanError:            chanError,
-			ChanUpdateAssetQuote: chanUpdateAssetQuote,
+			Ctx:                      ctx,
+			UnaryURL:                 "https://api.coinbase.com",
+			ChanError:                chanError,
+			ChanUpdateAssetQuote:     chanUpdateAssetQuote,
+			ChanUpdateCurrencyRates:  chanUpdateCurrencyRateCoinbase,
+			ChanRequestCurrencyRates: chanRequestCurrencyRate,
 		},
 		monitorPriceCoinbase.WithStreamingURL("wss://ws-feed.exchange.coinbase.com"),
 		monitorPriceCoinbase.WithRefreshInterval(time.Duration(configMonitor.RefreshInterval)*time.Second),
 	)
 
+	// Create and configure the API client for the Yahoo API shared between monitors
+	unaryAPI := unaryClientYahoo.NewUnaryAPI(unaryClientYahoo.Config{
+		BaseURL:           "https://query1.finance.yahoo.com",
+		SessionRootURL:    "https://finance.yahoo.com",
+		SessionCrumbURL:   "https://query2.finance.yahoo.com",
+		SessionConsentURL: "https://consent.yahoo.com",
+	})
+
 	var yahoo *monitorPriceYahoo.MonitorPriceYahoo
 	yahoo = monitorPriceYahoo.NewMonitorPriceYahoo(
 		monitorPriceYahoo.Config{
-			Ctx:                  ctx,
-			UnaryURL:             "https://query1.finance.yahoo.com",
-			SessionRootURL:       "https://finance.yahoo.com",
-			SessionCrumbURL:      "https://query2.finance.yahoo.com",
-			SessionConsentURL:    "https://consent.yahoo.com",
-			ChanError:            chanError,
-			ChanUpdateAssetQuote: chanUpdateAssetQuote,
+			Ctx:                      ctx,
+			UnaryAPI:                 unaryAPI,
+			ChanError:                chanError,
+			ChanUpdateAssetQuote:     chanUpdateAssetQuote,
+			ChanUpdateCurrencyRates:  chanUpdateCurrencyRateYahoo,
+			ChanRequestCurrencyRates: chanRequestCurrencyRate,
 		},
 		monitorPriceYahoo.WithRefreshInterval(time.Duration(configMonitor.RefreshInterval)*time.Second),
 	)
+
+	var yahooCurrencyRate *monitorCurrencyRate.MonitorCurrencyRateYahoo
+	yahooCurrencyRate = monitorCurrencyRate.NewMonitorCurrencyRateYahoo(
+		monitorCurrencyRate.Config{
+			Ctx:                      ctx,
+			UnaryAPI:                 unaryAPI,
+			ChanUpdateCurrencyRates:  chanUpdateCurrencyRate,
+			ChanRequestCurrencyRates: chanRequestCurrencyRate,
+			ChanError:                chanError,
+		},
+	)
+
+	yahooCurrencyRate.SetTargetCurrency(configMonitor.TargetCurrency)
 
 	m := &Monitor{
 		monitors: map[c.QuoteSource]c.Monitor{
 			c.QuoteSourceCoinbase: coinbase,
 			c.QuoteSourceYahoo:    yahoo,
 		},
-		chanUpdateAssetQuote:    chanUpdateAssetQuote,
-		chanError:               chanError,
-		onUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, nonce int) {},
-		onUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote, nonce int) {},
-		errorLogger:             configMonitor.ErrorLogger,
-		ctx:                     ctx,
-		cancel:                  cancel,
+		monitorCurrencyRate:            yahooCurrencyRate,
+		chanUpdateAssetQuote:           chanUpdateAssetQuote,
+		chanUpdateCurrencyRates:        chanUpdateCurrencyRate,
+		chanUpdateCurrencyRateYahoo:    chanUpdateCurrencyRateYahoo,
+		chanUpdateCurrencyRateCoinbase: chanUpdateCurrencyRateCoinbase,
+		chanError:                      chanError,
+		onUpdateAssetGroupQuote:        func(assetGroupQuote c.AssetGroupQuote, nonce int) {},
+		onUpdateAssetQuote:             func(symbol string, assetQuote c.AssetQuote, nonce int) {},
+		errorLogger:                    configMonitor.ErrorLogger,
+		ctx:                            ctx,
+		cancel:                         cancel,
 	}
 
 	return m, nil
@@ -154,6 +191,9 @@ func (m *Monitor) SetOnUpdate(config ConfigUpdateFns) error {
 
 // Start starts all monitors
 func (m *Monitor) Start() {
+
+	m.monitorCurrencyRate.Start()
+
 	for _, monitor := range m.monitors {
 		monitor.Start()
 	}
@@ -204,6 +244,11 @@ func (m *Monitor) handleUpdates() {
 			if m.errorLogger != nil {
 				m.errorLogger.Printf("%v", err)
 			}
+
+		case currencyRates := <-m.chanUpdateCurrencyRates:
+			// Fan out currency rates to each monitor
+			m.chanUpdateCurrencyRateYahoo <- currencyRates
+			m.chanUpdateCurrencyRateCoinbase <- currencyRates
 		}
 	}
 }

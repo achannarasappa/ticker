@@ -14,55 +14,53 @@ type CurrencyRateByUse struct { //nolint:golint,revive
 }
 
 // GetCurrencyRateFromContext reads currency rates from the context and sets the conversion rate for each use case
-func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string) CurrencyRateByUse {
+func GetCurrencyRateFromContext(ctx c.Context, fromCurrency string, toCurrency string, rate float64) CurrencyRateByUse {
 
-	// If currency is convertible
-	if currencyRate, ok := ctx.Reference.CurrencyRates[fromCurrency]; ok {
-
-		currencyRateCost := currencyRate.Rate
-
-		if ctx.Config.CurrencyDisableUnitCostConversion {
-			currencyRateCost = 1.0
-		}
-
-		// Convert only the summary currency to the configured currency
-		if ctx.Config.Currency != "" && ctx.Config.CurrencyConvertSummaryOnly {
-			return CurrencyRateByUse{
-				ToCurrencyCode: fromCurrency,
-				QuotePrice:     1.0,
-				PositionCost:   1.0,
-				SummaryValue:   currencyRate.Rate,
-				SummaryCost:    currencyRateCost,
-			}
-		}
-
-		// Convert all quotes and positions to target currency and implicitly convert summary currency (i.e. no conversion since underlying values are already converted)
-		if ctx.Config.Currency != "" {
-			return CurrencyRateByUse{
-				ToCurrencyCode: currencyRate.ToCurrency,
-				QuotePrice:     currencyRate.Rate,
-				PositionCost:   currencyRateCost,
-				SummaryValue:   1.0,
-				SummaryCost:    1.0,
-			}
-		}
-
-		// Convert only the summary currency to the default currency (USD) when currency conversion is not enabled
+	if rate == 0 {
 		return CurrencyRateByUse{
-			ToCurrencyCode: currencyRate.ToCurrency,
+			ToCurrencyCode: fromCurrency,
 			QuotePrice:     1.0,
 			PositionCost:   1.0,
-			SummaryValue:   currencyRate.Rate,
+			SummaryValue:   1.0,
+			SummaryCost:    1.0,
+		}
+	}
+
+	currencyRateCost := rate
+
+	if ctx.Config.CurrencyDisableUnitCostConversion {
+		currencyRateCost = 1.0
+	}
+
+	// Convert only the summary currency to the configured currency
+	if ctx.Config.Currency != "" && ctx.Config.CurrencyConvertSummaryOnly {
+		return CurrencyRateByUse{
+			ToCurrencyCode: fromCurrency,
+			QuotePrice:     1.0,
+			PositionCost:   1.0,
+			SummaryValue:   rate,
 			SummaryCost:    currencyRateCost,
 		}
-
 	}
 
+	// Convert all quotes and positions to target currency and implicitly convert summary currency (i.e. no conversion since underlying values are already converted)
+	if ctx.Config.Currency != "" {
+		return CurrencyRateByUse{
+			ToCurrencyCode: toCurrency,
+			QuotePrice:     rate,
+			PositionCost:   currencyRateCost,
+			SummaryValue:   1.0,
+			SummaryCost:    1.0,
+		}
+	}
+
+	// Convert only the summary currency to the default currency (USD) when currency conversion is not enabled
 	return CurrencyRateByUse{
-		ToCurrencyCode: fromCurrency,
+		ToCurrencyCode: toCurrency,
 		QuotePrice:     1.0,
 		PositionCost:   1.0,
-		SummaryValue:   1.0,
-		SummaryCost:    1.0,
+		SummaryValue:   rate,
+		SummaryCost:    currencyRateCost,
 	}
+
 }

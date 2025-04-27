@@ -12,6 +12,7 @@ func Start(dep *c.Dependencies, ctx *c.Context) func() error {
 
 		monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
 			RefreshInterval: ctx.Config.RefreshInterval,
+			TargetCurrency:  ctx.Config.Currency,
 		})
 
 		p := tea.NewProgram(

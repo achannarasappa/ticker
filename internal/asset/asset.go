@@ -2,7 +2,6 @@ package asset
 
 import (
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	"github.com/achannarasappa/ticker/v4/internal/currency"
 )
 
 // AggregatedLot represents a cost basis lot of an asset grouped by symbol
@@ -26,11 +25,11 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Hol
 
 	var holdingSummary HoldingSummary
 	assets := make([]c.Asset, 0)
-	holdingsBySymbol := getLots(assetGroupQuote.AssetGroup.Holdings)
+	holdingsBySymbol := getLots(assetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings)
 
 	for i, assetQuote := range assetGroupQuote.AssetQuotes {
 
-		currencyRateByUse := currency.GetCurrencyRateFromContext(ctx, assetQuote.Currency.FromCurrencyCode, assetQuote.Currency.ToCurrencyCode, assetQuote.Currency.Rate)
+		currencyRateByUse := getCurrencyRateByUse(ctx, assetQuote.Currency.FromCurrencyCode, assetQuote.Currency.ToCurrencyCode, assetQuote.Currency.Rate)
 
 		holding := getHoldingFromAssetQuote(assetQuote, holdingsBySymbol, currencyRateByUse)
 		holdingSummary = addHoldingToHoldingSummary(holdingSummary, holding, currencyRateByUse)
@@ -63,7 +62,7 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Hol
 
 }
 
-func addHoldingToHoldingSummary(holdingSummary HoldingSummary, holding c.Holding, currencyRateByUse currency.CurrencyRateByUse) HoldingSummary {
+func addHoldingToHoldingSummary(holdingSummary HoldingSummary, holding c.Holding, currencyRateByUse currencyRateByUse) HoldingSummary {
 
 	if holding.Cost == 0 || holding.Value == 0 {
 		return holdingSummary
@@ -104,7 +103,7 @@ func updateHoldingWeights(assets []c.Asset, holdingSummary HoldingSummary) []c.A
 
 }
 
-func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]AggregatedLot, currencyRateByUse currency.CurrencyRateByUse) c.Holding {
+func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]AggregatedLot, currencyRateByUse currencyRateByUse) c.Holding {
 
 	if aggregatedLot, ok := lotsBySymbol[assetQuote.Symbol]; ok {
 		value := aggregatedLot.Quantity * assetQuote.QuotePrice.Price * currencyRateByUse.QuotePrice

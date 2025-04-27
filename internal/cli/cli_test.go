@@ -313,36 +313,6 @@ var _ = Describe("Cli", func() {
 
 		})
 
-		When("there is an error getting reference data", func() {
-
-			It("returns the error", func() {
-
-				httpMocks.MockResponseCurrencyError()
-
-				_, outputErr := GetContext(dep, c.Config{
-					Watchlist: []string{"TSLA"},
-				})
-
-				Expect(outputErr).ToNot(BeNil())
-
-			})
-
-		})
-
-		When("there is an error refreshing the yahoo session", func() {
-
-			It("returns the error", func() {
-
-				httpMocks.MockResponseForRefreshSessionError()
-
-				_, outputErr := GetContext(dep, c.Config{})
-
-				Expect(outputErr).ToNot(BeNil())
-
-			})
-
-		})
-
 	})
 
 	Describe("GetConfig", func() {

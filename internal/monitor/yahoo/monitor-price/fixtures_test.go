@@ -14,6 +14,23 @@ var (
 			Error: nil,
 		},
 	}
+	currencyResponseFixture = unary.Response{
+		QuoteResponse: unary.ResponseQuoteResponse{
+			Quotes: []unary.ResponseQuote{
+				{
+					RegularMarketPrice: unary.ResponseFieldFloat{Raw: 1.25, Fmt: "1.25"},
+					Currency:           "EUR",
+					Symbol:             "EURUSD=X",
+				},
+				{
+					RegularMarketPrice: unary.ResponseFieldFloat{Raw: 0.92, Fmt: "0.92"},
+					Currency:           "USD",
+					Symbol:             "USDEUR=X",
+				},
+			},
+			Error: nil,
+		},
+	}
 	quoteCloudflareFixture = unary.ResponseQuote{
 		MarketState:                "REGULAR",
 		ShortName:                  "Cloudflare, Inc.",

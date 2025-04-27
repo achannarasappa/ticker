@@ -84,20 +84,7 @@ var _ = Describe("Asset", func() {
 				Config: c.Config{
 					Currency: "EUR",
 				},
-				Reference: c.Reference{
-					// CurrencyRates: map[string]c.CurrencyRate{
-					// 	"USD": {
-					// 		FromCurrency: "USD",
-					// 		ToCurrency:   "EUR",
-					// 		Rate:         1.5,
-					// 	},
-					// 	"GBP": {
-					// 		FromCurrency: "GBP",
-					// 		ToCurrency:   "EUR",
-					// 		Rate:         2,
-					// 	},
-					// },
-				},
+				Reference: c.Reference{},
 			}
 			inputAssetGroupQuote := fixtureAssetGroupQuote
 			inputAssetGroupQuote.AssetQuotes = []c.AssetQuote{
@@ -105,7 +92,7 @@ var _ = Describe("Asset", func() {
 					Name:          "ThoughtWorks",
 					Symbol:        "TWKS",
 					Class:         c.AssetClassStock,
-					Currency:      c.Currency{FromCurrencyCode: "USD"},
+					Currency:      c.Currency{FromCurrencyCode: "USD", ToCurrencyCode: "EUR", Rate: 1.5},
 					QuotePrice:    c.QuotePrice{Price: 110.0, PricePrevClose: 100.0, PriceOpen: 100.0, PriceDayHigh: 110.0, PriceDayLow: 90.0, Change: 10.0, ChangePercent: 10.0},
 					QuoteExtended: c.QuoteExtended{FiftyTwoWeekHigh: 150, FiftyTwoWeekLow: 50, MarketCap: 1000000},
 				},
@@ -113,7 +100,7 @@ var _ = Describe("Asset", func() {
 					Name:       "Microsoft Inc",
 					Symbol:     "MSFT",
 					Class:      c.AssetClassStock,
-					Currency:   c.Currency{FromCurrencyCode: "GBP"},
+					Currency:   c.Currency{FromCurrencyCode: "GBP", ToCurrencyCode: "EUR", Rate: 2.0},
 					QuotePrice: c.QuotePrice{Price: 220.0, PricePrevClose: 200.0, PriceOpen: 200.0, PriceDayHigh: 220.0, PriceDayLow: 180.0, Change: 20.0, ChangePercent: 10.0},
 				},
 			}
@@ -213,20 +200,14 @@ var _ = Describe("Asset", func() {
 			When("and there is a holding with a non-US currency", func() {
 
 				inputContext := c.Context{
-					Reference: c.Reference{
-						// CurrencyRates: map[string]c.CurrencyRate{
-						// 	"EUR": {
-						// 		FromCurrency: "EUR",
-						// 		ToCurrency:   "USD",
-						// 		Rate:         0.5,
-						// 	},
-						// },
-					},
+					Reference: c.Reference{},
 				}
 				inputAssetGroupQuote := fixtureAssetGroupQuote
 				inputAssetQuotes := make([]c.AssetQuote, len(fixtureAssetGroupQuote.AssetQuotes))
 				copy(inputAssetQuotes, fixtureAssetGroupQuote.AssetQuotes)
 				inputAssetQuotes[0].Currency.FromCurrencyCode = "EUR"
+				inputAssetQuotes[0].Currency.ToCurrencyCode = "USD"
+				inputAssetQuotes[0].Currency.Rate = 0.5
 				inputAssetGroupQuote.AssetQuotes = inputAssetQuotes
 				inputAssetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings = []c.Lot{
 					{

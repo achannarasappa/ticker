@@ -1,7 +1,6 @@
 package symbol_test
 
 import (
-	"github.com/jarcoal/httpmock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -9,68 +8,68 @@ import (
 
 	"github.com/achannarasappa/ticker/v4/internal/cli/symbol"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	h "github.com/achannarasappa/ticker/v4/test/http"
+	"github.com/onsi/gomega/ghttp"
 )
 
 var _ = Describe("Symbol", func() {
+	var (
+		server *ghttp.Server
+	)
 
 	BeforeEach(func() {
-		h.MockTickerSymbols()
+		server = ghttp.NewServer()
+	})
+
+	AfterEach(func() {
+		server.Close()
 	})
 
 	Describe("GetTickerSymbols", func() {
 
 		It("should get ticker symbols", func() {
+			// Set up mock response
+			responseFixture := `"BTC.X","BTC-USDC","cb"
+"XRP.X","XRP-USDC","cb"
+"ETH.X","ETH-USD","cb"
+"SOL.X","SOL-USD","cb"
+"SUI.X","SUI-USD","cb"
+`
+			server.RouteToHandler("GET", "/symbols.csv",
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/symbols.csv"),
+					ghttp.RespondWith(http.StatusOK, responseFixture, http.Header{"Content-Type": []string{"text/plain; charset=utf-8"}}),
+				),
+			)
 
 			expectedSymbols := symbol.TickerSymbolToSourceSymbol{
-				"ADA.X": symbol.SymbolSourceMap{
-					TickerSymbol: "ADA.X",
-					SourceSymbol: "cardano",
-					Source:       c.QuoteSourceCoingecko,
-				},
-				"ALGO.X": symbol.SymbolSourceMap{
-					TickerSymbol: "ALGO.X",
-					SourceSymbol: "algorand",
-					Source:       c.QuoteSourceCoingecko,
-				},
 				"BTC.X": symbol.SymbolSourceMap{
 					TickerSymbol: "BTC.X",
-					SourceSymbol: "bitcoin",
-					Source:       c.QuoteSourceCoingecko,
-				},
-				"ETH.X": symbol.SymbolSourceMap{
-					TickerSymbol: "ETH.X",
-					SourceSymbol: "ethereum",
-					Source:       c.QuoteSourceCoingecko,
-				},
-				"DOGE.X": symbol.SymbolSourceMap{
-					TickerSymbol: "DOGE.X",
-					SourceSymbol: "dogecoin",
-					Source:       c.QuoteSourceCoingecko,
-				},
-				"DOT.X": symbol.SymbolSourceMap{
-					TickerSymbol: "DOT.X",
-					SourceSymbol: "polkadot",
-					Source:       c.QuoteSourceCoingecko,
-				},
-				"SOL.X": symbol.SymbolSourceMap{
-					TickerSymbol: "SOL.X",
-					SourceSymbol: "solana",
-					Source:       c.QuoteSourceCoingecko,
-				},
-				"USDC.X": symbol.SymbolSourceMap{
-					TickerSymbol: "USDC.X",
-					SourceSymbol: "usd-coin",
-					Source:       c.QuoteSourceCoingecko,
+					SourceSymbol: "BTC-USDC",
+					Source:       c.QuoteSourceCoinbase,
 				},
 				"XRP.X": symbol.SymbolSourceMap{
 					TickerSymbol: "XRP.X",
-					SourceSymbol: "ripple",
-					Source:       c.QuoteSourceCoingecko,
+					SourceSymbol: "XRP-USDC",
+					Source:       c.QuoteSourceCoinbase,
+				},
+				"ETH.X": symbol.SymbolSourceMap{
+					TickerSymbol: "ETH.X",
+					SourceSymbol: "ETH-USD",
+					Source:       c.QuoteSourceCoinbase,
+				},
+				"SOL.X": symbol.SymbolSourceMap{
+					TickerSymbol: "SOL.X",
+					SourceSymbol: "SOL-USD",
+					Source:       c.QuoteSourceCoinbase,
+				},
+				"SUI.X": symbol.SymbolSourceMap{
+					TickerSymbol: "SUI.X",
+					SourceSymbol: "SUI-USD",
+					Source:       c.QuoteSourceCoinbase,
 				},
 			}
 
-			outputSymbols, outputErr := symbol.GetTickerSymbols("https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv")
+			outputSymbols, outputErr := symbol.GetTickerSymbols(server.URL() + "/symbols.csv")
 
 			Expect(outputSymbols).To(Equal(expectedSymbols))
 			Expect(outputErr).To(BeNil())
@@ -79,15 +78,14 @@ var _ = Describe("Symbol", func() {
 		When("a ticker symbol has an unknown source", func() {
 
 			It("should get ticker symbols", func() {
-
+				// Set up mock response
 				responseFixture := `"SOMESYMBOL.X","some-symbol","uk"
 `
-				responseUrl := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv"
-				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
-					resp := httpmock.NewStringResponse(200, responseFixture)
-					resp.Header.Set("Content-Type", "text/plain; charset=utf-8")
-					return resp, nil
-				})
+				server.RouteToHandler("GET", "/symbols.csv",
+					ghttp.CombineHandlers(
+						ghttp.RespondWith(http.StatusOK, responseFixture, http.Header{"Content-Type": []string{"text/plain; charset=utf-8"}}),
+					),
+				)
 
 				expectedSymbols := symbol.TickerSymbolToSourceSymbol{
 					"SOMESYMBOL.X": symbol.SymbolSourceMap{
@@ -97,7 +95,7 @@ var _ = Describe("Symbol", func() {
 					},
 				}
 
-				outputSymbols, outputErr := symbol.GetTickerSymbols("https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv")
+				outputSymbols, outputErr := symbol.GetTickerSymbols(server.URL() + "/symbols.csv")
 
 				Expect(outputSymbols).To(Equal(expectedSymbols))
 				Expect(outputErr).To(BeNil())
@@ -108,19 +106,18 @@ var _ = Describe("Symbol", func() {
 		When("a malformed CSV is returned", func() {
 
 			It("should get ticker symbols", func() {
-
+				// Set up mock response
 				responseFixture := `"SOMESYMBOL.X","some-symbol","uk"
 "SOMESYMBOL.X","some-symbol","uk", "abc"
 "test"
 `
-				responseUrl := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv"
-				httpmock.RegisterResponder("GET", responseUrl, func(req *http.Request) (*http.Response, error) {
-					resp := httpmock.NewStringResponse(200, responseFixture)
-					resp.Header.Set("Content-Type", "text/plain; charset=utf-8")
-					return resp, nil
-				})
+				server.RouteToHandler("GET", "/symbols.csv",
+					ghttp.CombineHandlers(
+						ghttp.RespondWith(http.StatusOK, responseFixture, http.Header{"Content-Type": []string{"text/plain; charset=utf-8"}}),
+					),
+				)
 
-				_, outputErr := symbol.GetTickerSymbols("https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv")
+				_, outputErr := symbol.GetTickerSymbols(server.URL() + "/symbols.csv")
 
 				Expect(outputErr).ToNot(BeNil())
 			})
@@ -130,13 +127,16 @@ var _ = Describe("Symbol", func() {
 		When("there is a server error", func() {
 
 			It("returns the error", func() {
+				// Set up mock response for server error
+				server.RouteToHandler("GET", "/symbols.csv",
+					ghttp.CombineHandlers(
+						ghttp.RespondWith(http.StatusInternalServerError, "", nil),
+					),
+				)
 
-				h.MockTickerSymbolsError()
-
-				_, outputErr := symbol.GetTickerSymbols("https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv")
+				_, outputErr := symbol.GetTickerSymbols(server.URL() + "/symbols.csv")
 
 				Expect(outputErr).ToNot(BeNil())
-
 			})
 
 		})

@@ -63,7 +63,8 @@ func Validate(config *c.Config, options *Options, prevErr *error) func(*cobra.Co
 
 func GetDependencies() c.Dependencies {
 	return c.Dependencies{
-		Fs: afero.NewOsFs(),
+		Fs:         afero.NewOsFs(),
+		SymbolsURL: "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv",
 	}
 }
 
@@ -79,7 +80,7 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		return c.Context{}, err
 	}
 
-	groups, err = getGroups(config)
+	groups, err = getGroups(config, d)
 
 	if err != nil {
 		return c.Context{}, err
@@ -226,12 +227,12 @@ func getStringOption(cliValue string, configValue string) string {
 	return ""
 }
 
-func getGroups(config c.Config) ([]c.AssetGroup, error) {
+func getGroups(config c.Config, d c.Dependencies) ([]c.AssetGroup, error) {
 
 	groups := make([]c.AssetGroup, 0)
 	var configAssetGroups []c.ConfigAssetGroup
 
-	tickerSymbolToSourceSymbol, err := symbol.GetTickerSymbols("https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv")
+	tickerSymbolToSourceSymbol, err := symbol.GetTickerSymbols(d.SymbolsURL)
 
 	if err != nil {
 		return []c.AssetGroup{}, err

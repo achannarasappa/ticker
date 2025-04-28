@@ -1,7 +1,6 @@
 package common
 
 import (
-	"github.com/go-resty/resty/v2"
 	"github.com/spf13/afero"
 )
 
@@ -68,13 +67,8 @@ type Reference struct {
 
 // Dependencies represents references to external dependencies
 type Dependencies struct {
-	Fs afero.Fs
-	// Kept for backwards compatibility but can be omitted
-	HttpClients DependenciesHttpClients `json:",omitempty"` //nolint:golint,stylecheck,revive
-}
-
-type DependenciesHttpClients struct { //nolint:golint,stylecheck,revive
-	Default *resty.Client
+	Fs         afero.Fs
+	SymbolsURL string
 }
 
 type Monitor interface {

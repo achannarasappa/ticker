@@ -3,6 +3,7 @@ package cli_test
 import (
 	"errors"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/ghttp"
 	g "github.com/onsi/gomega/gstruct"
 	"github.com/onsi/gomega/types"
 	"github.com/spf13/afero"
@@ -19,8 +21,6 @@ import (
 	"github.com/achannarasappa/ticker/v4/internal/cli"
 	. "github.com/achannarasappa/ticker/v4/internal/cli"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	h "github.com/achannarasappa/ticker/v4/test/http"
-	httpMocks "github.com/achannarasappa/ticker/v4/test/http"
 )
 
 func getStdout(fn func()) string {
@@ -51,9 +51,17 @@ var _ = Describe("Cli", func() {
 	var (
 		options Options
 		dep     c.Dependencies
+		server  *ghttp.Server
 	)
 
+	AfterEach(func() {
+		server.Close()
+	})
+
 	BeforeEach(func() {
+
+		server = ghttp.NewServer()
+
 		options = Options{
 			Watchlist:             "GME,BB",
 			RefreshInterval:       0,
@@ -65,14 +73,29 @@ var _ = Describe("Cli", func() {
 			Sort:                  "",
 		}
 		dep = c.Dependencies{
-			Fs: afero.NewMemMapFs(),
+			Fs:         afero.NewMemMapFs(),
+			SymbolsURL: server.URL() + "/symbols.csv",
 		}
 
 		//nolint:errcheck
 		dep.Fs.MkdirAll("./", 0755)
 
 		// Mock the ticker symbols endpoint
-		h.MockTickerSymbols()
+		responseFixture := `"ADA.X","cardano","cb"
+"ALGO.X","algorand","cb"
+"BTC.X","bitcoin","cb"
+"ETH.X","ethereum","cb"
+"DOGE.X","dogecoin","cb"
+"DOT.X","polkadot","cb"
+"SOL.X","solana","cb"
+"USDC.X","usd-coin","cb"
+"XRP.X","ripple","cb"
+`
+		server.RouteToHandler("GET", "/symbols.csv",
+			ghttp.CombineHandlers(
+				ghttp.RespondWith(http.StatusOK, responseFixture, http.Header{"Content-Type": []string{"text/plain; charset=utf-8"}}),
+			),
+		)
 	})
 
 	Describe("Run", func() {
@@ -285,7 +308,10 @@ var _ = Describe("Cli", func() {
 
 			It("returns the error", func() {
 
-				httpMocks.MockTickerSymbolsError()
+				dep := c.Dependencies{
+					Fs:         afero.NewMemMapFs(),
+					SymbolsURL: "invalid-url",
+				}
 
 				_, outputErr := GetContext(dep, c.Config{})
 

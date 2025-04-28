@@ -2,12 +2,14 @@ package print_test
 
 import (
 	"io/ioutil"
+	"net/http"
 	"os"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 	"github.com/achannarasappa/ticker/v4/internal/print"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/ghttp"
 	"github.com/spf13/cobra"
 )
 
@@ -28,16 +30,32 @@ func getStdout(fn func()) string {
 var _ = Describe("Print", func() {
 
 	var (
+		server            *ghttp.Server
 		inputOptions      = print.Options{}
 		inputContext      = c.Context{}
-		inputDependencies = c.Dependencies{
-			HttpClients: c.DependenciesHttpClients{
-				Default: client,
-			},
-		}
+		inputDependencies c.Dependencies
 	)
 
 	BeforeEach(func() {
+		server = ghttp.NewServer()
+
+		responseFixture := `"BTC.X","BTC-USDC","cb"
+		"XRP.X","XRP-USDC","cb"
+		"ETH.X","ETH-USD","cb"
+		"SOL.X","SOL-USD","cb"
+		"SUI.X","SUI-USD","cb"
+		`
+		server.RouteToHandler("GET", "/symbols.csv",
+			ghttp.CombineHandlers(
+				ghttp.VerifyRequest("GET", "/symbols.csv"),
+				ghttp.RespondWith(http.StatusOK, responseFixture, http.Header{"Content-Type": []string{"text/plain; charset=utf-8"}}),
+			),
+		)
+
+		inputDependencies = c.Dependencies{
+			SymbolsURL: server.URL() + "/symbols.csv",
+		}
+
 		inputContext = c.Context{
 			Groups: []c.AssetGroup{
 				{

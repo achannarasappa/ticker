@@ -26,7 +26,6 @@ type Options struct {
 	ExtraInfoFundamentals bool
 	ShowSummary           bool
 	ShowHoldings          bool
-	Proxy                 string
 	Sort                  string
 }
 
@@ -152,17 +151,12 @@ func GetConfig(dep c.Dependencies, configPath string, options Options) (c.Config
 		config.Watchlist = strings.Split(strings.ReplaceAll(options.Watchlist, " ", ""), ",")
 	}
 
-	if len(config.Proxy) > 0 {
-		dep.HttpClients.Default.SetProxy(config.Proxy)
-	}
-
 	config.RefreshInterval = getRefreshInterval(options.RefreshInterval, config.RefreshInterval)
 	config.Separate = getBoolOption(options.Separate, config.Separate)
 	config.ExtraInfoExchange = getBoolOption(options.ExtraInfoExchange, config.ExtraInfoExchange)
 	config.ExtraInfoFundamentals = getBoolOption(options.ExtraInfoFundamentals, config.ExtraInfoFundamentals)
 	config.ShowSummary = getBoolOption(options.ShowSummary, config.ShowSummary)
 	config.ShowHoldings = getBoolOption(options.ShowHoldings, config.ShowHoldings)
-	config.Proxy = getStringOption(options.Proxy, config.Proxy)
 	config.Sort = getStringOption(options.Sort, config.Sort)
 
 	return config, nil

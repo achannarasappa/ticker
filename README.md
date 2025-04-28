@@ -85,7 +85,6 @@ ticker -w NET,AAPL,TSLA
 |`show-summary`     |  |--show-summary     |                |show total day change, total value, and total value change|
 |`show-holdings`    |  |--show-holdings    |                |show holdings including weight, average cost, and quantity|
 |`sort`             |  |--sort             |                |sort quotes on the UI - options are change percent (default), `alpha`, `value`, and `user`|
-|`proxy`            |  |--proxy            |                |proxy URL for requests (default is none)|
 |`version`          |  |--version          |                |print the current version number|
 
 ## Configuration

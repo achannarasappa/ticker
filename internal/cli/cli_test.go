@@ -62,7 +62,6 @@ var _ = Describe("Cli", func() {
 			ExtraInfoFundamentals: false,
 			ShowSummary:           false,
 			ShowHoldings:          false,
-			Proxy:                 "",
 			Sort:                  "",
 		}
 		dep = c.Dependencies{
@@ -318,34 +317,6 @@ var _ = Describe("Cli", func() {
 					Expect(outputErr).To(c.AssertionErr)
 					Expect(outputConfig).To(c.AssertionConfig)
 				},
-
-				// option: string (proxy, sort)
-				Entry("when proxy is set in config file", Case{
-					InputOptions:            cli.Options{},
-					InputConfigFileContents: "proxy: http://myproxy.com:4438",
-					AssertionErr:            BeNil(),
-					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Proxy": Equal("http://myproxy.com:4438"),
-					}),
-				}),
-
-				Entry("when proxy is set in options", Case{
-					InputOptions:            cli.Options{Proxy: "http://www.example.org:3128"},
-					InputConfigFileContents: "",
-					AssertionErr:            BeNil(),
-					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Proxy": Equal("http://www.example.org:3128"),
-					}),
-				}),
-
-				Entry("when proxy is set in both config file and options", Case{
-					InputOptions:            cli.Options{Proxy: "http://www.example.org:3128"},
-					InputConfigFileContents: "proxy: http://myproxy.com:4438",
-					AssertionErr:            BeNil(),
-					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Proxy": Equal("http://www.example.org:3128"),
-					}),
-				}),
 
 				// option: interval
 				Entry("when interval is set in config file", Case{

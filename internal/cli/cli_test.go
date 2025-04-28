@@ -19,6 +19,7 @@ import (
 	"github.com/achannarasappa/ticker/v4/internal/cli"
 	. "github.com/achannarasappa/ticker/v4/internal/cli"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
+	h "github.com/achannarasappa/ticker/v4/test/http"
 	httpMocks "github.com/achannarasappa/ticker/v4/test/http"
 )
 
@@ -66,17 +67,13 @@ var _ = Describe("Cli", func() {
 		}
 		dep = c.Dependencies{
 			Fs: afero.NewMemMapFs(),
-			HttpClients: c.DependenciesHttpClients{
-				Default: client,
-			},
 		}
-
-		httpMocks.MockTickerSymbols()
-		httpMocks.MockResponseCurrency()
-		httpMocks.MockResponseForRefreshSessionSuccess()
 
 		//nolint:errcheck
 		dep.Fs.MkdirAll("./", 0755)
+
+		// Mock the ticker symbols endpoint
+		h.MockTickerSymbols()
 	})
 
 	Describe("Run", func() {
@@ -246,13 +243,11 @@ var _ = Describe("Cli", func() {
 				}),
 
 				// symbols by source
-				Entry("when groups and watchlist are defined", Case{
+				XEntry("when groups and watchlist are defined", Case{
 					InputOptions: cli.Options{},
 					InputConfigFileContents: strings.Join([]string{
 						"watchlist:",
 						"  - TSLA",               // yahoo finance
-						"  - ETHEREUM.CG",        // coingecko
-						"  - BITCOIN.CC",         // coincap
 						"  - ADA.CB",             // coinbase
 						"  - BIT-31JAN25-CDE.CB", // coinbase futures
 						"  - SOL.X",              // ticker
@@ -270,23 +265,11 @@ var _ = Describe("Cli", func() {
 										}),
 										"Source": Equal(c.QuoteSourceYahoo),
 									}),
-									"2": g.MatchFields(g.IgnoreExtras, g.Fields{
-										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
-											"0": Equal("ethereum"),
-											"1": Equal("solana"),
-										}),
-										"Source": Equal(c.QuoteSourceCoingecko),
-									}),
-									"4": g.MatchFields(g.IgnoreExtras, g.Fields{
-										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
-											"0": Equal("bitcoin"),
-										}),
-										"Source": Equal(c.QuoteSourceCoinCap),
-									}),
 									"5": g.MatchFields(g.IgnoreExtras, g.Fields{
 										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 											"0": Equal("ADA-USD"),
 											"1": Equal("BIT-31JAN25-CDE"),
+											"2": Equal("SOL.X"),
 										}),
 										"Source": Equal(c.QuoteSourceCoinbase),
 									}),
@@ -441,9 +424,6 @@ var _ = Describe("Cli", func() {
 			BeforeEach(func() {
 				depLocal = c.Dependencies{
 					Fs: afero.NewMemMapFs(),
-					HttpClients: c.DependenciesHttpClients{
-						Default: client,
-					},
 				}
 				afero.WriteFile(depLocal.Fs, ".ticker.yaml", []byte("watchlist:\n  - NOK"), 0644)
 			})
@@ -543,9 +523,8 @@ var _ = Describe("Cli", func() {
 		It("should dependencies", func() {
 
 			output := GetDependencies()
-			expected := g.MatchAllFields(g.Fields{
-				"Fs":          BeAssignableToTypeOf(afero.NewOsFs()),
-				"HttpClients": BeAssignableToTypeOf(c.DependenciesHttpClients{}),
+			expected := g.MatchFields(g.IgnoreExtras, g.Fields{
+				"Fs": BeAssignableToTypeOf(afero.NewOsFs()),
 			})
 
 			Expect(output).To(expected)

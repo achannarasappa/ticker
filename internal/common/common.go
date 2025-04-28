@@ -69,8 +69,9 @@ type Reference struct {
 
 // Dependencies represents references to external dependencies
 type Dependencies struct {
-	Fs          afero.Fs
-	HttpClients DependenciesHttpClients //nolint:golint,stylecheck,revive
+	Fs afero.Fs
+	// Kept for backwards compatibility but can be omitted
+	HttpClients DependenciesHttpClients `json:",omitempty"` //nolint:golint,stylecheck,revive
 }
 
 type DependenciesHttpClients struct { //nolint:golint,stylecheck,revive

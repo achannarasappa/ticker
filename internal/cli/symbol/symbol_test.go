@@ -15,9 +15,7 @@ import (
 var _ = Describe("Symbol", func() {
 
 	BeforeEach(func() {
-
 		h.MockTickerSymbols()
-
 	})
 
 	Describe("GetTickerSymbols", func() {
@@ -72,7 +70,7 @@ var _ = Describe("Symbol", func() {
 				},
 			}
 
-			outputSymbols, outputErr := symbol.GetTickerSymbols(*client)
+			outputSymbols, outputErr := symbol.GetTickerSymbols("https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv")
 
 			Expect(outputSymbols).To(Equal(expectedSymbols))
 			Expect(outputErr).To(BeNil())
@@ -99,7 +97,7 @@ var _ = Describe("Symbol", func() {
 					},
 				}
 
-				outputSymbols, outputErr := symbol.GetTickerSymbols(*client)
+				outputSymbols, outputErr := symbol.GetTickerSymbols("https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv")
 
 				Expect(outputSymbols).To(Equal(expectedSymbols))
 				Expect(outputErr).To(BeNil())
@@ -122,7 +120,7 @@ var _ = Describe("Symbol", func() {
 					return resp, nil
 				})
 
-				_, outputErr := symbol.GetTickerSymbols(*client)
+				_, outputErr := symbol.GetTickerSymbols("https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv")
 
 				Expect(outputErr).ToNot(BeNil())
 			})
@@ -135,7 +133,7 @@ var _ = Describe("Symbol", func() {
 
 				h.MockTickerSymbolsError()
 
-				_, outputErr := symbol.GetTickerSymbols(*client)
+				_, outputErr := symbol.GetTickerSymbols("https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv")
 
 				Expect(outputErr).ToNot(BeNil())
 

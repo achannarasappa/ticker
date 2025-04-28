@@ -3,16 +3,13 @@ package cli_test
 import (
 	"testing"
 
-	"github.com/go-resty/resty/v2"
 	"github.com/jarcoal/httpmock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
-var client = resty.New()
-
 var _ = BeforeSuite(func() {
-	httpmock.ActivateNonDefault(client.GetClient())
+	httpmock.Activate()
 })
 
 var _ = BeforeEach(func() {
@@ -25,5 +22,5 @@ var _ = AfterSuite(func() {
 
 func TestCli(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Cli Suite")
+	RunSpecs(t, "CLI Suite")
 }

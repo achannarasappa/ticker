@@ -410,9 +410,15 @@ var _ = Describe("Monitor Yahoo", func() {
 
 			When("the product does not exist in the cache", func() {
 				It("should not send updates for that product", func() {
-					var responseQuote1 unary.Response
-					responseQuoteJSON, _ := json.Marshal(responseQuote1Fixture)
-					json.Unmarshal(responseQuoteJSON, &responseQuote1)
+					responseQuote1 := unary.Response{
+						QuoteResponse: unary.ResponseQuoteResponse{
+							Quotes: []unary.ResponseQuote{
+								quoteCloudflareFixture,
+								quoteGoogleFixture,
+							},
+							Error: nil,
+						},
+					}
 
 					receivedSymbols := make(map[string]bool)
 					calledCount := 0

@@ -10,7 +10,6 @@ import (
 	"github.com/achannarasappa/ticker/v4/internal/ui/util"
 
 	"github.com/adrg/xdg"
-	"github.com/go-resty/resty/v2"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -64,14 +63,9 @@ func Validate(config *c.Config, options *Options, prevErr *error) func(*cobra.Co
 }
 
 func GetDependencies() c.Dependencies {
-
 	return c.Dependencies{
 		Fs: afero.NewOsFs(),
-		HttpClients: c.DependenciesHttpClients{
-			Default: resty.New(),
-		},
 	}
-
 }
 
 // GetContext builds the context from the config and reference data
@@ -86,7 +80,7 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		return c.Context{}, err
 	}
 
-	groups, err = getGroups(config, *d.HttpClients.Default)
+	groups, err = getGroups(config)
 
 	if err != nil {
 		return c.Context{}, err
@@ -238,12 +232,12 @@ func getStringOption(cliValue string, configValue string) string {
 	return ""
 }
 
-func getGroups(config c.Config, client resty.Client) ([]c.AssetGroup, error) {
+func getGroups(config c.Config) ([]c.AssetGroup, error) {
 
 	groups := make([]c.AssetGroup, 0)
 	var configAssetGroups []c.ConfigAssetGroup
 
-	tickerSymbolToSourceSymbol, err := symbol.GetTickerSymbols(client)
+	tickerSymbolToSourceSymbol, err := symbol.GetTickerSymbols("https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv")
 
 	if err != nil {
 		return []c.AssetGroup{}, err
@@ -299,20 +293,6 @@ func getGroups(config c.Config, client resty.Client) ([]c.AssetGroup, error) {
 func getSymbolAndSource(symbol string, tickerSymbolToSourceSymbol symbol.TickerSymbolToSourceSymbol) symbolSource {
 
 	symbolUppercase := strings.ToUpper(symbol)
-
-	if strings.HasSuffix(symbolUppercase, ".CG") {
-		return symbolSource{
-			source: c.QuoteSourceCoingecko,
-			symbol: strings.ToLower(symbol)[:len(symbol)-3],
-		}
-	}
-
-	if strings.HasSuffix(symbolUppercase, ".CC") {
-		return symbolSource{
-			source: c.QuoteSourceCoinCap,
-			symbol: strings.ToLower(symbol)[:len(symbol)-3],
-		}
-	}
 
 	if strings.HasSuffix(symbolUppercase, ".CB") {
 

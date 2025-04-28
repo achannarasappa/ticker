@@ -6,7 +6,6 @@ import (
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 	"github.com/achannarasappa/ticker/v4/internal/print"
-	. "github.com/achannarasappa/ticker/v4/test/http"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
@@ -39,7 +38,6 @@ var _ = Describe("Print", func() {
 	)
 
 	BeforeEach(func() {
-		MockResponseYahooQuotes()
 		inputContext = c.Context{
 			Groups: []c.AssetGroup{
 				{

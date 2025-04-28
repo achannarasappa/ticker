@@ -3,10 +3,11 @@ package symbol
 import (
 	"encoding/csv"
 	"errors"
+	"fmt"
 	"io"
+	"net/http"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	"github.com/go-resty/resty/v2"
 )
 
 type SymbolSourceMap struct { //nolint:golint,revive
@@ -18,8 +19,9 @@ type SymbolSourceMap struct { //nolint:golint,revive
 type TickerSymbolToSourceSymbol map[string]SymbolSourceMap
 
 func parseQuoteSource(id string) c.QuoteSource {
-	if id == "cg" {
-		return c.QuoteSourceCoingecko
+
+	if id == "cb" {
+		return c.QuoteSourceCoinbase
 	}
 
 	return c.QuoteSourceUnknown
@@ -58,19 +60,18 @@ func parseTickerSymbolToSourceSymbol(body io.ReadCloser) (TickerSymbolToSourceSy
 }
 
 // GetTickerSymbols retrieves a list of ticker specific symbols and their data source
-func GetTickerSymbols(client resty.Client) (TickerSymbolToSourceSymbol, error) {
-	url := "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv"
-	res, err := client.R().
-		SetDoNotParseResponse(true).
-		Get(url)
-	body := res.RawBody()
-
+func GetTickerSymbols(url string) (TickerSymbolToSourceSymbol, error) {
+	resp, err := http.Get(url)
 	if err != nil {
 		return TickerSymbolToSourceSymbol{}, err
 	}
+	defer resp.Body.Close()
 
-	tickerSymbolToSourceSymbol, err := parseTickerSymbolToSourceSymbol(body)
+	if resp.StatusCode != http.StatusOK {
+		return TickerSymbolToSourceSymbol{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
+	tickerSymbolToSourceSymbol, err := parseTickerSymbolToSourceSymbol(resp.Body)
 	if err != nil {
 		return TickerSymbolToSourceSymbol{}, err
 	}

@@ -44,6 +44,7 @@ func NewMonitorCurrencyRateYahoo(config Config) *MonitorCurrencyRateYahoo {
 		chanUpdateCurrencyRates:  config.ChanUpdateCurrencyRates,
 		chanRequestCurrencyRates: config.ChanRequestCurrencyRates,
 		chanError:                config.ChanError,
+		currencyRateCache:        make(map[string]c.CurrencyRate),
 	}
 
 	return monitor
@@ -89,7 +90,8 @@ func (m *MonitorCurrencyRateYahoo) SetTargetCurrency(targetCurrency string) {
 	}
 	m.mu.RUnlock()
 
-	rates, err := m.unaryAPI.GetCurrencyRates(fromCurrencies, m.targetCurrency)
+	rates, err := m.unaryAPI.GetCurrencyRates(fromCurrencies, targetCurrency)
+
 	if err != nil {
 		m.chanError <- err
 		return
@@ -138,9 +140,10 @@ func (m *MonitorCurrencyRateYahoo) handleRequestCurrencyRates() {
 
 			// Update the cache
 			m.mu.Lock()
-			m.currencyRateCache = rates
+			for currency, rate := range rates {
+				m.currencyRateCache[currency] = rate
+			}
 			m.mu.Unlock()
-
 			m.chanUpdateCurrencyRates <- m.currencyRateCache
 		}
 	}

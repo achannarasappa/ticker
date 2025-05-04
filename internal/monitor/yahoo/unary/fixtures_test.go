@@ -43,4 +43,16 @@ var (
 			Error: nil,
 		},
 	}
+	responseQuoteForCurrencyRates1Fixture = unary.Response{
+		QuoteResponse: unary.ResponseQuoteResponse{
+			Quotes: []unary.ResponseQuote{
+				{
+					Symbol:             "EURUSD=X",
+					RegularMarketPrice: unary.ResponseFieldFloat{Raw: 1.1, Fmt: "1.1"},
+					Currency:           "USD",
+				},
+			},
+			Error: nil,
+		},
+	}
 )

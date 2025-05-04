@@ -156,7 +156,11 @@ func (u *UnaryAPI) GetCurrencyRates(fromCurrencies []string, toCurrency string) 
 func (u *UnaryAPI) getQuotes(symbols []string, fields []string) (Response, error) {
 
 	// Build URL with query parameters
-	reqURL, _ := url.Parse(u.baseURL + "/v7/finance/quote")
+	reqURL, err := url.Parse(u.baseURL + "/v7/finance/quote")
+	if err != nil {
+		return Response{}, fmt.Errorf("failed to create request: %w", err)
+	}
+
 	q := reqURL.Query()
 	q.Set("fields", strings.Join(fields, ","))
 	q.Set("symbols", strings.Join(symbols, ","))
@@ -175,10 +179,7 @@ func (u *UnaryAPI) getQuotes(symbols []string, fields []string) (Response, error
 	reqURL.RawQuery = q.Encode()
 
 	// Create request
-	req, err := http.NewRequest("GET", reqURL.String(), nil)
-	if err != nil {
-		return Response{}, fmt.Errorf("failed to create request: %w", err)
-	}
+	req, _ := http.NewRequest("GET", reqURL.String(), nil)
 
 	// Set common headers
 	req.Header.Set("authority", "query1.finance.yahoo.com")

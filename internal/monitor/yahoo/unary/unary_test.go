@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	urlParams               = "&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"
-	urlParamsForCurrencyMap = "&fields=regularMarketPrice,currency&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"
+	urlParams            = "&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"
+	urlParamsForCurrency = "&fields=regularMarketPrice,currency&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"
 )
 
 var _ = Describe("Unary", func() {
@@ -85,21 +85,21 @@ var _ = Describe("Unary", func() {
 				It("should return an error", func() {
 					server.AppendHandlers(
 						ghttp.CombineHandlers(
-							ghttp.RespondWithJSONEncoded(http.StatusOK, "invalid"),
+							ghttp.RespondWith(http.StatusFound, "", http.Header{"Location": []string{"://bad-url"}}),
 						),
 					)
 
 					outputSlice, outputMap, outputError := client.GetAssetQuotes([]string{"NET"})
 					Expect(outputSlice).To(BeEmpty())
 					Expect(outputMap).To(BeEmpty())
-					Expect(outputError).To(HaveOccurred())
+					Expect(outputError.Error()).To(ContainSubstring("failed to make request"))
 				})
 			})
 
 			When("the request is invalid", func() {
 				It("should return an error", func() {
 					invalidClient := unary.NewUnaryAPI(unary.Config{
-						BaseURL:           "invalid",
+						BaseURL:           "http://example.com/\x00",
 						SessionRootURL:    server.URL(),
 						SessionCrumbURL:   server.URL(),
 						SessionConsentURL: server.URL(),
@@ -108,7 +108,7 @@ var _ = Describe("Unary", func() {
 					outputSlice, outputMap, outputError := invalidClient.GetAssetQuotes([]string{"NET"})
 					Expect(outputSlice).To(BeEmpty())
 					Expect(outputMap).To(BeEmpty())
-					Expect(outputError).To(HaveOccurred())
+					Expect(outputError.Error()).To(ContainSubstring("failed to create request"))
 				})
 			})
 		})
@@ -173,6 +173,28 @@ var _ = Describe("Unary", func() {
 					Expect(outputSlice).NotTo(BeEmpty())
 					Expect(outputMap).To(HaveKey("NET"))
 					Expect(outputError).To(BeNil())
+				})
+
+				When("the session was refreshed by the response code is unexpected", func() {
+					It("should return an error", func() {
+						// First, respond with 401 to trigger session refresh
+						appendQuote401(server, "NET")
+						appendRootSessionOK(server)
+						appendCrumb(server, "abc123")
+						// Then, respond with 299 (unexpected, but < 400) after refresh
+						server.AppendHandlers(
+							ghttp.CombineHandlers(
+								verifyRequest(server, "GET", "/v7/finance/quote", "symbols", "NET"),
+								ghttp.RespondWith(201, ""),
+							),
+						)
+
+						outputSlice, outputMap, outputError := client.GetAssetQuotes([]string{"NET"})
+						Expect(outputSlice).To(BeEmpty())
+						Expect(outputMap).To(BeEmpty())
+						Expect(outputError).To(HaveOccurred())
+						Expect(outputError.Error()).To(ContainSubstring("unexpected response"))
+					})
 				})
 
 				When("the API redirects to the EU consent page", func() {
@@ -566,7 +588,7 @@ var _ = Describe("Unary", func() {
 
 	Describe("GetCurrencyMap", func() {
 		It("should return a map of symbols to currency codes", func() {
-			appendQuoteHandler(server, "NET", urlParamsForCurrencyMap, responseQuoteForCurrencyMap1Fixture)
+			appendQuoteHandler(server, "NET", urlParamsForCurrency, responseQuoteForCurrencyMap1Fixture)
 
 			outputMap, outputErr := client.GetCurrencyMap([]string{"NET"})
 			Expect(outputMap).To(HaveKey("NET"))
@@ -575,7 +597,7 @@ var _ = Describe("Unary", func() {
 
 		When("there are no symbols", func() {
 			It("should return an empty map", func() {
-				appendQuoteHandler(server, "NET", urlParamsForCurrencyMap, responseQuoteForCurrencyMap1Fixture)
+				appendQuoteHandler(server, "NET", urlParamsForCurrency, responseQuoteForCurrencyMap1Fixture)
 
 				outputMap, outputErr := client.GetCurrencyMap([]string{})
 				Expect(outputMap).To(BeEmpty())
@@ -583,11 +605,11 @@ var _ = Describe("Unary", func() {
 			})
 		})
 
-		When("there is an erro making a request to the API", func() {
+		When("there is an error making a request to the API", func() {
 			It("should return an error", func() {
 				server.AppendHandlers(
 					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=NET"+urlParamsForCurrencyMap),
+						ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=NET"+urlParamsForCurrency),
 						ghttp.RespondWithJSONEncoded(http.StatusOK, "invalid"),
 					),
 				)
@@ -598,6 +620,101 @@ var _ = Describe("Unary", func() {
 			})
 		})
 	})
+
+	Describe("GetCurrencyRates", func() {
+
+		When("the target currency is an empty string", func() {
+
+			It("should default to USD", func() {
+				server.AppendHandlers(
+					ghttp.CombineHandlers(
+						verifyRequest(server, "GET", "/v7/finance/quote", "symbols", "EURUSD=X"),
+						ghttp.RespondWithJSONEncoded(http.StatusOK, responseQuoteForCurrencyRates1Fixture),
+					),
+				)
+
+				output, err := client.GetCurrencyRates([]string{"EUR"}, "")
+
+				Expect(err).To(BeNil())
+				Expect(output).To(HaveKey("EUR"))
+				Expect(output["EUR"].FromCurrency).To(Equal("EUR"))
+				Expect(output["EUR"].ToCurrency).To(Equal("USD"))
+				Expect(output["EUR"].Rate).To(Equal(1.1))
+			})
+
+		})
+
+		When("there are no currencies to convert from", func() {
+
+			It("should return an empty set of currency rates", func() {
+				output, err := client.GetCurrencyRates([]string{}, "USD")
+				Expect(err).To(BeNil())
+				Expect(output).To(BeEmpty())
+			})
+
+		})
+
+		When("there is at least one currency to convert from", func() {
+
+			When("one of the currencies is an empty string or the same as the target currency", func() {
+
+				It("should skip that entry", func() {
+					server.AppendHandlers(
+						ghttp.CombineHandlers(
+							verifyRequest(server, "GET", "/v7/finance/quote", "symbols", "EURUSD=X"),
+							ghttp.RespondWithJSONEncoded(http.StatusOK, responseQuoteForCurrencyRates1Fixture),
+						),
+					)
+					output, err := client.GetCurrencyRates([]string{"", "USD"}, "USD")
+					Expect(err).To(BeNil())
+					Expect(output).NotTo(HaveKey(""))
+					Expect(output).NotTo(HaveKey("USD"))
+				})
+
+			})
+
+			When("there is at least one currency pair that needs a currency rate", func() {
+
+				When("there is an error making the HTTP request to get the currency rates", func() {
+
+					It("should return an error", func() {
+						server.AppendHandlers(
+							ghttp.CombineHandlers(
+								verifyRequest(server, "GET", "/v7/finance/quote", "symbols", "EURUSD=X"),
+								ghttp.RespondWithJSONEncoded(http.StatusOK, "invalid"),
+							),
+						)
+
+						output, err := client.GetCurrencyRates([]string{"EUR"}, "USD")
+						Expect(output).To(BeEmpty())
+						Expect(err).To(HaveOccurred())
+					})
+
+				})
+
+				It("should return a map of currency rates", func() {
+					server.AppendHandlers(
+						ghttp.CombineHandlers(
+							verifyRequest(server, "GET", "/v7/finance/quote", "symbols", "EURUSD=X"),
+							ghttp.RespondWithJSONEncoded(http.StatusOK, responseQuoteForCurrencyRates1Fixture),
+						),
+					)
+
+					output, err := client.GetCurrencyRates([]string{"EUR"}, "USD")
+
+					Expect(err).To(BeNil())
+					Expect(output).To(HaveKey("EUR"))
+					Expect(output["EUR"].FromCurrency).To(Equal("EUR"))
+					Expect(output["EUR"].ToCurrency).To(Equal("USD"))
+					Expect(output["EUR"].Rate).To(Equal(1.1))
+				})
+
+			})
+
+		})
+
+	})
+
 })
 
 // Create a new API client for testing
@@ -768,4 +885,12 @@ func appendMalformedURL(server *ghttp.Server) {
 			},
 		),
 	)
+}
+
+func verifyRequest(server *ghttp.Server, method, path string, queryKey, queryValue string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		Expect(r.Method).To(Equal(method))
+		Expect(r.URL.Path).To(Equal(path))
+		Expect(r.URL.Query().Get(queryKey)).To(Equal(queryValue))
+	}
 }

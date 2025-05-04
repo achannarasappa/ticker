@@ -143,8 +143,19 @@ func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Comm
 
 		monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
 			RefreshInterval: ctx.Config.RefreshInterval,
+			ConfigMonitorsYahoo: mon.ConfigMonitorsYahoo{
+				BaseURL:           dep.MonitorYahooBaseURL,
+				SessionRootURL:    dep.MonitorYahooSessionRootURL,
+				SessionCrumbURL:   dep.MonitorYahooSessionCrumbURL,
+				SessionConsentURL: dep.MonitorYahooSessionConsentURL,
+			},
+			ConfigMonitorPriceCoinbase: mon.ConfigMonitorPriceCoinbase{
+				BaseURL:      dep.MonitorPriceCoinbaseBaseURL,
+				StreamingURL: dep.MonitorPriceCoinbaseStreamingURL,
+			},
 		})
-		assetGroupQuote := monitors.GetAssetGroupQuote(ctx.Groups[0])
+		monitors.SetAssetGroup(ctx.Groups[0], 0)
+		assetGroupQuote := monitors.GetAssetGroupQuote()
 		assets, _ := asset.GetAssets(*ctx, assetGroupQuote)
 
 		if options.Format == "csv" {
@@ -163,8 +174,15 @@ func RunSummary(dep *c.Dependencies, ctx *c.Context, options *Options) func(cmd 
 
 		monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
 			RefreshInterval: ctx.Config.RefreshInterval,
+			ConfigMonitorsYahoo: mon.ConfigMonitorsYahoo{
+				BaseURL:           dep.MonitorYahooBaseURL,
+				SessionRootURL:    dep.MonitorYahooSessionRootURL,
+				SessionCrumbURL:   dep.MonitorYahooSessionCrumbURL,
+				SessionConsentURL: dep.MonitorYahooSessionConsentURL,
+			},
 		})
-		assetGroupQuote := monitors.GetAssetGroupQuote(ctx.Groups[0])
+		monitors.SetAssetGroup(ctx.Groups[0], 0)
+		assetGroupQuote := monitors.GetAssetGroupQuote()
 		_, holdingSummary := asset.GetAssets(*ctx, assetGroupQuote)
 
 		if options.Format == "csv" {

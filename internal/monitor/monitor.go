@@ -26,6 +26,7 @@ type Monitor struct {
 	onUpdateAssetQuote             func(symbol string, assetQuote c.AssetQuote, nonce int)
 	onUpdateAssetGroupQuote        func(assetGroupQuote c.AssetGroupQuote, nonce int)
 	assetGroupNonce                int
+	assetGroup                     c.AssetGroup
 	mu                             sync.RWMutex
 	errorLogger                    *log.Logger
 	ctx                            context.Context
@@ -37,6 +38,22 @@ type ConfigMonitor struct {
 	RefreshInterval int
 	TargetCurrency  string
 	ErrorLogger     *log.Logger
+	ConfigMonitorPriceCoinbase
+	ConfigMonitorsYahoo
+}
+
+// ConfigMonitorPriceCoinbase represents the configuration for the Coinbase monitor
+type ConfigMonitorPriceCoinbase struct {
+	BaseURL      string
+	StreamingURL string
+}
+
+// ConfigMonitorsYahoo represents the configuration for the Yahoo monitors (price and currency rate)
+type ConfigMonitorsYahoo struct {
+	BaseURL           string
+	SessionRootURL    string
+	SessionCrumbURL   string
+	SessionConsentURL string
 }
 
 // ConfigUpdateFns represents the callback functions for when asset quotes are updated
@@ -61,22 +78,22 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 	coinbase = monitorPriceCoinbase.NewMonitorPriceCoinbase(
 		monitorPriceCoinbase.Config{
 			Ctx:                      ctx,
-			UnaryURL:                 "https://api.coinbase.com",
+			UnaryURL:                 configMonitor.ConfigMonitorPriceCoinbase.BaseURL,
 			ChanError:                chanError,
 			ChanUpdateAssetQuote:     chanUpdateAssetQuote,
 			ChanUpdateCurrencyRates:  chanUpdateCurrencyRateCoinbase,
 			ChanRequestCurrencyRates: chanRequestCurrencyRate,
 		},
-		monitorPriceCoinbase.WithStreamingURL("wss://ws-feed.exchange.coinbase.com"),
+		monitorPriceCoinbase.WithStreamingURL(configMonitor.ConfigMonitorPriceCoinbase.StreamingURL),
 		monitorPriceCoinbase.WithRefreshInterval(time.Duration(configMonitor.RefreshInterval)*time.Second),
 	)
 
 	// Create and configure the API client for the Yahoo API shared between monitors
 	unaryAPI := unaryClientYahoo.NewUnaryAPI(unaryClientYahoo.Config{
-		BaseURL:           "https://query1.finance.yahoo.com",
-		SessionRootURL:    "https://finance.yahoo.com",
-		SessionCrumbURL:   "https://query2.finance.yahoo.com",
-		SessionConsentURL: "https://consent.yahoo.com",
+		BaseURL:           configMonitor.ConfigMonitorsYahoo.BaseURL,
+		SessionRootURL:    configMonitor.ConfigMonitorsYahoo.SessionRootURL,
+		SessionCrumbURL:   configMonitor.ConfigMonitorsYahoo.SessionCrumbURL,
+		SessionConsentURL: configMonitor.ConfigMonitorsYahoo.SessionConsentURL,
 	})
 
 	var yahoo *monitorPriceYahoo.MonitorPriceYahoo
@@ -168,9 +185,10 @@ func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, nonce int) {
 
 	// Update the nonce so that any messages from the previous asset group can be ignored
 	m.assetGroupNonce = nonce
+	m.assetGroup = assetGroup
 
 	// Get asset quotes for all sources
-	assetGroupQuote := m.GetAssetGroupQuote(assetGroup)
+	assetGroupQuote := m.GetAssetGroupQuote()
 
 	// Run the callback in a goroutine to avoid blocking
 	go m.onUpdateAssetGroupQuote(assetGroupQuote, nonce)
@@ -202,11 +220,11 @@ func (m *Monitor) Start() {
 }
 
 // GetAssetGroupQuote synchronously gets price quotes a group of assets across all sources
-func (m *Monitor) GetAssetGroupQuote(assetGroup c.AssetGroup, ignoreCache ...bool) c.AssetGroupQuote {
+func (m *Monitor) GetAssetGroupQuote(ignoreCache ...bool) c.AssetGroupQuote {
 
 	assetQuotesFromAllSources := make([]c.AssetQuote, 0)
 
-	for _, symbolBySource := range assetGroup.SymbolsBySource {
+	for _, symbolBySource := range m.assetGroup.SymbolsBySource {
 
 		assetQuotes, _ := m.monitors[symbolBySource.Source].GetAssetQuotes(ignoreCache...)
 		assetQuotesFromAllSources = append(assetQuotesFromAllSources, assetQuotes...)
@@ -215,7 +233,7 @@ func (m *Monitor) GetAssetGroupQuote(assetGroup c.AssetGroup, ignoreCache ...boo
 
 	return c.AssetGroupQuote{
 		AssetQuotes: assetQuotesFromAllSources,
-		AssetGroup:  assetGroup,
+		AssetGroup:  m.assetGroup,
 	}
 }
 

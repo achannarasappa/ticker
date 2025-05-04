@@ -67,8 +67,14 @@ type Reference struct {
 
 // Dependencies represents references to external dependencies
 type Dependencies struct {
-	Fs         afero.Fs
-	SymbolsURL string
+	Fs                               afero.Fs
+	SymbolsURL                       string
+	MonitorPriceCoinbaseBaseURL      string
+	MonitorPriceCoinbaseStreamingURL string
+	MonitorYahooBaseURL              string
+	MonitorYahooSessionRootURL       string
+	MonitorYahooSessionCrumbURL      string
+	MonitorYahooSessionConsentURL    string
 }
 
 type Monitor interface {

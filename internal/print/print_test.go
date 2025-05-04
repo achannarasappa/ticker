@@ -1,11 +1,13 @@
 package print_test
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"os"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
+	"github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"
 	"github.com/achannarasappa/ticker/v4/internal/print"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -52,8 +54,29 @@ var _ = Describe("Print", func() {
 			),
 		)
 
+		server.RouteToHandler(http.MethodGet, "/v7/finance/quote",
+			ghttp.CombineHandlers(
+				func(w http.ResponseWriter, r *http.Request) {
+					query := r.URL.Query()
+					fields := query.Get("fields")
+
+					if fields == "regularMarketPrice,currency" {
+						json.NewEncoder(w).Encode(currencyResponseFixture)
+					} else {
+						json.NewEncoder(w).Encode(quoteCloudflareFixture)
+					}
+				},
+			),
+		)
+
 		inputDependencies = c.Dependencies{
-			SymbolsURL: server.URL() + "/symbols.csv",
+			SymbolsURL:                       server.URL() + "/symbols.csv",
+			MonitorYahooBaseURL:              server.URL(),
+			MonitorYahooSessionRootURL:       server.URL(),
+			MonitorYahooSessionCrumbURL:      server.URL(),
+			MonitorYahooSessionConsentURL:    server.URL(),
+			MonitorPriceCoinbaseBaseURL:      server.URL(),
+			MonitorPriceCoinbaseStreamingURL: server.URL(),
 		}
 
 		inputContext = c.Context{
@@ -89,7 +112,8 @@ var _ = Describe("Print", func() {
 
 	Describe("Run", func() {
 
-		PIt("should print holdings in JSON format", func() {
+		It("should print holdings in JSON format", func() {
+
 			output := getStdout(func() {
 				print.Run(&inputDependencies, &inputContext, &inputOptions)(&cobra.Command{}, []string{})
 			})
@@ -101,7 +125,8 @@ var _ = Describe("Print", func() {
 				inputContext.Groups[0].ConfigAssetGroup.Holdings = []c.Lot{}
 			})
 
-			PIt("should print an empty array", func() {
+			It("should print an empty array", func() {
+
 				output := getStdout(func() {
 					print.Run(&inputDependencies, &inputContext, &inputOptions)(&cobra.Command{}, []string{})
 				})
@@ -110,7 +135,7 @@ var _ = Describe("Print", func() {
 		})
 
 		When("the format option is set to csv", func() {
-			PIt("should print the holdings in CSV format", func() {
+			It("should print the holdings in CSV format", func() {
 				inputOptions := print.Options{
 					Format: "csv",
 				}
@@ -124,25 +149,65 @@ var _ = Describe("Print", func() {
 
 	Describe("RunSummary", func() {
 
-		PIt("should print the holdings summary in JSON format", func() {
+		It("should print the holdings summary in JSON format", func() {
 			output := getStdout(func() {
 				print.RunSummary(&inputDependencies, &inputContext, &inputOptions)(&cobra.Command{}, []string{})
 			})
-			Expect(output).To(Equal("{\"total_value\":\"29263.000000\",\"total_cost\":\"10500.000000\",\"day_change_amount\":\"-583.200992\",\"day_change_percent\":\"-1.992964\",\"total_change_amount\":\"18763.000000\",\"total_change_percent\":\"178.695238\"}\n"))
+			Expect(output).To(Equal("{\"total_value\":\"29263.000000\",\"total_cost\":\"10500.000000\",\"day_change_amount\":\"2750.500000\",\"day_change_percent\":\"9.399241\",\"total_change_amount\":\"18763.000000\",\"total_change_percent\":\"178.695238\"}\n"))
 		})
 
 		When("the format option is set to csv", func() {
-			PIt("should print the holdings summary in CSV format", func() {
+			It("should print the holdings summary in CSV format", func() {
 				inputOptions := print.Options{
 					Format: "csv",
 				}
 				output := getStdout(func() {
 					print.RunSummary(&inputDependencies, &inputContext, &inputOptions)(&cobra.Command{}, []string{})
 				})
-				Expect(output).To(Equal("total_value,total_cost,day_change_amount,day_change_percent,total_change_amount,total_change_percent\n29263.000000,10500.000000,-583.200992,-1.992964,18763.000000,178.695238\n\n"))
+				Expect(output).To(Equal("total_value,total_cost,day_change_amount,day_change_percent,total_change_amount,total_change_percent\n29263.000000,10500.000000,2750.500000,9.399241,18763.000000,178.695238\n\n"))
 			})
 		})
 
 	})
 
 })
+
+var currencyResponseFixture = unary.Response{
+	QuoteResponse: unary.ResponseQuoteResponse{
+		Quotes: []unary.ResponseQuote{
+			{
+				Currency: "USD",
+				Symbol:   "RBLX",
+			},
+			{
+				Currency: "USD",
+				Symbol:   "GOOG",
+			},
+		},
+	},
+}
+
+var quoteCloudflareFixture = unary.Response{
+	QuoteResponse: unary.ResponseQuoteResponse{
+		Quotes: []unary.ResponseQuote{
+			{
+				ShortName:                  "Alphabet Inc.",
+				Symbol:                     "GOOG",
+				MarketState:                "REGULAR",
+				Currency:                   "USD",
+				RegularMarketPrice:         unary.ResponseFieldFloat{Raw: 2838.42, Fmt: "2838.42"},
+				RegularMarketChangePercent: unary.ResponseFieldFloat{Raw: 10.00, Fmt: "10.00"},
+				RegularMarketChange:        unary.ResponseFieldFloat{Raw: 283.84, Fmt: "283.84"},
+			},
+			{
+				ShortName:                  "Roblox Corporation",
+				Symbol:                     "RBLX",
+				MarketState:                "REGULAR",
+				Currency:                   "USD",
+				RegularMarketPrice:         unary.ResponseFieldFloat{Raw: 87.88, Fmt: "87.88"},
+				RegularMarketChangePercent: unary.ResponseFieldFloat{Raw: -10.00, Fmt: "-10.00"},
+				RegularMarketChange:        unary.ResponseFieldFloat{Raw: -8.79, Fmt: "-8.79"},
+			},
+		},
+	},
+}

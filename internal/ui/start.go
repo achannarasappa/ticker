@@ -13,6 +13,16 @@ func Start(dep *c.Dependencies, ctx *c.Context) func() error {
 		monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
 			RefreshInterval: ctx.Config.RefreshInterval,
 			TargetCurrency:  ctx.Config.Currency,
+			ConfigMonitorsYahoo: mon.ConfigMonitorsYahoo{
+				BaseURL:           dep.MonitorYahooBaseURL,
+				SessionRootURL:    dep.MonitorYahooSessionRootURL,
+				SessionCrumbURL:   dep.MonitorYahooSessionCrumbURL,
+				SessionConsentURL: dep.MonitorYahooSessionConsentURL,
+			},
+			ConfigMonitorPriceCoinbase: mon.ConfigMonitorPriceCoinbase{
+				BaseURL:      dep.MonitorPriceCoinbaseBaseURL,
+				StreamingURL: dep.MonitorPriceCoinbaseStreamingURL,
+			},
 		})
 
 		p := tea.NewProgram(

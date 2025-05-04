@@ -63,8 +63,14 @@ func Validate(config *c.Config, options *Options, prevErr *error) func(*cobra.Co
 
 func GetDependencies() c.Dependencies {
 	return c.Dependencies{
-		Fs:         afero.NewOsFs(),
-		SymbolsURL: "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv",
+		Fs:                               afero.NewOsFs(),
+		SymbolsURL:                       "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv",
+		MonitorYahooBaseURL:              "https://query1.finance.yahoo.com",
+		MonitorYahooSessionRootURL:       "https://finance.yahoo.com",
+		MonitorYahooSessionCrumbURL:      "https://query2.finance.yahoo.com",
+		MonitorYahooSessionConsentURL:    "https://consent.yahoo.com",
+		MonitorPriceCoinbaseBaseURL:      "https://api.coinbase.com",
+		MonitorPriceCoinbaseStreamingURL: "wss://ws-feed.exchange.coinbase.com",
 	}
 }
 

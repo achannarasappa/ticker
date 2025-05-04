@@ -30,4 +30,17 @@ var (
 			Error: nil,
 		},
 	}
+	responseQuoteForCurrencyMap1Fixture = unary.Response{
+		QuoteResponse: unary.ResponseQuoteResponse{
+			Quotes: []unary.ResponseQuote{
+				{
+					ShortName:          "Cloudflare, Inc.",
+					RegularMarketPrice: unary.ResponseFieldFloat{Raw: 84.98, Fmt: "84.98"},
+					Symbol:             "NET",
+					Currency:           "USD",
+				},
+			},
+			Error: nil,
+		},
+	}
 )

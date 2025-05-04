@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	urlParams = "&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"
+	urlParams               = "&fields=shortName,regularMarketChange,regularMarketChangePercent,regularMarketPrice,regularMarketPreviousClose,regularMarketOpen,regularMarketDayRange,regularMarketDayHigh,regularMarketDayLow,regularMarketVolume,postMarketChange,postMarketChangePercent,postMarketPrice,preMarketChange,preMarketChangePercent,preMarketPrice,fiftyTwoWeekHigh,fiftyTwoWeekLow,marketCap&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"
+	urlParamsForCurrencyMap = "&fields=regularMarketPrice,currency&formatted=true&lang=en-US&region=US&corsDomain=finance.yahoo.com"
 )
 
 var _ = Describe("Unary", func() {
@@ -41,7 +42,7 @@ var _ = Describe("Unary", func() {
 
 	Describe("GetAssetQuotes", func() {
 		It("should return a list of asset quotes", func() {
-			appendQuoteHandler(server, "NET", responseQuote1Fixture)
+			appendQuoteHandler(server, "NET", urlParams, responseQuote1Fixture)
 
 			outputSlice, outputMap, outputError := client.GetAssetQuotes([]string{"NET"})
 
@@ -119,7 +120,7 @@ var _ = Describe("Unary", func() {
 				resp.QuoteResponse.Quotes[0].PostMarketPrice.Raw = postMarketPrice
 				resp.QuoteResponse.Quotes[0].PreMarketPrice.Raw = preMarketPrice
 
-				appendQuoteHandler(server, "NET", resp)
+				appendQuoteHandler(server, "NET", urlParams, resp)
 
 				outputSlice, _, outputError := client.GetAssetQuotes([]string{"NET"})
 				Expect(outputSlice).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
@@ -148,7 +149,7 @@ var _ = Describe("Unary", func() {
 			resp := cloneResponseQuote1Fixture()
 			resp.QuoteResponse.Quotes[0].QuoteType = "CRYPTOCURRENCY"
 
-			appendQuoteHandler(server, "NET", resp)
+			appendQuoteHandler(server, "NET", urlParams, resp)
 
 			outputSlice, _, outputError := client.GetAssetQuotes([]string{"NET"})
 			Expect(outputSlice).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
@@ -562,6 +563,41 @@ var _ = Describe("Unary", func() {
 			})
 		})
 	})
+
+	Describe("GetCurrencyMap", func() {
+		It("should return a map of symbols to currency codes", func() {
+			appendQuoteHandler(server, "NET", urlParamsForCurrencyMap, responseQuoteForCurrencyMap1Fixture)
+
+			outputMap, outputErr := client.GetCurrencyMap([]string{"NET"})
+			Expect(outputMap).To(HaveKey("NET"))
+			Expect(outputErr).To(BeNil())
+		})
+
+		When("there are no symbols", func() {
+			It("should return an empty map", func() {
+				appendQuoteHandler(server, "NET", urlParamsForCurrencyMap, responseQuoteForCurrencyMap1Fixture)
+
+				outputMap, outputErr := client.GetCurrencyMap([]string{})
+				Expect(outputMap).To(BeEmpty())
+				Expect(outputErr).To(BeNil())
+			})
+		})
+
+		When("there is an erro making a request to the API", func() {
+			It("should return an error", func() {
+				server.AppendHandlers(
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols=NET"+urlParamsForCurrencyMap),
+						ghttp.RespondWithJSONEncoded(http.StatusOK, "invalid"),
+					),
+				)
+
+				outputMap, outputErr := client.GetCurrencyMap([]string{"NET"})
+				Expect(outputMap).To(BeEmpty())
+				Expect(outputErr).To(HaveOccurred())
+			})
+		})
+	})
 })
 
 // Create a new API client for testing
@@ -581,7 +617,7 @@ func cloneResponseQuote1Fixture() unary.Response {
 }
 
 // Basic quote handler for successful requests
-func appendQuoteHandler(server *ghttp.Server, symbol string, response interface{}) {
+func appendQuoteHandler(server *ghttp.Server, symbol string, urlParams string, response interface{}) {
 	server.AppendHandlers(
 		ghttp.CombineHandlers(
 			ghttp.VerifyRequest("GET", "/v7/finance/quote", "symbols="+symbol+urlParams),

@@ -257,6 +257,153 @@ var _ = Describe("Monitor Coinbase", func() {
 		})
 	})
 
+	Describe("SetSymbols", func() {
+		When("there is a derivatives product (i.e. has an underlying asset)", func() {
+			When("a symbol is already mapped to an underlying symbol", func() {
+				It("should skip adding that symbol to the mapping between product ids and underlying product ids", func() {
+					// Initial response for first SetSymbols call
+					server.AppendHandlers(
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BIT-31JAN25-CDE"),
+							ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
+								Products: []unary.ResponseQuote{
+									{
+										Symbol:         "BIT-31JAN25-CDE",
+										ProductID:      "BIT-31JAN25-CDE",
+										ShortName:      "Bitcoin Futures",
+										Price:          "60000.00",
+										PriceChange24H: "5.00",
+										Volume24H:      "1000000.00",
+										MarketState:    "online",
+										Currency:       "USD",
+										ExchangeName:   "CDE",
+										ProductType:    "FUTURE",
+										FutureProductDetails: unary.ResponseQuoteFutureProductDetails{
+											ContractRootUnit:   "BTC",
+											GroupDescription:   "Bitcoin January 2025 Future",
+											ExpirationDate:     "2025-01-31",
+											ExpirationTimezone: "America/New_York",
+										},
+									},
+								},
+							}),
+						),
+						// Response for getting all quotes after mapping is established
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BIT-31JAN25-CDE&product_ids=BTC-USD"),
+							ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
+								Products: []unary.ResponseQuote{
+									{
+										Symbol:         "BIT-31JAN25-CDE",
+										ProductID:      "BIT-31JAN25-CDE",
+										ShortName:      "Bitcoin Futures",
+										Price:          "60000.00",
+										PriceChange24H: "5.00",
+										Volume24H:      "1000000.00",
+										MarketState:    "online",
+										Currency:       "USD",
+										ExchangeName:   "CDE",
+										ProductType:    "FUTURE",
+										FutureProductDetails: unary.ResponseQuoteFutureProductDetails{
+											ContractRootUnit:   "BTC",
+											GroupDescription:   "Bitcoin January 2025 Future",
+											ExpirationDate:     "2025-01-31",
+											ExpirationTimezone: "America/New_York",
+										},
+									},
+									{
+										Symbol:         "BTC",
+										ProductID:      "BTC-USD",
+										ShortName:      "Bitcoin",
+										Price:          "50000.00",
+										PriceChange24H: "5.00",
+										Volume24H:      "1000000.00",
+										MarketState:    "online",
+										Currency:       "USD",
+										ExchangeName:   "CBE",
+										ProductType:    "SPOT",
+									},
+								},
+							}),
+						),
+					)
+
+					// Verify that no additional API calls are made to get underlying symbols
+					// when setting the same symbol again
+					server.AppendHandlers(
+						// Only expect the call to get all quotes, not the underlying mapping call
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BIT-31JAN25-CDE"),
+							ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
+								Products: []unary.ResponseQuote{
+									{
+										Symbol:         "BIT-31JAN25-CDE",
+										ProductID:      "BIT-31JAN25-CDE",
+										ShortName:      "Bitcoin Futures",
+										Price:          "60000.00",
+										PriceChange24H: "5.00",
+										Volume24H:      "1000000.00",
+										MarketState:    "online",
+										Currency:       "USD",
+										ExchangeName:   "CDE",
+										ProductType:    "FUTURE",
+										FutureProductDetails: unary.ResponseQuoteFutureProductDetails{
+											ContractRootUnit:   "BTC",
+											GroupDescription:   "Bitcoin January 2025 Future",
+											ExpirationDate:     "2025-01-31",
+											ExpirationTimezone: "America/New_York",
+										},
+									},
+								},
+							}),
+						),
+					)
+
+					monitor := monitorPriceCoinbase.NewMonitorPriceCoinbase(monitorPriceCoinbase.Config{
+						UnaryURL:                 server.URL(),
+						Ctx:                      context.Background(),
+						ChanRequestCurrencyRates: make(chan []string, 1),
+						ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
+					})
+
+					// First call to SetSymbols establishes the mapping
+					err := monitor.SetSymbols([]string{"BIT-31JAN25-CDE"}, 0)
+					Expect(err).NotTo(HaveOccurred())
+
+					// Second call to SetSymbols should skip getting underlying symbols
+					err = monitor.SetSymbols([]string{"BIT-31JAN25-CDE"}, 1)
+					Expect(err).NotTo(HaveOccurred())
+
+					// Verify that all server handlers were called as expected
+					Expect(server.ReceivedRequests()).To(HaveLen(3))
+				})
+			})
+
+			When("there is an error making the request to retrieve the underlying product ids", func() {
+				It("should return an error", func() {
+					server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BIT-31JAN25-CDE"),
+							ghttp.RespondWith(http.StatusInternalServerError, "network error"),
+						),
+					)
+
+					monitor := monitorPriceCoinbase.NewMonitorPriceCoinbase(monitorPriceCoinbase.Config{
+						UnaryURL:                 server.URL(),
+						Ctx:                      context.Background(),
+						ChanRequestCurrencyRates: make(chan []string, 1),
+						ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
+					})
+
+					err := monitor.SetSymbols([]string{"BIT-31JAN25-CDE"}, 0)
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("request failed with status 500"))
+				})
+			})
+
+		})
+	})
+
 	Describe("Start", func() {
 		It("should start the monitor", func() {
 			monitor := monitorPriceCoinbase.NewMonitorPriceCoinbase(monitorPriceCoinbase.Config{
@@ -871,6 +1018,209 @@ var _ = Describe("Monitor Coinbase", func() {
 				})
 			})
 		})
+
+		When("there is a currency rate update", func() {
+			It("should replace the currency rate cache", func() {
+				var err error
+				var outputQuote c.AssetQuote
+
+				// Set up initial server response for asset quotes
+				server.RouteToHandler("GET", "/api/v3/brokerage/market/products", func(w http.ResponseWriter, r *http.Request) {
+					query := r.URL.Query()["product_ids"]
+
+					if len(query) == 1 && query[0] == "BIT-31JAN25-CDE" {
+						json.NewEncoder(w).Encode(unary.Response{
+							Products: []unary.ResponseQuote{
+								{
+									Symbol:         "BIT-31JAN25-CDE",
+									ProductID:      "BIT-31JAN25-CDE",
+									ShortName:      "Bitcoin Futures",
+									Price:          "60000.00",
+									PriceChange24H: "5.00",
+									Volume24H:      "1000000.00",
+									MarketState:    "online",
+									Currency:       "USD",
+									ExchangeName:   "CDE",
+									ProductType:    "FUTURE",
+									FutureProductDetails: unary.ResponseQuoteFutureProductDetails{
+										ContractRootUnit:   "BTC",
+										GroupDescription:   "Bitcoin January 2025 Future",
+										ExpirationDate:     "2025-01-31",
+										ExpirationTimezone: "America/New_York",
+									},
+								},
+							},
+						})
+						return
+					}
+					if len(query) == 2 && ((query[0] == "BTC-USD" && query[1] == "BIT-31JAN25-CDE") || (query[0] == "BIT-31JAN25-CDE" && query[1] == "BTC-USD")) {
+						json.NewEncoder(w).Encode(unary.Response{
+							Products: []unary.ResponseQuote{
+								{
+									Symbol:         "BTC",
+									ProductID:      "BTC-USD",
+									ShortName:      "Bitcoin",
+									Price:          "50000.00",
+									PriceChange24H: "2.5",
+									Volume24H:      "1000000.00",
+									MarketState:    "online",
+									Currency:       "USD",
+									ExchangeName:   "CBE",
+									ProductType:    "SPOT",
+								},
+								{
+									Symbol:         "BIT-31JAN25-CDE",
+									ProductID:      "BIT-31JAN25-CDE",
+									ShortName:      "Bitcoin Futures",
+									Price:          "60000.00",
+									PriceChange24H: "5.00",
+									Volume24H:      "1000000.00",
+									MarketState:    "online",
+									Currency:       "USD",
+									ExchangeName:   "CDE",
+									ProductType:    "FUTURE",
+									FutureProductDetails: unary.ResponseQuoteFutureProductDetails{
+										ContractRootUnit:   "BTC",
+										GroupDescription:   "Bitcoin January 2025 Future",
+										ExpirationDate:     "2025-01-31",
+										ExpirationTimezone: "America/New_York",
+									},
+								},
+							},
+						})
+						return
+					}
+					w.WriteHeader(http.StatusNotFound)
+				})
+
+				// Create channels for currency rate updates and asset quote updates
+				currencyRatesChan := make(chan c.CurrencyRates, 1)
+				updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
+
+				// Create and start the monitor
+				monitor := monitorPriceCoinbase.NewMonitorPriceCoinbase(monitorPriceCoinbase.Config{
+					UnaryURL:                 server.URL(),
+					ChanUpdateAssetQuote:     updateChan,
+					Ctx:                      context.Background(),
+					ChanRequestCurrencyRates: make(chan []string, 1),
+					ChanUpdateCurrencyRates:  currencyRatesChan,
+				}, monitorPriceCoinbase.WithRefreshInterval(100*time.Millisecond))
+
+				monitor.SetSymbols([]string{"BIT-31JAN25-CDE"}, 0)
+				err = monitor.Start()
+
+				// Send currency rates update
+				currencyRates := c.CurrencyRates{
+					"USD": c.CurrencyRate{
+						FromCurrency: "USD",
+						ToCurrency:   "EUR",
+						Rate:         0.85,
+					},
+				}
+				currencyRatesChan <- currencyRates
+
+				Expect(err).NotTo(HaveOccurred())
+
+				// Wait for and verify the asset quote update with new currency rate
+				Eventually(func() float64 {
+					select {
+					case <-time.After(200 * time.Millisecond):
+						quotes, err := monitor.GetAssetQuotes()
+
+						if err != nil {
+							return -1.0
+						}
+
+						outputQuote = quotes[0]
+
+						return quotes[0].Currency.Rate
+					}
+				}, 2*time.Second).Should(Equal(0.85))
+
+				Expect(outputQuote.Currency.FromCurrencyCode).To(Equal("USD"))
+				Expect(outputQuote.Currency.ToCurrencyCode).To(Equal("EUR"))
+
+				monitor.Stop()
+			})
+
+			When("there is an error getting asset quotes and replacing the cache after new currency rates are recieved", func() {
+				It("should send a message to the error channel", func() {
+					// Set up initial server response for asset quotes
+					server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BTC-USD"),
+							ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
+								Products: []unary.ResponseQuote{
+									{
+										Symbol:         "BTC",
+										ProductID:      "BTC-USD",
+										ShortName:      "Bitcoin",
+										Price:          "50000.00",
+										PriceChange24H: "2.5",
+										Volume24H:      "1000000.00",
+										MarketState:    "online",
+										Currency:       "USD",
+										ExchangeName:   "CBE",
+										ProductType:    "SPOT",
+									},
+								},
+							}),
+						),
+					)
+
+					// Create channels for updates and errors
+					currencyRatesChan := make(chan c.CurrencyRates, 1)
+					errorChan := make(chan error, 1)
+
+					// Create and start the monitor
+					monitor := monitorPriceCoinbase.NewMonitorPriceCoinbase(monitorPriceCoinbase.Config{
+						UnaryURL:                 server.URL(),
+						ChanError:                errorChan,
+						Ctx:                      context.Background(),
+						ChanRequestCurrencyRates: make(chan []string, 1),
+						ChanUpdateCurrencyRates:  currencyRatesChan,
+					}, monitorPriceCoinbase.WithRefreshInterval(100*time.Millisecond))
+
+					monitor.SetSymbols([]string{"BTC-USD"}, 0)
+					monitor.Start()
+
+					// Set up error response for the subsequent asset quote request
+					server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BTC-USD"),
+							ghttp.RespondWith(http.StatusInternalServerError, "Internal Server Error"),
+						),
+					)
+
+					// Send currency rates update to trigger asset quote refresh
+					currencyRates := c.CurrencyRates{
+						"USD": c.CurrencyRate{
+							FromCurrency: "USD",
+							ToCurrency:   "EUR",
+							Rate:         0.85,
+						},
+					}
+					currencyRatesChan <- currencyRates
+
+					// Verify that an error is sent to the error channel
+					var err error
+					Eventually(func() error {
+						select {
+						case err = <-errorChan:
+							return err
+						default:
+							return nil
+						}
+					}, 2*time.Second).Should(HaveOccurred())
+
+					Expect(err.Error()).To(ContainSubstring("request failed with status 500"))
+
+					monitor.Stop()
+				})
+			})
+
+		})
+
 	})
 
 	Describe("Stop", func() {

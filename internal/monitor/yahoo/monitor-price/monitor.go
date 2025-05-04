@@ -286,10 +286,17 @@ func (m *MonitorPriceYahoo) getAssetQuotesAndReplaceCache() ([]*c.AssetQuote, er
 	// Add currency rate to each price quote
 	m.muCurrencyRates.RLock()
 	for _, quote := range assetQuotes {
+
+		if quote.Currency.FromCurrencyCode == "" {
+			quote.Currency.FromCurrencyCode = "USD"
+		}
+
 		if currencyRate, exists := m.currencyRatesCache[quote.Currency.FromCurrencyCode]; exists {
+
 			quote.Currency.Rate = currencyRate.Rate
 			quote.Currency.ToCurrencyCode = currencyRate.ToCurrency
 		}
+
 		lookup[quote.Meta.SymbolInSourceAPI] = &quote
 		cache = append(cache, &quote)
 	}

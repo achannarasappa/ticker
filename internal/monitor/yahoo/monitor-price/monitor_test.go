@@ -470,6 +470,124 @@ var _ = Describe("Monitor Yahoo", func() {
 				})
 			})
 		})
+
+		When("there is a currency rate update", func() {
+			It("should replace the currency rate cache", func() {
+				var err error
+				var outputQuote c.AssetQuote
+
+				server.RouteToHandler("GET", "/v7/finance/quote",
+					ghttp.CombineHandlers(
+						ghttp.RespondWithJSONEncoded(http.StatusOK, responseQuote1Fixture),
+					),
+				)
+
+				// Create channels for currency rate updates and asset quote updates
+				currencyRatesChan := make(chan c.CurrencyRates, 1)
+				updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
+
+				// Create and start the monitor
+				monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
+					UnaryAPI:                 unaryAPI,
+					ChanUpdateAssetQuote:     updateChan,
+					Ctx:                      context.Background(),
+					ChanRequestCurrencyRates: make(chan []string, 1),
+					ChanUpdateCurrencyRates:  currencyRatesChan,
+				}, monitorPriceYahoo.WithRefreshInterval(100*time.Millisecond))
+
+				monitor.SetSymbols([]string{"NET"}, 0)
+				err = monitor.Start()
+
+				// Send currency rates update
+				currencyRates := c.CurrencyRates{
+					"USD": c.CurrencyRate{
+						FromCurrency: "USD",
+						ToCurrency:   "EUR",
+						Rate:         0.85,
+					},
+				}
+				currencyRatesChan <- currencyRates
+
+				Expect(err).NotTo(HaveOccurred())
+
+				// Wait for and verify the asset quote update with new currency rate
+				Eventually(func() float64 {
+					select {
+					case <-time.After(200 * time.Millisecond):
+						quotes, err := monitor.GetAssetQuotes(true)
+
+						if err != nil {
+							return -1.0
+						}
+
+						outputQuote = quotes[0]
+
+						return quotes[0].Currency.Rate
+					}
+				}, 2*time.Second).Should(Equal(0.85))
+
+				Expect(outputQuote.Currency.FromCurrencyCode).To(Equal("USD"))
+				Expect(outputQuote.Currency.ToCurrencyCode).To(Equal("EUR"))
+
+				monitor.Stop()
+			})
+
+			When("there is an error getting asset quotes and replacing the cache after new currency rates are recieved", func() {
+				It("should send a message to the error channel", func() {
+
+					var err error
+					var respondWithError bool = false
+
+					server.RouteToHandler("GET", "/v7/finance/quote",
+						ghttp.CombineHandlers(
+							func(w http.ResponseWriter, r *http.Request) {
+								if respondWithError {
+									w.Write([]byte("invalid"))
+								} else {
+									json.NewEncoder(w).Encode(responseQuote1Fixture)
+								}
+							},
+						),
+					)
+
+					// Create channels for currency rate updates and asset quote updates
+					currencyRatesChan := make(chan c.CurrencyRates, 1)
+					updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
+					errorChan := make(chan error, 1)
+
+					// Create and start the monitor
+					monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
+						UnaryAPI:                 unaryAPI,
+						ChanUpdateAssetQuote:     updateChan,
+						Ctx:                      context.Background(),
+						ChanRequestCurrencyRates: make(chan []string, 1),
+						ChanUpdateCurrencyRates:  currencyRatesChan,
+						ChanError:                errorChan,
+					}, monitorPriceYahoo.WithRefreshInterval(100*time.Millisecond))
+
+					err = monitor.SetSymbols([]string{"NET"}, 0)
+					Expect(err).NotTo(HaveOccurred())
+
+					err = monitor.Start()
+					Expect(err).NotTo(HaveOccurred())
+
+					// Send currency rates update
+					currencyRates := c.CurrencyRates{
+						"USD": c.CurrencyRate{
+							FromCurrency: "USD",
+							ToCurrency:   "EUR",
+							Rate:         0.85,
+						},
+					}
+					currencyRatesChan <- currencyRates
+					respondWithError = true
+
+					Eventually(errorChan, 2*time.Second).Should(Receive(MatchError(ContainSubstring("failed to decode response"))))
+
+					monitor.Stop()
+				})
+			})
+		})
 	})
 
 	Describe("Stop", func() {
@@ -519,4 +637,81 @@ var _ = Describe("Monitor Yahoo", func() {
 			})
 		})
 	})
+
+	Describe("SetSymbols", func() {
+
+		When("there are no symbols set", func() {
+
+			It("should not request a currency mapping", func() {
+
+				var calledGetCurrencyMap bool = false
+
+				server.RouteToHandler("GET", "/v7/finance/quote",
+					ghttp.CombineHandlers(
+						func(w http.ResponseWriter, r *http.Request) {
+							query := r.URL.Query()
+							fields := query.Get("fields")
+
+							if fields == "regularMarketPrice,currency" {
+								calledGetCurrencyMap = true
+								json.NewEncoder(w).Encode(currencyResponseFixture)
+							} else {
+								json.NewEncoder(w).Encode(responseQuote1Fixture)
+							}
+						},
+					),
+				)
+
+				monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
+					UnaryAPI:                 unaryAPI,
+					Ctx:                      context.Background(),
+					ChanRequestCurrencyRates: make(chan []string, 1),
+					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
+				})
+
+				err := monitor.SetSymbols([]string{}, 0)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(calledGetCurrencyMap).To(BeFalse())
+
+				monitor.Start()
+
+			})
+		})
+
+		When("there is an error getting the currency mapping", func() {
+
+			It("should return an error", func() {
+
+				server.RouteToHandler("GET", "/v7/finance/quote",
+					ghttp.CombineHandlers(
+						func(w http.ResponseWriter, r *http.Request) {
+							query := r.URL.Query()
+							fields := query.Get("fields")
+
+							if fields == "regularMarketPrice,currency" {
+								w.Write([]byte("invalid"))
+							} else {
+								json.NewEncoder(w).Encode(responseQuote1Fixture)
+							}
+						},
+					),
+				)
+
+				monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
+					UnaryAPI:                 unaryAPI,
+					Ctx:                      context.Background(),
+					ChanRequestCurrencyRates: make(chan []string, 1),
+					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
+				})
+
+				err := monitor.SetSymbols([]string{"NET"}, 0)
+				Expect(err).To(MatchError(ContainSubstring("failed to get currency information")))
+
+				monitor.Start()
+
+			})
+		})
+
+	})
+
 })

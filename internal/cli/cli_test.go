@@ -81,15 +81,12 @@ var _ = Describe("Cli", func() {
 		dep.Fs.MkdirAll("./", 0755)
 
 		// Mock the ticker symbols endpoint
-		responseFixture := `"ADA.X","cardano","cb"
-"ALGO.X","algorand","cb"
-"BTC.X","bitcoin","cb"
-"ETH.X","ethereum","cb"
-"DOGE.X","dogecoin","cb"
-"DOT.X","polkadot","cb"
-"SOL.X","solana","cb"
-"USDC.X","usd-coin","cb"
-"XRP.X","ripple","cb"
+		responseFixture := `"ADA.X","ADA-USD","cb"
+"ALGO.X","ALGO-USD","cb"
+"BTC.X","BTC-USD","cb"
+"ETH.X","ETH-USD","cb"
+"SOL.X","SOL-USD","cb"
+"XRP.X","XRP-USD","cb"
 `
 		server.RouteToHandler("GET", "/symbols.csv",
 			ghttp.CombineHandlers(
@@ -265,7 +262,7 @@ var _ = Describe("Cli", func() {
 				}),
 
 				// symbols by source
-				XEntry("when groups and watchlist are defined", Case{
+				Entry("when groups and watchlist are defined", Case{
 					InputOptions: cli.Options{},
 					InputConfigFileContents: strings.Join([]string{
 						"watchlist:",
@@ -291,7 +288,7 @@ var _ = Describe("Cli", func() {
 										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 											"0": Equal("ADA-USD"),
 											"1": Equal("BIT-31JAN25-CDE"),
-											"2": Equal("SOL.X"),
+											"2": Equal("SOL-USD"),
 										}),
 										"Source": Equal(c.QuoteSourceCoinbase),
 									}),

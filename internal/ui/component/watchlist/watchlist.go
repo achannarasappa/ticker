@@ -498,12 +498,17 @@ func textTags(asset *c.Asset, styles c.Styles) string {
 		currencyText = asset.Currency.FromCurrencyCode + " → " + asset.Currency.ToCurrencyCode
 	}
 
-	return formatTag(currencyText, styles) + " " + formatTag(exchangeDelayText(asset.Exchange.Delay), styles) + " " + formatTag(asset.Exchange.Name, styles)
+	return formatTag(currencyText, styles) + " " + formatTag(exchangeDelayText(asset.Exchange.Delay, asset.Exchange.DelayText), styles) + " " + formatTag(asset.Exchange.Name, styles)
 }
 
-func exchangeDelayText(delay float64) string {
+func exchangeDelayText(delay float64, delayText string) string {
+
+	if delayText != "" {
+		return delayText
+	}
+
 	if delay <= 0 {
-		return "Real-Time"
+		return "Live"
 	}
 
 	return "Delayed " + strconv.FormatFloat(delay, 'f', 0, 64) + "min"

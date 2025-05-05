@@ -433,6 +433,10 @@ func (m *MonitorPriceCoinbase) getAssetQuotesAndReplaceCache() ([]*c.AssetQuote,
 			}
 		}
 
+		if isStreamingProductId(quote.Meta.SymbolInSourceAPI) {
+			quote.Exchange.DelayText = "Real-time"
+		}
+
 		lookup[quote.Meta.SymbolInSourceAPI] = &quote
 		assetQuotesEnriched = append(assetQuotesEnriched, &quote)
 

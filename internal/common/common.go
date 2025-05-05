@@ -191,6 +191,7 @@ type QuoteFutures struct {
 type Exchange struct {
 	Name                    string
 	Delay                   float64
+	DelayText               string
 	State                   ExchangeState
 	IsActive                bool
 	IsRegularTradingSession bool

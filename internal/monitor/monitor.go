@@ -260,6 +260,12 @@ func (m *Monitor) handleUpdates() {
 			for _, monitor := range m.monitors {
 				monitor.SetCurrencyRates(currencyRates)
 			}
+
+			// Get asset quotes for all sources with new currency rates
+			assetGroupQuote := m.GetAssetGroupQuote()
+
+			// Callback with new asset quotes which include the new currency rates
+			go m.onUpdateAssetGroupQuote(assetGroupQuote, m.assetGroupNonce)
 		}
 	}
 }

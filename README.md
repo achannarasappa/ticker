@@ -7,7 +7,7 @@
 
 <h1 align="center">Ticker</h2>
 <p align="center">
-Terminal stock watcher and stock position tracker
+Terminal stock & crypto price watcher and position tracker
 </p>
 <p align="center">
 <img align="center" src="./docs/ticker.gif" />
@@ -15,7 +15,7 @@ Terminal stock watcher and stock position tracker
 
 ## Features
 
-* Live stock price quotes
+* Live stock & crypto price quotes
 * Track value of your stock positions
 * Support for multiple cost basis lots
 * Support for pre and post market price quotes
@@ -106,9 +106,8 @@ watchlist:
   - TEAM
   - ESTC
   - BTC-USD # Bitcoin price via Yahoo
-  - SOL.X # Solana price via CoinGecko
-  - SAMOYEDCOIN.CG # Samoyed price via CoinGecko
-  - CARDANO.CC # Samoyed price via CoinCap
+  - SOL.X # Solana price via Coinbase
+  - BIT-30MAY25-CDE.CB # Bitcoin futures contract price via Coinbase
 lots:
   - symbol: "ABNB"
     quantity: 35.0
@@ -131,9 +130,9 @@ groups:
         unit_cost: 159.10
 ```
 
-* Symbols not on the watchlist that exists in `lots` will automatically be watched
-* To add multiple (`quantity`, `unit_cost`) to the same `symbol`, write two `symbol` entries - see `ARKW` example above
 * All properties in `.ticker.yaml` are optional
+* Symbols not on the watchlist that exists in `lots` are implicitly added to the watchlist
+* To add multiple cost basis lots (`quantity`, `unit_cost`) for the same `symbol`, include two ore more entries - see `ARKW` example above
 * `.ticker.yaml` can be set in user home directory, the current directory, or [XDG config home](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
 
 ### Display Options
@@ -153,7 +152,7 @@ It's possible to set a custom sort order with the `--sort` flag or `sort:` confi
 
 ### Groups
 
-Watchlists and holdings can be grouped in `.ticker.yml` under the `groups` property. While running `ticker`, press <kbd>TAB</kbd> to cycle forward through groups.
+Watchlists and holdings can be grouped in `.ticker.yml` under the `groups` property. While running `ticker`, press <kbd>TAB</kbd> to cycle forward through groups or <kbd>SHIFT+TAB</kbd> to cycle backward.
 
 * If top level `watchlist` or `lots` properties are defined in the configuration file, the entries there will be added to a group named `default` which will always be shown first
 * Ordering is defined by order in the configuration file
@@ -161,12 +160,12 @@ Watchlists and holdings can be grouped in `.ticker.yml` under the `groups` prope
 
 ### Data Sources & Symbols
 
-`ticker` pulls price quotes from Yahoo Finance by default but also supports pulling quotes from CoinGecko which supports price quotes for most cryptocurrencies. In order to pull from a specific data source, use a source suffix:
+`ticker` pulls market data from a few different sources with Yahoo Finance as the default. Symbols for non default data sources follow the format `<symbol>.<source>` where `<symbol>` is the canonical symbol within that data source and `<source>` is the data source specifier. Below is a list of the supported data sources and their specifiers:
 
 * *none* - symbols with no suffix will default to Yahoo Finance as the data source
 * `.X` - symbols with this suffix are shorthand symbols that are specific to ticker and intended to provide more concise and familiar symbols for popular assets (e.g. using `SOL.X` rather than `SOLANA.CG`)
-  * The full list of ticker symbols can be found [here](https://github.com/achannarasappa/ticker-static/blob/master/symbols.csv). Initial values are populated with the top 250 cryptocurrencies from CoinGecko at time of release
-* `.CB` - symbols with this suffix will use Coinbase as the data source. The symbol can be found by searching for the asset on [Coinbase](https://www.coinbase.com/explore/s/listed) and finding the symbol for the asset. (e.g. for Starknet check the [asset page](https://www.coinbase.com/price/starknet-token) to find the symbol `STRK` and set the symbol to `STRK.CB` in ticker).
+  * The full list of ticker symbols can be found [here](https://github.com/achannarasappa/ticker-static/blob/master/symbols.csv). Initial values are populated with the top cryptocurrencies by volume on Coinbase at the time of update
+* `.CB` - symbols with this suffix will use Coinbase as the data source. The symbol can be found by searching for the asset on [Coinbase](https://www.coinbase.com/explore/s/listed) and finding the symbol for the asset. (e.g. for Starknet check the [market page](https://www.coinbase.com/advanced-trade/spot/STRK-USD) to find the symbol `STRK` and set the symbol to `STRK.CB` in ticker).
 
 Note: Coincap (`.CC`) and CoinGecko (`.CG`) are no longer supported after v5.0.0
 
@@ -181,7 +180,7 @@ Note: Coincap (`.CC`) and CoinGecko (`.CG`) are no longer supported after v5.0.0
 * If a `currency` is not set (default behavior) and the `show-summary` option is enabled, the summary will be calculated in USD regardless of the exchange currency to avoid mixing currencies
 * Currencies are retrieved only once at start time - currency exchange rates do fluctuate over time and thus converted values may vary depending on when ticker is started
 * If the `currency-summary-only` is set to `true` and a value is set for `currency`, only the summary values will be converted
-* If `currency-disable-unit-cost-conversion` flag to `true`, currency conversion will not be done when calculating the cost basis. This can be useful for users that purchase a foreign security and want to use the currency exchange rate at the time of purchase by inputting the unit cost in their local currency (set in `currency`) rather than using the most recent currency exchange rate.
+* If `currency-disable-unit-cost-conversion` flag to `true`, currency conversion will not be done when calculating the cost basis. This can be useful for users that purchase a non-US asset and want to use the currency exchange rate at the time of purchase by inputting the unit cost in their local currency (set in `currency`) rather than using the most recent currency exchange rate.
 
 ### Custom Color Schemes
 
@@ -220,7 +219,9 @@ $ ticker --config=./.ticker.yaml print
 
 ## Notes
 
-* **Real-time quotes** - Quotes are pulled from Yahoo finance which may provide delayed stock quotes depending on the exchange. The major US exchanges (NYSE, NASDAQ) have real-time quotes however other exchanges may not. Consult the [help article](https://help.yahoo.com/kb/SLN2310.html) on exchange delays to determine which exchanges you can expect delays for or use the `--show-tags` flag to include timeliness of data alongside quotes in `ticker`.
+* **Market data delay**
+  * _Yahoo Finance_ - Market data pulled from Yahoo finance will have some lag (<~30s) introduced by intermediary systems and certain exchanges will impose intentional delays on data. NYSE and NASDAQ offer real-time market data but other exchanges may not. Consult the [help article](https://help.yahoo.com/kb/SLN2310.html) on exchange delays to determine which exchanges you can expect delays for or use the `--show-tags` flag to include timeliness of data alongside quotes in `ticker`. Yahoo Finance also relies on polling which introduces some delay (>=5s). `refresh-interval` determines the polling frequency.
+  * _Coinbase_ - Market data for spot assets on Coinbase is directly streamed from the exchange through a WebSocket connection and is available in near real-time. Derivatives assets (i.e. symbols with `-CDE` suffix) are polling based however Basis is updated in near real-time based on spot market data changes
 * **Non-US Symbols, Forex, ETFs** - The names for there may differ from their common name/symbols. Try searching the native name in [Yahoo finance](https://finance.yahoo.com/) to determine the symbol to use in `ticker`
 * **Terminal fonts** - Font with support for the [`HORIZONTAL LINE SEPARATOR` unicode character](https://www.fileformat.info/info/unicode/char/23af/fontsupport.htm) is required to properly render separators (`--show-separator` option)
 

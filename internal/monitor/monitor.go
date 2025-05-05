@@ -16,21 +16,19 @@ import (
 
 // Monitor represents an overall monitor which manages API specific monitors
 type Monitor struct {
-	monitors                       map[c.QuoteSource]c.Monitor
-	monitorCurrencyRate            c.MonitorCurrencyRate
-	chanError                      chan error
-	chanUpdateAssetQuote           chan c.MessageUpdate[c.AssetQuote]
-	chanUpdateCurrencyRates        chan c.CurrencyRates
-	chanUpdateCurrencyRateYahoo    chan c.CurrencyRates
-	chanUpdateCurrencyRateCoinbase chan c.CurrencyRates
-	onUpdateAssetQuote             func(symbol string, assetQuote c.AssetQuote, nonce int)
-	onUpdateAssetGroupQuote        func(assetGroupQuote c.AssetGroupQuote, nonce int)
-	assetGroupNonce                int
-	assetGroup                     c.AssetGroup
-	mu                             sync.RWMutex
-	errorLogger                    *log.Logger
-	ctx                            context.Context
-	cancel                         context.CancelFunc
+	monitors                map[c.QuoteSource]c.Monitor
+	monitorCurrencyRate     c.MonitorCurrencyRate
+	chanError               chan error
+	chanUpdateAssetQuote    chan c.MessageUpdate[c.AssetQuote]
+	chanUpdateCurrencyRates chan c.CurrencyRates
+	onUpdateAssetQuote      func(symbol string, assetQuote c.AssetQuote, nonce int)
+	onUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote, nonce int)
+	assetGroupNonce         int
+	assetGroup              c.AssetGroup
+	mu                      sync.RWMutex
+	errorLogger             *log.Logger
+	ctx                     context.Context
+	cancel                  context.CancelFunc
 }
 
 // ConfigMonitor represents the configuration for the main monitor
@@ -68,8 +66,6 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 	chanError := make(chan error, 5)
 	chanUpdateAssetQuote := make(chan c.MessageUpdate[c.AssetQuote], 10)
 	chanUpdateCurrencyRate := make(chan c.CurrencyRates, 10)
-	chanUpdateCurrencyRateYahoo := make(chan c.CurrencyRates, 10)
-	chanUpdateCurrencyRateCoinbase := make(chan c.CurrencyRates, 10)
 	chanRequestCurrencyRate := make(chan []string, 10)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -81,7 +77,6 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 			UnaryURL:                 configMonitor.ConfigMonitorPriceCoinbase.BaseURL,
 			ChanError:                chanError,
 			ChanUpdateAssetQuote:     chanUpdateAssetQuote,
-			ChanUpdateCurrencyRates:  chanUpdateCurrencyRateCoinbase,
 			ChanRequestCurrencyRates: chanRequestCurrencyRate,
 		},
 		monitorPriceCoinbase.WithStreamingURL(configMonitor.ConfigMonitorPriceCoinbase.StreamingURL),
@@ -103,7 +98,6 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 			UnaryAPI:                 unaryAPI,
 			ChanError:                chanError,
 			ChanUpdateAssetQuote:     chanUpdateAssetQuote,
-			ChanUpdateCurrencyRates:  chanUpdateCurrencyRateYahoo,
 			ChanRequestCurrencyRates: chanRequestCurrencyRate,
 		},
 		monitorPriceYahoo.WithRefreshInterval(time.Duration(configMonitor.RefreshInterval)*time.Second),
@@ -127,17 +121,15 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 			c.QuoteSourceCoinbase: coinbase,
 			c.QuoteSourceYahoo:    yahoo,
 		},
-		monitorCurrencyRate:            yahooCurrencyRate,
-		chanUpdateAssetQuote:           chanUpdateAssetQuote,
-		chanUpdateCurrencyRates:        chanUpdateCurrencyRate,
-		chanUpdateCurrencyRateYahoo:    chanUpdateCurrencyRateYahoo,
-		chanUpdateCurrencyRateCoinbase: chanUpdateCurrencyRateCoinbase,
-		chanError:                      chanError,
-		onUpdateAssetGroupQuote:        func(assetGroupQuote c.AssetGroupQuote, nonce int) {},
-		onUpdateAssetQuote:             func(symbol string, assetQuote c.AssetQuote, nonce int) {},
-		errorLogger:                    configMonitor.ErrorLogger,
-		ctx:                            ctx,
-		cancel:                         cancel,
+		monitorCurrencyRate:     yahooCurrencyRate,
+		chanUpdateAssetQuote:    chanUpdateAssetQuote,
+		chanUpdateCurrencyRates: chanUpdateCurrencyRate,
+		chanError:               chanError,
+		onUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, nonce int) {},
+		onUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote, nonce int) {},
+		errorLogger:             configMonitor.ErrorLogger,
+		ctx:                     ctx,
+		cancel:                  cancel,
 	}
 
 	return m, nil
@@ -264,9 +256,10 @@ func (m *Monitor) handleUpdates() {
 			}
 
 		case currencyRates := <-m.chanUpdateCurrencyRates:
-			// Fan out currency rates to each monitor
-			m.chanUpdateCurrencyRateYahoo <- currencyRates
-			m.chanUpdateCurrencyRateCoinbase <- currencyRates
+			// Set currency rates on each each monitor
+			for _, monitor := range m.monitors {
+				monitor.SetCurrencyRates(currencyRates)
+			}
 		}
 	}
 }

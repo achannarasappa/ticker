@@ -31,7 +31,6 @@ type MonitorPriceYahoo struct {
 	cancel                   context.CancelFunc
 	isStarted                bool
 	chanUpdateAssetQuote     chan c.MessageUpdate[c.AssetQuote]
-	chanUpdateCurrencyRates  chan c.CurrencyRates
 	chanRequestCurrencyRates chan []string
 }
 
@@ -47,7 +46,6 @@ type Config struct {
 	UnaryAPI                 *unary.UnaryAPI
 	ChanError                chan error
 	ChanUpdateAssetQuote     chan c.MessageUpdate[c.AssetQuote]
-	ChanUpdateCurrencyRates  chan c.CurrencyRates
 	ChanRequestCurrencyRates chan []string
 }
 
@@ -67,7 +65,6 @@ func NewMonitorPriceYahoo(config Config, opts ...Option) *MonitorPriceYahoo {
 		ctx:                      ctx,
 		cancel:                   cancel,
 		chanUpdateAssetQuote:     config.ChanUpdateAssetQuote,
-		chanUpdateCurrencyRates:  config.ChanUpdateCurrencyRates,
 		chanRequestCurrencyRates: config.ChanRequestCurrencyRates,
 	}
 
@@ -197,6 +194,21 @@ func (m *MonitorPriceYahoo) Stop() error {
 	return nil
 }
 
+func (m *MonitorPriceYahoo) SetCurrencyRates(currencyRates c.CurrencyRates) error {
+	m.muCurrencyRates.Lock()
+	m.currencyRatesCache = currencyRates
+	m.muCurrencyRates.Unlock()
+
+	// Map over each asset quote and update the currency rate
+	// TODO: make this more efficient by selectively updating based on changes in rates
+	_, err := m.getAssetQuotesAndReplaceCache()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // handleUpdates listens for asset quote change messages and updates the cache
 func (m *MonitorPriceYahoo) handleUpdates() {
 	for {
@@ -255,17 +267,6 @@ func (m *MonitorPriceYahoo) handleUpdates() {
 			}
 
 			continue
-		case currencyRates := <-m.chanUpdateCurrencyRates:
-			m.muCurrencyRates.Lock()
-			m.currencyRatesCache = currencyRates
-			m.muCurrencyRates.Unlock()
-
-			// Map over each asset quote and update the currency rate
-			// TODO: make this more efficient by selectively updating based on changes in rates
-			_, err := m.getAssetQuotesAndReplaceCache()
-			if err != nil {
-				m.chanError <- err
-			}
 		default:
 		}
 	}

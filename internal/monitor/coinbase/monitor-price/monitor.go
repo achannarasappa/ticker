@@ -44,8 +44,7 @@ type MonitorPriceCoinbase struct {
 	cancel                           context.CancelFunc
 	isStarted                        bool
 	chanUpdateAssetQuote             chan c.MessageUpdate[c.AssetQuote]
-	chanUpdateCurrencyRates          chan c.CurrencyRates // Channel for currency rate updates
-	chanRequestCurrencyRates         chan []string        // Channel for currency rate requests
+	chanRequestCurrencyRates         chan []string // Channel for currency rate requests
 }
 
 type input struct {
@@ -59,7 +58,6 @@ type Config struct {
 	UnaryURL                 string
 	ChanError                chan error
 	ChanUpdateAssetQuote     chan c.MessageUpdate[c.AssetQuote]
-	ChanUpdateCurrencyRates  chan c.CurrencyRates
 	ChanRequestCurrencyRates chan []string
 }
 
@@ -84,7 +82,6 @@ func NewMonitorPriceCoinbase(config Config, opts ...Option) *MonitorPriceCoinbas
 		ctx:                              ctx,
 		cancel:                           cancel,
 		chanUpdateAssetQuote:             config.ChanUpdateAssetQuote,
-		chanUpdateCurrencyRates:          config.ChanUpdateCurrencyRates,
 		chanRequestCurrencyRates:         config.ChanRequestCurrencyRates,
 	}
 
@@ -377,21 +374,24 @@ func (m *MonitorPriceCoinbase) handleUpdates() {
 
 			continue
 
-		case currencyRates := <-m.chanUpdateCurrencyRates:
-			m.muCurrencyRates.Lock()
-			m.currencyRatesCache = currencyRates
-			m.muCurrencyRates.Unlock()
-
-			// Map over each asset quote and update the currency rate
-			// TODO: make this more efficient by selectively updating based on changes in rates
-			_, err := m.getAssetQuotesAndReplaceCache()
-			if err != nil {
-				m.chanError <- err
-			}
-
 		default:
 		}
 	}
+}
+
+func (m *MonitorPriceCoinbase) SetCurrencyRates(currencyRates c.CurrencyRates) error {
+	m.muCurrencyRates.Lock()
+	m.currencyRatesCache = currencyRates
+	m.muCurrencyRates.Unlock()
+
+	// Map over each asset quote and update the currency rate
+	// TODO: make this more efficient by selectively updating based on changes in rates
+	_, err := m.getAssetQuotesAndReplaceCache()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Get asset quotes from unary API, add futures quotes, filter out assets not explicitly requested, and replace the asset quotes cache

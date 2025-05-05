@@ -81,6 +81,7 @@ type Monitor interface {
 	Start() error
 	GetAssetQuotes(ignoreCache ...bool) ([]AssetQuote, error)
 	SetSymbols(symbols []string, nonce int) error
+	SetCurrencyRates(currencyRates CurrencyRates) error
 	Stop() error
 }
 

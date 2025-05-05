@@ -35,7 +35,6 @@ var _ = Describe("Monitor Coinbase", func() {
 				UnaryURL:                 server.URL(),
 				Ctx:                      context.Background(),
 				ChanRequestCurrencyRates: make(chan []string, 1),
-				ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 			})
 			Expect(monitor).NotTo(BeNil())
 		})
@@ -47,7 +46,6 @@ var _ = Describe("Monitor Coinbase", func() {
 					UnaryURL:                 server.URL(),
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				}, monitorPriceCoinbase.WithStreamingURL(url))
 
 				Expect(monitor).NotTo(BeNil())
@@ -61,7 +59,6 @@ var _ = Describe("Monitor Coinbase", func() {
 					UnaryURL:                 server.URL(),
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				}, monitorPriceCoinbase.WithRefreshInterval(interval))
 
 				Expect(monitor).NotTo(BeNil())
@@ -142,7 +139,6 @@ var _ = Describe("Monitor Coinbase", func() {
 				UnaryURL:                 server.URL(),
 				Ctx:                      context.Background(),
 				ChanRequestCurrencyRates: make(chan []string, 1),
-				ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 			})
 
 			monitor.SetSymbols([]string{"BIT-31JAN25-CDE", "ETH-USD"}, 0)
@@ -172,7 +168,6 @@ var _ = Describe("Monitor Coinbase", func() {
 					UnaryURL:                 server.URL(),
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				})
 
 				monitor.SetSymbols([]string{"BTC-USD"}, 0)
@@ -238,7 +233,6 @@ var _ = Describe("Monitor Coinbase", func() {
 					UnaryURL:                 server.URL(),
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				})
 
 				monitor.SetSymbols([]string{"BTC-USD"}, 0)
@@ -363,7 +357,6 @@ var _ = Describe("Monitor Coinbase", func() {
 						UnaryURL:                 server.URL(),
 						Ctx:                      context.Background(),
 						ChanRequestCurrencyRates: make(chan []string, 1),
-						ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 					})
 
 					// First call to SetSymbols establishes the mapping
@@ -392,7 +385,6 @@ var _ = Describe("Monitor Coinbase", func() {
 						UnaryURL:                 server.URL(),
 						Ctx:                      context.Background(),
 						ChanRequestCurrencyRates: make(chan []string, 1),
-						ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 					})
 
 					err := monitor.SetSymbols([]string{"BIT-31JAN25-CDE"}, 0)
@@ -410,7 +402,6 @@ var _ = Describe("Monitor Coinbase", func() {
 				UnaryURL:                 server.URL(),
 				Ctx:                      context.Background(),
 				ChanRequestCurrencyRates: make(chan []string, 1),
-				ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 			}, monitorPriceCoinbase.WithRefreshInterval(10*time.Second))
 
 			err := monitor.Start()
@@ -423,7 +414,6 @@ var _ = Describe("Monitor Coinbase", func() {
 					UnaryURL:                 server.URL(),
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				}, monitorPriceCoinbase.WithRefreshInterval(10*time.Second))
 
 				err := monitor.Start()
@@ -448,7 +438,6 @@ var _ = Describe("Monitor Coinbase", func() {
 					UnaryURL:                 server.URL(),
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				}, monitorPriceCoinbase.WithRefreshInterval(10*time.Second))
 
 				monitor.SetSymbols([]string{"BTC-USD"}, 0)
@@ -488,7 +477,6 @@ var _ = Describe("Monitor Coinbase", func() {
 					UnaryURL:                 server.URL(),
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				}, monitorPriceCoinbase.WithRefreshInterval(10*time.Second),
 					monitorPriceCoinbase.WithStreamingURL("wssss://invalid-url"))
 
@@ -530,7 +518,6 @@ var _ = Describe("Monitor Coinbase", func() {
 					UnaryURL:                 server.URL(),
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				})
 
 				monitor.SetSymbols([]string{"ETH-USD"}, 0)
@@ -595,7 +582,6 @@ var _ = Describe("Monitor Coinbase", func() {
 					ChanUpdateAssetQuote:     updateChan,
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				}, monitorPriceCoinbase.WithRefreshInterval(10*time.Second),
 					monitorPriceCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
@@ -658,7 +644,6 @@ var _ = Describe("Monitor Coinbase", func() {
 						ChanUpdateAssetQuote:     updateChan,
 						Ctx:                      context.Background(),
 						ChanRequestCurrencyRates: make(chan []string, 1),
-						ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 					}, monitorPriceCoinbase.WithRefreshInterval(100*time.Millisecond),
 						monitorPriceCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
@@ -720,7 +705,6 @@ var _ = Describe("Monitor Coinbase", func() {
 						ChanUpdateAssetQuote:     updateChan,
 						Ctx:                      context.Background(),
 						ChanRequestCurrencyRates: make(chan []string, 1),
-						ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 					}, monitorPriceCoinbase.WithRefreshInterval(100*time.Millisecond),
 						monitorPriceCoinbase.WithStreamingURL("ws://"+inputServer.URL[7:]))
 
@@ -826,7 +810,6 @@ var _ = Describe("Monitor Coinbase", func() {
 					ChanUpdateAssetQuote:     updateChan,
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				}, monitorPriceCoinbase.WithRefreshInterval(100*time.Millisecond))
 
 				monitor.SetSymbols([]string{"BIT-31JAN25-CDE", "BTC-USD"}, 0)
@@ -883,7 +866,6 @@ var _ = Describe("Monitor Coinbase", func() {
 						ChanUpdateAssetQuote:     updateChan,
 						Ctx:                      context.Background(),
 						ChanRequestCurrencyRates: make(chan []string, 1),
-						ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 					}, monitorPriceCoinbase.WithRefreshInterval(100*time.Millisecond))
 
 					monitor.SetSymbols([]string{"BTC-USD"}, 0)
@@ -961,7 +943,6 @@ var _ = Describe("Monitor Coinbase", func() {
 						ChanUpdateAssetQuote:     updateChan,
 						Ctx:                      context.Background(),
 						ChanRequestCurrencyRates: make(chan []string, 1),
-						ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 					}, monitorPriceCoinbase.WithRefreshInterval(100*time.Millisecond))
 
 					monitor.SetSymbols([]string{"ETH-USD"}, 0) // Only set ETH-USD in cache
@@ -1022,7 +1003,6 @@ var _ = Describe("Monitor Coinbase", func() {
 		When("there is a currency rate update", func() {
 			It("should replace the currency rate cache", func() {
 				var err error
-				var outputQuote c.AssetQuote
 
 				// Set up initial server response for asset quotes
 				server.RouteToHandler("GET", "/api/v3/brokerage/market/products", func(w http.ResponseWriter, r *http.Request) {
@@ -1094,7 +1074,6 @@ var _ = Describe("Monitor Coinbase", func() {
 				})
 
 				// Create channels for currency rate updates and asset quote updates
-				currencyRatesChan := make(chan c.CurrencyRates, 1)
 				updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
 				// Create and start the monitor
@@ -1103,7 +1082,6 @@ var _ = Describe("Monitor Coinbase", func() {
 					ChanUpdateAssetQuote:     updateChan,
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  currencyRatesChan,
 				}, monitorPriceCoinbase.WithRefreshInterval(100*time.Millisecond))
 
 				monitor.SetSymbols([]string{"BIT-31JAN25-CDE"}, 0)
@@ -1117,28 +1095,15 @@ var _ = Describe("Monitor Coinbase", func() {
 						Rate:         0.85,
 					},
 				}
-				currencyRatesChan <- currencyRates
+				err = monitor.SetCurrencyRates(currencyRates)
 
 				Expect(err).NotTo(HaveOccurred())
 
-				// Wait for and verify the asset quote update with new currency rate
-				Eventually(func() float64 {
-					select {
-					case <-time.After(200 * time.Millisecond):
-						quotes, err := monitor.GetAssetQuotes()
+				quotes, err := monitor.GetAssetQuotes()
 
-						if err != nil {
-							return -1.0
-						}
-
-						outputQuote = quotes[0]
-
-						return quotes[0].Currency.Rate
-					}
-				}, 2*time.Second).Should(Equal(0.85))
-
-				Expect(outputQuote.Currency.FromCurrencyCode).To(Equal("USD"))
-				Expect(outputQuote.Currency.ToCurrencyCode).To(Equal("EUR"))
+				Expect(quotes[0].Currency.Rate).To(Equal(0.85))
+				Expect(quotes[0].Currency.FromCurrencyCode).To(Equal("USD"))
+				Expect(quotes[0].Currency.ToCurrencyCode).To(Equal("EUR"))
 
 				monitor.Stop()
 			})
@@ -1169,7 +1134,6 @@ var _ = Describe("Monitor Coinbase", func() {
 					)
 
 					// Create channels for updates and errors
-					currencyRatesChan := make(chan c.CurrencyRates, 1)
 					errorChan := make(chan error, 1)
 
 					// Create and start the monitor
@@ -1178,7 +1142,6 @@ var _ = Describe("Monitor Coinbase", func() {
 						ChanError:                errorChan,
 						Ctx:                      context.Background(),
 						ChanRequestCurrencyRates: make(chan []string, 1),
-						ChanUpdateCurrencyRates:  currencyRatesChan,
 					}, monitorPriceCoinbase.WithRefreshInterval(100*time.Millisecond))
 
 					monitor.SetSymbols([]string{"BTC-USD"}, 0)
@@ -1200,18 +1163,9 @@ var _ = Describe("Monitor Coinbase", func() {
 							Rate:         0.85,
 						},
 					}
-					currencyRatesChan <- currencyRates
 
-					// Verify that an error is sent to the error channel
-					var err error
-					Eventually(func() error {
-						select {
-						case err = <-errorChan:
-							return err
-						default:
-							return nil
-						}
-					}, 2*time.Second).Should(HaveOccurred())
+					err := monitor.SetCurrencyRates(currencyRates)
+					Expect(err).To(HaveOccurred())
 
 					Expect(err.Error()).To(ContainSubstring("request failed with status 500"))
 
@@ -1229,7 +1183,6 @@ var _ = Describe("Monitor Coinbase", func() {
 				UnaryURL:                 server.URL(),
 				Ctx:                      context.Background(),
 				ChanRequestCurrencyRates: make(chan []string, 1),
-				ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 			}, monitorPriceCoinbase.WithRefreshInterval(10*time.Second))
 
 			err := monitor.Start()
@@ -1245,7 +1198,6 @@ var _ = Describe("Monitor Coinbase", func() {
 					UnaryURL:                 server.URL(),
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				})
 
 				err := monitor.Stop()

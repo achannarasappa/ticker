@@ -39,7 +39,6 @@ var _ = Describe("Monitor Yahoo", func() {
 				UnaryAPI:                 unaryAPI,
 				Ctx:                      context.Background(),
 				ChanRequestCurrencyRates: make(chan []string, 1),
-				ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 			})
 			Expect(monitor).NotTo(BeNil())
 		})
@@ -67,7 +66,6 @@ var _ = Describe("Monitor Yahoo", func() {
 				UnaryAPI:                 unaryAPI,
 				Ctx:                      context.Background(),
 				ChanRequestCurrencyRates: make(chan []string, 1),
-				ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 			}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
 
 			monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -105,7 +103,6 @@ var _ = Describe("Monitor Yahoo", func() {
 					UnaryAPI:                 unaryAPI,
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -145,7 +142,6 @@ var _ = Describe("Monitor Yahoo", func() {
 					UnaryAPI:                 unaryAPI,
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				})
 
 				monitor.SetSymbols([]string{"GOOG", "NET"}, 0)
@@ -186,7 +182,6 @@ var _ = Describe("Monitor Yahoo", func() {
 				UnaryAPI:                 unaryAPI,
 				Ctx:                      context.Background(),
 				ChanRequestCurrencyRates: make(chan []string, 1),
-				ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 			}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
 
 			monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -217,7 +212,6 @@ var _ = Describe("Monitor Yahoo", func() {
 					UnaryAPI:                 unaryAPI,
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -254,7 +248,6 @@ var _ = Describe("Monitor Yahoo", func() {
 					UnaryAPI:                 unaryAPI,
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -288,7 +281,6 @@ var _ = Describe("Monitor Yahoo", func() {
 					UnaryAPI:                 unaryAPI,
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				})
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -346,7 +338,6 @@ var _ = Describe("Monitor Yahoo", func() {
 					ChanUpdateAssetQuote:     updateChan,
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 100),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 100),
 				}, monitorPriceYahoo.WithRefreshInterval(100*time.Millisecond))
 
 				monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -388,7 +379,6 @@ var _ = Describe("Monitor Yahoo", func() {
 						ChanUpdateAssetQuote:     updateChan,
 						Ctx:                      context.Background(),
 						ChanRequestCurrencyRates: make(chan []string, 1),
-						ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 					}, monitorPriceYahoo.WithRefreshInterval(100*time.Millisecond))
 
 					monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -448,7 +438,6 @@ var _ = Describe("Monitor Yahoo", func() {
 						ChanUpdateAssetQuote:     updateChan,
 						Ctx:                      context.Background(),
 						ChanRequestCurrencyRates: make(chan []string, 1),
-						ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 					}, monitorPriceYahoo.WithRefreshInterval(100*time.Millisecond))
 
 					monitor.SetSymbols([]string{"GOOG", "NET"}, 0)
@@ -474,7 +463,6 @@ var _ = Describe("Monitor Yahoo", func() {
 		When("there is a currency rate update", func() {
 			It("should replace the currency rate cache", func() {
 				var err error
-				var outputQuote c.AssetQuote
 
 				server.RouteToHandler("GET", "/v7/finance/quote",
 					ghttp.CombineHandlers(
@@ -483,7 +471,6 @@ var _ = Describe("Monitor Yahoo", func() {
 				)
 
 				// Create channels for currency rate updates and asset quote updates
-				currencyRatesChan := make(chan c.CurrencyRates, 1)
 				updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
 
 				// Create and start the monitor
@@ -492,7 +479,6 @@ var _ = Describe("Monitor Yahoo", func() {
 					ChanUpdateAssetQuote:     updateChan,
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  currencyRatesChan,
 				}, monitorPriceYahoo.WithRefreshInterval(100*time.Millisecond))
 
 				monitor.SetSymbols([]string{"NET"}, 0)
@@ -506,28 +492,14 @@ var _ = Describe("Monitor Yahoo", func() {
 						Rate:         0.85,
 					},
 				}
-				currencyRatesChan <- currencyRates
-
+				err = monitor.SetCurrencyRates(currencyRates)
 				Expect(err).NotTo(HaveOccurred())
 
-				// Wait for and verify the asset quote update with new currency rate
-				Eventually(func() float64 {
-					select {
-					case <-time.After(200 * time.Millisecond):
-						quotes, err := monitor.GetAssetQuotes(true)
-
-						if err != nil {
-							return -1.0
-						}
-
-						outputQuote = quotes[0]
-
-						return quotes[0].Currency.Rate
-					}
-				}, 2*time.Second).Should(Equal(0.85))
-
-				Expect(outputQuote.Currency.FromCurrencyCode).To(Equal("USD"))
-				Expect(outputQuote.Currency.ToCurrencyCode).To(Equal("EUR"))
+				quotes, err := monitor.GetAssetQuotes()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(quotes[0].Currency.Rate).To(Equal(0.85))
+				Expect(quotes[0].Currency.FromCurrencyCode).To(Equal("USD"))
+				Expect(quotes[0].Currency.ToCurrencyCode).To(Equal("EUR"))
 
 				monitor.Stop()
 			})
@@ -539,19 +511,16 @@ var _ = Describe("Monitor Yahoo", func() {
 					var respondWithError bool = false
 
 					server.RouteToHandler("GET", "/v7/finance/quote",
-						ghttp.CombineHandlers(
-							func(w http.ResponseWriter, r *http.Request) {
-								if respondWithError {
-									w.Write([]byte("invalid"))
-								} else {
-									json.NewEncoder(w).Encode(responseQuote1Fixture)
-								}
-							},
-						),
+						func(w http.ResponseWriter, r *http.Request) {
+							if respondWithError {
+								w.Write([]byte("invalid"))
+							} else {
+								json.NewEncoder(w).Encode(responseQuote1Fixture)
+							}
+						},
 					)
 
 					// Create channels for currency rate updates and asset quote updates
-					currencyRatesChan := make(chan c.CurrencyRates, 1)
 					updateChan := make(chan c.MessageUpdate[c.AssetQuote], 10)
 					errorChan := make(chan error, 1)
 
@@ -561,7 +530,6 @@ var _ = Describe("Monitor Yahoo", func() {
 						ChanUpdateAssetQuote:     updateChan,
 						Ctx:                      context.Background(),
 						ChanRequestCurrencyRates: make(chan []string, 1),
-						ChanUpdateCurrencyRates:  currencyRatesChan,
 						ChanError:                errorChan,
 					}, monitorPriceYahoo.WithRefreshInterval(100*time.Millisecond))
 
@@ -579,10 +547,11 @@ var _ = Describe("Monitor Yahoo", func() {
 							Rate:         0.85,
 						},
 					}
-					currencyRatesChan <- currencyRates
-					respondWithError = true
 
-					Eventually(errorChan, 2*time.Second).Should(Receive(MatchError(ContainSubstring("failed to decode response"))))
+					respondWithError = true
+					err = monitor.SetCurrencyRates(currencyRates)
+
+					Expect(err).To(MatchError(ContainSubstring("failed to decode response")))
 
 					monitor.Stop()
 				})
@@ -603,7 +572,6 @@ var _ = Describe("Monitor Yahoo", func() {
 				UnaryAPI:                 unaryAPI,
 				Ctx:                      context.Background(),
 				ChanRequestCurrencyRates: make(chan []string, 1),
-				ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 			}, monitorPriceYahoo.WithRefreshInterval(10*time.Second))
 
 			monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
@@ -628,7 +596,6 @@ var _ = Describe("Monitor Yahoo", func() {
 					UnaryAPI:                 unaryAPI,
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				})
 
 				err := monitor.Stop()
@@ -647,26 +614,23 @@ var _ = Describe("Monitor Yahoo", func() {
 				var calledGetCurrencyMap bool = false
 
 				server.RouteToHandler("GET", "/v7/finance/quote",
-					ghttp.CombineHandlers(
-						func(w http.ResponseWriter, r *http.Request) {
-							query := r.URL.Query()
-							fields := query.Get("fields")
+					func(w http.ResponseWriter, r *http.Request) {
+						query := r.URL.Query()
+						fields := query.Get("fields")
 
-							if fields == "regularMarketPrice,currency" {
-								calledGetCurrencyMap = true
-								json.NewEncoder(w).Encode(currencyResponseFixture)
-							} else {
-								json.NewEncoder(w).Encode(responseQuote1Fixture)
-							}
-						},
-					),
+						if fields == "regularMarketPrice,currency" {
+							calledGetCurrencyMap = true
+							json.NewEncoder(w).Encode(currencyResponseFixture)
+						} else {
+							json.NewEncoder(w).Encode(responseQuote1Fixture)
+						}
+					},
 				)
 
 				monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 					UnaryAPI:                 unaryAPI,
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				})
 
 				err := monitor.SetSymbols([]string{}, 0)
@@ -683,25 +647,22 @@ var _ = Describe("Monitor Yahoo", func() {
 			It("should return an error", func() {
 
 				server.RouteToHandler("GET", "/v7/finance/quote",
-					ghttp.CombineHandlers(
-						func(w http.ResponseWriter, r *http.Request) {
-							query := r.URL.Query()
-							fields := query.Get("fields")
+					func(w http.ResponseWriter, r *http.Request) {
+						query := r.URL.Query()
+						fields := query.Get("fields")
 
-							if fields == "regularMarketPrice,currency" {
-								w.Write([]byte("invalid"))
-							} else {
-								json.NewEncoder(w).Encode(responseQuote1Fixture)
-							}
-						},
-					),
+						if fields == "regularMarketPrice,currency" {
+							w.Write([]byte("invalid"))
+						} else {
+							json.NewEncoder(w).Encode(responseQuote1Fixture)
+						}
+					},
 				)
 
 				monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
 					UnaryAPI:                 unaryAPI,
 					Ctx:                      context.Background(),
 					ChanRequestCurrencyRates: make(chan []string, 1),
-					ChanUpdateCurrencyRates:  make(chan c.CurrencyRates, 1),
 				})
 
 				err := monitor.SetSymbols([]string{"NET"}, 0)

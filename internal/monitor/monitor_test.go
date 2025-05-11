@@ -167,10 +167,10 @@ var _ = Describe("Monitor", func() {
 
 				// Set the callback function
 				m.SetOnUpdate(monitor.ConfigUpdateFns{
-					OnUpdateAssetQuote: func(symbol string, assetQuote c.AssetQuote, nonce int) {
+					OnUpdateAssetQuote: func(symbol string, assetQuote c.AssetQuote, versionVector int) {
 						outputCallCountSingleAsset++
 					},
-					OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, nonce int) {
+					OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, versionVector int) {
 						outputCallCountAllAssets++
 					},
 				})
@@ -214,8 +214,8 @@ var _ = Describe("Monitor", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			err = m.SetOnUpdate(monitor.ConfigUpdateFns{
-				OnUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote, nonce int) {},
-				OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, nonce int) {},
+				OnUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote, versionVector int) {},
+				OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, versionVector int) {},
 			})
 			Expect(err).To(BeNil())
 		})
@@ -231,13 +231,13 @@ var _ = Describe("Monitor", func() {
 				// Test with nil OnUpdateAssetQuote
 				err = m.SetOnUpdate(monitor.ConfigUpdateFns{
 					OnUpdateAssetQuote:      nil,
-					OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, nonce int) {},
+					OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, versionVector int) {},
 				})
 				Expect(err).To(MatchError("onUpdateAssetQuote and onUpdateAssetGroupQuote must be set"))
 
 				// Test with nil OnUpdateAssetGroupQuote
 				err = m.SetOnUpdate(monitor.ConfigUpdateFns{
-					OnUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote, nonce int) {},
+					OnUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote, versionVector int) {},
 					OnUpdateAssetGroupQuote: nil,
 				})
 				Expect(err).To(MatchError("onUpdateAssetQuote and onUpdateAssetGroupQuote must be set"))

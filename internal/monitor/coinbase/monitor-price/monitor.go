@@ -144,7 +144,7 @@ func (m *MonitorPriceCoinbase) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuo
 	return result, nil
 }
 
-func (m *MonitorPriceCoinbase) SetSymbols(productIds []string, nonce int) error {
+func (m *MonitorPriceCoinbase) SetSymbols(productIds []string, versionVector int) error {
 
 	var err error
 
@@ -186,8 +186,8 @@ func (m *MonitorPriceCoinbase) SetSymbols(productIds []string, nonce int) error 
 	}
 
 	// Coinbase steaming API for CBE (spot) only and not CDE (futures)
-	m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming, nonce)
-	m.poller.SetSymbols(m.productIdsPolling, nonce)
+	m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming, versionVector)
+	m.poller.SetSymbols(m.productIdsPolling, versionVector)
 
 	return nil
 
@@ -319,9 +319,9 @@ func (m *MonitorPriceCoinbase) handleUpdates() {
 
 			// Send a message with an updated quote
 			m.chanUpdateAssetQuote <- c.MessageUpdate[c.AssetQuote]{
-				ID:    assetQuote.Symbol,
-				Data:  *assetQuote,
-				Nonce: updateMessage.Nonce,
+				ID:            assetQuote.Symbol,
+				Data:          *assetQuote,
+				VersionVector: updateMessage.VersionVector,
 			}
 
 			continue
@@ -367,9 +367,9 @@ func (m *MonitorPriceCoinbase) handleUpdates() {
 
 			// Send a message with an updated quote
 			m.chanUpdateAssetQuote <- c.MessageUpdate[c.AssetQuote]{
-				ID:    assetQuote.Symbol,
-				Data:  *assetQuote,
-				Nonce: updateMessage.Nonce,
+				ID:            assetQuote.Symbol,
+				Data:          *assetQuote,
+				VersionVector: updateMessage.VersionVector,
 			}
 
 			continue

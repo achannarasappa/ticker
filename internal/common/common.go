@@ -80,7 +80,7 @@ type Dependencies struct {
 type Monitor interface {
 	Start() error
 	GetAssetQuotes(ignoreCache ...bool) ([]AssetQuote, error)
-	SetSymbols(symbols []string, nonce int) error
+	SetSymbols(symbols []string, versionVector int) error
 	SetCurrencyRates(currencyRates CurrencyRates) error
 	Stop() error
 }
@@ -257,14 +257,14 @@ type AssetQuote struct {
 }
 
 type MessageUpdate[T any] struct {
-	Data     T
-	ID       string
-	Sequence int64
-	Nonce    int
+	Data          T
+	ID            string
+	Sequence      int64
+	VersionVector int
 }
 
 type MessageRequest[T any] struct {
-	Data  T
-	ID    string
-	Nonce int
+	Data          T
+	ID            string
+	VersionVector int
 }

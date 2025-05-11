@@ -32,18 +32,18 @@ func Start(dep *c.Dependencies, ctx *c.Context) func() error {
 		)
 
 		monitors.SetOnUpdate(mon.ConfigUpdateFns{
-			OnUpdateAssetQuote: func(symbol string, assetQuote c.AssetQuote, nonce int) {
+			OnUpdateAssetQuote: func(symbol string, assetQuote c.AssetQuote, versionVector int) {
 				p.Send(SetAssetQuoteMsg{
-					symbol:     symbol,
-					assetQuote: assetQuote,
-					nonce:      nonce,
+					symbol:        symbol,
+					assetQuote:    assetQuote,
+					versionVector: versionVector,
 				})
 				return
 			},
-			OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, nonce int) {
+			OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, versionVector int) {
 				p.Send(SetAssetGroupQuoteMsg{
 					assetGroupQuote: assetGroupQuote,
-					nonce:           nonce,
+					versionVector:   versionVector,
 				})
 				return
 			},

@@ -117,7 +117,7 @@ func (m *MonitorPriceYahoo) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote,
 }
 
 // SetSymbols sets the symbols to monitor
-func (m *MonitorPriceYahoo) SetSymbols(symbols []string, nonce int) error {
+func (m *MonitorPriceYahoo) SetSymbols(symbols []string, versionVector int) error {
 
 	var err error
 
@@ -148,7 +148,7 @@ func (m *MonitorPriceYahoo) SetSymbols(symbols []string, nonce int) error {
 	}
 
 	// Set the symbols to monitor on the poller
-	m.poller.SetSymbols(m.symbols, nonce)
+	m.poller.SetSymbols(m.symbols, versionVector)
 
 	return nil
 
@@ -261,9 +261,9 @@ func (m *MonitorPriceYahoo) handleUpdates() {
 
 			// Send a message with an updated quote
 			m.chanUpdateAssetQuote <- c.MessageUpdate[c.AssetQuote]{
-				ID:    assetQuote.Symbol,
-				Data:  *assetQuote,
-				Nonce: updateMessage.Nonce,
+				ID:            assetQuote.Symbol,
+				Data:          *assetQuote,
+				VersionVector: updateMessage.VersionVector,
 			}
 
 			continue

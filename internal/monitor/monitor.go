@@ -21,9 +21,9 @@ type Monitor struct {
 	chanError               chan error
 	chanUpdateAssetQuote    chan c.MessageUpdate[c.AssetQuote]
 	chanUpdateCurrencyRates chan c.CurrencyRates
-	onUpdateAssetQuote      func(symbol string, assetQuote c.AssetQuote, nonce int)
-	onUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote, nonce int)
-	assetGroupNonce         int
+	onUpdateAssetQuote      func(symbol string, assetQuote c.AssetQuote, versionVector int)
+	onUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote, versionVector int)
+	assetGroupVersionVector int
 	assetGroup              c.AssetGroup
 	mu                      sync.RWMutex
 	errorLogger             *log.Logger
@@ -56,8 +56,8 @@ type ConfigMonitorsYahoo struct {
 
 // ConfigUpdateFns represents the callback functions for when asset quotes are updated
 type ConfigUpdateFns struct {
-	OnUpdateAssetQuote      func(symbol string, assetQuote c.AssetQuote, nonce int)
-	OnUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote, nonce int)
+	OnUpdateAssetQuote      func(symbol string, assetQuote c.AssetQuote, versionVector int)
+	OnUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote, versionVector int)
 }
 
 // New creates a new instance of the Coinbase monitor
@@ -125,8 +125,8 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 		chanUpdateAssetQuote:    chanUpdateAssetQuote,
 		chanUpdateCurrencyRates: chanUpdateCurrencyRate,
 		chanError:               chanError,
-		onUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, nonce int) {},
-		onUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote, nonce int) {},
+		onUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, versionVector int) {},
+		onUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote, versionVector int) {},
 		errorLogger:             configMonitor.ErrorLogger,
 		ctx:                     ctx,
 		cancel:                  cancel,
@@ -136,7 +136,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 }
 
 // SetAssetGroup sets the asset group for the monitor
-func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, nonce int) error {
+func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, versionVector int) error {
 	var wg sync.WaitGroup
 
 	// Create a channel for timeout
@@ -152,7 +152,7 @@ func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, nonce int) error {
 			wg.Add(1)
 			go func(mon c.Monitor, symbols []string) {
 				defer wg.Done()
-				err := mon.SetSymbols(symbols, nonce)
+				err := mon.SetSymbols(symbols, versionVector)
 				if err != nil {
 					chanError <- err
 				}
@@ -189,15 +189,15 @@ Continue:
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// Update the nonce so that any messages from the previous asset group can be ignored
-	m.assetGroupNonce = nonce
+	// Update the versionVector so that any messages from the previous asset group can be ignored
+	m.assetGroupVersionVector = versionVector
 	m.assetGroup = assetGroup
 
 	// Get asset quotes for all sources
 	assetGroupQuote := m.GetAssetGroupQuote()
 
 	// Run the callback in a goroutine to avoid blocking
-	go m.onUpdateAssetGroupQuote(assetGroupQuote, nonce)
+	go m.onUpdateAssetGroupQuote(assetGroupQuote, versionVector)
 
 	return nil
 }
@@ -256,14 +256,14 @@ func (m *Monitor) handleUpdates() {
 			m.mu.RLock()
 
 			// Skip updates from previous asset groups
-			if update.Nonce != m.assetGroupNonce {
+			if update.VersionVector != m.assetGroupVersionVector {
 				m.mu.RUnlock()
 				continue
 			}
 			m.mu.RUnlock()
 
 			// Call the callback function for individual asset quote updates
-			go m.onUpdateAssetQuote(update.Data.Symbol, update.Data, update.Nonce)
+			go m.onUpdateAssetQuote(update.Data.Symbol, update.Data, update.VersionVector)
 
 		case err := <-m.chanError:
 			// Log errors using the configured logger if one is set
@@ -281,7 +281,7 @@ func (m *Monitor) handleUpdates() {
 			assetGroupQuote := m.GetAssetGroupQuote()
 
 			// Callback with new asset quotes which include the new currency rates
-			go m.onUpdateAssetGroupQuote(assetGroupQuote, m.assetGroupNonce)
+			go m.onUpdateAssetGroupQuote(assetGroupQuote, m.assetGroupVersionVector)
 		}
 	}
 }

@@ -34,7 +34,7 @@ type Model struct {
 	ctx                c.Context
 	ready              bool
 	headerHeight       int
-	nonce              int
+	versionVector      int
 	requestInterval    int
 	assets             []c.Asset
 	assetQuotes        []c.AssetQuote
@@ -52,18 +52,18 @@ type Model struct {
 }
 
 type tickMsg struct {
-	nonce int
+	versionVector int
 }
 
 type SetAssetQuoteMsg struct {
-	symbol     string
-	assetQuote c.AssetQuote
-	nonce      int
+	symbol        string
+	assetQuote    c.AssetQuote
+	versionVector int
 }
 
 type SetAssetGroupQuoteMsg struct {
 	assetGroupQuote c.AssetGroupQuote
-	nonce           int
+	versionVector   int
 }
 
 // NewModel is the constructor for UI model
@@ -78,7 +78,7 @@ func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
 		headerHeight:       getVerticalMargin(ctx.Config),
 		ready:              false,
 		requestInterval:    ctx.Config.RefreshInterval,
-		nonce:              0,
+		versionVector:      0,
 		assets:             make([]c.Asset, 0),
 		assetQuotes:        make([]c.AssetQuote, 0),
 		assetQuotesLookup:  make(map[string]int),
@@ -100,7 +100,7 @@ func (m *Model) Init() tea.Cmd {
 	return tea.Batch(
 		tick(0),
 		func() tea.Msg {
-			(*m.monitors).SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.nonce)
+			(*m.monitors).SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.versionVector)
 			return nil
 		},
 	)
@@ -125,15 +125,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.groupSelectedName = m.ctx.Groups[m.groupSelectedIndex].Name
 
 			// Invalidate all previous ticks, incremental price updates, and full price updates
-			m.nonce++
+			m.versionVector++
 
 			m.mu.Unlock()
 
 			// Set the new set of symbols in the monitors and initiate a request to refresh all price quotes
 			// Eventually, SetAssetGroupQuoteMsg message will be sent with the new quotes once all of the HTTP request complete
-			m.monitors.SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.nonce)
+			m.monitors.SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.versionVector)
 
-			return m, tickImmediate(m.nonce)
+			return m, tickImmediate(m.versionVector)
 		case "ctrl+c":
 			fallthrough
 		case "esc":
@@ -166,8 +166,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.mu.Lock()
 		defer m.mu.Unlock()
 
-		// Do not re-render if nonce has changed and do not start a new timer with this nonce
-		if msg.nonce != m.nonce {
+		// Do not re-render if versionVector has changed and do not start a new timer with this versionVector
+		if msg.versionVector != m.versionVector {
 			return m, nil
 		}
 
@@ -179,15 +179,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport, _ = m.viewport.Update(msg)
 		}
 
-		return m, tick(msg.nonce)
+		return m, tick(msg.versionVector)
 
 	case SetAssetGroupQuoteMsg:
 
 		m.mu.Lock()
 		defer m.mu.Unlock()
 
-		// Do not update the assets and holding summary if the nonce has changed
-		if msg.nonce != m.nonce {
+		// Do not update the assets and holding summary if the versionVector has changed
+		if msg.versionVector != m.versionVector {
 			return m, nil
 		}
 
@@ -211,7 +211,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.mu.Lock()
 		defer m.mu.Unlock()
 
-		if msg.nonce != m.nonce {
+		if msg.versionVector != m.versionVector {
 			return m, nil
 		}
 
@@ -304,21 +304,21 @@ func getVerticalMargin(config c.Config) int {
 	return 0
 }
 
-// Send a new tick message with the nonce 200ms from now
-func tick(nonce int) tea.Cmd {
+// Send a new tick message with the versionVector 200ms from now
+func tick(versionVector int) tea.Cmd {
 	return tea.Tick(time.Second/5, func(time.Time) tea.Msg {
 		return tickMsg{
-			nonce: nonce,
+			versionVector: versionVector,
 		}
 	})
 }
 
 // Send a new tick message immediately
-func tickImmediate(nonce int) tea.Cmd {
+func tickImmediate(versionVector int) tea.Cmd {
 
 	return func() tea.Msg {
 		return tickMsg{
-			nonce: nonce,
+			versionVector: versionVector,
 		}
 	}
 }

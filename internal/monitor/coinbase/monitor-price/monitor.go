@@ -373,8 +373,6 @@ func (m *MonitorPriceCoinbase) handleUpdates() {
 			}
 
 			continue
-
-		default:
 		}
 	}
 }

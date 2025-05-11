@@ -267,7 +267,6 @@ func (m *MonitorPriceYahoo) handleUpdates() {
 			}
 
 			continue
-		default:
 		}
 	}
 }

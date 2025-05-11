@@ -95,7 +95,6 @@ func (p *Poller) Start() error {
 						VersionVector: versionVector,
 					}
 				}
-			default:
 			}
 		}
 	}()

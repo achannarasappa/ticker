@@ -87,7 +87,7 @@ func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
 		summary:            summary.NewModel(ctx),
 		groupMaxIndex:      groupMaxIndex,
 		groupSelectedIndex: 0,
-		groupSelectedName:  "default",
+		groupSelectedName:  "       ",
 		monitors:           monitors,
 	}
 }
@@ -122,7 +122,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.groupSelectedIndex = (m.groupSelectedIndex + groupSelectedCursor + m.groupMaxIndex + 1) % (m.groupMaxIndex + 1)
-			m.groupSelectedName = m.ctx.Groups[m.groupSelectedIndex].Name
 
 			// Invalidate all previous ticks, incremental price updates, and full price updates
 			m.versionVector++
@@ -200,6 +199,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for i, assetQuote := range m.assetQuotes {
 			m.assetQuotesLookup[assetQuote.Symbol] = i
 		}
+
+		m.groupSelectedName = m.ctx.Groups[m.groupSelectedIndex].Name
 
 		return m, nil
 

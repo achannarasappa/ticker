@@ -136,11 +136,15 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 }
 
 // SetAssetGroup sets the asset group for the monitor
-func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, nonce int) {
+func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, nonce int) error {
 	var wg sync.WaitGroup
 
 	// Create a channel for timeout
 	done := make(chan bool)
+	// Create error channel for collecting errors from each monitor
+	chanError := make(chan error, len(assetGroup.SymbolsBySource))
+	// Create a slice to collect errors
+	var errors []error
 
 	// Concurrently set symbols for each monitor (execute a synchronous call to update quotes for each monitor)
 	for _, symbolBySource := range assetGroup.SymbolsBySource {
@@ -150,7 +154,7 @@ func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, nonce int) {
 				defer wg.Done()
 				err := mon.SetSymbols(symbols, nonce)
 				if err != nil {
-					m.chanError <- err
+					chanError <- err
 				}
 				return
 			}(monitor, symbolBySource.Symbols)
@@ -164,13 +168,23 @@ func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, nonce int) {
 	}()
 
 	// Continue when the waitgroup is finished or a timeout is reached
-	select {
-	case <-done:
-	case <-time.After(2 * time.Second):
-		// Emit an error if not all monitors have completed setting symbols but continue
-		// The monitors that have not completed may return stale asset quotes
-		m.chanError <- fmt.Errorf("timeout waiting for monitors to set symbols on monitors")
+	timeout := time.After(2 * time.Second)
+	for {
+		select {
+		case <-done:
+			// If there are any errors, return them
+			if len(errors) > 0 {
+				return fmt.Errorf("errors setting symbols on monitor(s): %v", errors)
+			}
+			goto Continue
+		case err := <-chanError:
+			errors = append(errors, err)
+		case <-timeout:
+			// If there are any errors, return them along with the timeout error
+			return fmt.Errorf("timeout waiting for monitor(s) to set symbols. Additional non-timeout errors: %v", errors)
+		}
 	}
+Continue:
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -184,6 +198,8 @@ func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, nonce int) {
 
 	// Run the callback in a goroutine to avoid blocking
 	go m.onUpdateAssetGroupQuote(assetGroupQuote, nonce)
+
+	return nil
 }
 
 // SetOnUpdate sets the callback functions for when asset quotes are updated

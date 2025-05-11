@@ -3,8 +3,11 @@ package monitor_test
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -99,7 +102,6 @@ var _ = Describe("Monitor", func() {
 			It("should call the callback function", func() {
 
 				outputCallCountSingleAsset := 0
-				outputCallCountAllAssets := 0
 
 				// Set up mock responses
 				callCount := 0
@@ -156,7 +158,7 @@ var _ = Describe("Monitor", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				// Set symbols to monitor
-				m.SetAssetGroup(c.AssetGroup{
+				err = m.SetAssetGroup(c.AssetGroup{
 					SymbolsBySource: []c.AssetGroupSymbolsBySource{
 						{
 							Source:  c.QuoteSourceYahoo,
@@ -164,16 +166,15 @@ var _ = Describe("Monitor", func() {
 						},
 					},
 				}, 0)
-
+				Expect(err).NotTo(HaveOccurred())
 				// Set the callback function
-				m.SetOnUpdate(monitor.ConfigUpdateFns{
+				err = m.SetOnUpdate(monitor.ConfigUpdateFns{
 					OnUpdateAssetQuote: func(symbol string, assetQuote c.AssetQuote, versionVector int) {
 						outputCallCountSingleAsset++
 					},
-					OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, versionVector int) {
-						outputCallCountAllAssets++
-					},
+					OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, versionVector int) {},
 				})
+				Expect(err).NotTo(HaveOccurred())
 
 				// Start the monitor
 				m.Start()
@@ -196,7 +197,99 @@ var _ = Describe("Monitor", func() {
 
 			When("there is an error while listening for updates", func() {
 
-				PIt("should send the error to logger")
+				It("should send the error to logger", func() {
+
+					logReader, logWriter, _ := os.Pipe()
+
+					// Set up mock responses
+					callCount := 0
+					serverYahoo.RouteToHandler("GET", "/v7/finance/quote",
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("GET", "/v7/finance/quote"),
+							func(w http.ResponseWriter, req *http.Request) {
+								callCount++
+
+								if callCount >= 5 {
+									w.Header().Set("Location", "://bad-url")
+									w.WriteHeader(http.StatusFound)
+								} else {
+
+									basePrice := 150.00
+									// Increment price for each call in order to trigger an update message to be sent rather than ignoring updates do to price quote not changing
+									incrementedPrice := basePrice + float64(callCount-1)*10.00
+
+									response := unary.Response{
+										QuoteResponse: unary.ResponseQuoteResponse{
+											Quotes: []unary.ResponseQuote{
+												{
+													MarketState:                "REGULAR",
+													ShortName:                  "Apple Inc.",
+													PreMarketChange:            unary.ResponseFieldFloat{Raw: 1.0399933, Fmt: "1.0399933"},
+													PreMarketChangePercent:     unary.ResponseFieldFloat{Raw: 1.2238094, Fmt: "1.2238094"},
+													PreMarketPrice:             unary.ResponseFieldFloat{Raw: 86.03, Fmt: "86.03"},
+													RegularMarketChange:        unary.ResponseFieldFloat{Raw: 3.0800018, Fmt: "3.0800018"},
+													RegularMarketChangePercent: unary.ResponseFieldFloat{Raw: 3.7606857, Fmt: "3.7606857"},
+													RegularMarketPrice:         unary.ResponseFieldFloat{Raw: incrementedPrice, Fmt: fmt.Sprintf("%.2f", incrementedPrice)},
+													RegularMarketPreviousClose: unary.ResponseFieldFloat{Raw: 84.00, Fmt: "84.00"},
+													RegularMarketOpen:          unary.ResponseFieldFloat{Raw: 85.22, Fmt: "85.22"},
+													RegularMarketDayHigh:       unary.ResponseFieldFloat{Raw: 90.00, Fmt: "90.00"},
+													RegularMarketDayLow:        unary.ResponseFieldFloat{Raw: 80.00, Fmt: "80.00"},
+													PostMarketChange:           unary.ResponseFieldFloat{Raw: 1.37627, Fmt: "1.37627"},
+													PostMarketChangePercent:    unary.ResponseFieldFloat{Raw: 1.35735, Fmt: "1.35735"},
+													PostMarketPrice:            unary.ResponseFieldFloat{Raw: 86.56, Fmt: "86.56"},
+													Symbol:                     "AAPL",
+												},
+											},
+											Error: nil,
+										},
+									}
+									json.NewEncoder(w).Encode(response)
+								}
+							},
+						),
+					)
+
+					// Create monitor with test server URLs
+					errorLogger := log.New(logWriter, "", 0)
+
+					m, err := monitor.NewMonitor(monitor.ConfigMonitor{
+						RefreshInterval: 1,
+						Logger:          errorLogger,
+						ConfigMonitorsYahoo: monitor.ConfigMonitorsYahoo{
+							BaseURL:           serverYahoo.URL(),
+							SessionRootURL:    serverYahoo.URL(),
+							SessionCrumbURL:   serverYahoo.URL(),
+							SessionConsentURL: serverYahoo.URL(),
+						},
+					})
+					Expect(err).NotTo(HaveOccurred())
+
+					// Set symbols to monitor
+					m.SetAssetGroup(c.AssetGroup{
+						SymbolsBySource: []c.AssetGroupSymbolsBySource{
+							{
+								Source:  c.QuoteSourceYahoo,
+								Symbols: []string{"AAPL"},
+							},
+						},
+					}, 0)
+
+					// Start the monitor
+					m.Start()
+
+					// Wait for error response
+					time.Sleep(2 * time.Second)
+
+					// Close the log writer
+					logWriter.Close()
+
+					// Read the log output
+					logOutput, _ := io.ReadAll(logReader)
+					Expect(string(logOutput)).To(ContainSubstring("missing protocol scheme"))
+
+					// Clean up
+					m.Stop()
+				})
 
 			})
 

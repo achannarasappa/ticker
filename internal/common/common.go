@@ -1,6 +1,8 @@
 package common
 
 import (
+	"log"
+
 	"github.com/spf13/afero"
 )
 
@@ -9,6 +11,7 @@ type Context struct {
 	Config    Config
 	Groups    []AssetGroup
 	Reference Reference
+	Logger    *log.Logger
 }
 
 // Config represents user defined configuration
@@ -27,6 +30,7 @@ type Config struct {
 	CurrencyDisableUnitCostConversion bool               `yaml:"currency-disable-unit-cost-conversion"`
 	ColorScheme                       ConfigColorScheme  `yaml:"colors"`
 	AssetGroup                        []ConfigAssetGroup `yaml:"groups"`
+	Debug                             bool               `yaml:"debug"`
 }
 
 // ConfigColorScheme represents user defined color scheme

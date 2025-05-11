@@ -26,7 +26,7 @@ type Monitor struct {
 	assetGroupVersionVector int
 	assetGroup              c.AssetGroup
 	mu                      sync.RWMutex
-	errorLogger             *log.Logger
+	logger                  *log.Logger
 	ctx                     context.Context
 	cancel                  context.CancelFunc
 }
@@ -35,7 +35,7 @@ type Monitor struct {
 type ConfigMonitor struct {
 	RefreshInterval int
 	TargetCurrency  string
-	ErrorLogger     *log.Logger
+	Logger          *log.Logger
 	ConfigMonitorPriceCoinbase
 	ConfigMonitorsYahoo
 }
@@ -127,7 +127,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 		chanError:               chanError,
 		onUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, versionVector int) {},
 		onUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote, versionVector int) {},
-		errorLogger:             configMonitor.ErrorLogger,
+		logger:                  configMonitor.Logger,
 		ctx:                     ctx,
 		cancel:                  cancel,
 	}
@@ -267,8 +267,8 @@ func (m *Monitor) handleUpdates() {
 
 		case err := <-m.chanError:
 			// Log errors using the configured logger if one is set
-			if m.errorLogger != nil {
-				m.errorLogger.Printf("%v", err)
+			if m.logger != nil {
+				m.logger.Printf("%v", err)
 			}
 
 		case currencyRates := <-m.chanUpdateCurrencyRates:

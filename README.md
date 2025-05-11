@@ -86,6 +86,7 @@ ticker -w NET,AAPL,TSLA
 |`show-holdings`    |  |--show-holdings    |                |show holdings including weight, average cost, and quantity|
 |`sort`             |  |--sort             |                |sort quotes on the UI - options are change percent (default), `alpha`, `value`, and `user`|
 |`version`          |  |--version          |                |print the current version number|
+|`debug`            |  |                   |                |enable debug logging to `./ticker-log-<date>.log`|
 
 ## Configuration
 

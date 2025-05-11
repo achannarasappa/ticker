@@ -3,7 +3,10 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/achannarasappa/ticker/v4/internal/cli/symbol"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
@@ -98,10 +101,17 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		return c.Context{}, err
 	}
 
+	logger, err := getLogger(d)
+
+	if err != nil {
+		return c.Context{}, err
+	}
+
 	context := c.Context{
 		Reference: reference,
 		Config:    config,
 		Groups:    groups,
+		Logger:    logger,
 	}
 
 	return context, err
@@ -289,6 +299,18 @@ func getGroups(config c.Config, d c.Dependencies) ([]c.AssetGroup, error) {
 
 	return groups, nil
 
+}
+
+func getLogger(d c.Dependencies) (*log.Logger, error) {
+	// Create log file with current date
+	currentTime := time.Now()
+	logFileName := fmt.Sprintf("ticker-log-%s.log", currentTime.Format("2006-01-02"))
+	logFile, err := d.Fs.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create log file: %w", err)
+	}
+
+	return log.New(logFile, "", log.LstdFlags), nil
 }
 
 func getSymbolAndSource(symbol string, tickerSymbolToSourceSymbol symbol.TickerSymbolToSourceSymbol) symbolSource {

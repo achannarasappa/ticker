@@ -318,6 +318,24 @@ var _ = Describe("Cli", func() {
 
 		})
 
+		When("there is an error getting the logger", func() {
+
+			It("returns the error", func() {
+				dep := c.Dependencies{
+					Fs:         afero.NewMemMapFs(),
+					SymbolsURL: server.URL() + "/symbols.csv",
+				}
+
+				// Create a read-only filesystem to force an error when trying to create the log file
+				dep.Fs = afero.NewReadOnlyFs(dep.Fs)
+
+				_, outputErr := GetContext(dep, c.Config{})
+
+				Expect(outputErr).To(MatchError("failed to create log file: operation not permitted"))
+			})
+
+		})
+
 	})
 
 	Describe("GetConfig", func() {
@@ -403,6 +421,16 @@ var _ = Describe("Cli", func() {
 					AssertionErr:            BeNil(),
 					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
 						"Separate": Equal(true),
+					}),
+				}),
+
+				// option: debug
+				Entry("when debug is set in config file", Case{
+					InputOptions:            cli.Options{},
+					InputConfigFileContents: "debug: true",
+					AssertionErr:            BeNil(),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Debug": Equal(true),
 					}),
 				}),
 			)

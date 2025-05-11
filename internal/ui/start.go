@@ -13,6 +13,7 @@ func Start(dep *c.Dependencies, ctx *c.Context) func() error {
 		monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
 			RefreshInterval: ctx.Config.RefreshInterval,
 			TargetCurrency:  ctx.Config.Currency,
+			Logger:          ctx.Logger,
 			ConfigMonitorsYahoo: mon.ConfigMonitorsYahoo{
 				BaseURL:           dep.MonitorYahooBaseURL,
 				SessionRootURL:    dep.MonitorYahooSessionRootURL,

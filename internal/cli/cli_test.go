@@ -329,7 +329,7 @@ var _ = Describe("Cli", func() {
 				// Create a read-only filesystem to force an error when trying to create the log file
 				dep.Fs = afero.NewReadOnlyFs(dep.Fs)
 
-				_, outputErr := GetContext(dep, c.Config{})
+				_, outputErr := GetContext(dep, c.Config{Debug: true})
 
 				Expect(outputErr).To(MatchError("failed to create log file: operation not permitted"))
 			})

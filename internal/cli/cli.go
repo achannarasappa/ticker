@@ -101,10 +101,14 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		return c.Context{}, err
 	}
 
-	logger, err := getLogger(d)
+	var logger *log.Logger
 
-	if err != nil {
-		return c.Context{}, err
+	if config.Debug {
+		logger, err = getLogger(d)
+
+		if err != nil {
+			return c.Context{}, err
+		}
 	}
 
 	context := c.Context{

@@ -268,7 +268,7 @@ var _ = Describe("Watchlist", func() {
 			}
 			m.Update(SetAssetsMsg(setAssetsMsg))
 
-			expected := " USD   Real-Time   Cryptocurrency                                               "
+			expected := " USD   Live   Cryptocurrency                                                    "
 			Expect("\n" + getLine(removeFormatting(m.View()), 2)).To(Equal("\n" + expected))
 		})
 
@@ -340,7 +340,7 @@ var _ = Describe("Watchlist", func() {
 				m.Update(SetAssetsMsg(setAssetsMsg))
 
 				m.Context.Config.Currency = "EUR"
-				expected := " USD → EUR   Real-Time   NASDAQ                                                 "
+				expected := " USD → EUR   Live   NASDAQ                                                      "
 				Expect("\n" + getLine(removeFormatting(m.View()), 2)).To(Equal("\n" + expected))
 			})
 

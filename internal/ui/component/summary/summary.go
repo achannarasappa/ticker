@@ -6,6 +6,7 @@ import (
 	grid "github.com/achannarasappa/term-grid"
 	"github.com/achannarasappa/ticker/v4/internal/asset"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
+	tea "github.com/charmbracelet/bubbletea"
 
 	u "github.com/achannarasappa/ticker/v4/internal/ui/util"
 	"github.com/muesli/reflow/ansi"
@@ -13,42 +14,61 @@ import (
 
 // Model for summary section
 type Model struct {
-	Width   int
-	Summary asset.HoldingSummary
-	Context c.Context
+	width   int
+	summary asset.HoldingSummary
 	styles  c.Styles
 }
 
+type SetSummaryMsg asset.HoldingSummary
+
 // NewModel returns a model with default values
-func NewModel(ctx c.Context) Model {
-	return Model{
-		Width:  80,
+func NewModel(ctx c.Context) *Model {
+	return &Model{
+		width:  80,
 		styles: ctx.Reference.Styles,
 	}
+}
+
+// Init initializes the summary component
+func (m *Model) Init() tea.Cmd {
+	return nil
+}
+
+// Update handles messages for the summary component
+func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		return m, nil
+	case SetSummaryMsg:
+		m.summary = asset.HoldingSummary(msg)
+		return m, nil
+	}
+	return m, nil
 }
 
 // View rendering hook for bubbletea
 func (m Model) View() string {
 
-	if m.Width < 80 {
+	if m.width < 80 {
 		return ""
 	}
 
-	textChange := m.styles.TextLabel("Day Change: ") + quoteChangeText(m.Summary.DayChange.Amount, m.Summary.DayChange.Percent, m.styles) +
+	textChange := m.styles.TextLabel("Day Change: ") + quoteChangeText(m.summary.DayChange.Amount, m.summary.DayChange.Percent, m.styles) +
 		m.styles.TextLabel(" • ") +
-		m.styles.TextLabel("Change: ") + quoteChangeText(m.Summary.TotalChange.Amount, m.Summary.TotalChange.Percent, m.styles)
+		m.styles.TextLabel("Change: ") + quoteChangeText(m.summary.TotalChange.Amount, m.summary.TotalChange.Percent, m.styles)
 	widthChange := ansi.PrintableRuneWidth(textChange)
 	textValue := m.styles.TextLabel(" • ") +
-		m.styles.TextLabel("Value: ") + m.styles.TextLabel(u.ConvertFloatToString(m.Summary.Value, false))
+		m.styles.TextLabel("Value: ") + m.styles.TextLabel(u.ConvertFloatToString(m.summary.Value, false))
 	widthValue := ansi.PrintableRuneWidth(textValue)
 	textCost := m.styles.TextLabel(" • ") +
-		m.styles.TextLabel("Cost: ") + m.styles.TextLabel(u.ConvertFloatToString(m.Summary.Cost, false))
+		m.styles.TextLabel("Cost: ") + m.styles.TextLabel(u.ConvertFloatToString(m.summary.Cost, false))
 	widthCost := ansi.PrintableRuneWidth(textValue)
 
 	return grid.Render(grid.Grid{
 		Rows: []grid.Row{
 			{
-				Width: m.Width,
+				Width: m.width,
 				Cells: []grid.Cell{
 					{
 						Text:  textChange,
@@ -67,9 +87,9 @@ func (m Model) View() string {
 				},
 			},
 			{
-				Width: m.Width,
+				Width: m.width,
 				Cells: []grid.Cell{
-					{Text: m.styles.TextLine(strings.Repeat("━", m.Width))},
+					{Text: m.styles.TextLine(strings.Repeat("━", m.width))},
 				},
 			},
 		},

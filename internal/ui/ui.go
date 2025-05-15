@@ -42,7 +42,7 @@ type Model struct {
 	holdingSummary     asset.HoldingSummary
 	viewport           viewport.Model
 	watchlist          *watchlist.Model
-	summary            summary.Model
+	summary            *summary.Model
 	lastUpdateTime     string
 	groupSelectedIndex int
 	groupMaxIndex      int
@@ -71,19 +71,23 @@ func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
 
 	groupMaxIndex := len(ctx.Groups) - 1
 
-	w := watchlist.NewModel(ctx)
-
 	return &Model{
-		ctx:                ctx,
-		headerHeight:       getVerticalMargin(ctx.Config),
-		ready:              false,
-		requestInterval:    ctx.Config.RefreshInterval,
-		versionVector:      0,
-		assets:             make([]c.Asset, 0),
-		assetQuotes:        make([]c.AssetQuote, 0),
-		assetQuotesLookup:  make(map[string]int),
-		holdingSummary:     asset.HoldingSummary{},
-		watchlist:          w,
+		ctx:               ctx,
+		headerHeight:      getVerticalMargin(ctx.Config),
+		ready:             false,
+		requestInterval:   ctx.Config.RefreshInterval,
+		versionVector:     0,
+		assets:            make([]c.Asset, 0),
+		assetQuotes:       make([]c.AssetQuote, 0),
+		assetQuotesLookup: make(map[string]int),
+		holdingSummary:    asset.HoldingSummary{},
+		watchlist: watchlist.NewModel(watchlist.Config{
+			Separate:              ctx.Config.Separate,
+			ShowHoldings:          ctx.Config.ShowHoldings,
+			ExtraInfoExchange:     ctx.Config.ExtraInfoExchange,
+			ExtraInfoFundamentals: ctx.Config.ExtraInfoFundamentals,
+			Styles:                ctx.Reference.Styles,
+		}),
 		summary:            summary.NewModel(ctx),
 		groupMaxIndex:      groupMaxIndex,
 		groupSelectedIndex: 0,
@@ -145,8 +149,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.mu.Lock()
 		defer m.mu.Unlock()
 
-		m.watchlist.Width = msg.Width
-		m.summary.Width = msg.Width
 		viewportHeight := msg.Height - m.headerHeight - footerHeight
 
 		if !m.ready {
@@ -157,10 +159,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.Height = viewportHeight
 		}
 
+		// Forward window size message to watchlist and summary component
+		m.watchlist, _ = m.watchlist.Update(msg)
+		m.summary, _ = m.summary.Update(msg)
+
 		return m, nil
 
 	// Trigger component re-render if data has changed
 	case tickMsg:
+
+		cmds := make([]tea.Cmd, 0)
 
 		m.mu.Lock()
 		defer m.mu.Unlock()
@@ -170,15 +178,23 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-		m.watchlist.Update(watchlist.SetAssetsMsg(m.assets))
+		// Update watchlist and summary components
+		m.watchlist, _ = m.watchlist.Update(watchlist.SetAssetsMsg(m.assets))
+		m.summary, _ = m.summary.Update(summary.SetSummaryMsg(m.holdingSummary))
+
+		// Set the current tick time
 		m.lastUpdateTime = getTime()
-		m.summary.Summary = m.holdingSummary
+
+		// Update the viewport
 		if m.ready {
-			m.viewport.SetContent(m.watchlist.View())
-			m.viewport, _ = m.viewport.Update(msg)
+			var cmd tea.Cmd
+			m.viewport, cmd = m.viewport.Update(msg)
+			cmds = append(cmds, cmd)
 		}
 
-		return m, tick(msg.versionVector)
+		cmds = append(cmds, tick(msg.versionVector))
+
+		return m, tea.Batch(cmds...)
 
 	case SetAssetGroupQuoteMsg:
 
@@ -258,6 +274,8 @@ func (m *Model) View() string {
 	if !m.ready {
 		return "\n  Initializing..."
 	}
+
+	m.viewport.SetContent(m.watchlist.View())
 
 	viewSummary := ""
 

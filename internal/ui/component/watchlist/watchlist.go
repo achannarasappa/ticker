@@ -62,6 +62,9 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SetAssetsMsg:
 
+		var cmd tea.Cmd
+		cmds := make([]tea.Cmd, 0)
+
 		// Convert []c.Asset to []*c.Asset and update assetsBySymbol map
 		assets := make([]*c.Asset, len(msg))
 		assetsBySymbol := make(map[string]*c.Asset)
@@ -75,7 +78,8 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 
 		for i, asset := range assets {
 			if i < len(m.rows) {
-				m.rows[i], _ = m.rows[i].Update(row.UpdateAssetMsg(asset))
+				m.rows[i], cmd = m.rows[i].Update(row.UpdateAssetMsg(asset))
+				cmds = append(cmds, cmd)
 				m.rowsBySymbol[assets[i].Symbol] = m.rows[i]
 			} else {
 				m.rows = append(m.rows, row.New(row.Config{
@@ -102,7 +106,7 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 			})
 		}
 
-		return m, nil
+		return m, tea.Batch(cmds...)
 
 	case tea.WindowSizeMsg:
 
@@ -115,6 +119,19 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 			})
 		}
 		return m, nil
+
+	case row.FrameMsg:
+
+		var cmd tea.Cmd
+		cmds := make([]tea.Cmd, 0)
+
+		// TODO: send message to a specific row rather than all rows
+		for i, r := range m.rows {
+			m.rows[i], cmd = r.Update(row.FrameMsg(msg))
+			cmds = append(cmds, cmd)
+		}
+		return m, tea.Batch(cmds...)
+
 	}
 
 	return m, nil

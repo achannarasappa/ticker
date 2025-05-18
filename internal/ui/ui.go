@@ -11,6 +11,7 @@ import (
 	mon "github.com/achannarasappa/ticker/v4/internal/monitor"
 	"github.com/achannarasappa/ticker/v4/internal/ui/component/summary"
 	"github.com/achannarasappa/ticker/v4/internal/ui/component/watchlist"
+	"github.com/achannarasappa/ticker/v4/internal/ui/component/watchlist/row"
 
 	util "github.com/achannarasappa/ticker/v4/internal/ui/util"
 
@@ -146,6 +147,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
+
+		var cmd tea.Cmd
+
 		m.mu.Lock()
 		defer m.mu.Unlock()
 
@@ -160,14 +164,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		// Forward window size message to watchlist and summary component
-		m.watchlist, _ = m.watchlist.Update(msg)
+		m.watchlist, cmd = m.watchlist.Update(msg)
 		m.summary, _ = m.summary.Update(msg)
 
-		return m, nil
+		return m, cmd
 
 	// Trigger component re-render if data has changed
 	case tickMsg:
 
+		var cmd tea.Cmd
 		cmds := make([]tea.Cmd, 0)
 
 		m.mu.Lock()
@@ -179,15 +184,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		// Update watchlist and summary components
-		m.watchlist, _ = m.watchlist.Update(watchlist.SetAssetsMsg(m.assets))
+		m.watchlist, cmd = m.watchlist.Update(watchlist.SetAssetsMsg(m.assets))
 		m.summary, _ = m.summary.Update(summary.SetSummaryMsg(m.holdingSummary))
+
+		cmds = append(cmds, cmd)
 
 		// Set the current tick time
 		m.lastUpdateTime = getTime()
 
 		// Update the viewport
 		if m.ready {
-			var cmd tea.Cmd
 			m.viewport, cmd = m.viewport.Update(msg)
 			cmds = append(cmds, cmd)
 		}
@@ -261,6 +267,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.holdingSummary = holdingSummary
 
 		return m, nil
+
+	case row.FrameMsg:
+		var cmd tea.Cmd
+		m.watchlist, cmd = m.watchlist.Update(msg)
+		return m, cmd
 	}
 
 	return m, nil

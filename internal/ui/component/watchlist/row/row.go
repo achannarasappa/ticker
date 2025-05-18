@@ -3,12 +3,15 @@ package row
 import (
 	"strconv"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 	u "github.com/achannarasappa/ticker/v4/internal/ui/util"
 
 	grid "github.com/achannarasappa/term-grid"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 const (
@@ -20,6 +23,8 @@ const (
 	WidthChangeStatic   = 12 // "↓ " + " (100.00%)" = 12 length
 	WidthRangeStatic    = 3  // " - " = 3 length
 )
+
+var lastID int64
 
 type SetCellWidthsMsg struct {
 	Width      int
@@ -38,6 +43,7 @@ type CellWidthsContainer struct {
 }
 
 type Config struct {
+	ID                    int
 	Separate              bool
 	ShowHoldings          bool
 	ExtraInfoExchange     bool
@@ -48,16 +54,34 @@ type Config struct {
 
 type UpdateAssetMsg *c.Asset
 
+type FrameMsg int
+
 // Model for watchlist row
 type Model struct {
-	width      int
-	config     Config
-	cellWidths CellWidthsContainer
+	id                   int
+	width                int
+	config               Config
+	cellWidths           CellWidthsContainer
+	frame                int
+	priceStyle           lipgloss.Style
+	priceChangeSegment   string
+	priceNoChangeSegment string
+	priceChangeDirection int
 }
 
 // New returns a model with default values
 func New(config Config) *Model {
+
+	id := 0
+
+	if config.ID != 0 {
+		id = config.ID
+	} else {
+		id = nextID()
+	}
+
 	return &Model{
+		id:     id,
 		width:  80,
 		config: config,
 	}
@@ -76,7 +100,88 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 		m.width = msg.Width
 		return m, nil
 	case UpdateAssetMsg:
+
+		// If symbol has not changed and price has changed then start the price animation
+		if m.config.Asset.Symbol == msg.Symbol && m.config.Asset.QuotePrice.Price != msg.QuotePrice.Price {
+			// Reset color and frame on number change
+			m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("15")).Background(lipgloss.Color(""))
+			m.frame = 0
+
+			oldPrice := u.ConvertFloatToString(m.config.Asset.QuotePrice.Price, m.config.Asset.Meta.IsVariablePrecision)
+			newPrice := u.ConvertFloatToString(msg.QuotePrice.Price, msg.Meta.IsVariablePrecision)
+
+			if msg.QuotePrice.Price > m.config.Asset.QuotePrice.Price {
+				m.priceChangeDirection = 1
+			} else if msg.QuotePrice.Price < m.config.Asset.QuotePrice.Price {
+				m.priceChangeDirection = -1
+			}
+
+			// Find the last position where prices differ by iterating from right to left
+			if len(oldPrice) == len(newPrice) {
+				i := len(newPrice) - 1
+				highestIndex := i
+				for i >= 0 {
+					if newPrice[i] != oldPrice[i] {
+						highestIndex = i
+					}
+					i--
+				}
+
+				// Split the price into unchanged and changed segments
+				m.priceNoChangeSegment = newPrice[:highestIndex]
+				m.priceChangeSegment = newPrice[highestIndex:]
+			} else {
+				m.priceNoChangeSegment = ""
+				m.priceChangeSegment = newPrice
+			}
+
+			m.config.Asset = msg
+			return m, frameCmd(m.id)
+		}
+
+		// If symbol has changed or price has not changed then just update the asset
 		m.config.Asset = msg
+
+		return m, nil
+
+	case FrameMsg:
+
+		if m.id != int(msg) {
+			return m, nil
+		}
+
+		if m.frame < 4 && m.priceChangeDirection > 0 {
+			switch m.frame {
+			case 0:
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Background(lipgloss.Color("22"))
+			case 1:
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Background(lipgloss.Color("22"))
+			case 2:
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("84")).Background(lipgloss.Color("232"))
+			case 3:
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("15")).Background(lipgloss.Color(""))
+			}
+
+			m.frame++
+			return m, frameCmd(m.id)
+		}
+
+		if m.frame < 4 && m.priceChangeDirection < 0 {
+			switch m.frame {
+			case 0:
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Background(lipgloss.Color("52"))
+			case 1:
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Background(lipgloss.Color("52"))
+			case 2:
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("167")).Background(lipgloss.Color("232"))
+			case 3:
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("15")).Background(lipgloss.Color(""))
+			}
+
+			m.frame++
+			return m, frameCmd(m.id)
+		}
+
 		return m, nil
 	}
 
@@ -92,7 +197,7 @@ func (m *Model) View() string {
 		rows,
 		grid.Row{
 			Width: m.width,
-			Cells: buildCells(m.config, m.cellWidths),
+			Cells: m.buildCells(),
 		})
 
 	if m.config.ExtraInfoExchange {
@@ -120,51 +225,51 @@ func (m *Model) View() string {
 	return grid.Render(grid.Grid{Rows: rows, GutterHorizontal: WidthGutter})
 }
 
-func buildCells(config Config, cellWidths CellWidthsContainer) []grid.Cell {
+func (m *Model) buildCells() []grid.Cell {
 
-	if !config.ExtraInfoFundamentals && !config.ShowHoldings {
+	if !m.config.ExtraInfoFundamentals && !m.config.ShowHoldings {
 
 		return []grid.Cell{
-			{Text: textName(config.Asset, config.Styles)},
-			{Text: textMarketState(config.Asset, config.Styles), Width: WidthMarketState, Align: grid.Right},
-			{Text: textQuote(config.Asset, config.Styles), Width: cellWidths.WidthQuote, Align: grid.Right},
+			{Text: textName(m.config.Asset, m.config.Styles)},
+			{Text: textMarketState(m.config.Asset, m.config.Styles), Width: WidthMarketState, Align: grid.Right},
+			{Text: textQuote(m.config.Asset, m.config.Styles, m.priceStyle, m.priceNoChangeSegment, m.priceChangeSegment), Width: m.cellWidths.WidthQuote, Align: grid.Right},
 		}
 
 	}
 
 	cellName := []grid.Cell{
-		{Text: textName(config.Asset, config.Styles), Width: WidthName},
+		{Text: textName(m.config.Asset, m.config.Styles), Width: WidthName},
 		{Text: ""},
-		{Text: textMarketState(config.Asset, config.Styles), Width: WidthMarketState, Align: grid.Right},
+		{Text: textMarketState(m.config.Asset, m.config.Styles), Width: WidthMarketState, Align: grid.Right},
 	}
 
 	cells := []grid.Cell{
-		{Text: textQuote(config.Asset, config.Styles), Width: cellWidths.WidthQuote, Align: grid.Right},
+		{Text: textQuote(m.config.Asset, m.config.Styles, m.priceStyle, m.priceNoChangeSegment, m.priceChangeSegment), Width: m.cellWidths.WidthQuote, Align: grid.Right},
 	}
-	widthMinTerm := WidthName + WidthMarketState + cellWidths.WidthQuote + (3 * WidthGutter)
+	widthMinTerm := WidthName + WidthMarketState + m.cellWidths.WidthQuote + (3 * WidthGutter)
 
-	if config.ShowHoldings {
-		widthHoldings := widthMinTerm + cellWidths.WidthPosition + (3 * WidthGutter) + cellWidths.WidthPositionExtended + WidthLabel
+	if m.config.ShowHoldings {
+		widthHoldings := widthMinTerm + m.cellWidths.WidthPosition + (3 * WidthGutter) + m.cellWidths.WidthPositionExtended + WidthLabel
 
 		cells = append(
 			[]grid.Cell{
 				{
-					Text:            textPositionExtendedLabels(config.Asset, config.Styles),
+					Text:            textPositionExtendedLabels(m.config.Asset, m.config.Styles),
 					Width:           WidthLabel,
 					Align:           grid.Right,
 					VisibleMinWidth: widthHoldings,
 				},
 				{
-					Text:            textPositionExtended(config.Asset, config.Styles),
-					Width:           cellWidths.WidthPositionExtended,
+					Text:            textPositionExtended(m.config.Asset, m.config.Styles),
+					Width:           m.cellWidths.WidthPositionExtended,
 					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + cellWidths.WidthPosition + (2 * WidthGutter) + cellWidths.WidthPositionExtended,
+					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthPosition + (2 * WidthGutter) + m.cellWidths.WidthPositionExtended,
 				},
 				{
-					Text:            textPosition(config.Asset, config.Styles),
-					Width:           cellWidths.WidthPosition,
+					Text:            textPosition(m.config.Asset, m.config.Styles),
+					Width:           m.cellWidths.WidthPosition,
 					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + cellWidths.WidthPosition + WidthGutter,
+					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthPosition + WidthGutter,
 				},
 			},
 			cells...,
@@ -172,44 +277,44 @@ func buildCells(config Config, cellWidths CellWidthsContainer) []grid.Cell {
 		widthMinTerm = widthHoldings
 	}
 
-	if config.ExtraInfoFundamentals {
+	if m.config.ExtraInfoFundamentals {
 		cells = append(
 			[]grid.Cell{
 				{
-					Text:            textVolumeMarketCapLabels(config.Asset, config.Styles),
+					Text:            textVolumeMarketCapLabels(m.config.Asset, m.config.Styles),
 					Width:           WidthLabel,
 					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (6 * WidthGutter) + (3 * WidthLabel) + cellWidths.WidthQuoteRange + cellWidths.WidthVolumeMarketCap,
+					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (6 * WidthGutter) + (3 * WidthLabel) + m.cellWidths.WidthQuoteRange + m.cellWidths.WidthVolumeMarketCap,
 				},
 				{
-					Text:            textVolumeMarketCap(config.Asset),
-					Width:           cellWidths.WidthVolumeMarketCap,
+					Text:            textVolumeMarketCap(m.config.Asset),
+					Width:           m.cellWidths.WidthVolumeMarketCap,
 					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (5 * WidthGutter) + (2 * WidthLabel) + cellWidths.WidthQuoteRange + cellWidths.WidthVolumeMarketCap,
+					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (5 * WidthGutter) + (2 * WidthLabel) + m.cellWidths.WidthQuoteRange + m.cellWidths.WidthVolumeMarketCap,
 				},
 				{
-					Text:            textQuoteRangeLabels(config.Asset, config.Styles),
+					Text:            textQuoteRangeLabels(m.config.Asset, m.config.Styles),
 					Width:           WidthLabel,
 					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (4 * WidthGutter) + (2 * WidthLabel) + cellWidths.WidthQuoteRange,
+					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (4 * WidthGutter) + (2 * WidthLabel) + m.cellWidths.WidthQuoteRange,
 				},
 				{
-					Text:            textQuoteRange(config.Asset, config.Styles),
-					Width:           cellWidths.WidthQuoteRange,
+					Text:            textQuoteRange(m.config.Asset, m.config.Styles),
+					Width:           m.cellWidths.WidthQuoteRange,
 					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (3 * WidthGutter) + WidthLabel + cellWidths.WidthQuoteRange,
+					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (3 * WidthGutter) + WidthLabel + m.cellWidths.WidthQuoteRange,
 				},
 				{
-					Text:            textQuoteExtendedLabels(config.Asset, config.Styles),
+					Text:            textQuoteExtendedLabels(m.config.Asset, m.config.Styles),
 					Width:           WidthLabel,
 					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + (2 * WidthGutter) + WidthLabel,
+					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (2 * WidthGutter) + WidthLabel,
 				},
 				{
-					Text:            textQuoteExtended(config.Asset, config.Styles),
-					Width:           cellWidths.WidthQuoteExtended,
+					Text:            textQuoteExtended(m.config.Asset, m.config.Styles),
+					Width:           m.cellWidths.WidthQuoteExtended,
 					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + cellWidths.WidthQuoteExtended + WidthGutter,
+					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + WidthGutter,
 				},
 			},
 			cells...,
@@ -236,8 +341,8 @@ func textName(asset *c.Asset, styles c.Styles) string {
 		styles.TextLabel(asset.Name)
 }
 
-func textQuote(asset *c.Asset, styles c.Styles) string {
-	return styles.Text(u.ConvertFloatToString(asset.QuotePrice.Price, asset.Meta.IsVariablePrecision)) +
+func textQuote(asset *c.Asset, styles c.Styles, priceStyle lipgloss.Style, priceNoChangeSegment string, priceChangeSegment string) string {
+	return priceNoChangeSegment + priceStyle.Render(priceChangeSegment) +
 		"\n" +
 		quoteChangeText(asset.QuotePrice.Change, asset.QuotePrice.ChangePercent, asset.Meta.IsVariablePrecision, styles)
 }
@@ -461,4 +566,14 @@ func exchangeDelayText(delay float64, delayText string) string {
 
 func formatTag(text string, style c.Styles) string {
 	return style.Tag(" " + text + " ")
+}
+
+func frameCmd(id int) tea.Cmd {
+	return tea.Tick(50*time.Millisecond, func(t time.Time) tea.Msg {
+		return FrameMsg(id)
+	})
+}
+
+func nextID() int {
+	return int(atomic.AddInt64(&lastID, 1))
 }

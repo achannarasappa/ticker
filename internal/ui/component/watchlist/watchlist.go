@@ -132,7 +132,7 @@ func (m *Model) View() string {
 		rows = append(rows, row.View())
 	}
 
-	return strings.Join(rows, strings.Repeat("\n", 1+row.WidthGutter))
+	return strings.Join(rows, "\n")
 
 }
 func getCellWidths(assets []*c.Asset) row.CellWidthsContainer {

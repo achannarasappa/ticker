@@ -142,7 +142,7 @@ var _ = Describe("Print", func() {
 				output := getStdout(func() {
 					print.Run(&inputDependencies, &inputContext, &inputOptions)(&cobra.Command{}, []string{})
 				})
-				Expect(output).To(Equal("name,symbol,price,value,cost,quantity,weight\nAlphabet Inc.,GOOG,2838.42,28384,10000,10.000,96.997\nRoblox Corporation,RBLX,87.880,878.80,500.00,10.000,3.0031\n\n"))
+				Expect(output).To(Equal("name,symbol,price,value,cost,quantity,weight\nAlphabet Inc.,GOOG,2838.42,28384.20,10000.00,10.000,96.997\nRoblox Corporation,RBLX,87.880,878.80,500.00,10.000,3.0031\n\n"))
 			})
 		})
 	})

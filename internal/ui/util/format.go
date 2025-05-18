@@ -15,7 +15,7 @@ func getPrecision(f float64) int {
 		return 2
 	}
 
-	if v >= 10000 {
+	if v >= 1000000 {
 		return 0
 	}
 

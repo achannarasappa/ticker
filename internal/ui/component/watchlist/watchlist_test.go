@@ -10,6 +10,7 @@ import (
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 	. "github.com/achannarasappa/ticker/v4/internal/ui/component/watchlist"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func removeFormatting(text string) string {
@@ -33,16 +34,14 @@ var _ = Describe("Watchlist", func() {
 	}
 
 	It("should render a watchlist", func() {
-		m := NewModel(c.Context{
-			Reference: c.Reference{Styles: stylesFixture},
-			Config: c.Config{
-				ShowHoldings:          true,
-				ExtraInfoExchange:     true,
-				ExtraInfoFundamentals: true,
-				Sort:                  "alpha",
-			},
+		m := NewModel(Config{
+			Styles:                stylesFixture,
+			ShowHoldings:          true,
+			ExtraInfoExchange:     true,
+			ExtraInfoFundamentals: true,
+			Sort:                  "alpha",
 		})
-		m.Width = 175
+		m.Update(tea.WindowSizeMsg{Width: 175})
 		setAssetsMsg := []c.Asset{
 			{
 				Symbol: "STOCK1", Name: "Stock 1 Inc. (gain)", QuoteExtended: c.QuoteExtended{MarketCap: 23467907, Volume: 4239786698},
@@ -136,12 +135,10 @@ var _ = Describe("Watchlist", func() {
 
 	When("an unknown update message is received", func() {
 		It("should ignore the message", func() {
-			m := NewModel(c.Context{
-				Reference: c.Reference{Styles: stylesFixture},
-				Config: c.Config{
-					ShowHoldings: false,
-					Sort:         "alpha",
-				},
+			m := NewModel(Config{
+				Styles:       stylesFixture,
+				ShowHoldings: false,
+				Sort:         "alpha",
 			})
 
 			// Initial state
@@ -174,14 +171,12 @@ var _ = Describe("Watchlist", func() {
 		When("the show-separator layout flag is set", func() {
 			It("should render a watchlist with separators", func() {
 
-				m := NewModel(c.Context{
-					Reference: c.Reference{Styles: stylesFixture},
-					Config: c.Config{
-						Separate:              true,
-						ExtraInfoExchange:     false,
-						ExtraInfoFundamentals: false,
-						Sort:                  "",
-					},
+				m := NewModel(Config{
+					Styles:                stylesFixture,
+					Separate:              true,
+					ExtraInfoExchange:     false,
+					ExtraInfoFundamentals: false,
+					Sort:                  "",
 				})
 				setAssetsMsg := []c.Asset{
 					{
@@ -239,11 +234,9 @@ var _ = Describe("Watchlist", func() {
 
 	When("the option for extra exchange information is set", func() {
 		It("should render extra exchange information", func() {
-			m := NewModel(c.Context{
-				Reference: c.Reference{Styles: stylesFixture},
-				Config: c.Config{
-					ExtraInfoExchange: true,
-				},
+			m := NewModel(Config{
+				Styles:            stylesFixture,
+				ExtraInfoExchange: true,
 			})
 			setAssetsMsg := []c.Asset{
 				{
@@ -274,11 +267,9 @@ var _ = Describe("Watchlist", func() {
 
 		When("the exchange has a delay", func() {
 			It("should render extra exchange information with the delay amount", func() {
-				m := NewModel(c.Context{
-					Reference: c.Reference{Styles: stylesFixture},
-					Config: c.Config{
-						ExtraInfoExchange: true,
-					},
+				m := NewModel(Config{
+					Styles:            stylesFixture,
+					ExtraInfoExchange: true,
 				})
 				setAssetsMsg := []c.Asset{
 					{
@@ -309,12 +300,9 @@ var _ = Describe("Watchlist", func() {
 
 		When("the currency is being converted", func() {
 			It("should show an indicator with the to and from currency codes", func() {
-				m := NewModel(c.Context{
-					Reference: c.Reference{Styles: stylesFixture},
-					Config: c.Config{
-						ExtraInfoExchange: true,
-						Currency:          "EUR",
-					},
+				m := NewModel(Config{
+					Styles:            stylesFixture,
+					ExtraInfoExchange: true,
 				})
 				setAssetsMsg := []c.Asset{
 					{
@@ -339,7 +327,6 @@ var _ = Describe("Watchlist", func() {
 				}
 				m.Update(SetAssetsMsg(setAssetsMsg))
 
-				m.Context.Config.Currency = "EUR"
 				expected := " USD → EUR   Live   NASDAQ                                                      "
 				Expect("\n" + getLine(removeFormatting(m.View()), 2)).To(Equal("\n" + expected))
 			})
@@ -349,13 +336,11 @@ var _ = Describe("Watchlist", func() {
 
 	When("the option for extra fundamental information is set", func() {
 		It("should render extra fundamental information", func() {
-			m := NewModel(c.Context{
-				Reference: c.Reference{Styles: stylesFixture},
-				Config: c.Config{
-					ExtraInfoFundamentals: true,
-				},
+			m := NewModel(Config{
+				Styles:                stylesFixture,
+				ExtraInfoFundamentals: true,
 			})
-			m.Width = 165
+			m.Update(tea.WindowSizeMsg{Width: 165})
 			setAssetsMsg := []c.Asset{
 				{
 					Symbol: "BTC-USD",
@@ -391,13 +376,11 @@ var _ = Describe("Watchlist", func() {
 
 		When("there is no day range or open price", func() {
 
-			m := NewModel(c.Context{
-				Reference: c.Reference{Styles: stylesFixture},
-				Config: c.Config{
-					ExtraInfoFundamentals: true,
-				},
+			m := NewModel(Config{
+				Styles:                stylesFixture,
+				ExtraInfoFundamentals: true,
 			})
-			m.Width = 135
+			m.Update(tea.WindowSizeMsg{Width: 135})
 			setAssetsMsg := []c.Asset{
 				{
 					Symbol: "BTC-USD",
@@ -431,13 +414,11 @@ var _ = Describe("Watchlist", func() {
 
 		When("the asset is a futures contract", func() {
 			It("should render the underlying asset symbol", func() {
-				m := NewModel(c.Context{
-					Reference: c.Reference{Styles: stylesFixture},
-					Config: c.Config{
-						ExtraInfoFundamentals: true,
-					},
+				m := NewModel(Config{
+					Styles:                stylesFixture,
+					ExtraInfoFundamentals: true,
 				})
-				m.Width = 150
+				m.Update(tea.WindowSizeMsg{Width: 150})
 				setAssetsMsg := []c.Asset{
 					{
 						Symbol: "BIT-27DEC24-CDE",
@@ -470,13 +451,11 @@ var _ = Describe("Watchlist", func() {
 
 			When("the index price is not set", func() {
 				It("should not render the index price", func() {
-					m := NewModel(c.Context{
-						Reference: c.Reference{Styles: stylesFixture},
-						Config: c.Config{
-							ExtraInfoFundamentals: true,
-						},
+					m := NewModel(Config{
+						Styles:                stylesFixture,
+						ExtraInfoFundamentals: true,
 					})
-					m.Width = 150
+					m.Update(tea.WindowSizeMsg{Width: 150})
 					setAssetsMsg := []c.Asset{
 						{
 							Symbol: "BIT-27DEC24-CDE",
@@ -500,13 +479,11 @@ var _ = Describe("Watchlist", func() {
 
 			When("the day range and expiry are set", func() {
 				It("should render both fields", func() {
-					m := NewModel(c.Context{
-						Reference: c.Reference{Styles: stylesFixture},
-						Config: c.Config{
-							ExtraInfoFundamentals: true,
-						},
+					m := NewModel(Config{
+						Styles:                stylesFixture,
+						ExtraInfoFundamentals: true,
 					})
-					m.Width = 150
+					m.Update(tea.WindowSizeMsg{Width: 150})
 					setAssetsMsg := []c.Asset{
 						{
 							Symbol: "BIT-27DEC24-CDE",
@@ -539,13 +516,11 @@ var _ = Describe("Watchlist", func() {
 
 	When("the option for extra holding information is set", func() {
 		It("should render extra holding information", func() {
-			m := NewModel(c.Context{
-				Reference: c.Reference{Styles: stylesFixture},
-				Config: c.Config{
-					ShowHoldings: true,
-				},
+			m := NewModel(Config{
+				Styles:       stylesFixture,
+				ShowHoldings: true,
 			})
-			m.Width = 120
+			m.Update(tea.WindowSizeMsg{Width: 120})
 			setAssetsMsg := []c.Asset{
 				{
 					Symbol: "PTON",
@@ -577,13 +552,11 @@ var _ = Describe("Watchlist", func() {
 
 		When("the holding quantity is high", func() {
 			It("should render extra holding information without truncation", func() {
-				m := NewModel(c.Context{
-					Reference: c.Reference{Styles: stylesFixture},
-					Config: c.Config{
-						ShowHoldings: true,
-					},
+				m := NewModel(Config{
+					Styles:       stylesFixture,
+					ShowHoldings: true,
 				})
-				m.Width = 120
+				m.Update(tea.WindowSizeMsg{Width: 120})
 				setAssetsMsg := []c.Asset{
 					{
 						Symbol: "PENNY",
@@ -616,13 +589,11 @@ var _ = Describe("Watchlist", func() {
 
 		When("there is no position", func() {
 			It("should not render quantity or average cost", func() {
-				m := NewModel(c.Context{
-					Reference: c.Reference{Styles: stylesFixture},
-					Config: c.Config{
-						ShowHoldings: true,
-					},
+				m := NewModel(Config{
+					Styles:       stylesFixture,
+					ShowHoldings: true,
 				})
-				m.Width = 120
+				m.Update(tea.WindowSizeMsg{Width: 120})
 				setAssetsMsg := []c.Asset{
 					{
 						Symbol: "PTON",
@@ -647,14 +618,12 @@ var _ = Describe("Watchlist", func() {
 
 	When("no quotes are set", func() {
 		It("should render an empty watchlist", func() {
-			m := NewModel(c.Context{
-				Reference: c.Reference{Styles: stylesFixture},
-				Config: c.Config{
-					Separate:              false,
-					ExtraInfoExchange:     false,
-					ExtraInfoFundamentals: false,
-					Sort:                  "",
-				},
+			m := NewModel(Config{
+				Styles:                stylesFixture,
+				Separate:              false,
+				ExtraInfoExchange:     false,
+				ExtraInfoFundamentals: false,
+				Sort:                  "",
 			})
 			Expect(m.View()).To(Equal(""))
 		})
@@ -662,30 +631,26 @@ var _ = Describe("Watchlist", func() {
 
 	When("the window width is less than the minimum", func() {
 		It("should render an empty watchlist", func() {
-			m := NewModel(c.Context{
-				Reference: c.Reference{Styles: stylesFixture},
-				Config: c.Config{
-					Separate:              false,
-					ExtraInfoExchange:     false,
-					ExtraInfoFundamentals: false,
-					Sort:                  "",
-				},
+			m := NewModel(Config{
+				Styles:                stylesFixture,
+				Separate:              false,
+				ExtraInfoExchange:     false,
+				ExtraInfoFundamentals: false,
+				Sort:                  "",
 			})
-			m.Width = 70
+			m.Update(tea.WindowSizeMsg{Width: 70})
 			Expect(m.View()).To(Equal("Terminal window too narrow to render content\nResize to fix (70/80)"))
 		})
 	})
 
 	Describe("Init", func() {
 		It("should return nil command", func() {
-			m := NewModel(c.Context{
-				Reference: c.Reference{Styles: stylesFixture},
-				Config: c.Config{
-					ShowHoldings:          false,
-					ExtraInfoExchange:     false,
-					ExtraInfoFundamentals: false,
-					Sort:                  "alpha",
-				},
+			m := NewModel(Config{
+				Styles:                stylesFixture,
+				ShowHoldings:          false,
+				ExtraInfoExchange:     false,
+				ExtraInfoFundamentals: false,
+				Sort:                  "alpha",
 			})
 
 			cmd := m.Init()

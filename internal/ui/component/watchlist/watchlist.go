@@ -65,8 +65,6 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 		// Convert []c.Asset to []*c.Asset and update assetsBySymbol map
 		assets := make([]*c.Asset, len(msg))
 		assetsBySymbol := make(map[string]*c.Asset)
-		rows := make([]*row.Model, len(msg))
-		rowsBySymbol := make(map[string]*row.Model)
 
 		for i := range msg {
 			assets[i] = &msg[i]
@@ -76,26 +74,24 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 		assets = m.sorter(assets)
 
 		for i, asset := range assets {
-			if rows[i] != nil {
-				rows[i], _ = rows[i].Update(row.UpdateAssetMsg(*asset))
-				rowsBySymbol[assets[i].Symbol] = rows[i]
+			if i < len(m.rows) {
+				m.rows[i], _ = m.rows[i].Update(row.UpdateAssetMsg(asset))
+				m.rowsBySymbol[assets[i].Symbol] = m.rows[i]
 			} else {
-				rows[i] = row.New(row.Config{
+				m.rows = append(m.rows, row.New(row.Config{
 					Separate:              m.config.Separate,
 					ExtraInfoExchange:     m.config.ExtraInfoExchange,
 					ExtraInfoFundamentals: m.config.ExtraInfoFundamentals,
 					ShowHoldings:          m.config.ShowHoldings,
 					Styles:                m.config.Styles,
 					Asset:                 asset,
-				})
-				rowsBySymbol[assets[i].Symbol] = rows[i]
+				}))
+				m.rowsBySymbol[assets[i].Symbol] = m.rows[len(m.rows)-1]
 			}
 		}
 
 		m.assets = assets
 		m.assetsBySymbol = assetsBySymbol
-		m.rows = rows
-		m.rowsBySymbol = rowsBySymbol
 
 		// TODO: only set conditionally if all assets have changed
 		m.cellWidths = getCellWidths(m.assets)

@@ -46,7 +46,7 @@ type Config struct {
 	Asset                 *c.Asset
 }
 
-type UpdateAssetMsg c.Asset
+type UpdateAssetMsg *c.Asset
 
 // Model for watchlist row
 type Model struct {
@@ -74,6 +74,9 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 	case SetCellWidthsMsg:
 		m.cellWidths = msg.CellWidths
 		m.width = msg.Width
+		return m, nil
+	case UpdateAssetMsg:
+		m.config.Asset = msg
 		return m, nil
 	}
 

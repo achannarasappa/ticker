@@ -41,7 +41,7 @@ var _ = Describe("Watchlist", func() {
 			ExtraInfoFundamentals: true,
 			Sort:                  "alpha",
 		})
-		m.Update(tea.WindowSizeMsg{Width: 175})
+		m, _ = m.Update(tea.WindowSizeMsg{Width: 175})
 		setAssetsMsg := []c.Asset{
 			{
 				Symbol: "STOCK1", Name: "Stock 1 Inc. (gain)", QuoteExtended: c.QuoteExtended{MarketCap: 23467907, Volume: 4239786698},
@@ -127,7 +127,7 @@ var _ = Describe("Watchlist", func() {
 				Exchange: c.Exchange{IsActive: false, IsRegularTradingSession: false},
 			},
 		}
-		m.Update(SetAssetsMsg(setAssetsMsg))
+		m, _ = m.Update(SetAssetsMsg(setAssetsMsg))
 
 		expected, _ := ioutil.ReadFile("./snapshots/watchlist-all-options.snap")
 		Expect("\n" + removeFormatting(m.View())).To(BeIdenticalTo("\n" + string(expected)))

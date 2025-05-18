@@ -81,9 +81,11 @@ func New(config Config) *Model {
 	}
 
 	return &Model{
-		id:     id,
-		width:  80,
-		config: config,
+		id:                   id,
+		width:                80,
+		config:               config,
+		priceNoChangeSegment: u.ConvertFloatToString(config.Asset.QuotePrice.Price, config.Asset.Meta.IsVariablePrecision),
+		priceChangeSegment:   "",
 	}
 }
 
@@ -141,6 +143,8 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 
 		// If symbol has changed or price has not changed then just update the asset
 		m.config.Asset = msg
+		m.priceNoChangeSegment = u.ConvertFloatToString(msg.QuotePrice.Price, msg.Meta.IsVariablePrecision)
+		m.priceChangeSegment = ""
 
 		return m, nil
 

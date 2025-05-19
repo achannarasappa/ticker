@@ -83,6 +83,7 @@ func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
 		assetQuotesLookup: make(map[string]int),
 		holdingSummary:    asset.HoldingSummary{},
 		watchlist: watchlist.NewModel(watchlist.Config{
+			Sort:                  ctx.Config.Sort,
 			Separate:              ctx.Config.Separate,
 			ShowHoldings:          ctx.Config.ShowHoldings,
 			ExtraInfoExchange:     ctx.Config.ExtraInfoExchange,

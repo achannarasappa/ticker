@@ -106,7 +106,11 @@ func (m *Model) Init() tea.Cmd {
 	return tea.Batch(
 		tick(0),
 		func() tea.Msg {
-			(*m.monitors).SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.versionVector) //nolint:errcheck
+			err := (*m.monitors).SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.versionVector)
+
+			if err != nil {
+				m.ctx.Logger.Println(err)
+			}
 
 			return nil
 		},

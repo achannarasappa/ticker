@@ -119,6 +119,8 @@ func (m *Model) Init() tea.Cmd {
 
 // Update hook for bubbletea
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
@@ -150,6 +152,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			fallthrough
 		case "q":
 			return m, tea.Quit
+		case "up":
+			m.viewport, cmd = m.viewport.Update(msg)
+			return m, cmd
+		case "down":
+			m.viewport, cmd = m.viewport.Update(msg)
+			return m, cmd
+
 		}
 
 	case tea.WindowSizeMsg:

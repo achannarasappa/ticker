@@ -1,7 +1,6 @@
 package unary
 
 import (
-	"encoding/json"
 	"strings"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"

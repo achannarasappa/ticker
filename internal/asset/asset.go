@@ -1,6 +1,8 @@
 package asset
 
 import (
+	"strings"
+
 	c "github.com/achannarasappa/ticker/v4/internal/common"
 )
 
@@ -26,8 +28,21 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Hol
 	var holdingSummary HoldingSummary
 	assets := make([]c.Asset, 0)
 	holdingsBySymbol := getLots(assetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings)
+	orderIndex := make(map[string]int)
 
-	for i, assetQuote := range assetGroupQuote.AssetQuotes {
+	for i, symbol := range assetGroupQuote.AssetGroup.ConfigAssetGroup.Watchlist {
+		if _, exists := orderIndex[symbol]; !exists {
+			orderIndex[strings.ToLower(symbol)] = i
+		}
+	}
+
+	for i, symbol := range assetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings {
+		if _, exists := orderIndex[symbol.Symbol]; !exists {
+			orderIndex[strings.ToLower(symbol.Symbol)] = i + len(assetGroupQuote.AssetGroup.ConfigAssetGroup.Watchlist) - 1
+		}
+	}
+
+	for _, assetQuote := range assetGroupQuote.AssetQuotes {
 
 		currencyRateByUse := getCurrencyRateByUse(ctx, assetQuote.Currency.FromCurrencyCode, assetQuote.Currency.ToCurrencyCode, assetQuote.Currency.Rate)
 
@@ -50,7 +65,7 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Hol
 			Exchange:      assetQuote.Exchange,
 			Meta: c.Meta{
 				IsVariablePrecision: assetQuote.Meta.IsVariablePrecision,
-				OrderIndex:          i,
+				OrderIndex:          orderIndex[strings.ToLower(assetQuote.Symbol)],
 			},
 		})
 

@@ -44,6 +44,9 @@ var _ = Describe("Sorter", func() {
 				IsActive:                true,
 				IsRegularTradingSession: false,
 			},
+			Meta: c.Meta{
+				OrderIndex: 2,
+			},
 		}
 		googleQuote := c.Asset{
 			Symbol: "GOOG",
@@ -76,6 +79,9 @@ var _ = Describe("Sorter", func() {
 				IsActive:                false,
 				IsRegularTradingSession: false,
 			},
+			Meta: c.Meta{
+				OrderIndex: 3,
+			},
 		}
 		rblxQuote := c.Asset{
 			Symbol: "RBLX",
@@ -88,6 +94,9 @@ var _ = Describe("Sorter", func() {
 			Exchange: c.Exchange{
 				IsActive:                false,
 				IsRegularTradingSession: false,
+			},
+			Meta: c.Meta{
+				OrderIndex: 4,
 			},
 		}
 		assets := []*c.Asset{

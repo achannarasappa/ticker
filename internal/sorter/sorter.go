@@ -23,31 +23,16 @@ func NewSorter(sort string) Sorter {
 	return sortByChange
 }
 
-func sortByUser(assetsIn []*c.Asset) []*c.Asset {
+func sortByUser(assets []*c.Asset) []*c.Asset {
 
-	assetCount := len(assetsIn)
+	assetCount := len(assets)
 
 	if assetCount <= 0 {
-		return assetsIn
+		return assets
 	}
 
-	assets := make([]*c.Asset, assetCount)
-	copy(assets, assetsIn)
-
 	sort.SliceStable(assets, func(i, j int) bool {
-
-		prevIndex := assetCount
-		nextIndex := assetCount
-
-		if assets[i].Holding != (c.Holding{}) {
-			prevIndex = assets[i].Meta.OrderIndex
-		}
-
-		if assets[j].Holding != (c.Holding{}) {
-			nextIndex = assets[j].Meta.OrderIndex
-		}
-
-		return nextIndex > prevIndex
+		return assets[j].Meta.OrderIndex > assets[i].Meta.OrderIndex
 	})
 
 	return assets

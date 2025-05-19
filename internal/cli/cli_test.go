@@ -3,6 +3,7 @@ package cli_test
 import (
 	"errors"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/ghttp"
 	g "github.com/onsi/gomega/gstruct"
 	"github.com/onsi/gomega/types"
 	"github.com/spf13/afero"
@@ -19,7 +21,6 @@ import (
 	"github.com/achannarasappa/ticker/v4/internal/cli"
 	. "github.com/achannarasappa/ticker/v4/internal/cli"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	httpMocks "github.com/achannarasappa/ticker/v4/test/http"
 )
 
 func getStdout(fn func()) string {
@@ -50,9 +51,17 @@ var _ = Describe("Cli", func() {
 	var (
 		options Options
 		dep     c.Dependencies
+		server  *ghttp.Server
 	)
 
+	AfterEach(func() {
+		server.Close()
+	})
+
 	BeforeEach(func() {
+
+		server = ghttp.NewServer()
+
 		options = Options{
 			Watchlist:             "GME,BB",
 			RefreshInterval:       0,
@@ -61,24 +70,29 @@ var _ = Describe("Cli", func() {
 			ExtraInfoFundamentals: false,
 			ShowSummary:           false,
 			ShowHoldings:          false,
-			Proxy:                 "",
 			Sort:                  "",
 		}
 		dep = c.Dependencies{
-			Fs: afero.NewMemMapFs(),
-			HttpClients: c.DependenciesHttpClients{
-				Default:      client,
-				Yahoo:        client,
-				YahooSession: client,
-			},
+			Fs:         afero.NewMemMapFs(),
+			SymbolsURL: server.URL() + "/symbols.csv",
 		}
-
-		httpMocks.MockTickerSymbols()
-		httpMocks.MockResponseCurrency()
-		httpMocks.MockResponseForRefreshSessionSuccess()
 
 		//nolint:errcheck
 		dep.Fs.MkdirAll("./", 0755)
+
+		// Mock the ticker symbols endpoint
+		responseFixture := `"ADA.X","ADA-USD","cb"
+"ALGO.X","ALGO-USD","cb"
+"BTC.X","BTC-USD","cb"
+"ETH.X","ETH-USD","cb"
+"SOL.X","SOL-USD","cb"
+"XRP.X","XRP-USD","cb"
+`
+		server.RouteToHandler("GET", "/symbols.csv",
+			ghttp.CombineHandlers(
+				ghttp.RespondWith(http.StatusOK, responseFixture, http.Header{"Content-Type": []string{"text/plain; charset=utf-8"}}),
+			),
+		)
 	})
 
 	Describe("Run", func() {
@@ -253,8 +267,6 @@ var _ = Describe("Cli", func() {
 					InputConfigFileContents: strings.Join([]string{
 						"watchlist:",
 						"  - TSLA",               // yahoo finance
-						"  - ETHEREUM.CG",        // coingecko
-						"  - BITCOIN.CC",         // coincap
 						"  - ADA.CB",             // coinbase
 						"  - BIT-31JAN25-CDE.CB", // coinbase futures
 						"  - SOL.X",              // ticker
@@ -272,23 +284,11 @@ var _ = Describe("Cli", func() {
 										}),
 										"Source": Equal(c.QuoteSourceYahoo),
 									}),
-									"2": g.MatchFields(g.IgnoreExtras, g.Fields{
-										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
-											"0": Equal("ethereum"),
-											"1": Equal("solana"),
-										}),
-										"Source": Equal(c.QuoteSourceCoingecko),
-									}),
-									"4": g.MatchFields(g.IgnoreExtras, g.Fields{
-										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
-											"0": Equal("bitcoin"),
-										}),
-										"Source": Equal(c.QuoteSourceCoinCap),
-									}),
 									"5": g.MatchFields(g.IgnoreExtras, g.Fields{
 										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
 											"0": Equal("ADA-USD"),
 											"1": Equal("BIT-31JAN25-CDE"),
+											"2": Equal("SOL-USD"),
 										}),
 										"Source": Equal(c.QuoteSourceCoinbase),
 									}),
@@ -305,7 +305,10 @@ var _ = Describe("Cli", func() {
 
 			It("returns the error", func() {
 
-				httpMocks.MockTickerSymbolsError()
+				dep := c.Dependencies{
+					Fs:         afero.NewMemMapFs(),
+					SymbolsURL: "invalid-url",
+				}
 
 				_, outputErr := GetContext(dep, c.Config{})
 
@@ -315,32 +318,20 @@ var _ = Describe("Cli", func() {
 
 		})
 
-		When("there is an error getting reference data", func() {
+		When("there is an error getting the logger", func() {
 
 			It("returns the error", func() {
+				dep := c.Dependencies{
+					Fs:         afero.NewMemMapFs(),
+					SymbolsURL: server.URL() + "/symbols.csv",
+				}
 
-				httpMocks.MockResponseCurrencyError()
+				// Create a read-only filesystem to force an error when trying to create the log file
+				dep.Fs = afero.NewReadOnlyFs(dep.Fs)
 
-				_, outputErr := GetContext(dep, c.Config{
-					Watchlist: []string{"TSLA"},
-				})
+				_, outputErr := GetContext(dep, c.Config{Debug: true})
 
-				Expect(outputErr).ToNot(BeNil())
-
-			})
-
-		})
-
-		When("there is an error refreshing the yahoo session", func() {
-
-			It("returns the error", func() {
-
-				httpMocks.MockResponseForRefreshSessionError()
-
-				_, outputErr := GetContext(dep, c.Config{})
-
-				Expect(outputErr).ToNot(BeNil())
-
+				Expect(outputErr).To(MatchError("failed to create log file: operation not permitted"))
 			})
 
 		})
@@ -367,34 +358,6 @@ var _ = Describe("Cli", func() {
 					Expect(outputErr).To(c.AssertionErr)
 					Expect(outputConfig).To(c.AssertionConfig)
 				},
-
-				// option: string (proxy, sort)
-				Entry("when proxy is set in config file", Case{
-					InputOptions:            cli.Options{},
-					InputConfigFileContents: "proxy: http://myproxy.com:4438",
-					AssertionErr:            BeNil(),
-					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Proxy": Equal("http://myproxy.com:4438"),
-					}),
-				}),
-
-				Entry("when proxy is set in options", Case{
-					InputOptions:            cli.Options{Proxy: "http://www.example.org:3128"},
-					InputConfigFileContents: "",
-					AssertionErr:            BeNil(),
-					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Proxy": Equal("http://www.example.org:3128"),
-					}),
-				}),
-
-				Entry("when proxy is set in both config file and options", Case{
-					InputOptions:            cli.Options{Proxy: "http://www.example.org:3128"},
-					InputConfigFileContents: "proxy: http://myproxy.com:4438",
-					AssertionErr:            BeNil(),
-					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
-						"Proxy": Equal("http://www.example.org:3128"),
-					}),
-				}),
 
 				// option: interval
 				Entry("when interval is set in config file", Case{
@@ -460,6 +423,16 @@ var _ = Describe("Cli", func() {
 						"Separate": Equal(true),
 					}),
 				}),
+
+				// option: debug
+				Entry("when debug is set in config file", Case{
+					InputOptions:            cli.Options{},
+					InputConfigFileContents: "debug: true",
+					AssertionErr:            BeNil(),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Debug": Equal(true),
+					}),
+				}),
 			)
 
 		})
@@ -473,10 +446,6 @@ var _ = Describe("Cli", func() {
 			BeforeEach(func() {
 				depLocal = c.Dependencies{
 					Fs: afero.NewMemMapFs(),
-					HttpClients: c.DependenciesHttpClients{
-						Default: client,
-						Yahoo:   client,
-					},
 				}
 				afero.WriteFile(depLocal.Fs, ".ticker.yaml", []byte("watchlist:\n  - NOK"), 0644)
 			})
@@ -576,9 +545,8 @@ var _ = Describe("Cli", func() {
 		It("should dependencies", func() {
 
 			output := GetDependencies()
-			expected := g.MatchAllFields(g.Fields{
-				"Fs":          BeAssignableToTypeOf(afero.NewOsFs()),
-				"HttpClients": BeAssignableToTypeOf(c.DependenciesHttpClients{}),
+			expected := g.MatchFields(g.IgnoreExtras, g.Fields{
+				"Fs": BeAssignableToTypeOf(afero.NewOsFs()),
 			})
 
 			Expect(output).To(expected)

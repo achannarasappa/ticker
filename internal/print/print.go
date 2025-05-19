@@ -8,7 +8,7 @@ import (
 
 	"github.com/achannarasappa/ticker/v4/internal/asset"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	quote "github.com/achannarasappa/ticker/v4/internal/quote"
+	mon "github.com/achannarasappa/ticker/v4/internal/monitor"
 	"github.com/achannarasappa/ticker/v4/internal/ui/util"
 
 	"github.com/spf13/cobra"
@@ -141,7 +141,21 @@ func convertSummaryToCSV(summary asset.HoldingSummary) string {
 func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Command, []string) {
 	return func(_ *cobra.Command, _ []string) {
 
-		assetGroupQuote := quote.GetAssetGroupQuote(*dep, ctx.Reference)(ctx.Groups[0])
+		monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
+			RefreshInterval: ctx.Config.RefreshInterval,
+			ConfigMonitorsYahoo: mon.ConfigMonitorsYahoo{
+				BaseURL:           dep.MonitorYahooBaseURL,
+				SessionRootURL:    dep.MonitorYahooSessionRootURL,
+				SessionCrumbURL:   dep.MonitorYahooSessionCrumbURL,
+				SessionConsentURL: dep.MonitorYahooSessionConsentURL,
+			},
+			ConfigMonitorPriceCoinbase: mon.ConfigMonitorPriceCoinbase{
+				BaseURL:      dep.MonitorPriceCoinbaseBaseURL,
+				StreamingURL: dep.MonitorPriceCoinbaseStreamingURL,
+			},
+		})
+		monitors.SetAssetGroup(ctx.Groups[0], 0) //nolint:errcheck
+		assetGroupQuote := monitors.GetAssetGroupQuote()
 		assets, _ := asset.GetAssets(*ctx, assetGroupQuote)
 
 		if options.Format == "csv" {
@@ -157,7 +171,18 @@ func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Comm
 // RunSummary handles the print summary command
 func RunSummary(dep *c.Dependencies, ctx *c.Context, options *Options) func(cmd *cobra.Command, args []string) {
 	return func(_ *cobra.Command, _ []string) {
-		assetGroupQuote := quote.GetAssetGroupQuote(*dep, ctx.Reference)(ctx.Groups[0])
+
+		monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
+			RefreshInterval: ctx.Config.RefreshInterval,
+			ConfigMonitorsYahoo: mon.ConfigMonitorsYahoo{
+				BaseURL:           dep.MonitorYahooBaseURL,
+				SessionRootURL:    dep.MonitorYahooSessionRootURL,
+				SessionCrumbURL:   dep.MonitorYahooSessionCrumbURL,
+				SessionConsentURL: dep.MonitorYahooSessionConsentURL,
+			},
+		})
+		monitors.SetAssetGroup(ctx.Groups[0], 0) //nolint:errcheck
+		assetGroupQuote := monitors.GetAssetGroupQuote()
 		_, holdingSummary := asset.GetAssets(*ctx, assetGroupQuote)
 
 		if options.Format == "csv" {

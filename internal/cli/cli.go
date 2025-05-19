@@ -3,16 +3,16 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/achannarasappa/ticker/v4/internal/cli/symbol"
 	c "github.com/achannarasappa/ticker/v4/internal/common"
-	"github.com/achannarasappa/ticker/v4/internal/quote"
-	yahooClient "github.com/achannarasappa/ticker/v4/internal/quote/yahoo/client"
 	"github.com/achannarasappa/ticker/v4/internal/ui/util"
 
 	"github.com/adrg/xdg"
-	"github.com/go-resty/resty/v2"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -29,7 +29,6 @@ type Options struct {
 	ExtraInfoFundamentals bool
 	ShowSummary           bool
 	ShowHoldings          bool
-	Proxy                 string
 	Sort                  string
 }
 
@@ -66,16 +65,16 @@ func Validate(config *c.Config, options *Options, prevErr *error) func(*cobra.Co
 }
 
 func GetDependencies() c.Dependencies {
-
 	return c.Dependencies{
-		Fs: afero.NewOsFs(),
-		HttpClients: c.DependenciesHttpClients{
-			Default:      resty.New(),
-			Yahoo:        yahooClient.New(resty.New(), resty.New()),
-			YahooSession: resty.New(),
-		},
+		Fs:                               afero.NewOsFs(),
+		SymbolsURL:                       "https://raw.githubusercontent.com/achannarasappa/ticker-static/master/symbols.csv",
+		MonitorYahooBaseURL:              "https://query1.finance.yahoo.com",
+		MonitorYahooSessionRootURL:       "https://finance.yahoo.com",
+		MonitorYahooSessionCrumbURL:      "https://query2.finance.yahoo.com",
+		MonitorYahooSessionConsentURL:    "https://consent.yahoo.com",
+		MonitorPriceCoinbaseBaseURL:      "https://api.coinbase.com",
+		MonitorPriceCoinbaseStreamingURL: "wss://ws-feed.exchange.coinbase.com",
 	}
-
 }
 
 // GetContext builds the context from the config and reference data
@@ -86,28 +85,37 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		err       error
 	)
 
-	err = yahooClient.RefreshSession(d.HttpClients.Yahoo, d.HttpClients.YahooSession)
+	if err != nil {
+		return c.Context{}, err
+	}
+
+	groups, err = getGroups(config, d)
 
 	if err != nil {
 		return c.Context{}, err
 	}
 
-	groups, err = getGroups(config, *d.HttpClients.Default)
+	reference, err = getReference(config, groups)
 
 	if err != nil {
 		return c.Context{}, err
 	}
 
-	reference, err = getReference(config, groups, d.HttpClients.Yahoo)
+	var logger *log.Logger
 
-	if err != nil {
-		return c.Context{}, err
+	if config.Debug {
+		logger, err = getLogger(d)
+
+		if err != nil {
+			return c.Context{}, err
+		}
 	}
 
 	context := c.Context{
 		Reference: reference,
 		Config:    config,
 		Groups:    groups,
+		Logger:    logger,
 	}
 
 	return context, err
@@ -136,24 +144,18 @@ func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {
 	return config, nil
 }
 
-func getReference(config c.Config, assetGroups []c.AssetGroup, client *resty.Client) (c.Reference, error) {
+func getReference(config c.Config, assetGroups []c.AssetGroup) (c.Reference, error) {
 
-	currencyRates, err := quote.GetAssetGroupsCurrencyRates(client, assetGroups, config.Currency)
-	if err != nil {
-		return c.Reference{}, err
-	}
+	var err error
 
 	styles := util.GetColorScheme(config.ColorScheme)
-	sourceToUnderlyingAssetSymbols, err := quote.GetAssetGroupUnderlyingAssetSymbols(client, assetGroups)
 
 	if err != nil {
 		return c.Reference{}, err
 	}
 
 	return c.Reference{
-		CurrencyRates:                  currencyRates,
-		SourceToUnderlyingAssetSymbols: sourceToUnderlyingAssetSymbols,
-		Styles:                         styles,
+		Styles: styles,
 	}, err
 
 }
@@ -170,18 +172,12 @@ func GetConfig(dep c.Dependencies, configPath string, options Options) (c.Config
 		config.Watchlist = strings.Split(strings.ReplaceAll(options.Watchlist, " ", ""), ",")
 	}
 
-	if len(config.Proxy) > 0 {
-		dep.HttpClients.Default.SetProxy(config.Proxy)
-		dep.HttpClients.Yahoo.SetProxy(config.Proxy)
-	}
-
 	config.RefreshInterval = getRefreshInterval(options.RefreshInterval, config.RefreshInterval)
 	config.Separate = getBoolOption(options.Separate, config.Separate)
 	config.ExtraInfoExchange = getBoolOption(options.ExtraInfoExchange, config.ExtraInfoExchange)
 	config.ExtraInfoFundamentals = getBoolOption(options.ExtraInfoFundamentals, config.ExtraInfoFundamentals)
 	config.ShowSummary = getBoolOption(options.ShowSummary, config.ShowSummary)
 	config.ShowHoldings = getBoolOption(options.ShowHoldings, config.ShowHoldings)
-	config.Proxy = getStringOption(options.Proxy, config.Proxy)
 	config.Sort = getStringOption(options.Sort, config.Sort)
 
 	return config, nil
@@ -251,12 +247,12 @@ func getStringOption(cliValue string, configValue string) string {
 	return ""
 }
 
-func getGroups(config c.Config, client resty.Client) ([]c.AssetGroup, error) {
+func getGroups(config c.Config, d c.Dependencies) ([]c.AssetGroup, error) {
 
 	groups := make([]c.AssetGroup, 0)
 	var configAssetGroups []c.ConfigAssetGroup
 
-	tickerSymbolToSourceSymbol, err := symbol.GetTickerSymbols(client)
+	tickerSymbolToSourceSymbol, err := symbol.GetTickerSymbols(d.SymbolsURL)
 
 	if err != nil {
 		return []c.AssetGroup{}, err
@@ -309,23 +305,21 @@ func getGroups(config c.Config, client resty.Client) ([]c.AssetGroup, error) {
 
 }
 
+func getLogger(d c.Dependencies) (*log.Logger, error) {
+	// Create log file with current date
+	currentTime := time.Now()
+	logFileName := fmt.Sprintf("ticker-log-%s.log", currentTime.Format("2006-01-02"))
+	logFile, err := d.Fs.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create log file: %w", err)
+	}
+
+	return log.New(logFile, "", log.LstdFlags), nil
+}
+
 func getSymbolAndSource(symbol string, tickerSymbolToSourceSymbol symbol.TickerSymbolToSourceSymbol) symbolSource {
 
 	symbolUppercase := strings.ToUpper(symbol)
-
-	if strings.HasSuffix(symbolUppercase, ".CG") {
-		return symbolSource{
-			source: c.QuoteSourceCoingecko,
-			symbol: strings.ToLower(symbol)[:len(symbol)-3],
-		}
-	}
-
-	if strings.HasSuffix(symbolUppercase, ".CC") {
-		return symbolSource{
-			source: c.QuoteSourceCoinCap,
-			symbol: strings.ToLower(symbol)[:len(symbol)-3],
-		}
-	}
 
 	if strings.HasSuffix(symbolUppercase, ".CB") {
 

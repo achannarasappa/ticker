@@ -90,11 +90,11 @@ var _ = Describe("Sorter", func() {
 				IsRegularTradingSession: false,
 			},
 		}
-		assets := []c.Asset{
-			bitcoinQuote,
-			twQuote,
-			googleQuote,
-			msftQuote,
+		assets := []*c.Asset{
+			&bitcoinQuote,
+			&twQuote,
+			&googleQuote,
+			&msftQuote,
 		}
 
 		When("providing no sort parameter", func() {
@@ -114,23 +114,23 @@ var _ = Describe("Sorter", func() {
 						IsRegularTradingSession: false,
 					},
 				}
-				assets := []c.Asset{
-					rblxQuote,
-					bitcoinQuote,
-					twQuote,
-					googleQuote,
-					msftQuote,
-					coinQuote,
+				assets := []*c.Asset{
+					&rblxQuote,
+					&bitcoinQuote,
+					&twQuote,
+					&googleQuote,
+					&msftQuote,
+					&coinQuote,
 				}
 
 				sortedQuotes := sorter(assets)
-				expected := []c.Asset{
-					bitcoinQuote,
-					twQuote,
-					googleQuote,
-					coinQuote,
-					rblxQuote,
-					msftQuote,
+				expected := []*c.Asset{
+					&bitcoinQuote,
+					&twQuote,
+					&googleQuote,
+					&coinQuote,
+					&rblxQuote,
+					&msftQuote,
 				}
 
 				Expect(sortedQuotes).To(Equal(expected))
@@ -141,11 +141,11 @@ var _ = Describe("Sorter", func() {
 				sorter := NewSorter("alpha")
 
 				sortedQuotes := sorter(assets)
-				expected := []c.Asset{
-					bitcoinQuote,
-					googleQuote,
-					msftQuote,
-					twQuote,
+				expected := []*c.Asset{
+					&bitcoinQuote,
+					&googleQuote,
+					&msftQuote,
+					&twQuote,
 				}
 
 				Expect(sortedQuotes).To(Equal(expected))
@@ -164,21 +164,21 @@ var _ = Describe("Sorter", func() {
 				msftQuoteWithHolding := msftQuote
 				msftQuoteWithHolding.Holding.Value = 100.00
 
-				assets := []c.Asset{
-					bitcoinQuoteWithHolding,
-					twQuote,
-					googleQuoteWithHolding,
-					msftQuoteWithHolding,
-					rblxQuoteWithHolding,
+				assets := []*c.Asset{
+					&bitcoinQuoteWithHolding,
+					&twQuote,
+					&googleQuoteWithHolding,
+					&msftQuoteWithHolding,
+					&rblxQuoteWithHolding,
 				}
 
 				sortedQuotes := sorter(assets)
-				expected := []c.Asset{
-					bitcoinQuoteWithHolding,
-					googleQuoteWithHolding,
-					twQuote,
-					rblxQuoteWithHolding,
-					msftQuoteWithHolding,
+				expected := []*c.Asset{
+					&bitcoinQuoteWithHolding,
+					&googleQuoteWithHolding,
+					&twQuote,
+					&rblxQuoteWithHolding,
+					&msftQuoteWithHolding,
 				}
 
 				Expect(sortedQuotes).To(Equal(expected))
@@ -189,11 +189,11 @@ var _ = Describe("Sorter", func() {
 				sorter := NewSorter("user")
 
 				sortedQuotes := sorter(assets)
-				expected := []c.Asset{
-					googleQuote,
-					bitcoinQuote,
-					twQuote,
-					msftQuote,
+				expected := []*c.Asset{
+					&googleQuote,
+					&bitcoinQuote,
+					&twQuote,
+					&msftQuote,
 				}
 
 				Expect(sortedQuotes).To(Equal(expected))
@@ -204,8 +204,8 @@ var _ = Describe("Sorter", func() {
 				It("should return no quotes", func() {
 					sorter := NewSorter("")
 
-					sortedQuotes := sorter([]c.Asset{})
-					expected := []c.Asset{}
+					sortedQuotes := sorter([]*c.Asset{})
+					expected := []*c.Asset{}
 					Expect(sortedQuotes).To(Equal(expected))
 				})
 			})
@@ -213,8 +213,8 @@ var _ = Describe("Sorter", func() {
 				It("should return no quotes", func() {
 					sorter := NewSorter("alpha")
 
-					sortedQuotes := sorter([]c.Asset{})
-					expected := []c.Asset{}
+					sortedQuotes := sorter([]*c.Asset{})
+					expected := []*c.Asset{}
 					Expect(sortedQuotes).To(Equal(expected))
 				})
 			})
@@ -222,8 +222,8 @@ var _ = Describe("Sorter", func() {
 				It("should return no quotes", func() {
 					sorter := NewSorter("value")
 
-					sortedQuotes := sorter([]c.Asset{})
-					expected := []c.Asset{}
+					sortedQuotes := sorter([]*c.Asset{})
+					expected := []*c.Asset{}
 					Expect(sortedQuotes).To(Equal(expected))
 				})
 			})
@@ -231,8 +231,8 @@ var _ = Describe("Sorter", func() {
 				It("should return no quotes", func() {
 					sorter := NewSorter("user")
 
-					sortedQuotes := sorter([]c.Asset{})
-					expected := []c.Asset{}
+					sortedQuotes := sorter([]*c.Asset{})
+					expected := []*c.Asset{}
 					Expect(sortedQuotes).To(Equal(expected))
 				})
 			})

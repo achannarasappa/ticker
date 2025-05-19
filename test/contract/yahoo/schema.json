@@ -1,0 +1,135 @@
+{
+	"properties": {
+		"quoteResponse": {
+			"type": "object",
+			"properties": {
+				"result": {
+					"$ref": "#/definitions/result"
+				},
+				"error": {
+					"type": "null"
+				}
+			}
+		}
+	},
+	"definitions": {
+		"result": {
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/quote"
+			}
+		},
+		"quote": {
+			"properties": {
+				"marketState": {
+					"type": "string"
+				},
+				"shortName": {
+					"type": "string"
+				},
+				"regularMarketChange": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"regularMarketChangePercent": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"regularMarketPrice": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"regularMarketTime": {
+					"$ref": "#/definitions/fieldInteger"
+				},
+				"regularMarketPreviousClose": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"regularMarketOpen": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"regularMarketDayRange": {
+					"$ref": "#/definitions/fieldString"
+				},
+				"regularMarketDayHigh": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"regularMarketDayLow": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"regularMarketVolume": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"postMarketChange": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"postMarketChangePercent": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"postMarketPrice": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"preMarketChange": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"preMarketChangePercent": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"preMarketPrice": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"fiftyTwoWeekHigh": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"fiftyTwoWeekLow": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"symbol": {
+					"type": "string"
+				},
+				"fullExchangeName": {
+					"type": "string"
+				},
+				"exchangeDataDelayedBy": {
+					"type": "number"
+				},
+				"marketCap": {
+					"$ref": "#/definitions/fieldNumber"
+				},
+				"quoteType": {
+					"type": "string"
+				}
+			}
+		},
+		"fieldNumber": {
+			"properties": {
+				"raw": {
+					"type": "number"
+				},
+				"fmt": {
+					"type": "string"
+				}
+			}
+		},
+		"fieldInteger": {
+			"properties": {
+				"raw": {
+					"type": "integer"
+				},
+				"fmt": {
+					"type": "string"
+				}
+			}
+		},
+		"fieldString": {
+			"properties": {
+				"raw": {
+					"type": "string"
+				},
+				"fmt": {
+					"type": "string"
+				}
+			}
+		}
+	},
+	"required": [
+		"quoteResponse"
+	]
+}

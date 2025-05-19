@@ -1,7 +1,8 @@
 package common
 
 import (
-	"github.com/go-resty/resty/v2"
+	"log"
+
 	"github.com/spf13/afero"
 )
 
@@ -10,6 +11,7 @@ type Context struct {
 	Config    Config
 	Groups    []AssetGroup
 	Reference Reference
+	Logger    *log.Logger
 }
 
 // Config represents user defined configuration
@@ -22,13 +24,13 @@ type Config struct {
 	ExtraInfoFundamentals             bool               `yaml:"show-fundamentals"`
 	ShowSummary                       bool               `yaml:"show-summary"`
 	ShowHoldings                      bool               `yaml:"show-holdings"`
-	Proxy                             string             `yaml:"proxy"`
 	Sort                              string             `yaml:"sort"`
 	Currency                          string             `yaml:"currency"`
 	CurrencyConvertSummaryOnly        bool               `yaml:"currency-summary-only"`
 	CurrencyDisableUnitCostConversion bool               `yaml:"currency-disable-unit-cost-conversion"`
 	ColorScheme                       ConfigColorScheme  `yaml:"colors"`
 	AssetGroup                        []ConfigAssetGroup `yaml:"groups"`
+	Debug                             bool               `yaml:"debug"`
 }
 
 // ConfigColorScheme represents user defined color scheme
@@ -64,21 +66,33 @@ type AssetGroupQuote struct {
 
 // Reference represents derived configuration for internal use from user defined configuration
 type Reference struct {
-	CurrencyRates                  CurrencyRates
-	SourceToUnderlyingAssetSymbols map[QuoteSource][]string
-	Styles                         Styles
+	Styles Styles
 }
 
 // Dependencies represents references to external dependencies
 type Dependencies struct {
-	Fs          afero.Fs
-	HttpClients DependenciesHttpClients //nolint:golint,stylecheck,revive
+	Fs                               afero.Fs
+	SymbolsURL                       string
+	MonitorPriceCoinbaseBaseURL      string
+	MonitorPriceCoinbaseStreamingURL string
+	MonitorYahooBaseURL              string
+	MonitorYahooSessionRootURL       string
+	MonitorYahooSessionCrumbURL      string
+	MonitorYahooSessionConsentURL    string
 }
 
-type DependenciesHttpClients struct { //nolint:golint,stylecheck,revive
-	Default      *resty.Client
-	Yahoo        *resty.Client
-	YahooSession *resty.Client
+type Monitor interface {
+	Start() error
+	GetAssetQuotes(ignoreCache ...bool) ([]AssetQuote, error)
+	SetSymbols(symbols []string, versionVector int) error
+	SetCurrencyRates(currencyRates CurrencyRates) error
+	Stop() error
+}
+
+type MonitorCurrencyRate interface {
+	Start() error
+	SetTargetCurrency(targetCurrency string)
+	Stop() error
 }
 
 // Lot represents a cost basis lot
@@ -129,6 +143,7 @@ type HoldingChange struct {
 type Meta struct {
 	IsVariablePrecision bool
 	OrderIndex          int
+	SymbolInSourceAPI   string
 }
 
 type Holding struct {
@@ -148,6 +163,8 @@ type Currency struct {
 	FromCurrencyCode string
 	// CodeConverted is the currency code that pricing and values have been converted into
 	ToCurrencyCode string
+	// Rate is the conversion rate from the original currency to the converted currency
+	Rate float64
 }
 
 type QuotePrice struct {
@@ -178,6 +195,7 @@ type QuoteFutures struct {
 type Exchange struct {
 	Name                    string
 	Delay                   float64
+	DelayText               string
 	State                   ExchangeState
 	IsActive                bool
 	IsRegularTradingSession bool
@@ -240,4 +258,17 @@ type AssetQuote struct {
 	QuoteSource   QuoteSource
 	Exchange      Exchange
 	Meta          Meta
+}
+
+type MessageUpdate[T any] struct {
+	Data          T
+	ID            string
+	Sequence      int64
+	VersionVector int
+}
+
+type MessageRequest[T any] struct {
+	Data          T
+	ID            string
+	VersionVector int
 }

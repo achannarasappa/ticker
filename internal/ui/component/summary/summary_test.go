@@ -8,6 +8,7 @@ import (
 	. "github.com/achannarasappa/ticker/v4/internal/ui/component/summary"
 
 	"github.com/acarl005/stripansi"
+	tea "github.com/charmbracelet/bubbletea"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -31,8 +32,8 @@ var _ = Describe("Summary", func() {
 	When("the change is positive", func() {
 		It("should render a summary with up arrow", func() {
 			m := NewModel(ctxFixture)
-			m.Width = 120
-			m.Summary = asset.HoldingSummary{
+			m, _ = m.Update(tea.WindowSizeMsg{Width: 120})
+			m, _ = m.Update(SetSummaryMsg(asset.HoldingSummary{
 				Value: 10000,
 				Cost:  1000,
 				DayChange: c.HoldingChange{
@@ -43,7 +44,7 @@ var _ = Describe("Summary", func() {
 					Amount:  9000,
 					Percent: 1000.0,
 				},
-			}
+			}))
 			Expect(removeFormatting(m.View())).To(Equal(strings.Join([]string{
 				"Day Change: ↑ 100.00 (10.00%) • Change: ↑ 9000.00 (1000.00%)  • Value: 10000.00  • Cost: 1000.00  ",
 				"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
@@ -54,8 +55,8 @@ var _ = Describe("Summary", func() {
 	When("the change is negative", func() {
 		It("should render a summary with down arrow", func() {
 			m := NewModel(ctxFixture)
-			m.Width = 120
-			m.Summary = asset.HoldingSummary{
+			m, _ = m.Update(tea.WindowSizeMsg{Width: 120})
+			m, _ = m.Update(SetSummaryMsg(asset.HoldingSummary{
 				Value: 1000,
 				Cost:  10000,
 				DayChange: c.HoldingChange{
@@ -66,7 +67,7 @@ var _ = Describe("Summary", func() {
 					Amount:  -9000,
 					Percent: -1000.0,
 				},
-			}
+			}))
 			Expect(removeFormatting(m.View())).To(Equal(strings.Join([]string{
 				"Day Change: ↓ -100.00 (-10.00%) • Change: ↓ -9000.00 (-1000.00%)  • Value: 1000.00  • Cost: 10000.00",
 				"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
@@ -87,7 +88,7 @@ var _ = Describe("Summary", func() {
 	When("the window width is less than the minimum", func() {
 		It("should render an empty summary", func() {
 			m := NewModel(ctxFixture)
-			m.Width = 10
+			m, _ = m.Update(tea.WindowSizeMsg{Width: 10})
 			Expect(m.View()).To(Equal(""))
 		})
 	})

@@ -157,27 +157,30 @@ nfpms:
     formats:
       - deb
       - rpm
-# snapcrafts:
-#   -
-#     id: ticker
-#     name_template: >-
-#       {{- .ProjectName }}-
-#       {{- .Version }}-
-#       {{- if eq .Os "darwin" }}mac
-#       {{- else}}{{ .Os }}{{ end }}-
-#       {{- .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
-#       {{- if .Mips }}-{{ .Mips }}{{ end }}
-#     publish: true
-#     summary: Terminal stock watcher and stock position tracker
-#     description: |
-#       Features:
-#       Live stock price quotes
-#       Track value of your stock positions
-#       Support for multiple cost basis lots
-#       Support for pre and post market price quotes
-
-#     grade: stable
-#     confinement: strict
-#     apps:
-#       ticker:
-#         plugs: ["network", "home"]
+snapcrafts:
+  -
+    id: ticker
+    name: ticker
+    builds:
+      - build-linux-64
+    publish: true
+    summary: Terminal stock watcher and stock position tracker
+    description: |
+      Features:
+      Live stock price quotes
+      Track value of your stock positions
+      Support for multiple cost basis lots
+      Support for pre and post market price quotes
+    grade: stable
+    confinement: strict
+    channel_templates:
+      - edge
+      - beta
+      - candidate
+      - stable
+    apps:
+      ticker:
+        command: bin/ticker
+        plugs: ["network", "home"]
+        environment:
+          PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH

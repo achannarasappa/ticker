@@ -180,7 +180,6 @@ snapcrafts:
       - stable
     apps:
       ticker:
-        command: bin/ticker
         plugs: ["network", "home"]
         environment:
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH

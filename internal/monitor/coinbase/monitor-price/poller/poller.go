@@ -2,7 +2,7 @@ package poller
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
@@ -50,20 +50,21 @@ func (p *Poller) SetSymbols(symbols []string, versionVector int) {
 func (p *Poller) SetRefreshInterval(interval time.Duration) error {
 
 	if p.isStarted {
-		return fmt.Errorf("cannot set refresh interval while poller is started")
+		return errors.New("cannot set refresh interval while poller is started")
 	}
 
 	p.refreshInterval = interval
+
 	return nil
 }
 
 func (p *Poller) Start() error {
 	if p.isStarted {
-		return fmt.Errorf("poller already started")
+		return errors.New("poller already started")
 	}
 
 	if p.refreshInterval <= 0 {
-		return fmt.Errorf("refresh interval is not set")
+		return errors.New("refresh interval is not set")
 	}
 
 	p.isStarted = true
@@ -79,12 +80,14 @@ func (p *Poller) Start() error {
 				return
 			case <-ticker.C:
 				if len(p.symbols) == 0 {
+
 					continue
 				}
 				versionVector := p.versionVector
 				assetQuotes, _, err := p.unaryAPI.GetAssetQuotes(p.symbols)
 				if err != nil {
 					p.chanError <- err
+
 					continue
 				}
 

@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"sync"
@@ -70,8 +71,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	var coinbase *monitorPriceCoinbase.MonitorPriceCoinbase
-	coinbase = monitorPriceCoinbase.NewMonitorPriceCoinbase(
+	coinbase := monitorPriceCoinbase.NewMonitorPriceCoinbase(
 		monitorPriceCoinbase.Config{
 			Ctx:                      ctx,
 			UnaryURL:                 configMonitor.ConfigMonitorPriceCoinbase.BaseURL,
@@ -91,8 +91,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 		SessionConsentURL: configMonitor.ConfigMonitorsYahoo.SessionConsentURL,
 	})
 
-	var yahoo *monitorPriceYahoo.MonitorPriceYahoo
-	yahoo = monitorPriceYahoo.NewMonitorPriceYahoo(
+	yahoo := monitorPriceYahoo.NewMonitorPriceYahoo(
 		monitorPriceYahoo.Config{
 			Ctx:                      ctx,
 			UnaryAPI:                 unaryAPI,
@@ -103,8 +102,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 		monitorPriceYahoo.WithRefreshInterval(time.Duration(configMonitor.RefreshInterval)*time.Second),
 	)
 
-	var yahooCurrencyRate *monitorCurrencyRate.MonitorCurrencyRateYahoo
-	yahooCurrencyRate = monitorCurrencyRate.NewMonitorCurrencyRateYahoo(
+	yahooCurrencyRate := monitorCurrencyRate.NewMonitorCurrencyRateYahoo(
 		monitorCurrencyRate.Config{
 			Ctx:                      ctx,
 			UnaryAPI:                 unaryAPI,
@@ -156,7 +154,6 @@ func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, versionVector int) erro
 				if err != nil {
 					chanError <- err
 				}
-				return
 			}(monitor, symbolBySource.Symbols)
 		}
 	}
@@ -174,12 +171,15 @@ func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, versionVector int) erro
 		case <-done:
 			// If there are any errors, return them
 			if len(errors) > 0 {
+
 				return fmt.Errorf("errors setting symbols on monitor(s): %v", errors)
 			}
+
 			goto Continue
 		case err := <-chanError:
 			errors = append(errors, err)
 		case <-timeout:
+
 			// If there are any errors, return them along with the timeout error
 			return fmt.Errorf("timeout waiting for monitor(s) to set symbols. Additional non-timeout errors: %v", errors)
 		}
@@ -206,7 +206,7 @@ Continue:
 func (m *Monitor) SetOnUpdate(config ConfigUpdateFns) error {
 
 	if config.OnUpdateAssetQuote == nil || config.OnUpdateAssetGroupQuote == nil {
-		return fmt.Errorf("onUpdateAssetQuote and onUpdateAssetGroupQuote must be set")
+		return errors.New("onUpdateAssetQuote and onUpdateAssetGroupQuote must be set")
 	}
 
 	m.onUpdateAssetQuote = config.OnUpdateAssetQuote
@@ -218,10 +218,10 @@ func (m *Monitor) SetOnUpdate(config ConfigUpdateFns) error {
 // Start starts all monitors
 func (m *Monitor) Start() {
 
-	m.monitorCurrencyRate.Start()
+	m.monitorCurrencyRate.Start() //nolint:errcheck
 
 	for _, monitor := range m.monitors {
-		monitor.Start()
+		monitor.Start() //nolint:errcheck
 	}
 
 	go m.handleUpdates()
@@ -250,6 +250,7 @@ func (m *Monitor) handleUpdates() {
 	for {
 		select {
 		case <-m.ctx.Done():
+
 			return
 		case update := <-m.chanUpdateAssetQuote:
 
@@ -258,6 +259,7 @@ func (m *Monitor) handleUpdates() {
 			// Skip updates from previous asset groups
 			if update.VersionVector != m.assetGroupVersionVector {
 				m.mu.RUnlock()
+
 				continue
 			}
 			m.mu.RUnlock()
@@ -274,7 +276,10 @@ func (m *Monitor) handleUpdates() {
 		case currencyRates := <-m.chanUpdateCurrencyRates:
 			// Set currency rates on each each monitor
 			for _, monitor := range m.monitors {
-				monitor.SetCurrencyRates(currencyRates)
+				err := monitor.SetCurrencyRates(currencyRates)
+				if err != nil {
+					m.chanError <- err
+				}
 			}
 
 			// Get asset quotes for all sources with new currency rates
@@ -290,7 +295,7 @@ func (m *Monitor) handleUpdates() {
 func (m *Monitor) Stop() {
 
 	for _, monitor := range m.monitors {
-		monitor.Stop()
+		monitor.Stop() //nolint:errcheck
 	}
 
 	m.cancel()

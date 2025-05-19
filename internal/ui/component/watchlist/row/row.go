@@ -24,7 +24,7 @@ const (
 	WidthRangeStatic    = 3  // " - " = 3 length
 )
 
-var lastID int64
+var lastID int64 //nolint:gochecknoglobals
 
 type SetCellWidthsMsg struct {
 	Width      int
@@ -72,7 +72,7 @@ type Model struct {
 // New returns a model with default values
 func New(config Config) *Model {
 
-	id := 0
+	var id int
 
 	if config.ID != 0 {
 		id = config.ID
@@ -100,7 +100,9 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 	case SetCellWidthsMsg:
 		m.cellWidths = msg.CellWidths
 		m.width = msg.Width
+
 		return m, nil
+
 	case UpdateAssetMsg:
 
 		// If symbol has not changed and price has changed then start the price animation
@@ -138,7 +140,9 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 			}
 
 			m.config.Asset = msg
+
 			return m, frameCmd(m.id)
+
 		}
 
 		// If symbol has changed or price has not changed then just update the asset
@@ -167,6 +171,7 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 			}
 
 			m.frame++
+
 			return m, frameCmd(m.id)
 		}
 
@@ -183,6 +188,7 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 			}
 
 			m.frame++
+
 			return m, frameCmd(m.id)
 		}
 
@@ -451,6 +457,7 @@ func textQuoteRange(asset *c.Asset, styles c.Styles) string {
 				"\n" +
 				asset.QuoteFutures.Expiry
 		}
+
 		return asset.QuoteFutures.Expiry
 
 	}

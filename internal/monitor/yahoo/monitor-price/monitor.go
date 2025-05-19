@@ -2,6 +2,7 @@ package monitorPriceYahoo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
@@ -16,7 +17,6 @@ import (
 type MonitorPriceYahoo struct {
 	unaryAPI                 *unary.UnaryAPI
 	poller                   *poller.Poller
-	unary                    *unary.UnaryAPI
 	input                    input
 	symbols                  []string
 	symbolToCurrency         map[string]string         // Map of symbols to currency
@@ -85,7 +85,8 @@ func NewMonitorPriceYahoo(config Config, opts ...Option) *MonitorPriceYahoo {
 // WithRefreshInterval sets the refresh interval for the monitor
 func WithRefreshInterval(interval time.Duration) Option {
 	return func(m *MonitorPriceYahoo) {
-		m.poller.SetRefreshInterval(interval)
+		// TODO: handle error
+		m.poller.SetRefreshInterval(interval) //nolint:errcheck
 	}
 }
 
@@ -102,6 +103,7 @@ func (m *MonitorPriceYahoo) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote,
 		for i, quote := range assetQuotes {
 			result[i] = *quote
 		}
+
 		return result, nil
 	}
 
@@ -113,6 +115,7 @@ func (m *MonitorPriceYahoo) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuote,
 	for i, quote := range m.assetQuotesCache {
 		result[i] = *quote
 	}
+
 	return result, nil
 }
 
@@ -160,7 +163,7 @@ func (m *MonitorPriceYahoo) Start() error {
 	var err error
 
 	if m.isStarted {
-		return fmt.Errorf("monitor already started")
+		return errors.New("monitor already started")
 	}
 
 	// On start, get initial quotes from unary API
@@ -187,10 +190,11 @@ func (m *MonitorPriceYahoo) Start() error {
 func (m *MonitorPriceYahoo) Stop() error {
 
 	if !m.isStarted {
-		return fmt.Errorf("monitor not started")
+		return errors.New("monitor not started")
 	}
 
 	m.cancel()
+
 	return nil
 }
 
@@ -226,6 +230,7 @@ func (m *MonitorPriceYahoo) handleUpdates() {
 			if !exists {
 				// TODO: log product not found in cache - should not happen
 				m.mu.RUnlock()
+
 				continue
 			}
 
@@ -235,6 +240,7 @@ func (m *MonitorPriceYahoo) handleUpdates() {
 				assetQuote.QuotePrice.PriceDayHigh == updateMessage.Data.QuotePrice.PriceDayHigh {
 
 				m.mu.RUnlock()
+
 				continue
 			}
 			m.mu.RUnlock()

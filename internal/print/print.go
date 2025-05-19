@@ -154,7 +154,7 @@ func Run(dep *c.Dependencies, ctx *c.Context, options *Options) func(*cobra.Comm
 				StreamingURL: dep.MonitorPriceCoinbaseStreamingURL,
 			},
 		})
-		monitors.SetAssetGroup(ctx.Groups[0], 0)
+		monitors.SetAssetGroup(ctx.Groups[0], 0) //nolint:errcheck
 		assetGroupQuote := monitors.GetAssetGroupQuote()
 		assets, _ := asset.GetAssets(*ctx, assetGroupQuote)
 
@@ -181,7 +181,7 @@ func RunSummary(dep *c.Dependencies, ctx *c.Context, options *Options) func(cmd 
 				SessionConsentURL: dep.MonitorYahooSessionConsentURL,
 			},
 		})
-		monitors.SetAssetGroup(ctx.Groups[0], 0)
+		monitors.SetAssetGroup(ctx.Groups[0], 0) //nolint:errcheck
 		assetGroupQuote := monitors.GetAssetGroupQuote()
 		_, holdingSummary := asset.GetAssets(*ctx, assetGroupQuote)
 

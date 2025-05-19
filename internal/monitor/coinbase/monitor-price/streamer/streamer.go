@@ -2,6 +2,7 @@ package streamer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -41,9 +42,7 @@ type Streamer struct {
 	conn                          *websocket.Conn
 	isStarted                     bool
 	url                           string
-	assetQuoteChan                chan c.AssetQuote
 	subscriptionChan              chan messageSubscription
-	onUpdate                      func()
 	wg                            sync.WaitGroup
 	ctx                           context.Context
 	cancel                        context.CancelFunc
@@ -78,7 +77,7 @@ func NewStreamer(ctx context.Context, config StreamerConfig) *Streamer {
 
 func (s *Streamer) Start() error {
 	if s.isStarted {
-		return fmt.Errorf("streamer already started")
+		return errors.New("streamer already started")
 	}
 
 	if s.url == "" {
@@ -96,6 +95,7 @@ func (s *Streamer) Start() error {
 		conn, _, err := websocket.DefaultDialer.DialContext(s.ctx, url, nil)
 		if err != nil {
 			errChan <- err
+
 			return
 		}
 		connChan <- conn
@@ -106,8 +106,10 @@ func (s *Streamer) Start() error {
 	case conn := <-connChan:
 		s.conn = conn
 	case err := <-errChan:
+
 		return err
 	case <-s.ctx.Done():
+
 		return fmt.Errorf("connection aborted: %w", s.ctx.Err())
 	}
 
@@ -134,6 +136,7 @@ func (s *Streamer) SetSymbolsAndUpdateSubscriptions(symbols []string, versionVec
 	var err error
 
 	if !s.isStarted {
+
 		return nil
 	}
 
@@ -148,6 +151,7 @@ func (s *Streamer) SetSymbolsAndUpdateSubscriptions(symbols []string, versionVec
 
 	err = s.subscribe(s.symbols)
 	if err != nil {
+
 		return err
 	}
 
@@ -157,10 +161,12 @@ func (s *Streamer) SetSymbolsAndUpdateSubscriptions(symbols []string, versionVec
 func (s *Streamer) SetURL(url string) error {
 
 	if s.isStarted {
-		return fmt.Errorf("cannot set URL while streamer is connected")
+
+		return errors.New("cannot set URL while streamer is connected")
 	}
 
 	s.url = url
+
 	return nil
 }
 
@@ -176,11 +182,13 @@ func (s *Streamer) readStreamQuote() {
 			err := s.conn.ReadJSON(&message)
 			if err != nil {
 				s.chanError <- err
+
 				return
 			}
 
 			// Only handle ticker messages; first message is a subscription confirmation
 			if message.Type != "ticker" {
+
 				continue
 			}
 
@@ -197,12 +205,14 @@ func (s *Streamer) writeStreamSubscription() {
 	for {
 		select {
 		case <-s.ctx.Done():
+
 			return
 		case message := <-s.subscriptionChan:
 
 			err := s.conn.WriteJSON(message)
 			if err != nil {
 				s.chanError <- err
+
 				return
 			}
 		}
@@ -218,10 +228,11 @@ func (s *Streamer) subscribe(productIDs []string) error {
 	}
 
 	s.subscriptionChan <- message
+
 	return nil
 }
 
-func (s *Streamer) unsubscribe() error {
+func (s *Streamer) unsubscribe() error { //nolint:unused
 
 	message := messageSubscription{
 		Type:     "unsubscribe",
@@ -229,6 +240,7 @@ func (s *Streamer) unsubscribe() error {
 	}
 
 	s.subscriptionChan <- message
+
 	return nil
 }
 

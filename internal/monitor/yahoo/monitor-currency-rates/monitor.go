@@ -2,7 +2,7 @@ package monitorCurrencyRate
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"sync"
 
 	c "github.com/achannarasappa/ticker/v4/internal/common"
@@ -53,7 +53,7 @@ func NewMonitorCurrencyRateYahoo(config Config) *MonitorCurrencyRateYahoo {
 func (m *MonitorCurrencyRateYahoo) Start() error {
 
 	if m.isStarted {
-		return fmt.Errorf("monitor already started")
+		return errors.New("monitor already started")
 	}
 
 	if m.targetCurrency == "" {
@@ -70,7 +70,7 @@ func (m *MonitorCurrencyRateYahoo) Start() error {
 func (m *MonitorCurrencyRateYahoo) Stop() error {
 
 	if !m.isStarted {
-		return fmt.Errorf("monitor not started")
+		return errors.New("monitor not started")
 	}
 
 	m.cancel()
@@ -94,6 +94,7 @@ func (m *MonitorCurrencyRateYahoo) SetTargetCurrency(targetCurrency string) {
 
 	if err != nil {
 		m.chanError <- err
+
 		return
 	}
 
@@ -128,6 +129,7 @@ func (m *MonitorCurrencyRateYahoo) handleRequestCurrencyRates() {
 
 			// Skip if no new currencies to fetch
 			if len(fromCurrenciesToRequest) == 0 {
+
 				continue
 			}
 
@@ -135,6 +137,7 @@ func (m *MonitorCurrencyRateYahoo) handleRequestCurrencyRates() {
 			rates, err := m.unaryAPI.GetCurrencyRates(fromCurrenciesToRequest, m.targetCurrency)
 			if err != nil {
 				m.chanError <- err
+
 				continue
 			}
 

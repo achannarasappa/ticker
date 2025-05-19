@@ -105,7 +105,8 @@ func (m *Model) Init() tea.Cmd {
 	return tea.Batch(
 		tick(0),
 		func() tea.Msg {
-			(*m.monitors).SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.versionVector)
+			(*m.monitors).SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.versionVector) //nolint:errcheck
+
 			return nil
 		},
 	)
@@ -135,7 +136,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			// Set the new set of symbols in the monitors and initiate a request to refresh all price quotes
 			// Eventually, SetAssetGroupQuoteMsg message will be sent with the new quotes once all of the HTTP request complete
-			m.monitors.SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.versionVector)
+			m.monitors.SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.versionVector) //nolint:errcheck
 
 			return m, tickImmediate(m.versionVector)
 		case "ctrl+c":
@@ -271,6 +272,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case row.FrameMsg:
 		var cmd tea.Cmd
 		m.watchlist, cmd = m.watchlist.Update(msg)
+
 		return m, cmd
 	}
 

@@ -14,7 +14,6 @@ linters:
     - godot
     - lll
     - funlen
-    - gomnd
     - gofumpt
     - unparam
     - tagliatelle
@@ -26,6 +25,17 @@ linters:
     - nolintlint
     - mnd
     - copyloopvar
+    - revive
+    - gocognit
+    - nestif
+    - stylecheck
+    - godox
+    - cyclop
+    - nonamedreturns
+    - ireturn
+    - noctx
+    - containedctx
+    - err113
 run:
   tests: false
 issues:

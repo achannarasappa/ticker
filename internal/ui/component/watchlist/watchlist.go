@@ -118,6 +118,7 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 				CellWidths: m.cellWidths,
 			})
 		}
+
 		return m, nil
 
 	case row.FrameMsg:
@@ -127,9 +128,10 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 
 		// TODO: send message to a specific row rather than all rows
 		for i, r := range m.rows {
-			m.rows[i], cmd = r.Update(row.FrameMsg(msg))
+			m.rows[i], cmd = r.Update(msg)
 			cmds = append(cmds, cmd)
 		}
+
 		return m, tea.Batch(cmds...)
 
 	}

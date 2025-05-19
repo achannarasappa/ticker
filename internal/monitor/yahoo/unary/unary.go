@@ -42,6 +42,7 @@ func NewUnaryAPI(config Config) *UnaryAPI {
 			if len(via) >= 1 {
 				return http.ErrUseLastResponse
 			}
+
 			return nil
 		},
 	}
@@ -179,14 +180,14 @@ func (u *UnaryAPI) getQuotes(symbols []string, fields []string) (Response, error
 	reqURL.RawQuery = q.Encode()
 
 	// Create request
-	req, _ := http.NewRequest("GET", reqURL.String(), nil)
+	req, _ := http.NewRequest(http.MethodGet, reqURL.String(), nil)
 
 	// Set common headers
-	req.Header.Set("authority", "query1.finance.yahoo.com")
-	req.Header.Set("accept", "*/*")
-	req.Header.Set("accept-language", defaultAcceptLang)
-	req.Header.Set("origin", u.baseURL)
-	req.Header.Set("user-agent", defaultUserAgent)
+	req.Header.Set("Authority", "query1.finance.yahoo.com")
+	req.Header.Set("Accept", "*/*")
+	req.Header.Set("Accept-Language", defaultAcceptLang)
+	req.Header.Set("Origin", u.baseURL)
+	req.Header.Set("User-Agent", defaultUserAgent)
 
 	// Add cookies if available
 	if len(u.cookies) > 0 {

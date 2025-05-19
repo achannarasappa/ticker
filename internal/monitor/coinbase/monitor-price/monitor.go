@@ -2,7 +2,7 @@ package monitorPriceCoinbase
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"slices"
 	"strings"
 	"sync"
@@ -22,13 +22,11 @@ type MonitorPriceCoinbase struct {
 	unaryAPI                         *unary.UnaryAPI
 	streamer                         *streamer.Streamer
 	poller                           *poller.Poller
-	unary                            *unary.UnaryAPI
 	input                            input
 	productIds                       []string // Coinbase APIs refer to trading pairs as Product IDs which symbols ticker accepts with a -USD suffix
 	productIdsStreaming              []string
 	productIdsPolling                []string
 	productIdsToUnderlyingProductIds map[string]string        // Map of productIds to underlying productIds
-	productIdsUnderlyingOnly         map[string]bool          // Product IDs which are only underlying assets of explicit requested assets (e.g. BTC-USD is an underlying asset of BIT-31JAN25-CDE)
 	assetQuotesCache                 []*c.AssetQuote          // Asset quotes for all assets retrieved at start or on symbol change
 	assetQuotesCacheLookup           map[string]*c.AssetQuote // Asset quotes for all assets retrieved at least once (symbol change does not remove symbols)
 	currencyRatesCache               c.CurrencyRates          // Cache of currency rates
@@ -109,14 +107,16 @@ func NewMonitorPriceCoinbase(config Config, opts ...Option) *MonitorPriceCoinbas
 // WithStreamingURL sets the streaming URL for the monitor
 func WithStreamingURL(url string) Option {
 	return func(m *MonitorPriceCoinbase) {
-		m.streamer.SetURL(url)
+		// TODO: handle error
+		m.streamer.SetURL(url) //nolint:errcheck
 	}
 }
 
 // WithRefreshInterval sets the refresh interval for the monitor
 func WithRefreshInterval(interval time.Duration) Option {
 	return func(m *MonitorPriceCoinbase) {
-		m.poller.SetRefreshInterval(interval)
+		// TODO: handle error
+		m.poller.SetRefreshInterval(interval) //nolint:errcheck
 	}
 }
 
@@ -131,6 +131,7 @@ func (m *MonitorPriceCoinbase) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuo
 		for i, quote := range assetQuotes {
 			result[i] = *quote
 		}
+
 		return result, nil
 	}
 
@@ -141,6 +142,7 @@ func (m *MonitorPriceCoinbase) GetAssetQuotes(ignoreCache ...bool) ([]c.AssetQuo
 	for i, quote := range m.assetQuotesCache {
 		result[i] = *quote
 	}
+
 	return result, nil
 }
 
@@ -186,7 +188,12 @@ func (m *MonitorPriceCoinbase) SetSymbols(productIds []string, versionVector int
 	}
 
 	// Coinbase steaming API for CBE (spot) only and not CDE (futures)
-	m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming, versionVector)
+	err = m.streamer.SetSymbolsAndUpdateSubscriptions(m.productIdsStreaming, versionVector)
+	if err != nil {
+		return err
+	}
+
+	// TODO: handle error
 	m.poller.SetSymbols(m.productIdsPolling, versionVector)
 
 	return nil
@@ -198,7 +205,7 @@ func (m *MonitorPriceCoinbase) Start() error {
 	var err error
 
 	if m.isStarted {
-		return fmt.Errorf("monitor already started")
+		return errors.New("monitor already started")
 	}
 
 	// On start, get initial quotes from unary API
@@ -227,10 +234,11 @@ func (m *MonitorPriceCoinbase) Start() error {
 func (m *MonitorPriceCoinbase) Stop() error {
 
 	if !m.isStarted {
-		return fmt.Errorf("monitor not started")
+		return errors.New("monitor not started")
 	}
 
 	m.cancel()
+
 	return nil
 }
 
@@ -262,6 +270,7 @@ func mergeProductIds(symbolsA, symbolsB []string) []string {
 	merged = append(merged, symbolsA...)
 	merged = append(merged, symbolsB...)
 	slices.Sort(merged)
+
 	return merged
 }
 
@@ -285,6 +294,7 @@ func (m *MonitorPriceCoinbase) handleUpdates() {
 				// If product id does not exist in cache, skip update
 				// TODO: log product not found in cache - should not happen
 				m.mu.RUnlock()
+
 				continue
 			}
 
@@ -294,6 +304,7 @@ func (m *MonitorPriceCoinbase) handleUpdates() {
 				assetQuote.QuotePrice.PriceDayHigh == updateMessage.Data.QuotePrice.PriceDayHigh {
 
 				m.mu.RUnlock()
+
 				continue
 			}
 			m.mu.RUnlock()
@@ -340,12 +351,14 @@ func (m *MonitorPriceCoinbase) handleUpdates() {
 				// If product id does not exist in cache, skip update
 				// TODO: log product not found in cache - should not happen
 				m.mu.RUnlock()
+
 				continue
 			}
 
 			// Skip update if price has not changed
 			if assetQuote.QuotePrice.Price == updateMessage.Data.Price {
 				m.mu.RUnlock()
+
 				continue
 			}
 			m.mu.RUnlock()

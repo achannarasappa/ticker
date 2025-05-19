@@ -32,25 +32,30 @@ func Start(dep *c.Dependencies, ctx *c.Context) func() error {
 			tea.WithAltScreen(),
 		)
 
-		monitors.SetOnUpdate(mon.ConfigUpdateFns{
+		var err error
+
+		err = monitors.SetOnUpdate(mon.ConfigUpdateFns{
 			OnUpdateAssetQuote: func(symbol string, assetQuote c.AssetQuote, versionVector int) {
 				p.Send(SetAssetQuoteMsg{
 					symbol:        symbol,
 					assetQuote:    assetQuote,
 					versionVector: versionVector,
 				})
-				return
 			},
 			OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, versionVector int) {
 				p.Send(SetAssetGroupQuoteMsg{
 					assetGroupQuote: assetGroupQuote,
 					versionVector:   versionVector,
 				})
-				return
 			},
 		})
 
-		_, err := p.Run()
+		if err != nil {
+
+			return err
+		}
+
+		_, err = p.Run()
 
 		return err
 	}

@@ -61,7 +61,7 @@ func parseTickerSymbolToSourceSymbol(body io.ReadCloser) (TickerSymbolToSourceSy
 
 // GetTickerSymbols retrieves a list of ticker specific symbols and their data source
 func GetTickerSymbols(url string) (TickerSymbolToSourceSymbol, error) {
-	resp, err := http.Get(url)
+	resp, err := http.Get(url) //nolint:gosec
 	if err != nil {
 		return TickerSymbolToSourceSymbol{}, err
 	}

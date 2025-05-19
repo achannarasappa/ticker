@@ -154,9 +154,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "up":
 			m.viewport, cmd = m.viewport.Update(msg)
+
 			return m, cmd
 		case "down":
 			m.viewport, cmd = m.viewport.Update(msg)
+
 			return m, cmd
 
 		}

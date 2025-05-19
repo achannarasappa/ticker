@@ -94,6 +94,10 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 			}
 		}
 
+		if len(assets) < len(m.rows) {
+			m.rows = m.rows[:len(assets)]
+		}
+
 		m.assets = assets
 		m.assetsBySymbol = assetsBySymbol
 

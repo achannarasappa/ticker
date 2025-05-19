@@ -165,7 +165,7 @@ func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, versionVector int) erro
 	}()
 
 	// Continue when the waitgroup is finished or a timeout is reached
-	// timeout := time.After(5 * time.Second)
+	timeout := time.After(3 * time.Second)
 	for {
 		select {
 		case <-done:

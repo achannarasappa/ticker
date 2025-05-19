@@ -414,7 +414,7 @@ var _ = Describe("Monitor", func() {
 						ghttp.VerifyRequest("GET", "/v7/finance/quote"),
 						func(w http.ResponseWriter, req *http.Request) {
 							// Simulate a slow response by sleeping
-							time.Sleep(3 * time.Second)
+							time.Sleep(3*time.Second + 100*time.Millisecond)
 							json.NewEncoder(w).Encode(map[string]interface{}{
 								"quoteResponse": map[string]interface{}{
 									"quotes": []map[string]interface{}{

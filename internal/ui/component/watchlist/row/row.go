@@ -161,11 +161,11 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 		if m.frame < 4 && m.priceChangeDirection > 0 {
 			switch m.frame {
 			case 0:
-				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Background(lipgloss.Color("22"))
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("154")).Background(lipgloss.Color("22"))
 			case 1:
-				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Background(lipgloss.Color("22"))
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("154")).Background(lipgloss.Color("22"))
 			case 2:
-				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("84")).Background(lipgloss.Color("232"))
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("157")).Background(lipgloss.Color("232"))
 			case 3:
 				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("15")).Background(lipgloss.Color(""))
 			}
@@ -178,11 +178,11 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 		if m.frame < 4 && m.priceChangeDirection < 0 {
 			switch m.frame {
 			case 0:
-				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Background(lipgloss.Color("52"))
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Background(lipgloss.Color("52"))
 			case 1:
-				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Background(lipgloss.Color("52"))
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Background(lipgloss.Color("52"))
 			case 2:
-				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("167")).Background(lipgloss.Color("232"))
+				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("210")).Background(lipgloss.Color("232"))
 			case 3:
 				m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("15")).Background(lipgloss.Color(""))
 			}

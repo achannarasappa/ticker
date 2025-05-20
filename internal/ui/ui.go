@@ -108,7 +108,7 @@ func (m *Model) Init() tea.Cmd {
 		func() tea.Msg {
 			err := (*m.monitors).SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.versionVector)
 
-			if err != nil {
+			if m.ctx.Config.Debug && err != nil {
 				m.ctx.Logger.Println(err)
 			}
 

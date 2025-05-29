@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/achannarasappa/ticker/v4/internal/cli"
-	c "github.com/achannarasappa/ticker/v4/internal/common"
-	"github.com/achannarasappa/ticker/v4/internal/print"
-	"github.com/achannarasappa/ticker/v4/internal/ui"
+	"github.com/achannarasappa/ticker/v5/internal/cli"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
+	"github.com/achannarasappa/ticker/v5/internal/print"
+	"github.com/achannarasappa/ticker/v5/internal/ui"
 )
 
 //nolint:gochecknoglobals

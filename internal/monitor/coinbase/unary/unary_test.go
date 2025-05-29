@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/unary"
+	"github.com/achannarasappa/ticker/v5/internal/monitor/coinbase/unary"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"

@@ -1,7 +1,7 @@
 package asset
 
 import (
-	c "github.com/achannarasappa/ticker/v4/internal/common"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
 )
 
 // currencyRateByUse represents the currency conversion rate for each use case

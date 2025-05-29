@@ -9,9 +9,9 @@ import (
 	. "github.com/onsi/gomega"
 	g "github.com/onsi/gomega/gstruct"
 
-	c "github.com/achannarasappa/ticker/v4/internal/common"
-	streamer "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/monitor-price/streamer"
-	testWs "github.com/achannarasappa/ticker/v4/test/websocket"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
+	streamer "github.com/achannarasappa/ticker/v5/internal/monitor/coinbase/monitor-price/streamer"
+	testWs "github.com/achannarasappa/ticker/v5/test/websocket"
 )
 
 var _ = Describe("Streamer", func() {

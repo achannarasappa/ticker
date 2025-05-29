@@ -4,11 +4,11 @@ import (
 	"strings"
 
 	grid "github.com/achannarasappa/term-grid"
-	"github.com/achannarasappa/ticker/v4/internal/asset"
-	c "github.com/achannarasappa/ticker/v4/internal/common"
+	"github.com/achannarasappa/ticker/v5/internal/asset"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
 	tea "github.com/charmbracelet/bubbletea"
 
-	u "github.com/achannarasappa/ticker/v4/internal/ui/util"
+	u "github.com/achannarasappa/ticker/v5/internal/ui/util"
 	"github.com/muesli/reflow/ansi"
 )
 

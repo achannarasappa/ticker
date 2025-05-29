@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"sync"
 
-	c "github.com/achannarasappa/ticker/v4/internal/common"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
 	"github.com/gorilla/websocket"
 )
 

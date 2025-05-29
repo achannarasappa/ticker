@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"os"
 
-	c "github.com/achannarasappa/ticker/v4/internal/common"
-	"github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"
-	"github.com/achannarasappa/ticker/v4/internal/print"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
+	"github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/unary"
+	"github.com/achannarasappa/ticker/v5/internal/print"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"

@@ -15,7 +15,7 @@ builds:
       post:
         - upx "{{ .Path }}"
     ldflags:
-      - -s -w -X 'github.com/achannarasappa/ticker/v4/cmd.Version={{.Version}}'
+      - -s -w -X 'github.com/achannarasappa/ticker/v5/cmd.Version={{.Version}}'
   - id: build-linux
     main: ./main.go
     env:
@@ -30,7 +30,7 @@ builds:
       post:
         - upx "{{ .Path }}"
     ldflags:
-      - -s -w -X 'github.com/achannarasappa/ticker/v4/cmd.Version={{.Version}}'
+      - -s -w -X 'github.com/achannarasappa/ticker/v5/cmd.Version={{.Version}}'
   - id: build-mac
     main: ./main.go
     env:
@@ -38,7 +38,7 @@ builds:
     goos:
       - darwin
     ldflags:
-      - -s -w -X 'github.com/achannarasappa/ticker/v4/cmd.Version={{.Version}}'
+      - -s -w -X 'github.com/achannarasappa/ticker/v5/cmd.Version={{.Version}}'
   - id: build-windows-64
     main: ./main.go
     env:
@@ -48,7 +48,7 @@ builds:
     goos:
       - windows
     ldflags:
-      - -s -w -X 'github.com/achannarasappa/ticker/v4/cmd.Version={{.Version}}'
+      - -s -w -X 'github.com/achannarasappa/ticker/v5/cmd.Version={{.Version}}'
   - id: build-windows-32
     main: ./main.go
     env:
@@ -58,7 +58,7 @@ builds:
     goos:
       - windows
     ldflags:
-      - -s -w -X 'github.com/achannarasappa/ticker/v4/cmd.Version={{.Version}}'
+      - -s -w -X 'github.com/achannarasappa/ticker/v5/cmd.Version={{.Version}}'
 archives:
   - id: release-winget
     format: zip

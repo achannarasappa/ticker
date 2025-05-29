@@ -6,14 +6,14 @@ import (
 	"time"
 
 	grid "github.com/achannarasappa/term-grid"
-	"github.com/achannarasappa/ticker/v4/internal/asset"
-	c "github.com/achannarasappa/ticker/v4/internal/common"
-	mon "github.com/achannarasappa/ticker/v4/internal/monitor"
-	"github.com/achannarasappa/ticker/v4/internal/ui/component/summary"
-	"github.com/achannarasappa/ticker/v4/internal/ui/component/watchlist"
-	"github.com/achannarasappa/ticker/v4/internal/ui/component/watchlist/row"
+	"github.com/achannarasappa/ticker/v5/internal/asset"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
+	mon "github.com/achannarasappa/ticker/v5/internal/monitor"
+	"github.com/achannarasappa/ticker/v5/internal/ui/component/summary"
+	"github.com/achannarasappa/ticker/v5/internal/ui/component/watchlist"
+	"github.com/achannarasappa/ticker/v5/internal/ui/component/watchlist/row"
 
-	util "github.com/achannarasappa/ticker/v4/internal/ui/util"
+	util "github.com/achannarasappa/ticker/v5/internal/ui/util"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"

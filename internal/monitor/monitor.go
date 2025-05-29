@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
-	c "github.com/achannarasappa/ticker/v4/internal/common"
-	monitorPriceCoinbase "github.com/achannarasappa/ticker/v4/internal/monitor/coinbase/monitor-price"
-	monitorCurrencyRate "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/monitor-currency-rates"
-	monitorPriceYahoo "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/monitor-price"
-	unaryClientYahoo "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
+	monitorPriceCoinbase "github.com/achannarasappa/ticker/v5/internal/monitor/coinbase/monitor-price"
+	monitorCurrencyRate "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-currency-rates"
+	monitorPriceYahoo "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price"
+	unaryClientYahoo "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/unary"
 )
 
 // Monitor represents an overall monitor which manages API specific monitors

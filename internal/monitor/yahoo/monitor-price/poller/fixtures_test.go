@@ -1,6 +1,6 @@
 package poller_test
 
-import "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"
+import "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/unary"
 
 var (
 	responseQuote1Fixture = unary.Response{

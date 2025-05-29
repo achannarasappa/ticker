@@ -9,9 +9,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	c "github.com/achannarasappa/ticker/v4/internal/common"
-	monitorPriceYahoo "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/monitor-price"
-	"github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
+	monitorPriceYahoo "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price"
+	"github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/unary"
 
 	"github.com/onsi/gomega/ghttp"
 )

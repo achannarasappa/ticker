@@ -4,8 +4,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	. "github.com/achannarasappa/ticker/v4/internal/asset"
-	c "github.com/achannarasappa/ticker/v4/internal/common"
+	. "github.com/achannarasappa/ticker/v5/internal/asset"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
 )
 
 var assetGroupFixture = c.AssetGroup{

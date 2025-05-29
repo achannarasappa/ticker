@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	c "github.com/achannarasappa/ticker/v4/internal/common"
-	"github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
+	"github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/unary"
 )
 
 // Poller represents a poller for Yahoo Finance

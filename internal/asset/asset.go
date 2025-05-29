@@ -3,7 +3,7 @@ package asset
 import (
 	"strings"
 
-	c "github.com/achannarasappa/ticker/v4/internal/common"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
 )
 
 // AggregatedLot represents a cost basis lot of an asset grouped by symbol

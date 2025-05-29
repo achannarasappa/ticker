@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	c "github.com/achannarasappa/ticker/v4/internal/common"
-	s "github.com/achannarasappa/ticker/v4/internal/sorter"
-	row "github.com/achannarasappa/ticker/v4/internal/ui/component/watchlist/row"
-	u "github.com/achannarasappa/ticker/v4/internal/ui/util"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
+	s "github.com/achannarasappa/ticker/v5/internal/sorter"
+	row "github.com/achannarasappa/ticker/v5/internal/ui/component/watchlist/row"
+	u "github.com/achannarasappa/ticker/v5/internal/ui/util"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

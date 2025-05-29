@@ -11,9 +11,9 @@ import (
 
 	g "github.com/onsi/gomega/gstruct"
 
-	c "github.com/achannarasappa/ticker/v4/internal/common"
-	poller "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/monitor-price/poller"
-	unary "github.com/achannarasappa/ticker/v4/internal/monitor/yahoo/unary"
+	c "github.com/achannarasappa/ticker/v5/internal/common"
+	poller "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller"
+	unary "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/unary"
 )
 
 var _ = Describe("Poller", func() {

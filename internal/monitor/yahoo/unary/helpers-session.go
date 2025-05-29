@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Constants for URLs and common header values
@@ -104,7 +105,14 @@ func (u *UnaryAPI) getCookieEU() ([]*http.Cookie, error) {
 	}
 
 	// Get GUCS cookie
-	gucsCookies := resp1.Cookies()
+	var gucsCookies []*http.Cookie
+	if resp1.Request != nil && resp1.Request.Response != nil &&
+		resp1.Request.Response.Request != nil && resp1.Request.Response.Request.Response != nil {
+		gucsCookies, err = parseSetCookieHeaders(resp1.Request.Response.Request.Response.Header)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing GUCS cookies: %w", err)
+		}
+	}
 	if len(gucsCookies) == 0 {
 		return nil, errors.New("session refresh error: GUCS cookie missing from response")
 	}
@@ -154,7 +162,12 @@ func (u *UnaryAPI) getCookieEU() ([]*http.Cookie, error) {
 	}
 	defer resp2.Body.Close()
 
-	cookies = resp2.Cookies()
+	// Parse cookies from response headers
+	cookies, err = parseSetCookieHeaders(resp2.Header)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing cookies from response: %w", err)
+	}
+
 	if !isRequiredCookieSet(cookies) {
 		return nil, errors.New("session refresh error: A3 session cookie missing from response after agreeing to EU consent request")
 	}
@@ -256,4 +269,59 @@ func extractSessionAndCSRF(resp *http.Response) (string, string, error) {
 	}
 
 	return sessionIDMatch[1], csrfTokenMatch[1], nil
+}
+
+// parseSetCookieHeaders parses all Set-Cookie headers from a response header map into http.Cookie objects
+func parseSetCookieHeaders(headers http.Header) ([]*http.Cookie, error) {
+	cookies := make([]*http.Cookie, 0)
+	for _, cookieStr := range headers.Values("Set-Cookie") {
+		parts := strings.Split(cookieStr, ";")
+		if len(parts) == 0 {
+			continue
+		}
+
+		// Parse name-value pair
+		nameValue := strings.SplitN(parts[0], "=", 2)
+		if len(nameValue) != 2 {
+			continue
+		}
+
+		cookie := &http.Cookie{
+			Name:  strings.TrimSpace(nameValue[0]),
+			Value: strings.TrimSpace(nameValue[1]),
+		}
+
+		// Parse attributes
+		for _, part := range parts[1:] {
+			part = strings.TrimSpace(part)
+			switch {
+			case strings.HasPrefix(part, "Domain="):
+				cookie.Domain = strings.TrimPrefix(part, "Domain=")
+			case strings.HasPrefix(part, "Path="):
+				cookie.Path = strings.TrimPrefix(part, "Path=")
+			case strings.HasPrefix(part, "Expires="):
+				cookie.Expires, _ = time.Parse(time.RFC1123, strings.TrimPrefix(part, "Expires="))
+			case strings.HasPrefix(part, "Max-Age="):
+				if maxAge, err := strconv.Atoi(strings.TrimPrefix(part, "Max-Age=")); err == nil {
+					cookie.MaxAge = maxAge
+				}
+			case part == "Secure":
+				cookie.Secure = true
+			case part == "HttpOnly":
+				cookie.HttpOnly = true
+			case strings.HasPrefix(part, "SameSite="):
+				cookie.SameSite = http.SameSiteLaxMode
+				sameSite := strings.TrimPrefix(part, "SameSite=")
+				if sameSite == "None" {
+					cookie.SameSite = http.SameSiteNoneMode
+				} else if sameSite == "Strict" {
+					cookie.SameSite = http.SameSiteStrictMode
+				}
+			}
+		}
+
+		cookies = append(cookies, cookie)
+	}
+
+	return cookies, nil
 }

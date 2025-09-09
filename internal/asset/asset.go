@@ -30,15 +30,15 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Hol
 	holdingsBySymbol := getLots(assetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings)
 	orderIndex := make(map[string]int)
 
-	for i, symbol := range assetGroupQuote.AssetGroup.ConfigAssetGroup.Watchlist {
-		if _, exists := orderIndex[symbol]; !exists {
-			orderIndex[strings.ToLower(symbol)] = i
+	for i, symbol := range assetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings {
+		if _, exists := orderIndex[symbol.Symbol]; !exists {
+			orderIndex[strings.ToLower(symbol.Symbol)] = i
 		}
 	}
 
-	for i, symbol := range assetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings {
-		if _, exists := orderIndex[symbol.Symbol]; !exists {
-			orderIndex[strings.ToLower(symbol.Symbol)] = i + len(assetGroupQuote.AssetGroup.ConfigAssetGroup.Watchlist) - 1
+	for i, symbol := range assetGroupQuote.AssetGroup.ConfigAssetGroup.Watchlist {
+		if _, exists := orderIndex[symbol]; !exists {
+			orderIndex[strings.ToLower(symbol)] = i + len(assetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings)
 		}
 	}
 

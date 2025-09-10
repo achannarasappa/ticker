@@ -160,6 +160,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport, cmd = m.viewport.Update(msg)
 
 			return m, cmd
+		case "pgup":
+			m.viewport.PageUp()
+
+			return m, nil
+		case "pgdown":
+			m.viewport.PageDown()
+
+			return m, nil
 
 		}
 

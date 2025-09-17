@@ -1,10 +1,6 @@
 module github.com/achannarasappa/ticker/v5
 
-<<<<<<< HEAD
 go 1.24.3
-=======
-go 1.19
->>>>>>> fcb122a (Tracking the target price)
 
 require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
@@ -64,5 +60,3 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-// replace github.com/achannarasappa/ticker => ./

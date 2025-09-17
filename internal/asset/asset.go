@@ -4,6 +4,9 @@ import (
 	"strings"
 
 	c "github.com/achannarasappa/ticker/v5/internal/common"
+	"fmt"
+	"github.com/achannarasappa/ticker/v4/internal/currency"
+	// "github.com/achannarasappa/ticker/internal/alert"
 )
 
 // AggregatedLot represents a cost basis lot of an asset grouped by symbol
@@ -12,6 +15,7 @@ type AggregatedLot struct {
 	Cost       float64
 	Quantity   float64
 	OrderIndex int
+	TargetPrice *float64
 }
 
 // HoldingSummary represents a summary of all asset holdings at a point in time
@@ -73,6 +77,9 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Hol
 
 	assets = updateHoldingWeights(assets, holdingSummary)
 
+	// Evaluate assets and trigger alerts if necessary
+    processAssets(assets)
+
 	return assets, holdingSummary
 
 }
@@ -118,8 +125,23 @@ func updateHoldingWeights(assets []c.Asset, holdingSummary HoldingSummary) []c.A
 
 }
 
-func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]AggregatedLot, currencyRateByUse currencyRateByUse) c.Holding {
+func processAssets(assets []c.Asset) {
+	for _, asset := range assets {
+		if asset.Holding.TargetPrice == nil {
+			continue // No target price, so no alert is required
+		}
 
+		currentPrice := asset.QuotePrice.Price
+		targetPrice := *asset.Holding.TargetPrice
+
+		// Trigger an alert if the current price exceeds the target price
+		if currentPrice >= targetPrice {
+			// fmt.Printf("📢 Alert: %s has reached the target price! Current: $%.2f, Target: $%.2f\n", asset.Symbol, currentPrice, targetPrice)
+		}
+	}
+}
+
+func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]AggregatedLot, currencyRateByUse currency.CurrencyRateByUse) c.Holding {
 	if aggregatedLot, ok := lotsBySymbol[assetQuote.Symbol]; ok {
 		value := aggregatedLot.Quantity * assetQuote.QuotePrice.Price * currencyRateByUse.QuotePrice
 		cost := aggregatedLot.Cost * currencyRateByUse.PositionCost
@@ -127,11 +149,11 @@ func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]A
 		totalChangePercent := (totalChangeAmount / cost) * 100
 
 		return c.Holding{
-			Value:     value,
-			Cost:      cost,
-			Quantity:  aggregatedLot.Quantity,
-			UnitValue: value / aggregatedLot.Quantity,
-			UnitCost:  cost / aggregatedLot.Quantity,
+			Value:      value,
+			Cost:       cost,
+			Quantity:   aggregatedLot.Quantity,
+			UnitValue:  value / aggregatedLot.Quantity,
+			UnitCost:   cost / aggregatedLot.Quantity,
 			DayChange: c.HoldingChange{
 				Amount:  assetQuote.QuotePrice.Change * aggregatedLot.Quantity * currencyRateByUse.QuotePrice,
 				Percent: assetQuote.QuotePrice.ChangePercent,
@@ -140,14 +162,49 @@ func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]A
 				Amount:  totalChangeAmount,
 				Percent: totalChangePercent,
 			},
-			Weight: 0,
+			Weight:      0,
+			TargetPrice: aggregatedLot.TargetPrice, // Assign TargetPrice from AggregatedLot
 		}
 	}
 
 	return c.Holding{}
-
 }
 
+func getLots(lots []c.Lot) map[string]AggregatedLot {
+	if lots == nil {
+		return map[string]AggregatedLot{}
+	}
+
+	aggregatedLots := map[string]AggregatedLot{}
+
+	for i, lot := range lots {
+		aggregatedLot, ok := aggregatedLots[lot.Symbol]
+
+		if !ok {
+			aggregatedLots[lot.Symbol] = AggregatedLot{
+				Symbol:     lot.Symbol,
+				Cost:       (lot.UnitCost * lot.Quantity) + lot.FixedCost,
+				Quantity:   lot.Quantity,
+				OrderIndex: i,
+				TargetPrice: lot.TargetPrice, // Store the target price from the lot
+			}
+		} else {
+			aggregatedLot.Quantity += lot.Quantity
+			aggregatedLot.Cost += lot.Quantity * lot.UnitCost
+
+			// If the TargetPrice is not set, set it from the lot
+			if aggregatedLot.TargetPrice == nil && lot.TargetPrice != nil {
+				aggregatedLot.TargetPrice = lot.TargetPrice
+			}
+
+			aggregatedLots[lot.Symbol] = aggregatedLot
+		}
+	}
+
+	return aggregatedLots
+}
+
+/*
 func getLots(lots []c.Lot) map[string]AggregatedLot {
 
 	if lots == nil {
@@ -182,3 +239,4 @@ func getLots(lots []c.Lot) map[string]AggregatedLot {
 
 	return aggregatedLots
 }
+*/

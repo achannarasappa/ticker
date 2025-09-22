@@ -90,7 +90,7 @@ func (u *UnaryAPI) GetCurrencyMap(symbols []string) (map[string]SymbolToCurrency
 	for _, quote := range result.QuoteResponse.Quotes {
 		symbolToCurrency[quote.Symbol] = SymbolToCurrency{
 			Symbol:       quote.Symbol,
-			FromCurrency: strings.ToUpper(quote.Currency),
+			FromCurrency: quote.Currency,
 		}
 	}
 

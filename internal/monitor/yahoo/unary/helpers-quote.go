@@ -1,8 +1,6 @@
 package unary
 
 import (
-	"strings"
-
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 )
 
@@ -22,7 +20,7 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 		Symbol: responseQuote.Symbol,
 		Class:  assetClass,
 		Currency: c.Currency{
-			FromCurrencyCode: strings.ToUpper(responseQuote.Currency),
+			FromCurrencyCode: responseQuote.Currency,
 		},
 		QuotePrice: c.QuotePrice{
 			Price:          responseQuote.RegularMarketPrice.Raw,

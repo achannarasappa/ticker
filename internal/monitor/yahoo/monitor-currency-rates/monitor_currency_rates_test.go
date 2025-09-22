@@ -1,6 +1,7 @@
 package monitorCurrencyRate_test
 
 import (
+	"math"
 	"net/http"
 	"time"
 
@@ -18,8 +19,9 @@ import (
 var _ = Describe("MonitorCurrencyRates", func() {
 
 	var (
-		server *ghttp.Server
-		client *unary.UnaryAPI
+		server                   *ghttp.Server
+		client                   *unary.UnaryAPI
+		float64EqualityTolerance = 1e-9
 	)
 
 	BeforeEach(func() {
@@ -81,7 +83,7 @@ var _ = Describe("MonitorCurrencyRates", func() {
 
 			When("a request for currency rates is received", func() {
 
-				It("should return currency rates requested and all previous currency rates", func() {
+				It("should return currency rates requested, and minor units, and all previous currency rates", func() {
 					// Setup server to respond to EURUSD=X
 					server.RouteToHandler("GET", "/v7/finance/quote",
 						ghttp.CombineHandlers(
@@ -115,6 +117,11 @@ var _ = Describe("MonitorCurrencyRates", func() {
 					Expect(rates["EUR"].ToCurrency).To(Equal("USD"))
 					Expect(rates["EUR"].Rate).To(Equal(1.1))
 
+					Expect(rates).To(HaveKey("EUr"))
+					Expect(rates["EUr"].FromCurrency).To(Equal("EUr"))
+					Expect(rates["EUr"].ToCurrency).To(Equal("USD"))
+					Expect(float64ValuesAreEqual(rates["EUr"].Rate, 0.011, float64EqualityTolerance)).To(BeTrue())
+
 					// Replace API to only return quotes for GBPUSD=X
 					server.RouteToHandler("GET", "/v7/finance/quote",
 						ghttp.CombineHandlers(
@@ -141,6 +148,47 @@ var _ = Describe("MonitorCurrencyRates", func() {
 					Expect(rates).To(HaveKey("GBP"))
 					Expect(rates["EUR"].Rate).To(Equal(1.1))
 					Expect(rates["GBP"].Rate).To(Equal(1.3))
+
+					Expect(rates).To(HaveKey("EUr"))
+					Expect(rates).To(HaveKey("GBp"))
+					Expect(float64ValuesAreEqual(rates["EUr"].Rate, 0.011, float64EqualityTolerance)).To(BeTrue())
+					Expect(float64ValuesAreEqual(rates["GBp"].Rate, 0.013, float64EqualityTolerance)).To(BeTrue())
+
+					// Replace API to only return quotes for JPNUSD=X (no minor currency)
+					server.RouteToHandler("GET", "/v7/finance/quote",
+						ghttp.CombineHandlers(
+							verifyRequest(server, "GET", "/v7/finance/quote", "symbols", "JPNUSD=X"),
+							ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
+								QuoteResponse: unary.ResponseQuoteResponse{
+									Quotes: []unary.ResponseQuote{{
+										Symbol:             "JPNUSD=X",
+										RegularMarketPrice: unary.ResponseFieldFloat{Raw: 0.0068, Fmt: "0.0068"},
+										Currency:           "USD",
+									}},
+									Error: nil,
+								},
+							}),
+						),
+					)
+
+					// Request both EUR and GBP
+					requestCh <- []string{"EUR", "GBP", "JPN"}
+
+					Eventually(updateCh, 500*time.Millisecond).Should(Receive(&rates))
+
+					Expect(rates).To(HaveKey("EUR"))
+					Expect(rates).To(HaveKey("GBP"))
+					Expect(rates).To(HaveKey("JPN"))
+					Expect(rates["EUR"].Rate).To(Equal(1.1))
+					Expect(rates["GBP"].Rate).To(Equal(1.3))
+					Expect(rates["JPN"].Rate).To(Equal(0.0068))
+
+					Expect(rates).To(HaveKey("EUr"))
+					Expect(rates).To(HaveKey("GBp"))
+					Expect(rates).NotTo(HaveKey("JPn"))
+					Expect(float64ValuesAreEqual(rates["EUr"].Rate, 0.011, float64EqualityTolerance)).To(BeTrue())
+					Expect(float64ValuesAreEqual(rates["GBp"].Rate, 0.013, float64EqualityTolerance)).To(BeTrue())
+
 				})
 
 				When("the currency request is empty", func() {
@@ -379,6 +427,10 @@ var _ = Describe("MonitorCurrencyRates", func() {
 	})
 
 })
+
+func float64ValuesAreEqual(f1 float64, f2 float64, tolerance float64) bool {
+	return math.Abs(f1-f2) < tolerance
+}
 
 func verifyRequest(server *ghttp.Server, method, path string, queryKey, queryValue string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {

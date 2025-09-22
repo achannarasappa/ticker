@@ -60,6 +60,10 @@ func Validate(config *c.Config, options *Options, prevErr *error) func(*cobra.Co
 			return errors.New("invalid config: No watchlist provided") //nolint:goerr113
 		}
 
+		if len(config.Currency) > 0 && (strings.ToUpper(config.Currency) != config.Currency || len(config.Currency) != 3) {
+			return errors.New("invalid config: Display currency may only be an ISO 4712 major currency or blank (eg GBP not GBp; default: USD)") //nolint:goerr113
+		}
+
 		return nil
 	}
 }

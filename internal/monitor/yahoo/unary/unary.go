@@ -3,6 +3,8 @@ package unary
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -142,6 +144,8 @@ func (u *UnaryAPI) GetCurrencyRates(fromCurrencies []string, toCurrency string) 
 	// Transform result to currency rates
 	currencyRates := make(map[string]c.CurrencyRate)
 
+	// The Yahoo API forces uppercase and so, even though the currency symbol GBpGBP=x is submitted, it is interpreted and returned as
+	// GBPGBP=X with Rate = 1.0. So, assume a major to minor ISO 4217 digital currency code conversion when fromCurrency=toCurrency
 	for _, quote := range result.QuoteResponse.Quotes {
 		fromCurrency := strings.TrimSuffix(strings.TrimSuffix(quote.Symbol, "=X"), toCurrency)
 		currencyRates[fromCurrency] = c.CurrencyRate{
@@ -150,6 +154,20 @@ func (u *UnaryAPI) GetCurrencyRates(fromCurrencies []string, toCurrency string) 
 			Rate:         quote.RegularMarketPrice.Raw,
 		}
 	}
+
+	// If any currency in the map has a minor form then add it to the map as well (with a modified rate.)
+	minorCurrencyRates := make(map[string]c.CurrencyRate)
+	for fromCurrency, currencyRate := range currencyRates {
+		if ok, minorCurrencyCode, minorUnit := MinorUnitForCurrencyCode(fromCurrency); ok {
+			minorCurrencyRates[minorCurrencyCode] = c.CurrencyRate{
+				FromCurrency: minorCurrencyCode,
+				ToCurrency:   currencyRate.ToCurrency,
+				Rate:         currencyRate.Rate * math.Pow(10, -minorUnit),
+			}
+		}
+	}
+
+	maps.Copy(currencyRates, minorCurrencyRates)
 
 	return currencyRates, nil
 }

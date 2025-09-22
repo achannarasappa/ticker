@@ -610,5 +610,62 @@ var _ = Describe("Cli", func() {
 			})
 		})
 
+		Describe("currency", func() {
+			When("a mixed-case currency is specified in the config file", func() {
+				It("should return an error (even if a valid minor currency)", func() {
+					options.Watchlist = "SEIT.L"
+					config = c.Config{
+						Currency: "USd",
+					}
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(MatchError("invalid config: Display currency may only be an ISO 4712 major currency or blank (eg GBP not GBp; default: USD)"))
+				})
+			})
+
+			When("a blank currency is specified in the config file", func() {
+				It("should not return an error", func() {
+					options.Watchlist = "SEIT.L"
+					config := c.Config{
+						Currency: "",
+					}
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).NotTo(HaveOccurred())
+				})
+			})
+
+			When("a short currency (len < 3) is specified in the config file", func() {
+				It("should return an error", func() {
+					options.Watchlist = "SEIT.L"
+					config := c.Config{
+						Currency: "US",
+					}
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(MatchError("invalid config: Display currency may only be an ISO 4712 major currency or blank (eg GBP not GBp; default: USD)"))
+				})
+			})
+
+			When("a long currency (len > 3) is specified in the config file", func() {
+				It("should return an error", func() {
+					options.Watchlist = "SEIT.L"
+					config := c.Config{
+						Currency: "USD2",
+					}
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(MatchError("invalid config: Display currency may only be an ISO 4712 major currency or blank (eg GBP not GBp; default: USD)"))
+				})
+			})
+
+			PWhen("a non-ISO 4712 currency is specified in the config file", func() {
+				PIt("should return an error", func() {
+					options.Watchlist = "SEIT.L"
+					config = c.Config{
+						Currency: "XXX",
+					}
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(MatchError("invalid config: Display currency may only be an ISO 4712 major currency or blank (eg GBP not GBp; default: USD)"))
+				})
+			})
+		})
+
 	})
 })

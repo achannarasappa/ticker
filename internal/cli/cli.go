@@ -61,7 +61,7 @@ func Validate(config *c.Config, options *Options, prevErr *error) func(*cobra.Co
 		}
 
 		if len(config.Currency) > 0 && (strings.ToUpper(config.Currency) != config.Currency || len(config.Currency) != 3) {
-			return errors.New("invalid config: Display currency may only be an ISO 4712 major currency or blank (eg GBP not GBp; default: USD)") //nolint:goerr113
+			return errors.New("invalid config: Display currency may only be an ISO 4217 major currency or blank (eg GBP not GBp; default: USD)") //nolint:goerr113
 		}
 
 		return nil

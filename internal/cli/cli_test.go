@@ -618,7 +618,7 @@ var _ = Describe("Cli", func() {
 						Currency: "USd",
 					}
 					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
-					Expect(outputErr).To(MatchError("invalid config: Display currency may only be an ISO 4712 major currency or blank (eg GBP not GBp; default: USD)"))
+					Expect(outputErr).To(MatchError("invalid config: Display currency may only be an ISO 4217 major currency or blank (eg GBP not GBp; default: USD)"))
 				})
 			})
 
@@ -640,7 +640,7 @@ var _ = Describe("Cli", func() {
 						Currency: "US",
 					}
 					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
-					Expect(outputErr).To(MatchError("invalid config: Display currency may only be an ISO 4712 major currency or blank (eg GBP not GBp; default: USD)"))
+					Expect(outputErr).To(MatchError("invalid config: Display currency may only be an ISO 4217 major currency or blank (eg GBP not GBp; default: USD)"))
 				})
 			})
 
@@ -651,18 +651,18 @@ var _ = Describe("Cli", func() {
 						Currency: "USD2",
 					}
 					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
-					Expect(outputErr).To(MatchError("invalid config: Display currency may only be an ISO 4712 major currency or blank (eg GBP not GBp; default: USD)"))
+					Expect(outputErr).To(MatchError("invalid config: Display currency may only be an ISO 4217 major currency or blank (eg GBP not GBp; default: USD)"))
 				})
 			})
 
-			PWhen("a non-ISO 4712 currency is specified in the config file", func() {
+			PWhen("a non-ISO 4217 currency is specified in the config file", func() {
 				PIt("should return an error", func() {
 					options.Watchlist = "SEIT.L"
 					config = c.Config{
 						Currency: "XXX",
 					}
 					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
-					Expect(outputErr).To(MatchError("invalid config: Display currency may only be an ISO 4712 major currency or blank (eg GBP not GBp; default: USD)"))
+					Expect(outputErr).To(MatchError("invalid config: Display currency may only be an ISO 4217 major currency or blank (eg GBP not GBp; default: USD)"))
 				})
 			})
 		})

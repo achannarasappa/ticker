@@ -54,6 +54,7 @@ Note: config file can be mounted from the host machine by using a bind mount wit
 **snap**
 ```sh
 sudo snap install ticker
+sudo snap connect ticker:ticker-config
 ```
 
 Note: config file will need to be set with `--config $HOME/ticker.yaml` since Snap does not allow access to dotfiles

@@ -3,6 +3,7 @@ package unary
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -90,7 +91,7 @@ func (u *UnaryAPI) GetCurrencyMap(symbols []string) (map[string]SymbolToCurrency
 	for _, quote := range result.QuoteResponse.Quotes {
 		symbolToCurrency[quote.Symbol] = SymbolToCurrency{
 			Symbol:       quote.Symbol,
-			FromCurrency: strings.ToUpper(quote.Currency),
+			FromCurrency: quote.Currency,
 		}
 	}
 
@@ -142,6 +143,8 @@ func (u *UnaryAPI) GetCurrencyRates(fromCurrencies []string, toCurrency string) 
 	// Transform result to currency rates
 	currencyRates := make(map[string]c.CurrencyRate)
 
+	// The Yahoo API forces uppercase and so, even though the currency symbol GBpGBP=x, for example, is submitted,
+	// it is interpreted and returned as GBPGBP=X with Rate = 1.0.
 	for _, quote := range result.QuoteResponse.Quotes {
 		fromCurrency := strings.TrimSuffix(strings.TrimSuffix(quote.Symbol, "=X"), toCurrency)
 		currencyRates[fromCurrency] = c.CurrencyRate{
@@ -149,6 +152,16 @@ func (u *UnaryAPI) GetCurrencyRates(fromCurrencies []string, toCurrency string) 
 			ToCurrency:   toCurrency,
 			Rate:         quote.RegularMarketPrice.Raw,
 		}
+
+		// If fromCurrency has a minor form as well then add it to the map as well (with a modified rate).
+		if ok, minorCurrencyCode, minorUnit := MinorUnitForCurrencyCode(fromCurrency); ok {
+			currencyRates[minorCurrencyCode] = c.CurrencyRate{
+				FromCurrency: minorCurrencyCode,
+				ToCurrency:   toCurrency,
+				Rate:         quote.RegularMarketPrice.Raw * math.Pow(10, -minorUnit),
+			}
+		}
+
 	}
 
 	return currencyRates, nil

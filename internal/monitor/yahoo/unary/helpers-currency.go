@@ -8,7 +8,35 @@ type minorCurrency struct {
 	MinorUnit         float64
 }
 
+// Just consider the currencies traded on major exchanges
+func MinorUnitForCurrencyCode(majorCurrency string) (bool, string, float64) {
+
+	var minorCurrencyCodeByMajorCurrencyCode = map[string]minorCurrency{
+		"AUD": {"AUD", "AUd", 2},
+		"CAD": {"CAD", "CAd", 2},
+		"CHF": {"CHF", "CHf", 2},
+		"CNY": {"CNY", "CNy", 2},
+		"EUR": {"EUR", "EUr", 2},
+		"GBP": {"GBP", "GBp", 2},
+		"HKD": {"HKD", "HKd", 2},
+		"INR": {"INR", "INr", 2},
+		"TWD": {"TWD", "TWd", 2},
+		"USD": {"USD", "USd", 2},
+		"ZAR": {"ZAR", "ZAr", 2},
+	}
+
+	if mc, ok := minorCurrencyCodeByMajorCurrencyCode[majorCurrency]; ok {
+
+		return true, mc.MinorCurrencyCode, mc.MinorUnit
+	}
+
+	return false, "", 0
+
+}
+
+/*
 // This map is derived from https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-one.xls
+// Retaining this as a reference to the complete list as at October 2025.
 var _minorCurrencyCodeByMajorCurrencyCode = map[string]minorCurrency{
 	"AED": {"AED", "AEd", 2},
 	"AFN": {"AFN", "AFn", 2},
@@ -160,14 +188,4 @@ var _minorCurrencyCodeByMajorCurrencyCode = map[string]minorCurrency{
 	"ZMW": {"ZMW", "ZMw", 2},
 	"ZWG": {"ZWG", "ZWg", 2},
 }
-
-func MinorUnitForCurrencyCode(majorCurrency string) (bool, string, float64) {
-
-	if mc, ok := _minorCurrencyCodeByMajorCurrencyCode[majorCurrency]; ok {
-
-		return true, mc.MinorCurrencyCode, mc.MinorUnit
-	}
-
-	return false, "", 0
-
-}
+*/

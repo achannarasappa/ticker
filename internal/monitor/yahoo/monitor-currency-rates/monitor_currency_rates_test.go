@@ -157,11 +157,11 @@ var _ = Describe("MonitorCurrencyRates", func() {
 					// Replace API to only return quotes for JPNUSD=X (no minor currency)
 					server.RouteToHandler("GET", "/v7/finance/quote",
 						ghttp.CombineHandlers(
-							verifyRequest(server, "GET", "/v7/finance/quote", "symbols", "JPNUSD=X"),
+							verifyRequest(server, "GET", "/v7/finance/quote", "symbols", "JPYUSD=X"),
 							ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
 								QuoteResponse: unary.ResponseQuoteResponse{
 									Quotes: []unary.ResponseQuote{{
-										Symbol:             "JPNUSD=X",
+										Symbol:             "JPYUSD=X",
 										RegularMarketPrice: unary.ResponseFieldFloat{Raw: 0.0068, Fmt: "0.0068"},
 										Currency:           "USD",
 									}},
@@ -171,21 +171,21 @@ var _ = Describe("MonitorCurrencyRates", func() {
 						),
 					)
 
-					// Request both EUR and GBP
-					requestCh <- []string{"EUR", "GBP", "JPN"}
+					// Request EUR, GBP & JPY
+					requestCh <- []string{"EUR", "GBP", "JPY"}
 
 					Eventually(updateCh, 500*time.Millisecond).Should(Receive(&rates))
 
 					Expect(rates).To(HaveKey("EUR"))
 					Expect(rates).To(HaveKey("GBP"))
-					Expect(rates).To(HaveKey("JPN"))
+					Expect(rates).To(HaveKey("JPY"))
 					Expect(rates["EUR"].Rate).To(Equal(1.1))
 					Expect(rates["GBP"].Rate).To(Equal(1.3))
-					Expect(rates["JPN"].Rate).To(Equal(0.0068))
+					Expect(rates["JPY"].Rate).To(Equal(0.0068))
 
 					Expect(rates).To(HaveKey("EUr"))
 					Expect(rates).To(HaveKey("GBp"))
-					Expect(rates).NotTo(HaveKey("JPn"))
+					Expect(rates).NotTo(HaveKey("JPy"))
 					Expect(float64ValuesAreEqual(rates["EUr"].Rate, 0.011, float64EqualityTolerance)).To(BeTrue())
 					Expect(float64ValuesAreEqual(rates["GBp"].Rate, 0.013, float64EqualityTolerance)).To(BeTrue())
 

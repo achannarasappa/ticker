@@ -48,6 +48,7 @@ type Model struct {
 	groupSelectedIndex int
 	groupMaxIndex      int
 	groupSelectedName  string
+	currentSort        string
 	monitors           *mon.Monitor
 	mu                 sync.RWMutex
 }
@@ -94,6 +95,7 @@ func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
 		groupMaxIndex:      groupMaxIndex,
 		groupSelectedIndex: 0,
 		groupSelectedName:  "       ",
+		currentSort:        ctx.Config.Sort,
 		monitors:           monitors,
 	}
 }
@@ -168,6 +170,30 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.PageDown()
 
 			return m, nil
+		case "s":
+			m.mu.Lock()
+
+			// Cycle through sort options: default -> alpha -> value -> user -> default
+			sortOptions := []string{"", "alpha", "value", "user"}
+			currentIndex := -1
+			for i, sortOpt := range sortOptions {
+				if m.currentSort == sortOpt {
+					currentIndex = i
+
+					break
+				}
+			}
+
+			// Move to next sort option
+			nextIndex := (currentIndex + 1) % len(sortOptions)
+			m.currentSort = sortOptions[nextIndex]
+
+			m.mu.Unlock()
+
+			// Update watchlist component with new sort
+			m.watchlist, cmd = m.watchlist.Update(watchlist.ChangeSortMsg(m.currentSort))
+
+			return m, cmd
 
 		}
 
@@ -322,11 +348,11 @@ func (m *Model) View() string {
 
 	return viewSummary +
 		m.viewport.View() + "\n" +
-		footer(m.viewport.Width, m.lastUpdateTime, m.groupSelectedName)
+		footer(m.viewport.Width, m.lastUpdateTime, m.groupSelectedName, m.currentSort)
 
 }
 
-func footer(width int, time string, groupSelectedName string) string {
+func footer(width int, time string, groupSelectedName string, currentSort string) string {
 
 	if width < 80 {
 		return styleLogo(" ticker ")
@@ -336,6 +362,19 @@ func footer(width int, time string, groupSelectedName string) string {
 		groupSelectedName = groupSelectedName[:12]
 	}
 
+	// Get display name for current sort
+	sortDisplayName := "change"
+	switch currentSort {
+	case "alpha":
+		sortDisplayName = "alpha"
+	case "value":
+		sortDisplayName = "value"
+	case "user":
+		sortDisplayName = "user"
+	}
+
+	helpText := " q: exit ↑: scroll up ↓: scroll down s: change sort (" + sortDisplayName + ") ⭾: change group"
+
 	return grid.Render(grid.Grid{
 		Rows: []grid.Row{
 			{
@@ -343,7 +382,7 @@ func footer(width int, time string, groupSelectedName string) string {
 				Cells: []grid.Cell{
 					{Text: styleLogo(" ticker "), Width: 8},
 					{Text: styleGroup(" " + groupSelectedName + " "), Width: len(groupSelectedName) + 2, VisibleMinWidth: 95},
-					{Text: styleHelp(" q: exit ↑: scroll up ↓: scroll down ⭾: change group"), Width: 52},
+					{Text: styleHelp(helpText), Width: len(helpText)},
 					{Text: styleHelp("↻  " + time), Align: grid.Right},
 				},
 			},

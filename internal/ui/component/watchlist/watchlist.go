@@ -206,14 +206,14 @@ func getCellWidths(assets []*c.Asset) row.CellWidthsContainer {
 	for _, asset := range assets {
 		var quoteLength int
 
-		volumeMarketCapLength := len(u.ConvertFloatToString(asset.QuoteExtended.MarketCap, true))
+		volumeMarketCapLength := len(u.ConvertFloatToStringWithCommas(asset.QuoteExtended.MarketCap, true))
 
 		if asset.QuoteExtended.FiftyTwoWeekHigh == 0.0 {
-			quoteLength = len(u.ConvertFloatToString(asset.QuotePrice.Price, asset.Meta.IsVariablePrecision))
+			quoteLength = len(u.ConvertFloatToStringWithCommas(asset.QuotePrice.Price, asset.Meta.IsVariablePrecision))
 		}
 
 		if asset.QuoteExtended.FiftyTwoWeekHigh != 0.0 {
-			quoteLength = len(u.ConvertFloatToString(asset.QuoteExtended.FiftyTwoWeekHigh, asset.Meta.IsVariablePrecision))
+			quoteLength = len(u.ConvertFloatToStringWithCommas(asset.QuoteExtended.FiftyTwoWeekHigh, asset.Meta.IsVariablePrecision))
 		}
 
 		if volumeMarketCapLength > cellMaxWidths.WidthVolumeMarketCap {
@@ -228,8 +228,8 @@ func getCellWidths(assets []*c.Asset) row.CellWidthsContainer {
 		}
 
 		if asset.Holding != (c.Holding{}) {
-			positionLength := len(u.ConvertFloatToString(asset.Holding.Value, asset.Meta.IsVariablePrecision))
-			positionQuantityLength := len(u.ConvertFloatToString(asset.Holding.Quantity, asset.Meta.IsVariablePrecision))
+			positionLength := len(u.ConvertFloatToStringWithCommas(asset.Holding.Value, asset.Meta.IsVariablePrecision))
+			positionQuantityLength := len(u.ConvertFloatToStringWithCommas(asset.Holding.Quantity, asset.Meta.IsVariablePrecision))
 
 			if positionLength > cellMaxWidths.PositionLength {
 				cellMaxWidths.PositionLength = positionLength

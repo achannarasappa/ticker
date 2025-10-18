@@ -65,6 +65,29 @@ var _ = Describe("Util", func() {
 			})
 		})
 
+		When("formatting with comma delimiters", func() {
+			It("should add commas for thousands", func() {
+				output := ConvertFloatToStringWithCommas(1000.00, false)
+				Expect(output).To(Equal("1,000.00"))
+			})
+			It("should add commas for millions", func() {
+				output := ConvertFloatToStringWithCommas(1234567.89, false)
+				Expect(output).To(Equal("1,234,567.89"))
+			})
+			It("should add commas for negative numbers", func() {
+				output := ConvertFloatToStringWithCommas(-1234567.89, false)
+				Expect(output).To(Equal("-1,234,567.89"))
+			})
+			It("should not add commas for numbers under 1000", func() {
+				output := ConvertFloatToStringWithCommas(999.99, false)
+				Expect(output).To(Equal("999.99"))
+			})
+			It("should add commas with variable precision", func() {
+				output := ConvertFloatToStringWithCommas(5432.10, true)
+				Expect(output).To(Equal("5,432.10"))
+			})
+		})
+
 	})
 	Describe("ValueText", func() {
 		When("value is <= 0.0", func() {

@@ -371,7 +371,7 @@ var _ = Describe("Watchlist", func() {
 			Expect(removeFormatting(m.View())).To(ContainSubstring("Day Range"))
 			Expect(removeFormatting(m.View())).To(ContainSubstring("52wk Range"))
 			Expect(removeFormatting(m.View())).To(ContainSubstring("100.00 - 200.00"))
-			Expect(removeFormatting(m.View())).To(ContainSubstring("300.00 - 2000.00"))
+			Expect(removeFormatting(m.View())).To(ContainSubstring("300.00 - 2,000.00"))
 		})
 
 		When("there is no day range or open price", func() {
@@ -444,7 +444,7 @@ var _ = Describe("Watchlist", func() {
 				}
 				m.Update(SetAssetsMsg(setAssetsMsg))
 
-				Expect(removeFormatting(m.View())).To(ContainSubstring("50312"))
+				Expect(removeFormatting(m.View())).To(ContainSubstring("50,312"))
 				Expect(removeFormatting(m.View())).To(ContainSubstring("5d 10h"))
 				Expect(removeFormatting(m.View())).To(ContainSubstring("10.00%"))
 			})
@@ -506,7 +506,7 @@ var _ = Describe("Watchlist", func() {
 					m.Update(SetAssetsMsg(setAssetsMsg))
 
 					Expect(removeFormatting(m.View())).To(ContainSubstring("Day Range"))
-					Expect(removeFormatting(m.View())).To(ContainSubstring("49000.00 - 50500.00"))
+					Expect(removeFormatting(m.View())).To(ContainSubstring("49,000.00 - 50,500.00"))
 					Expect(removeFormatting(m.View())).To(ContainSubstring("Expiry"))
 					Expect(removeFormatting(m.View())).To(ContainSubstring("5d 10h"))
 				})
@@ -582,7 +582,7 @@ var _ = Describe("Watchlist", func() {
 				m.Update(SetAssetsMsg(setAssetsMsg))
 				Expect(removeFormatting(m.View())).To(ContainSubstring("Quantity"))
 				Expect(removeFormatting(m.View())).To(ContainSubstring("Avg. Cost"))
-				Expect(removeFormatting(m.View())).To(ContainSubstring("92709.00"))
+				Expect(removeFormatting(m.View())).To(ContainSubstring("92,709.00"))
 				Expect(removeFormatting(m.View())).To(ContainSubstring("0.00"))
 			})
 		})

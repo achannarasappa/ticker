@@ -181,7 +181,7 @@ var _ = Describe("Row", func() {
 
 							view := stripANSI(outputRow.View())
 							Expect(view).To(ContainSubstring("AAPL"), "output was: %q", view)
-							Expect(view).To(ContainSubstring("1500.00"), "output was: %q", view)
+							Expect(view).To(ContainSubstring("1,500.00"), "output was: %q", view)
 							Expect(cmd).ToNot(BeNil())
 
 							// Simulate frame updates
@@ -196,7 +196,7 @@ var _ = Describe("Row", func() {
 							view = stripANSI(outputRow.View())
 							Expect(cmd).To(BeNil(), "expected cmd to be nil after final frame, got: %v", cmd)
 							Expect(view).To(ContainSubstring("AAPL"), "output was: %q", view)
-							Expect(view).To(ContainSubstring("1500.00"), "output was: %q", view)
+							Expect(view).To(ContainSubstring("1,500.00"), "output was: %q", view)
 						})
 
 					})

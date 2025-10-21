@@ -268,37 +268,44 @@ func getGroups(config c.Config, d c.Dependencies) ([]c.AssetGroup, error) {
 
 	configAssetGroups = append(configAssetGroups, config.AssetGroup...)
 
+	// Index groups by name for include resolution and validate duplicate names
+	groupsByName := make(map[string]c.ConfigAssetGroup)
+	for _, g := range configAssetGroups {
+		if g.Name == "" {
+			// unnamed groups are allowed unless referenced by include-groups
+			continue
+		}
+		if _, exists := groupsByName[g.Name]; exists {
+			return nil, fmt.Errorf("invalid config: duplicate group name: %s", g.Name)
+		}
+		groupsByName[g.Name] = g
+	}
+
+	// Build final groups in declaration order using flattened config
 	for _, configAssetGroup := range configAssetGroups {
-
-		symbols := make(map[string]bool)
-		symbolsUnique := make(map[c.QuoteSource]c.AssetGroupSymbolsBySource)
-		var assetGroupSymbolsBySource []c.AssetGroupSymbolsBySource
-
-		for _, symbol := range configAssetGroup.Watchlist {
-			if !symbols[symbol] {
-				symbols[symbol] = true
-				symbolAndSource := getSymbolAndSource(symbol, tickerSymbolToSourceSymbol)
-				symbolsUnique = appendSymbol(symbolsUnique, symbolAndSource)
+		// compute effective watchlist/holdings
+		effWatchlist := configAssetGroup.Watchlist
+		effHoldings := configAssetGroup.Holdings
+		if len(configAssetGroup.IncludeGroups) > 0 {
+			wl, hl, err := resolveGroupIncludes(groupsByName, configAssetGroup, map[string]bool{})
+			if err != nil {
+				return nil, err
 			}
+			// de-duplicate watchlist preserving order
+			effWatchlist = dedupePreserveOrder(wl)
+			// lots are intentionally not de-duplicated here; aggregation is handled downstream
+			effHoldings = hl
 		}
-
-		for _, lot := range configAssetGroup.Holdings {
-			if !symbols[lot.Symbol] {
-				symbols[lot.Symbol] = true
-				symbolAndSource := getSymbolAndSource(lot.Symbol, tickerSymbolToSourceSymbol)
-				symbolsUnique = appendSymbol(symbolsUnique, symbolAndSource)
-			}
-		}
-
-		for _, symbolsBySource := range symbolsUnique {
-			assetGroupSymbolsBySource = append(assetGroupSymbolsBySource, symbolsBySource)
-		}
-
+		assetGroupSymbolsBySource := symbolsBySource(effWatchlist, effHoldings, tickerSymbolToSourceSymbol)
 		groups = append(groups, c.AssetGroup{
-			ConfigAssetGroup: configAssetGroup,
-			SymbolsBySource:  assetGroupSymbolsBySource,
+			ConfigAssetGroup: c.ConfigAssetGroup{
+				Name:          configAssetGroup.Name,
+				Watchlist:     effWatchlist,
+				Holdings:      effHoldings,
+				IncludeGroups: configAssetGroup.IncludeGroups,
+			},
+			SymbolsBySource: assetGroupSymbolsBySource,
 		})
-
 	}
 
 	return groups, nil
@@ -315,6 +322,82 @@ func getLogger(d c.Dependencies) (*log.Logger, error) {
 	}
 
 	return log.New(logFile, "", log.LstdFlags), nil
+}
+
+// resolveGroupIncludes flattens include-groups recursively preserving order and detecting cycles
+func resolveGroupIncludes(groupsByName map[string]c.ConfigAssetGroup, cur c.ConfigAssetGroup, visiting map[string]bool) ([]string, []c.Lot, error) {
+
+	wl := make([]string, 0)
+	hl := make([]c.Lot, 0)
+
+	if cur.Name != "" {
+		if visiting[cur.Name] {
+			return nil, nil, fmt.Errorf("invalid config: cyclic include-groups involving %s", cur.Name)
+		}
+		visiting[cur.Name] = true
+		defer delete(visiting, cur.Name)
+	}
+
+	for _, name := range cur.IncludeGroups {
+		inc, ok := groupsByName[name]
+		if !ok {
+			return nil, nil, fmt.Errorf("invalid config: include-groups references unknown group: %s", name)
+		}
+		iw, ih, err := resolveGroupIncludes(groupsByName, inc, visiting)
+		if err != nil {
+			return nil, nil, err
+		}
+		wl = append(wl, iw...)
+		hl = append(hl, ih...)
+	}
+
+	wl = append(wl, cur.Watchlist...)
+	hl = append(hl, cur.Holdings...)
+
+	return wl, hl, nil
+}
+
+// dedupePreserveOrder removes duplicates from a list while preserving first-seen order
+func dedupePreserveOrder(xs []string) []string {
+	seen := make(map[string]bool)
+	out := make([]string, 0, len(xs))
+	for _, s := range xs {
+		if !seen[s] {
+			seen[s] = true
+			out = append(out, s)
+		}
+	}
+
+	return out
+}
+
+// symbolsBySource builds the list of symbols partitioned by quote source
+func symbolsBySource(watchlist []string, holdings []c.Lot, tickerSymbolToSourceSymbol symbol.TickerSymbolToSourceSymbol) []c.AssetGroupSymbolsBySource {
+	symbols := make(map[string]bool)
+	symbolsUnique := make(map[c.QuoteSource]c.AssetGroupSymbolsBySource)
+
+	for _, sym := range watchlist {
+		if !symbols[sym] {
+			symbols[sym] = true
+			symSrc := getSymbolAndSource(sym, tickerSymbolToSourceSymbol)
+			symbolsUnique = appendSymbol(symbolsUnique, symSrc)
+		}
+	}
+
+	for _, lot := range holdings {
+		if !symbols[lot.Symbol] {
+			symbols[lot.Symbol] = true
+			symSrc := getSymbolAndSource(lot.Symbol, tickerSymbolToSourceSymbol)
+			symbolsUnique = appendSymbol(symbolsUnique, symSrc)
+		}
+	}
+
+	res := make([]c.AssetGroupSymbolsBySource, 0, len(symbolsUnique))
+	for _, s := range symbolsUnique {
+		res = append(res, s)
+	}
+
+	return res
 }
 
 func getSymbolAndSource(symbol string, tickerSymbolToSourceSymbol symbol.TickerSymbolToSourceSymbol) symbolSource {

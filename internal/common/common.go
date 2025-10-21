@@ -44,9 +44,10 @@ type ConfigColorScheme struct {
 }
 
 type ConfigAssetGroup struct {
-	Name      string   `yaml:"name"`
-	Watchlist []string `yaml:"watchlist"`
-	Holdings  []Lot    `yaml:"holdings"`
+	Name          string   `yaml:"name"`
+	Watchlist     []string `yaml:"watchlist"`
+	Holdings      []Lot    `yaml:"holdings"`
+	IncludeGroups []string `yaml:"include-groups"`
 }
 
 type AssetGroup struct {

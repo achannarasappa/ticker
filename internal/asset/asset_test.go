@@ -244,5 +244,116 @@ var _ = Describe("Asset", func() {
 			})
 		})
 
+		When("unit cost is zero", func() {
+			When("and fixed cost is also zero", func() {
+				It("should handle zero cost without division by zero", func() {
+					inputContext := c.Context{}
+					inputAssetGroupQuote := fixtureAssetGroupQuote
+					inputAssetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings = []c.Lot{
+						{
+							Symbol:    "TWKS",
+							UnitCost:  0,
+							Quantity:  10,
+							FixedCost: 0,
+						},
+						{
+							Symbol:    "MSFT",
+							UnitCost:  400,
+							Quantity:  10,
+							FixedCost: 0,
+						},
+					}
+
+					outputAssets, outputHoldingSummary := GetAssets(inputContext, inputAssetGroupQuote)
+
+					Expect(outputAssets).To(HaveLen(3))
+
+					// TWKS with zero cost
+					Expect(outputAssets[0].Holding.Value).To(Equal(1100.0)) // 10 * 110
+					Expect(outputAssets[0].Holding.Cost).To(Equal(0.0))
+					Expect(outputAssets[0].Holding.Quantity).To(Equal(10.0))
+					Expect(outputAssets[0].Holding.UnitValue).To(Equal(110.0))
+					Expect(outputAssets[0].Holding.UnitCost).To(Equal(0.0))
+					Expect(outputAssets[0].Holding.TotalChange.Amount).To(Equal(1100.0)) // value - cost
+					Expect(outputAssets[0].Holding.TotalChange.Percent).To(Equal(0.0))   // Should be 0 when cost is 0
+
+					// MSFT with normal cost
+					Expect(outputAssets[1].Holding.Value).To(Equal(2200.0))
+					Expect(outputAssets[1].Holding.Cost).To(Equal(4000.0))
+					Expect(outputAssets[1].Holding.Quantity).To(Equal(10.0))
+					Expect(outputAssets[1].Holding.UnitValue).To(Equal(220.0))
+					Expect(outputAssets[1].Holding.UnitCost).To(Equal(400.0))
+
+					// Summary should include zero cost holdings
+					Expect(outputHoldingSummary.Cost).To(Equal(4000.0))
+					Expect(outputHoldingSummary.Value).To(Equal(3300.0)) // 1100 + 2200
+					Expect(outputHoldingSummary.TotalChange.Amount).To(Equal(-700.0)) // 3300 - 4000
+					Expect(outputHoldingSummary.TotalChange.Percent).To(Equal(-17.5)) // (-700 / 4000) * 100
+				})
+			})
+
+			When("but fixed cost is non-zero", func() {
+				It("should use fixed cost as the total cost", func() {
+					inputContext := c.Context{}
+					inputAssetGroupQuote := fixtureAssetGroupQuote
+					inputAssetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings = []c.Lot{
+						{
+							Symbol:    "TWKS",
+							UnitCost:  0,
+							Quantity:  10,
+							FixedCost: 50,
+						},
+					}
+
+					outputAssets, outputHoldingSummary := GetAssets(inputContext, inputAssetGroupQuote)
+
+					Expect(outputAssets).To(HaveLen(3))
+
+					Expect(outputAssets[0].Holding.Value).To(Equal(1100.0)) // 10 * 110
+					Expect(outputAssets[0].Holding.Cost).To(Equal(50.0))    // Only fixed cost
+					Expect(outputAssets[0].Holding.Quantity).To(Equal(10.0))
+					Expect(outputAssets[0].Holding.UnitValue).To(Equal(110.0))
+					Expect(outputAssets[0].Holding.UnitCost).To(Equal(5.0)) // 50 / 10
+					Expect(outputAssets[0].Holding.TotalChange.Amount).To(Equal(1050.0))
+					Expect(outputAssets[0].Holding.TotalChange.Percent).To(Equal(2100.0)) // (1050 / 50) * 100
+
+					Expect(outputHoldingSummary.Cost).To(Equal(50.0))
+					Expect(outputHoldingSummary.Value).To(Equal(1100.0))
+					Expect(outputHoldingSummary.TotalChange.Amount).To(Equal(1050.0))
+					Expect(outputHoldingSummary.TotalChange.Percent).To(Equal(2100.0))
+				})
+			})
+		})
+
+		When("unit cost is undefined (defaults to zero)", func() {
+			It("should handle undefined unit cost the same as zero", func() {
+				inputContext := c.Context{}
+				inputAssetGroupQuote := fixtureAssetGroupQuote
+				inputAssetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings = []c.Lot{
+					{
+						Symbol:    "TWKS",
+						Quantity:  10,
+						FixedCost: 0,
+						// UnitCost is not set, defaults to 0
+					},
+				}
+
+				outputAssets, outputHoldingSummary := GetAssets(inputContext, inputAssetGroupQuote)
+
+				Expect(outputAssets).To(HaveLen(3))
+
+				Expect(outputAssets[0].Holding.Value).To(Equal(1100.0))
+				Expect(outputAssets[0].Holding.Cost).To(Equal(0.0))
+				Expect(outputAssets[0].Holding.UnitCost).To(Equal(0.0))
+				Expect(outputAssets[0].Holding.TotalChange.Percent).To(Equal(0.0)) // Should not cause division by zero
+
+				// Summary should include zero cost holdings
+				Expect(outputHoldingSummary.Cost).To(Equal(0.0))
+				Expect(outputHoldingSummary.Value).To(Equal(1100.0))
+				Expect(outputHoldingSummary.TotalChange.Amount).To(Equal(1100.0)) // 1100 - 0
+				Expect(outputHoldingSummary.TotalChange.Percent).To(Equal(0.0)) // 0 when cost is 0
+			})
+		})
+
 	})
 })

@@ -77,9 +77,18 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Hol
 
 }
 
+// calculateChangePercent calculates the percentage change, returning 0 if base is 0 to avoid division by zero
+func calculateChangePercent(changeAmount float64, base float64) float64 {
+	if base == 0 {
+		return 0
+	}
+
+	return (changeAmount / base) * 100
+}
+
 func addHoldingToHoldingSummary(holdingSummary HoldingSummary, holding c.Holding, currencyRateByUse currencyRateByUse) HoldingSummary {
 
-	if holding.Cost == 0 || holding.Value == 0 {
+	if holding.Value == 0 {
 		return holdingSummary
 	}
 
@@ -87,7 +96,8 @@ func addHoldingToHoldingSummary(holdingSummary HoldingSummary, holding c.Holding
 	cost := holdingSummary.Cost + (holding.Cost * currencyRateByUse.SummaryCost)
 	dayChange := holdingSummary.DayChange.Amount + (holding.DayChange.Amount * currencyRateByUse.SummaryValue)
 	totalChange := value - cost
-	totalChangePercent := (totalChange / cost) * 100
+
+	totalChangePercent := calculateChangePercent(totalChange, cost)
 	dayChangePercent := (dayChange / value) * 100
 
 	return HoldingSummary{
@@ -124,7 +134,8 @@ func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]A
 		value := aggregatedLot.Quantity * assetQuote.QuotePrice.Price * currencyRateByUse.QuotePrice
 		cost := aggregatedLot.Cost * currencyRateByUse.PositionCost
 		totalChangeAmount := value - cost
-		totalChangePercent := (totalChangeAmount / cost) * 100
+
+		totalChangePercent := calculateChangePercent(totalChangeAmount, cost)
 
 		return c.Holding{
 			Value:     value,

@@ -48,6 +48,27 @@ func Run(uiStartFn func() error) func(*cobra.Command, []string) {
 	}
 }
 
+// validateLot validates a single lot and returns an error if invalid
+func validateLot(lot c.Lot, groupName string, lotIndex int) error {
+	if lot.Symbol == "" {
+		return fmt.Errorf("invalid config: lot #%d in group '%s' has empty symbol", lotIndex+1, groupName) //nolint:goerr113
+	}
+
+	if lot.Quantity <= 0 {
+		return fmt.Errorf("invalid config: lot #%d for symbol '%s' in group '%s' has invalid quantity (must be positive, got %f)", lotIndex+1, lot.Symbol, groupName, lot.Quantity) //nolint:goerr113
+	}
+
+	if lot.UnitCost < 0 {
+		return fmt.Errorf("invalid config: lot #%d for symbol '%s' in group '%s' has invalid unit_cost (must be zero or positive, got %f)", lotIndex+1, lot.Symbol, groupName, lot.UnitCost) //nolint:goerr113
+	}
+
+	if lot.FixedCost < 0 {
+		return fmt.Errorf("invalid config: lot #%d for symbol '%s' in group '%s' has invalid fixed_cost (must be zero or positive, got %f)", lotIndex+1, lot.Symbol, groupName, lot.FixedCost) //nolint:goerr113
+	}
+
+	return nil
+}
+
 // Validate checks whether config is valid and returns an error if invalid or if an error was generated earlier
 func Validate(config *c.Config, options *Options, prevErr *error) func(*cobra.Command, []string) error {
 	return func(_ *cobra.Command, _ []string) error {
@@ -58,6 +79,26 @@ func Validate(config *c.Config, options *Options, prevErr *error) func(*cobra.Co
 
 		if len(config.Watchlist) == 0 && len(options.Watchlist) == 0 && len(config.Lots) == 0 && len(config.AssetGroup) == 0 {
 			return errors.New("invalid config: No watchlist provided") //nolint:goerr113
+		}
+
+		// Validate lots in config.Lots (default group)
+		for i, lot := range config.Lots {
+			if err := validateLot(lot, "default", i); err != nil {
+				return err
+			}
+		}
+
+		// Validate lots in config.AssetGroup
+		for _, assetGroup := range config.AssetGroup {
+			groupName := assetGroup.Name
+			if groupName == "" {
+				groupName = "unnamed"
+			}
+			for i, lot := range assetGroup.Holdings {
+				if err := validateLot(lot, groupName, i); err != nil {
+					return err
+				}
+			}
 		}
 
 		return nil

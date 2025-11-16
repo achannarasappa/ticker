@@ -610,5 +610,187 @@ var _ = Describe("Cli", func() {
 			})
 		})
 
+		Describe("lot validation", func() {
+			When("lot has empty symbol", func() {
+				It("should return an error", func() {
+					config = c.Config{
+						Lots: []c.Lot{
+							{
+								Symbol:   "",
+								UnitCost: 1.0,
+								Quantity: 1.0,
+							},
+						},
+					}
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(MatchError("invalid config: lot #1 in group 'default' has empty symbol"))
+				})
+			})
+
+			When("lot has zero quantity", func() {
+				It("should return an error", func() {
+					config = c.Config{
+						Lots: []c.Lot{
+							{
+								Symbol:   "SYM",
+								UnitCost: 1.0,
+								Quantity: 0.0,
+							},
+						},
+					}
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(MatchError(ContainSubstring("invalid quantity (must be positive, got 0")))
+				})
+			})
+
+			When("lot has negative quantity", func() {
+				It("should return an error", func() {
+					config = c.Config{
+						Lots: []c.Lot{
+							{
+								Symbol:   "SYM",
+								UnitCost: 1.0,
+								Quantity: -1.0,
+							},
+						},
+					}
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(MatchError(ContainSubstring("invalid quantity (must be positive, got -1")))
+				})
+			})
+
+			When("lot has negative unit cost", func() {
+				It("should return an error", func() {
+					config = c.Config{
+						Lots: []c.Lot{
+							{
+								Symbol:   "SYM",
+								UnitCost: -1.0,
+								Quantity: 1.0,
+							},
+						},
+					}
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(MatchError(ContainSubstring("invalid unit_cost (must be zero or positive, got -1")))
+				})
+			})
+
+			When("lot has negative fixed cost", func() {
+				It("should return an error", func() {
+					config = c.Config{
+						Lots: []c.Lot{
+							{
+								Symbol:    "SYM",
+								UnitCost:  1.0,
+								Quantity:  1.0,
+								FixedCost: -1.0,
+							},
+						},
+					}
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(MatchError(ContainSubstring("invalid fixed_cost (must be zero or positive, got -1")))
+				})
+			})
+
+			When("lot has zero unit cost and zero fixed cost", func() {
+				It("should not return an error", func() {
+					config = c.Config{
+						Lots: []c.Lot{
+							{
+								Symbol:    "SYM",
+								UnitCost:  0.0,
+								Quantity:  1.0,
+								FixedCost: 0.0,
+							},
+						},
+					}
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).NotTo(HaveOccurred())
+				})
+			})
+
+			When("lot has valid values", func() {
+				It("should not return an error", func() {
+					config = c.Config{
+						Lots: []c.Lot{
+							{
+								Symbol:    "SYM",
+								UnitCost:  100.0,
+								Quantity:  10.0,
+								FixedCost: 5.0,
+							},
+						},
+					}
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).NotTo(HaveOccurred())
+				})
+			})
+
+			When("validating lots in asset groups", func() {
+				When("lot in asset group has invalid quantity", func() {
+					It("should return an error with group name", func() {
+						config = c.Config{
+							AssetGroup: []c.ConfigAssetGroup{
+								{
+									Name: "my-group",
+									Holdings: []c.Lot{
+										{
+											Symbol:   "SYM",
+											UnitCost: 1.0,
+											Quantity: 0.0,
+										},
+									},
+								},
+							},
+						}
+						outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+						Expect(outputErr).To(MatchError(ContainSubstring("lot #1 for symbol 'SYM' in group 'my-group' has invalid quantity")))
+					})
+				})
+
+				When("lot in unnamed asset group has invalid quantity", func() {
+					It("should return an error with 'unnamed' as group name", func() {
+						config = c.Config{
+							AssetGroup: []c.ConfigAssetGroup{
+								{
+									Name: "",
+									Holdings: []c.Lot{
+										{
+											Symbol:   "SYM",
+											UnitCost: 1.0,
+											Quantity: -1.0,
+										},
+									},
+								},
+							},
+						}
+						outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+						Expect(outputErr).To(MatchError(ContainSubstring("lot #1 for symbol 'SYM' in group 'unnamed' has invalid quantity")))
+					})
+				})
+			})
+
+			When("multiple lots have validation errors", func() {
+				It("should return the first error", func() {
+					config = c.Config{
+						Lots: []c.Lot{
+							{
+								Symbol:   "SYM1",
+								UnitCost: 1.0,
+								Quantity: 0.0,
+							},
+							{
+								Symbol:   "SYM2",
+								UnitCost: -1.0,
+								Quantity: 1.0,
+							},
+						},
+					}
+					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
+					Expect(outputErr).To(MatchError(ContainSubstring("lot #1 for symbol 'SYM1' in group 'default' has invalid quantity")))
+				})
+			})
+		})
+
 	})
 })

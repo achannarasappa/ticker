@@ -178,14 +178,8 @@ snapcrafts:
       - beta
       - candidate
       - stable
-    plugs:
-      ticker-config:
-        interface: personal-files
-        read:
-        - $HOME/.ticker.yaml
-        - $HOME/.ticker.yml
     apps:
       ticker:
-        plugs: ["network", "home", "ticker-config"]
+        plugs: ["network", "home"]
         environment:
           PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH

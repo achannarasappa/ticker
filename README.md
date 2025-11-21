@@ -159,6 +159,41 @@ Watchlists and holdings can be grouped in `.ticker.yml` under the `groups` prope
 * If top level `watchlist` or `lots` properties are defined in the configuration file, the entries there will be added to a group named `default` which will always be shown first
 * Ordering is defined by order in the configuration file
 * The `holdings` property replaces `lots` under `groups` but serves the same purpose
+* New: `include-groups` allows composing a group from other groups without duplicating entries. The effective watchlist is the concatenation of included groups’ watchlists (then the group’s own), de-duplicated by first occurrence; holdings are concatenated (lots aggregate by symbol automatically in summaries)
+
+Example composite group:
+
+```yaml
+groups:
+  - name: crypto
+    watchlist: [BTC-USD, ETH-USD]
+    holdings:
+      - symbol: BTC-USD
+        quantity: 0.75
+        unit_cost: 35000
+
+  - name: personal stocks
+    watchlist: [AAPL, MSFT]
+    holdings:
+      - symbol: AAPL
+        quantity: 20
+        unit_cost: 130
+
+  - name: personal holding
+    include-groups: [crypto, personal stocks]
+    # Optional extras specific to this composite
+    watchlist: [SOL.X]
+    holdings:
+      - symbol: MSFT
+        quantity: 3
+        unit_cost: 310
+```
+
+Notes:
+- Includes are resolved recursively; cyclic includes are invalid.
+- `default` (created from top-level `watchlist`/`lots`) may be referenced.
+- Forward references are allowed: a composite group can include groups
+  declared later in the file.
 
 ### Data Sources & Symbols
 

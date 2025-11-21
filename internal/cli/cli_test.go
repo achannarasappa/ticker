@@ -165,6 +165,156 @@ var _ = Describe("Cli", func() {
 					}),
 				}),
 
+				// include-groups: composite group merges watchlist and holdings
+				Entry("when include-groups composes groups", Case{
+					InputOptions: cli.Options{},
+					InputConfigFileContents: strings.Join([]string{
+						"groups:",
+						"  - name: crypto",
+						"    watchlist:",
+						"      - BTC-USD",
+						"      - ETH-USD",
+						"    holdings:",
+						"      - symbol: BTC-USD",
+						"        quantity: 1",
+						"        unit_cost: 30000",
+						"  - name: personal",
+						"    watchlist:",
+						"      - AAPL",
+						"    holdings:",
+						"      - symbol: AAPL",
+						"        quantity: 2",
+						"        unit_cost: 120",
+						"  - name: combined",
+						"    include-groups:",
+						"      - crypto",
+						"      - personal",
+						"    watchlist:",
+						"      - ETH-USD",
+						"    holdings:",
+						"      - symbol: AAPL",
+						"        quantity: 1",
+						"        unit_cost: 130",
+					}, "\n"),
+					AssertionErr: BeNil(),
+					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Groups": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+							"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"ConfigAssetGroup": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"Name": Equal("crypto"),
+								}),
+							}),
+							"1": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"ConfigAssetGroup": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"Name": Equal("personal"),
+								}),
+							}),
+							"2": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"ConfigAssetGroup": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"Name":      Equal("combined"),
+									"Watchlist": Equal([]string{"BTC-USD", "ETH-USD", "AAPL"}),
+									"Holdings": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+										"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+											"Symbol": Equal("BTC-USD"),
+										}),
+										"1": g.MatchFields(g.IgnoreExtras, g.Fields{
+											"Symbol": Equal("AAPL"),
+										}),
+										"2": g.MatchFields(g.IgnoreExtras, g.Fields{
+											"Symbol": Equal("AAPL"),
+										}),
+									}),
+								}),
+							}),
+						}),
+					}),
+				}),
+
+				// include-groups: composite group declared before referenced groups
+				Entry("when include-groups composes groups declared later", Case{
+					InputOptions: cli.Options{},
+					InputConfigFileContents: strings.Join([]string{
+						"groups:",
+						"  - name: combined",
+						"    include-groups:",
+						"      - crypto",
+						"      - personal",
+						"    watchlist:",
+						"      - ETH-USD",
+						"    holdings:",
+						"      - symbol: AAPL",
+						"        quantity: 1",
+						"        unit_cost: 130",
+						"  - name: crypto",
+						"    watchlist:",
+						"      - BTC-USD",
+						"      - ETH-USD",
+						"    holdings:",
+						"      - symbol: BTC-USD",
+						"        quantity: 1",
+						"        unit_cost: 30000",
+						"  - name: personal",
+						"    watchlist:",
+						"      - AAPL",
+						"    holdings:",
+						"      - symbol: AAPL",
+						"        quantity: 2",
+						"        unit_cost: 120",
+					}, "\n"),
+					AssertionErr: BeNil(),
+					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Groups": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+							"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"ConfigAssetGroup": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"Name":      Equal("combined"),
+									"Watchlist": Equal([]string{"BTC-USD", "ETH-USD", "AAPL"}),
+									"Holdings": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+										"0": g.MatchFields(g.IgnoreExtras, g.Fields{"Symbol": Equal("BTC-USD")}),
+										"1": g.MatchFields(g.IgnoreExtras, g.Fields{"Symbol": Equal("AAPL")}),
+										"2": g.MatchFields(g.IgnoreExtras, g.Fields{"Symbol": Equal("AAPL")}),
+									}),
+								}),
+							}),
+							"1": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"ConfigAssetGroup": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"Name": Equal("crypto"),
+								}),
+							}),
+							"2": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"ConfigAssetGroup": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"Name": Equal("personal"),
+								}),
+							}),
+						}),
+					}),
+				}),
+
+				// include-groups: unknown target should error
+				Entry("when include-groups references unknown group", Case{
+					InputOptions: cli.Options{},
+					InputConfigFileContents: strings.Join([]string{
+						"groups:",
+						"  - name: test",
+						"    include-groups:",
+						"      - missing",
+					}, "\n"),
+					AssertionErr: Not(BeNil()),
+					AssertionCtx: BeZero(),
+				}),
+
+				// include-groups: cyclic include should error
+				Entry("when include-groups is cyclic", Case{
+					InputOptions: cli.Options{},
+					InputConfigFileContents: strings.Join([]string{
+						"groups:",
+						"  - name: A",
+						"    include-groups: [B]",
+						"  - name: B",
+						"    include-groups: [A]",
+					}, "\n"),
+					AssertionErr: Not(BeNil()),
+					AssertionCtx: BeZero(),
+				}),
 				Entry("when watchlist is set in options", Case{
 					InputOptions:            cli.Options{Watchlist: "BIO,BB"},
 					InputConfigFileContents: "",

@@ -102,6 +102,7 @@ type Lot struct {
 	Quantity  float64 `yaml:"quantity"`
 	FixedCost float64 `yaml:"fixed_cost"`
 	// FixedProperties LotFixedProperties `yaml:"fixed_properties"`
+	TargetPrice *float64 `yaml:"target_price"`
 }
 
 // type LotFixedProperties struct {
@@ -155,6 +156,7 @@ type Holding struct {
 	DayChange   HoldingChange
 	TotalChange HoldingChange
 	Weight      float64
+	TargetPrice *float64 // New field for tracking the target price
 }
 
 // Currency is the original and converted currency if applicable

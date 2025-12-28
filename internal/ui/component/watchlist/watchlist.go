@@ -154,27 +154,10 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 		assets := m.sorter(m.assets)
 		m.assets = assets
 
-		// Update rows with the new order (similar to SetAssetsMsg)
+		// Update rows with the new order
 		for i, asset := range assets {
-			if i < len(m.rows) {
-				m.rows[i], cmd = m.rows[i].Update(row.UpdateAssetMsg(asset))
-				cmds = append(cmds, cmd)
-			} else {
-				// Create new row if needed
-				m.rows = append(m.rows, row.New(row.Config{
-					Separate:              m.config.Separate,
-					ExtraInfoExchange:     m.config.ExtraInfoExchange,
-					ExtraInfoFundamentals: m.config.ExtraInfoFundamentals,
-					ShowPositions:         m.config.ShowPositions,
-					Styles:                m.config.Styles,
-					Asset:                 asset,
-				}))
-			}
-		}
-
-		// Remove extra rows if needed
-		if len(assets) < len(m.rows) {
-			m.rows = m.rows[:len(assets)]
+			m.rows[i], cmd = m.rows[i].Update(row.UpdateAssetMsg(asset))
+			cmds = append(cmds, cmd)
 		}
 
 		return m, tea.Batch(cmds...)

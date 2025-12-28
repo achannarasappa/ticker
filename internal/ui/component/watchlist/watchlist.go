@@ -40,6 +40,9 @@ type SetAssetsMsg []c.Asset
 // Messages for updating assets
 type UpdateAssetsMsg []c.Asset
 
+// Messages for changing sort
+type ChangeSortMsg string
+
 // NewModel returns a model with default values
 func NewModel(config Config) *Model {
 	return &Model{
@@ -138,6 +141,44 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 
 		return m, tea.Batch(cmds...)
 
+	case ChangeSortMsg:
+
+		var cmd tea.Cmd
+		cmds := make([]tea.Cmd, 0)
+
+		// Update the sorter with the new sort option
+		m.config.Sort = string(msg)
+		m.sorter = s.NewSorter(m.config.Sort)
+
+		// Re-sort and update the assets
+		assets := m.sorter(m.assets)
+		m.assets = assets
+
+		// Update rows with the new order (similar to SetAssetsMsg)
+		for i, asset := range assets {
+			if i < len(m.rows) {
+				m.rows[i], cmd = m.rows[i].Update(row.UpdateAssetMsg(asset))
+				cmds = append(cmds, cmd)
+			} else {
+				// Create new row if needed
+				m.rows = append(m.rows, row.New(row.Config{
+					Separate:              m.config.Separate,
+					ExtraInfoExchange:     m.config.ExtraInfoExchange,
+					ExtraInfoFundamentals: m.config.ExtraInfoFundamentals,
+					ShowPositions:         m.config.ShowPositions,
+					Styles:                m.config.Styles,
+					Asset:                 asset,
+				}))
+			}
+		}
+
+		// Remove extra rows if needed
+		if len(assets) < len(m.rows) {
+			m.rows = m.rows[:len(assets)]
+		}
+
+		return m, tea.Batch(cmds...)
+
 	}
 
 	return m, nil
@@ -165,14 +206,14 @@ func getCellWidths(assets []*c.Asset) row.CellWidthsContainer {
 	for _, asset := range assets {
 		var quoteLength int
 
-		volumeMarketCapLength := len(u.ConvertFloatToString(asset.QuoteExtended.MarketCap, true))
+		volumeMarketCapLength := len(u.ConvertFloatToStringWithCommas(asset.QuoteExtended.MarketCap, true))
 
 		if asset.QuoteExtended.FiftyTwoWeekHigh == 0.0 {
-			quoteLength = len(u.ConvertFloatToString(asset.QuotePrice.Price, asset.Meta.IsVariablePrecision))
+			quoteLength = len(u.ConvertFloatToStringWithCommas(asset.QuotePrice.Price, asset.Meta.IsVariablePrecision))
 		}
 
 		if asset.QuoteExtended.FiftyTwoWeekHigh != 0.0 {
-			quoteLength = len(u.ConvertFloatToString(asset.QuoteExtended.FiftyTwoWeekHigh, asset.Meta.IsVariablePrecision))
+			quoteLength = len(u.ConvertFloatToStringWithCommas(asset.QuoteExtended.FiftyTwoWeekHigh, asset.Meta.IsVariablePrecision))
 		}
 
 		if volumeMarketCapLength > cellMaxWidths.WidthVolumeMarketCap {
@@ -187,8 +228,8 @@ func getCellWidths(assets []*c.Asset) row.CellWidthsContainer {
 		}
 
 		if asset.Position != (c.Position{}) {
-			positionLength := len(u.ConvertFloatToString(asset.Position.Value, asset.Meta.IsVariablePrecision))
-			positionQuantityLength := len(u.ConvertFloatToString(asset.Position.Quantity, asset.Meta.IsVariablePrecision))
+			positionLength := len(u.ConvertFloatToStringWithCommas(asset.Position.Value, asset.Meta.IsVariablePrecision))
+			positionQuantityLength := len(u.ConvertFloatToStringWithCommas(asset.Position.Quantity, asset.Meta.IsVariablePrecision))
 
 			if positionLength > cellMaxWidths.PositionLength {
 				cellMaxWidths.PositionLength = positionLength

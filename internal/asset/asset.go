@@ -137,12 +137,18 @@ func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]A
 
 		totalChangePercent := calculateChangePercent(totalChangeAmount, cost)
 
+		var unitValue, unitCost float64
+		if aggregatedLot.Quantity != 0 {
+			unitValue = value / aggregatedLot.Quantity
+			unitCost = cost / aggregatedLot.Quantity
+		}
+
 		return c.Holding{
 			Value:     value,
 			Cost:      cost,
 			Quantity:  aggregatedLot.Quantity,
-			UnitValue: value / aggregatedLot.Quantity,
-			UnitCost:  cost / aggregatedLot.Quantity,
+			UnitValue: unitValue,
+			UnitCost:  unitCost,
 			DayChange: c.HoldingChange{
 				Amount:  assetQuote.QuotePrice.Change * aggregatedLot.Quantity * currencyRateByUse.QuotePrice,
 				Percent: assetQuote.QuotePrice.ChangePercent,

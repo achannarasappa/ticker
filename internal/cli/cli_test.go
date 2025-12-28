@@ -639,12 +639,12 @@ var _ = Describe("Cli", func() {
 						},
 					}
 					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
-					Expect(outputErr).To(MatchError(ContainSubstring("invalid quantity (must be positive, got 0")))
+					Expect(outputErr).To(MatchError(ContainSubstring("invalid quantity (cannot be zero, got 0")))
 				})
 			})
 
 			When("lot has negative quantity", func() {
-				It("should return an error", func() {
+				It("should not return an error", func() {
 					config = c.Config{
 						Lots: []c.Lot{
 							{
@@ -655,7 +655,7 @@ var _ = Describe("Cli", func() {
 						},
 					}
 					outputErr := Validate(&config, &options, nil)(&cobra.Command{}, []string{})
-					Expect(outputErr).To(MatchError(ContainSubstring("invalid quantity (must be positive, got -1")))
+					Expect(outputErr).NotTo(HaveOccurred())
 				})
 			})
 
@@ -748,7 +748,7 @@ var _ = Describe("Cli", func() {
 					})
 				})
 
-				When("lot in unnamed asset group has invalid quantity", func() {
+				When("lot in unnamed asset group has zero quantity", func() {
 					It("should return an error with 'unnamed' as group name", func() {
 						config = c.Config{
 							AssetGroup: []c.ConfigAssetGroup{
@@ -758,7 +758,7 @@ var _ = Describe("Cli", func() {
 										{
 											Symbol:   "SYM",
 											UnitCost: 1.0,
-											Quantity: -1.0,
+											Quantity: 0.0,
 										},
 									},
 								},

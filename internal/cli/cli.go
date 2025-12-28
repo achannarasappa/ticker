@@ -54,8 +54,8 @@ func validateLot(lot c.Lot, groupName string, lotIndex int) error {
 		return fmt.Errorf("invalid config: lot #%d in group '%s' has empty symbol", lotIndex+1, groupName) //nolint:goerr113
 	}
 
-	if lot.Quantity <= 0 {
-		return fmt.Errorf("invalid config: lot #%d for symbol '%s' in group '%s' has invalid quantity (must be positive, got %f)", lotIndex+1, lot.Symbol, groupName, lot.Quantity) //nolint:goerr113
+	if lot.Quantity == 0 {
+		return fmt.Errorf("invalid config: lot #%d for symbol '%s' in group '%s' has invalid quantity (cannot be zero, got %f)", lotIndex+1, lot.Symbol, groupName, lot.Quantity) //nolint:goerr113
 	}
 
 	if lot.UnitCost < 0 {

@@ -355,5 +355,46 @@ var _ = Describe("Asset", func() {
 			})
 		})
 
+		When("aggregated quantity is zero", func() {
+			It("should handle a net zero position", func() {
+				inputContext := c.Context{}
+				inputAssetGroupQuote := fixtureAssetGroupQuote
+				inputAssetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings = []c.Lot{
+					{
+						Symbol:    "TWKS",
+						UnitCost:  100.0,
+						Quantity:  10.0,
+						FixedCost: 0,
+					},
+					{
+						Symbol:    "TWKS",
+						UnitCost:  110.0,
+						Quantity:  -10.0,
+						FixedCost: 0,
+					},
+				}
+
+				outputAssets, outputHoldingSummary := GetAssets(inputContext, inputAssetGroupQuote)
+
+				Expect(outputAssets).To(HaveLen(3))
+
+				// TWKS with zero aggregated quantity (10 + (-10) = 0)
+				// Cost calculation: (100*10) + (110*(-10)) = 1000 - 1100 = -100
+				Expect(outputAssets[0].Holding.Value).To(Equal(0.0))    // 0 * 110 = 0
+				Expect(outputAssets[0].Holding.Cost).To(Equal(-100.0)) // Aggregated cost: 1000 + (-1100) = -100
+				Expect(outputAssets[0].Holding.Quantity).To(Equal(0.0)) // 10 + (-10) = 0
+				Expect(outputAssets[0].Holding.UnitValue).To(Equal(0.0)) // Should be 0
+				Expect(outputAssets[0].Holding.UnitCost).To(Equal(0.0))  // Should be 0
+				Expect(outputAssets[0].Holding.TotalChange.Amount).To(Equal(100.0))   // value - cost = 0 - (-100) = 100
+				Expect(outputAssets[0].Holding.TotalChange.Percent).To(Equal(-100.0)) // (100 / -100) * 100 = -100
+
+				// Summary should handle zero quantity holdings
+				// Since holding.Value is 0, it's skipped in addHoldingToHoldingSummary
+				Expect(outputHoldingSummary.Cost).To(Equal(0.0))
+				Expect(outputHoldingSummary.Value).To(Equal(0.0))
+				Expect(outputHoldingSummary.TotalChange.Amount).To(Equal(0.0))
+			})
+		})
+
 	})
 })

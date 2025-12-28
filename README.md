@@ -134,8 +134,9 @@ groups:
 
 * All properties in `.ticker.yaml` are optional
 * Symbols not on the watchlist that exists in `lots` are implicitly added to the watchlist
-* To add multiple cost basis lots (`quantity`, `unit_cost`) for the same `symbol`, include two ore more entries - see `ARKW` example above
+* To add multiple cost basis lots (`quantity`, `unit_cost`) for the same `symbol`, include two or more entries - see `ARKW` example above
 * `.ticker.yaml` can be set in user home directory, the current directory, or [XDG config home](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
+* Quantities can be negative to represent closed positions (position netting), 
 
 ### Display Options
 

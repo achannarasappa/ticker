@@ -36,7 +36,7 @@ var _ = Describe("Watchlist", func() {
 	It("should render a watchlist", func() {
 		m := NewModel(Config{
 			Styles:                stylesFixture,
-			ShowHoldings:          true,
+			ShowPositions:          true,
 			ExtraInfoExchange:     true,
 			ExtraInfoFundamentals: true,
 			Sort:                  "alpha",
@@ -65,12 +65,12 @@ var _ = Describe("Watchlist", func() {
 				Symbol: "STOCK4", Name: "Stock 4 Inc. (position, day gain, total gain)", QuoteExtended: c.QuoteExtended{FiftyTwoWeekHigh: 150.00},
 				QuotePrice: c.QuotePrice{Price: 105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
 					PriceDayLow: 90.00, Change: 5.0, ChangePercent: 5.0},
-				Holding: c.Holding{
+				Position: c.Position{
 					Quantity:    100.0,
 					Cost:        50.0,
 					Value:       105.0,
-					DayChange:   c.HoldingChange{Amount: 5.0, Percent: 5.0},
-					TotalChange: c.HoldingChange{Amount: 55.0, Percent: 110.0},
+					DayChange:   c.PositionChange{Amount: 5.0, Percent: 5.0},
+					TotalChange: c.PositionChange{Amount: 55.0, Percent: 110.0},
 				},
 				Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: true},
 			},
@@ -78,12 +78,12 @@ var _ = Describe("Watchlist", func() {
 				Symbol: "STOCK5", Name: "Stock 5 Inc. (position, day gain, total loss)", QuoteExtended: c.QuoteExtended{FiftyTwoWeekHigh: 150.00},
 				QuotePrice: c.QuotePrice{Price: 105.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
 					PriceDayLow: 90.00, Change: 5.0, ChangePercent: 5.0},
-				Holding: c.Holding{
+				Position: c.Position{
 					Quantity:    100.0,
 					Cost:        150.0,
 					Value:       105.0,
-					DayChange:   c.HoldingChange{Amount: 5.0, Percent: 5.0},
-					TotalChange: c.HoldingChange{Amount: -45.0, Percent: -30.0},
+					DayChange:   c.PositionChange{Amount: 5.0, Percent: 5.0},
+					TotalChange: c.PositionChange{Amount: -45.0, Percent: -30.0},
 				},
 				Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: true},
 			},
@@ -91,12 +91,12 @@ var _ = Describe("Watchlist", func() {
 				Symbol: "STOCK6", Name: "Stock 6 Inc. (position, day loss, total loss)", QuoteExtended: c.QuoteExtended{FiftyTwoWeekHigh: 150.00},
 				QuotePrice: c.QuotePrice{Price: 95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
 					PriceDayLow: 90.00, Change: -5.0, ChangePercent: -5.0},
-				Holding: c.Holding{
+				Position: c.Position{
 					Quantity:    100.0,
 					Cost:        50.0,
 					Value:       95.0,
-					DayChange:   c.HoldingChange{Amount: -5.0, Percent: -5.0},
-					TotalChange: c.HoldingChange{Amount: -55.0, Percent: -36.67},
+					DayChange:   c.PositionChange{Amount: -5.0, Percent: -5.0},
+					TotalChange: c.PositionChange{Amount: -55.0, Percent: -36.67},
 				},
 				Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: true},
 			},
@@ -104,12 +104,12 @@ var _ = Describe("Watchlist", func() {
 				Symbol: "STOCK7", Name: "Stock 7 Inc. (position, day loss, total gain)",
 				QuotePrice: c.QuotePrice{Price: 95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
 					PriceDayLow: 90.00, Change: -5.0, ChangePercent: -5.0},
-				Holding: c.Holding{
+				Position: c.Position{
 					Quantity:    100.0,
 					Cost:        50.0,
 					Value:       95.0,
-					DayChange:   c.HoldingChange{Amount: -5.0, Percent: -5.0},
-					TotalChange: c.HoldingChange{Amount: 45.0, Percent: 90.0},
+					DayChange:   c.PositionChange{Amount: -5.0, Percent: -5.0},
+					TotalChange: c.PositionChange{Amount: 45.0, Percent: 90.0},
 				},
 				Exchange: c.Exchange{IsActive: true, IsRegularTradingSession: true},
 			},
@@ -117,12 +117,12 @@ var _ = Describe("Watchlist", func() {
 				Symbol: "STOCK8", Name: "Stock 8 Inc. (position, closed market)",
 				QuotePrice: c.QuotePrice{Price: 95.00, PricePrevClose: 100.00, PriceOpen: 110.00, PriceDayHigh: 120.00,
 					PriceDayLow: 90.00, Change: 0.0, ChangePercent: 0.0},
-				Holding: c.Holding{
+				Position: c.Position{
 					Quantity:    100.0,
 					Cost:        100.0,
 					Value:       95.0,
-					DayChange:   c.HoldingChange{Amount: 0.0, Percent: 0.0},
-					TotalChange: c.HoldingChange{Amount: 45.0, Percent: 90.0},
+					DayChange:   c.PositionChange{Amount: 0.0, Percent: 0.0},
+					TotalChange: c.PositionChange{Amount: 45.0, Percent: 90.0},
 				},
 				Exchange: c.Exchange{IsActive: false, IsRegularTradingSession: false},
 			},
@@ -137,7 +137,7 @@ var _ = Describe("Watchlist", func() {
 		It("should ignore the message", func() {
 			m := NewModel(Config{
 				Styles:       stylesFixture,
-				ShowHoldings: false,
+				ShowPositions: false,
 				Sort:         "alpha",
 			})
 
@@ -518,7 +518,7 @@ var _ = Describe("Watchlist", func() {
 		It("should render extra holding information", func() {
 			m := NewModel(Config{
 				Styles:       stylesFixture,
-				ShowHoldings: true,
+				ShowPositions: true,
 			})
 			m.Update(tea.WindowSizeMsg{Width: 120})
 			setAssetsMsg := []c.Asset{
@@ -530,12 +530,12 @@ var _ = Describe("Watchlist", func() {
 						Change:        10.0,
 						ChangePercent: 10.0,
 					},
-					Holding: c.Holding{
+					Position: c.Position{
 						Quantity:    100.0,
 						Cost:        50.0,
 						Value:       105.0,
-						DayChange:   c.HoldingChange{Amount: 5.0, Percent: 5.0},
-						TotalChange: c.HoldingChange{Amount: 55.0, Percent: 110.0},
+						DayChange:   c.PositionChange{Amount: 5.0, Percent: 5.0},
+						TotalChange: c.PositionChange{Amount: 55.0, Percent: 110.0},
 					},
 					Exchange: c.Exchange{
 						IsActive:                true,
@@ -554,7 +554,7 @@ var _ = Describe("Watchlist", func() {
 			It("should render extra holding information without truncation", func() {
 				m := NewModel(Config{
 					Styles:       stylesFixture,
-					ShowHoldings: true,
+					ShowPositions: true,
 				})
 				m.Update(tea.WindowSizeMsg{Width: 120})
 				setAssetsMsg := []c.Asset{
@@ -566,12 +566,12 @@ var _ = Describe("Watchlist", func() {
 							Change:        0.01,
 							ChangePercent: 10.0,
 						},
-						Holding: c.Holding{
+						Position: c.Position{
 							Quantity:    92709.0,
 							Cost:        0.10,
 							Value:       9270.90,
-							DayChange:   c.HoldingChange{Amount: 10.0, Percent: 10.0},
-							TotalChange: c.HoldingChange{Amount: 10.0, Percent: 10.0},
+							DayChange:   c.PositionChange{Amount: 10.0, Percent: 10.0},
+							TotalChange: c.PositionChange{Amount: 10.0, Percent: 10.0},
 						},
 						Exchange: c.Exchange{
 							IsActive:                true,
@@ -591,7 +591,7 @@ var _ = Describe("Watchlist", func() {
 			It("should not render quantity or average cost", func() {
 				m := NewModel(Config{
 					Styles:       stylesFixture,
-					ShowHoldings: true,
+					ShowPositions: true,
 				})
 				m.Update(tea.WindowSizeMsg{Width: 120})
 				setAssetsMsg := []c.Asset{
@@ -647,7 +647,7 @@ var _ = Describe("Watchlist", func() {
 		It("should return nil command", func() {
 			m := NewModel(Config{
 				Styles:                stylesFixture,
-				ShowHoldings:          false,
+				ShowPositions:          false,
 				ExtraInfoExchange:     false,
 				ExtraInfoFundamentals: false,
 				Sort:                  "alpha",

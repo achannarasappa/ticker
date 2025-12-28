@@ -45,7 +45,7 @@ type CellWidthsContainer struct {
 type Config struct {
 	ID                    int
 	Separate              bool
-	ShowHoldings          bool
+	ShowPositions         bool
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
 	Styles                c.Styles
@@ -237,7 +237,7 @@ func (m *Model) View() string {
 
 func (m *Model) buildCells() []grid.Cell {
 
-	if !m.config.ExtraInfoFundamentals && !m.config.ShowHoldings {
+	if !m.config.ExtraInfoFundamentals && !m.config.ShowPositions {
 
 		return []grid.Cell{
 			{Text: textName(m.config.Asset, m.config.Styles)},
@@ -258,7 +258,7 @@ func (m *Model) buildCells() []grid.Cell {
 	}
 	widthMinTerm := WidthName + WidthMarketState + m.cellWidths.WidthQuote + (3 * WidthGutter)
 
-	if m.config.ShowHoldings {
+	if m.config.ShowPositions {
 		widthHoldings := widthMinTerm + m.cellWidths.WidthPosition + (3 * WidthGutter) + m.cellWidths.WidthPositionExtended + WidthLabel
 
 		cells = append(
@@ -362,15 +362,15 @@ func textPosition(asset *c.Asset, styles c.Styles) string {
 	positionValue := ""
 	positionChange := ""
 
-	if asset.Holding.Value != 0.0 {
-		positionValue = u.ValueText(asset.Holding.Value, styles) +
+	if asset.Position.Value != 0.0 {
+		positionValue = u.ValueText(asset.Position.Value, styles) +
 			styles.TextLight(
 				" ("+
-					u.ConvertFloatToString(asset.Holding.Weight, asset.Meta.IsVariablePrecision)+"%"+
+					u.ConvertFloatToString(asset.Position.Weight, asset.Meta.IsVariablePrecision)+"%"+
 					")")
 	}
-	if asset.Holding.TotalChange.Amount != 0.0 {
-		positionChange = quoteChangeText(asset.Holding.TotalChange.Amount, asset.Holding.TotalChange.Percent, asset.Meta.IsVariablePrecision, styles)
+	if asset.Position.TotalChange.Amount != 0.0 {
+		positionChange = quoteChangeText(asset.Position.TotalChange.Amount, asset.Position.TotalChange.Percent, asset.Meta.IsVariablePrecision, styles)
 	}
 
 	return positionValue +
@@ -425,19 +425,19 @@ func textQuoteExtendedLabels(asset *c.Asset, styles c.Styles) string {
 
 func textPositionExtended(asset *c.Asset, styles c.Styles) string {
 
-	if asset.Holding.Quantity == 0.0 {
+	if asset.Position.Quantity == 0.0 {
 		return ""
 	}
 
-	return styles.Text(u.ConvertFloatToString(asset.Holding.UnitCost, asset.Meta.IsVariablePrecision)) +
+	return styles.Text(u.ConvertFloatToString(asset.Position.UnitCost, asset.Meta.IsVariablePrecision)) +
 		"\n" +
-		styles.Text(u.ConvertFloatToString(asset.Holding.Quantity, asset.Meta.IsVariablePrecision))
+		styles.Text(u.ConvertFloatToString(asset.Position.Quantity, asset.Meta.IsVariablePrecision))
 
 }
 
 func textPositionExtendedLabels(asset *c.Asset, styles c.Styles) string {
 
-	if asset.Holding.Quantity == 0.0 {
+	if asset.Position.Quantity == 0.0 {
 		return ""
 	}
 

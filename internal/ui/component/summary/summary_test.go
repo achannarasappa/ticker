@@ -33,14 +33,14 @@ var _ = Describe("Summary", func() {
 		It("should render a summary with up arrow", func() {
 			m := NewModel(ctxFixture)
 			m, _ = m.Update(tea.WindowSizeMsg{Width: 120})
-			m, _ = m.Update(SetSummaryMsg(asset.HoldingSummary{
+			m, _ = m.Update(SetSummaryMsg(asset.PositionSummary{
 				Value: 10000,
 				Cost:  1000,
-				DayChange: c.HoldingChange{
+				DayChange: c.PositionChange{
 					Amount:  100.0,
 					Percent: 10.0,
 				},
-				TotalChange: c.HoldingChange{
+				TotalChange: c.PositionChange{
 					Amount:  9000,
 					Percent: 1000.0,
 				},
@@ -56,14 +56,14 @@ var _ = Describe("Summary", func() {
 		It("should render a summary with down arrow", func() {
 			m := NewModel(ctxFixture)
 			m, _ = m.Update(tea.WindowSizeMsg{Width: 120})
-			m, _ = m.Update(SetSummaryMsg(asset.HoldingSummary{
+			m, _ = m.Update(SetSummaryMsg(asset.PositionSummary{
 				Value: 1000,
 				Cost:  10000,
-				DayChange: c.HoldingChange{
+				DayChange: c.PositionChange{
 					Amount:  -100.0,
 					Percent: -10.0,
 				},
-				TotalChange: c.HoldingChange{
+				TotalChange: c.PositionChange{
 					Amount:  -9000,
 					Percent: -1000.0,
 				},

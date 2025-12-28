@@ -15,11 +15,11 @@ import (
 // Model for summary section
 type Model struct {
 	width   int
-	summary asset.HoldingSummary
+	summary asset.PositionSummary
 	styles  c.Styles
 }
 
-type SetSummaryMsg asset.HoldingSummary
+type SetSummaryMsg asset.PositionSummary
 
 // NewModel returns a model with default values
 func NewModel(ctx c.Context) *Model {
@@ -42,7 +42,7 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 
 		return m, nil
 	case SetSummaryMsg:
-		m.summary = asset.HoldingSummary(msg)
+		m.summary = asset.PositionSummary(msg)
 
 		return m, nil
 	}

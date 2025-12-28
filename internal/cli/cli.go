@@ -28,7 +28,8 @@ type Options struct {
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
 	ShowSummary           bool
-	ShowHoldings          bool
+	ShowHoldings          bool // Deprecated: use ShowPositions instead, kept for backwards compatibility
+	ShowPositions         bool // Preferred field name
 	Sort                  string
 }
 
@@ -94,7 +95,12 @@ func Validate(config *c.Config, options *Options, prevErr *error) func(*cobra.Co
 			if groupName == "" {
 				groupName = "unnamed"
 			}
-			for i, lot := range assetGroup.Holdings {
+			// Use Lots (preferred), otherwise fall back to Holdings for backwards compatibility
+			lots := assetGroup.Lots
+			if len(lots) == 0 {
+				lots = assetGroup.Holdings
+			}
+			for i, lot := range lots {
 				if err := validateLot(lot, groupName, i); err != nil {
 					return err
 				}
@@ -126,17 +132,13 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		err       error
 	)
 
-	if err != nil {
-		return c.Context{}, err
-	}
-
 	groups, err = getGroups(config, d)
 
 	if err != nil {
 		return c.Context{}, err
 	}
 
-	reference, err = getReference(config, groups)
+	reference, err = getReference(config)
 
 	if err != nil {
 		return c.Context{}, err
@@ -185,20 +187,12 @@ func readConfig(fs afero.Fs, configPathOption string) (c.Config, error) {
 	return config, nil
 }
 
-func getReference(config c.Config, assetGroups []c.AssetGroup) (c.Reference, error) {
-
-	var err error
-
+func getReference(config c.Config) (c.Reference, error) {
 	styles := util.GetColorScheme(config.ColorScheme)
-
-	if err != nil {
-		return c.Reference{}, err
-	}
 
 	return c.Reference{
 		Styles: styles,
-	}, err
-
+	}, nil
 }
 
 func GetConfig(dep c.Dependencies, configPath string, options Options) (c.Config, error) {
@@ -218,7 +212,20 @@ func GetConfig(dep c.Dependencies, configPath string, options Options) (c.Config
 	config.ExtraInfoExchange = getBoolOption(options.ExtraInfoExchange, config.ExtraInfoExchange)
 	config.ExtraInfoFundamentals = getBoolOption(options.ExtraInfoFundamentals, config.ExtraInfoFundamentals)
 	config.ShowSummary = getBoolOption(options.ShowSummary, config.ShowSummary)
-	config.ShowHoldings = getBoolOption(options.ShowHoldings, config.ShowHoldings)
+	// Merge ShowHoldings into ShowPositions with positions taking precedence
+	// First check if Positions is set (CLI or config), then fall back to Holdings if not
+	showPositionsFromCLI := options.ShowPositions
+	showPositionsFromConfig := config.ShowPositions
+	showHoldingsFromCLI := options.ShowHoldings
+	showHoldingsFromConfig := config.ShowHoldings
+
+	// Positions takes precedence: use it if set in CLI or config
+	if showPositionsFromCLI || showPositionsFromConfig {
+		config.ShowPositions = true
+	} else {
+		// Otherwise, fall back to Holdings
+		config.ShowPositions = showHoldingsFromCLI || showHoldingsFromConfig
+	}
 	config.Sort = getStringOption(options.Sort, config.Sort)
 
 	return config, nil
@@ -303,7 +310,7 @@ func getGroups(config c.Config, d c.Dependencies) ([]c.AssetGroup, error) {
 		configAssetGroups = append(configAssetGroups, c.ConfigAssetGroup{
 			Name:      "default",
 			Watchlist: config.Watchlist,
-			Holdings:  config.Lots,
+			Lots:      config.Lots,
 		})
 	}
 
@@ -323,7 +330,14 @@ func getGroups(config c.Config, d c.Dependencies) ([]c.AssetGroup, error) {
 			}
 		}
 
-		for _, lot := range configAssetGroup.Holdings {
+		lots := configAssetGroup.Lots
+		mergedConfigAssetGroup := configAssetGroup
+		if len(lots) == 0 {
+			lots = configAssetGroup.Holdings
+			mergedConfigAssetGroup.Lots = lots
+		}
+
+		for _, lot := range lots {
 			if !symbols[lot.Symbol] {
 				symbols[lot.Symbol] = true
 				symbolAndSource := getSymbolAndSource(lot.Symbol, tickerSymbolToSourceSymbol)
@@ -336,7 +350,7 @@ func getGroups(config c.Config, d c.Dependencies) ([]c.AssetGroup, error) {
 		}
 
 		groups = append(groups, c.AssetGroup{
-			ConfigAssetGroup: configAssetGroup,
+			ConfigAssetGroup: mergedConfigAssetGroup,
 			SymbolsBySource:  assetGroupSymbolsBySource,
 		})
 

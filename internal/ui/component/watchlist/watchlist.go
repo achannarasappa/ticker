@@ -15,7 +15,7 @@ import (
 // Config represents the configuration for the watchlist component
 type Config struct {
 	Separate              bool
-	ShowHoldings          bool
+	ShowPositions         bool
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
 	Sort                  string
@@ -86,7 +86,7 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 					Separate:              m.config.Separate,
 					ExtraInfoExchange:     m.config.ExtraInfoExchange,
 					ExtraInfoFundamentals: m.config.ExtraInfoFundamentals,
-					ShowHoldings:          m.config.ShowHoldings,
+					ShowPositions:         m.config.ShowPositions,
 					Styles:                m.config.Styles,
 					Asset:                 asset,
 				}))
@@ -186,9 +186,9 @@ func getCellWidths(assets []*c.Asset) row.CellWidthsContainer {
 			cellMaxWidths.WidthQuoteRange = row.WidthRangeStatic + (quoteLength * 2)
 		}
 
-		if asset.Holding != (c.Holding{}) {
-			positionLength := len(u.ConvertFloatToString(asset.Holding.Value, asset.Meta.IsVariablePrecision))
-			positionQuantityLength := len(u.ConvertFloatToString(asset.Holding.Quantity, asset.Meta.IsVariablePrecision))
+		if asset.Position != (c.Position{}) {
+			positionLength := len(u.ConvertFloatToString(asset.Position.Value, asset.Meta.IsVariablePrecision))
+			positionQuantityLength := len(u.ConvertFloatToString(asset.Position.Quantity, asset.Meta.IsVariablePrecision))
 
 			if positionLength > cellMaxWidths.PositionLength {
 				cellMaxWidths.PositionLength = positionLength

@@ -44,15 +44,15 @@ func convertAssetsToCSV(assets []c.Asset) string {
 	}
 
 	for _, asset := range assets {
-		if asset.Holding.Quantity > 0 {
+		if asset.Position.Quantity > 0 {
 			rows = append(rows, []string{
 				asset.Name,
 				asset.Symbol,
 				util.ConvertFloatToString(asset.QuotePrice.Price, true),
-				util.ConvertFloatToString(asset.Holding.Value, true),
-				util.ConvertFloatToString(asset.Holding.Cost, true),
-				util.ConvertFloatToString(asset.Holding.Quantity, true),
-				util.ConvertFloatToString(asset.Holding.Weight, true),
+				util.ConvertFloatToString(asset.Position.Value, true),
+				util.ConvertFloatToString(asset.Position.Cost, true),
+				util.ConvertFloatToString(asset.Position.Quantity, true),
+				util.ConvertFloatToString(asset.Position.Weight, true),
 			})
 		}
 	}
@@ -70,15 +70,15 @@ func convertAssetsToJSON(assets []c.Asset) string {
 	var rows []jsonRow
 
 	for _, asset := range assets {
-		if asset.Holding.Quantity > 0 {
+		if asset.Position.Quantity > 0 {
 			rows = append(rows, jsonRow{
 				Name:     asset.Name,
 				Symbol:   asset.Symbol,
 				Price:    fmt.Sprintf("%f", asset.QuotePrice.Price),
-				Value:    fmt.Sprintf("%f", asset.Holding.Value),
-				Cost:     fmt.Sprintf("%f", asset.Holding.Cost),
-				Quantity: fmt.Sprintf("%f", asset.Holding.Quantity),
-				Weight:   fmt.Sprintf("%f", asset.Holding.Weight),
+				Value:    fmt.Sprintf("%f", asset.Position.Value),
+				Cost:     fmt.Sprintf("%f", asset.Position.Cost),
+				Quantity: fmt.Sprintf("%f", asset.Position.Quantity),
+				Weight:   fmt.Sprintf("%f", asset.Position.Weight),
 			})
 		}
 	}
@@ -97,7 +97,7 @@ func convertAssetsToJSON(assets []c.Asset) string {
 
 }
 
-func convertSummaryToJSON(summary asset.HoldingSummary) string {
+func convertSummaryToJSON(summary asset.PositionSummary) string {
 	row := jsonSummary{
 		TotalValue:         fmt.Sprintf("%f", summary.Value),
 		TotalCost:          fmt.Sprintf("%f", summary.Cost),
@@ -116,7 +116,7 @@ func convertSummaryToJSON(summary asset.HoldingSummary) string {
 	return string(out)
 }
 
-func convertSummaryToCSV(summary asset.HoldingSummary) string {
+func convertSummaryToCSV(summary asset.PositionSummary) string {
 	rows := [][]string{
 		{"total_value", "total_cost", "day_change_amount", "day_change_percent", "total_change_amount", "total_change_percent"},
 		{
@@ -183,14 +183,14 @@ func RunSummary(dep *c.Dependencies, ctx *c.Context, options *Options) func(cmd 
 		})
 		monitors.SetAssetGroup(ctx.Groups[0], 0) //nolint:errcheck
 		assetGroupQuote := monitors.GetAssetGroupQuote()
-		_, holdingSummary := asset.GetAssets(*ctx, assetGroupQuote)
+		_, positionSummary := asset.GetAssets(*ctx, assetGroupQuote)
 
 		if options.Format == "csv" {
-			fmt.Println(convertSummaryToCSV(holdingSummary))
+			fmt.Println(convertSummaryToCSV(positionSummary))
 
 			return
 		}
 
-		fmt.Println(convertSummaryToJSON(holdingSummary))
+		fmt.Println(convertSummaryToJSON(positionSummary))
 	}
 }

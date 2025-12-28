@@ -23,7 +23,8 @@ type Config struct {
 	ExtraInfoExchange                 bool               `yaml:"show-tags"`
 	ExtraInfoFundamentals             bool               `yaml:"show-fundamentals"`
 	ShowSummary                       bool               `yaml:"show-summary"`
-	ShowHoldings                      bool               `yaml:"show-holdings"`
+	ShowHoldings                      bool               `yaml:"show-holdings"`  // Deprecated: use ShowPositions instead, kept for backwards compatibility
+	ShowPositions                     bool               `yaml:"show-positions"` // Preferred field name
 	Sort                              string             `yaml:"sort"`
 	Currency                          string             `yaml:"currency"`
 	CurrencyConvertSummaryOnly        bool               `yaml:"currency-summary-only"`
@@ -46,7 +47,8 @@ type ConfigColorScheme struct {
 type ConfigAssetGroup struct {
 	Name      string   `yaml:"name"`
 	Watchlist []string `yaml:"watchlist"`
-	Holdings  []Lot    `yaml:"holdings"`
+	Lots      []Lot    `yaml:"lots"`     // Preferred field name
+	Holdings  []Lot    `yaml:"holdings"` // Deprecated: use Lots instead, kept for backwards compatibility
 }
 
 type AssetGroup struct {
@@ -135,7 +137,7 @@ type Styles struct {
 // StyleFn is a function that styles text
 type StyleFn func(string) string
 
-type HoldingChange struct {
+type PositionChange struct {
 	Amount  float64
 	Percent float64
 }
@@ -146,14 +148,14 @@ type Meta struct {
 	SymbolInSourceAPI   string
 }
 
-type Holding struct {
+type Position struct {
 	Value       float64
 	Cost        float64
 	Quantity    float64
 	UnitValue   float64
 	UnitCost    float64
-	DayChange   HoldingChange
-	TotalChange HoldingChange
+	DayChange   PositionChange
+	TotalChange PositionChange
 	Weight      float64
 }
 
@@ -215,7 +217,7 @@ type Asset struct {
 	Symbol        string
 	Class         AssetClass
 	Currency      Currency
-	Holding       Holding
+	Position      Position
 	QuotePrice    QuotePrice
 	QuoteExtended QuoteExtended
 	QuoteFutures  QuoteFutures

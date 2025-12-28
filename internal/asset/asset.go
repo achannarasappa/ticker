@@ -14,31 +14,33 @@ type AggregatedLot struct {
 	OrderIndex int
 }
 
-// HoldingSummary represents a summary of all asset holdings at a point in time
-type HoldingSummary struct {
+// PositionSummary represents a summary of all asset positions at a point in time
+type PositionSummary struct {
 	Value       float64
 	Cost        float64
-	TotalChange c.HoldingChange
-	DayChange   c.HoldingChange
+	TotalChange c.PositionChange
+	DayChange   c.PositionChange
 }
 
 // GetAssets returns assets from an asset group quote
-func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, HoldingSummary) {
+func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, PositionSummary) {
 
-	var holdingSummary HoldingSummary
+	lots := assetGroupQuote.AssetGroup.ConfigAssetGroup.Lots
+
+	var positionSummary PositionSummary
 	assets := make([]c.Asset, 0)
-	holdingsBySymbol := getLots(assetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings)
+	lotsBySymbol := getLots(lots)
 	orderIndex := make(map[string]int)
 
-	for i, symbol := range assetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings {
-		if _, exists := orderIndex[symbol.Symbol]; !exists {
-			orderIndex[strings.ToLower(symbol.Symbol)] = i
+	for i, lot := range lots {
+		if _, exists := orderIndex[lot.Symbol]; !exists {
+			orderIndex[strings.ToLower(lot.Symbol)] = i
 		}
 	}
 
 	for i, symbol := range assetGroupQuote.AssetGroup.ConfigAssetGroup.Watchlist {
 		if _, exists := orderIndex[symbol]; !exists {
-			orderIndex[strings.ToLower(symbol)] = i + len(assetGroupQuote.AssetGroup.ConfigAssetGroup.Holdings)
+			orderIndex[strings.ToLower(symbol)] = i + len(lots)
 		}
 	}
 
@@ -46,8 +48,8 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Hol
 
 		currencyRateByUse := getCurrencyRateByUse(ctx, assetQuote.Currency.FromCurrencyCode, assetQuote.Currency.ToCurrencyCode, assetQuote.Currency.Rate)
 
-		holding := getHoldingFromAssetQuote(assetQuote, holdingsBySymbol, currencyRateByUse)
-		holdingSummary = addHoldingToHoldingSummary(holdingSummary, holding, currencyRateByUse)
+		position := getPositionFromAssetQuote(assetQuote, lotsBySymbol, currencyRateByUse)
+		positionSummary = addPositionToPositionSummary(positionSummary, position, currencyRateByUse)
 
 		assets = append(assets, c.Asset{
 			Name:   assetQuote.Name,
@@ -57,7 +59,7 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Hol
 				FromCurrencyCode: assetQuote.Currency.FromCurrencyCode,
 				ToCurrencyCode:   currencyRateByUse.ToCurrencyCode,
 			},
-			Holding:       holding,
+			Position:      position,
 			QuotePrice:    convertAssetQuotePriceCurrency(currencyRateByUse, assetQuote.QuotePrice),
 			QuoteExtended: convertAssetQuoteExtendedCurrency(currencyRateByUse, assetQuote.QuoteExtended),
 			QuoteFutures:  assetQuote.QuoteFutures,
@@ -71,9 +73,9 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Hol
 
 	}
 
-	assets = updateHoldingWeights(assets, holdingSummary)
+	assets = updatePositionWeights(assets, positionSummary)
 
-	return assets, holdingSummary
+	return assets, positionSummary
 
 }
 
@@ -86,49 +88,49 @@ func calculateChangePercent(changeAmount float64, base float64) float64 {
 	return (changeAmount / base) * 100
 }
 
-func addHoldingToHoldingSummary(holdingSummary HoldingSummary, holding c.Holding, currencyRateByUse currencyRateByUse) HoldingSummary {
+func addPositionToPositionSummary(positionSummary PositionSummary, position c.Position, currencyRateByUse currencyRateByUse) PositionSummary {
 
-	if holding.Value == 0 {
-		return holdingSummary
+	if position.Value == 0 {
+		return positionSummary
 	}
 
-	value := holdingSummary.Value + (holding.Value * currencyRateByUse.SummaryValue)
-	cost := holdingSummary.Cost + (holding.Cost * currencyRateByUse.SummaryCost)
-	dayChange := holdingSummary.DayChange.Amount + (holding.DayChange.Amount * currencyRateByUse.SummaryValue)
+	value := positionSummary.Value + (position.Value * currencyRateByUse.SummaryValue)
+	cost := positionSummary.Cost + (position.Cost * currencyRateByUse.SummaryCost)
+	dayChange := positionSummary.DayChange.Amount + (position.DayChange.Amount * currencyRateByUse.SummaryValue)
 	totalChange := value - cost
 
 	totalChangePercent := calculateChangePercent(totalChange, cost)
 	dayChangePercent := (dayChange / value) * 100
 
-	return HoldingSummary{
+	return PositionSummary{
 		Value: value,
 		Cost:  cost,
-		TotalChange: c.HoldingChange{
+		TotalChange: c.PositionChange{
 			Amount:  totalChange,
 			Percent: totalChangePercent,
 		},
-		DayChange: c.HoldingChange{
+		DayChange: c.PositionChange{
 			Amount:  dayChange,
 			Percent: dayChangePercent,
 		},
 	}
 }
 
-func updateHoldingWeights(assets []c.Asset, holdingSummary HoldingSummary) []c.Asset {
+func updatePositionWeights(assets []c.Asset, positionSummary PositionSummary) []c.Asset {
 
-	if holdingSummary.Value == 0 {
+	if positionSummary.Value == 0 {
 		return assets
 	}
 
 	for i, asset := range assets {
-		assets[i].Holding.Weight = (asset.Holding.Value / holdingSummary.Value) * 100
+		assets[i].Position.Weight = (asset.Position.Value / positionSummary.Value) * 100
 	}
 
 	return assets
 
 }
 
-func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]AggregatedLot, currencyRateByUse currencyRateByUse) c.Holding {
+func getPositionFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]AggregatedLot, currencyRateByUse currencyRateByUse) c.Position {
 
 	if aggregatedLot, ok := lotsBySymbol[assetQuote.Symbol]; ok {
 		value := aggregatedLot.Quantity * assetQuote.QuotePrice.Price * currencyRateByUse.QuotePrice
@@ -143,17 +145,17 @@ func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]A
 			unitCost = cost / aggregatedLot.Quantity
 		}
 
-		return c.Holding{
+		return c.Position{
 			Value:     value,
 			Cost:      cost,
 			Quantity:  aggregatedLot.Quantity,
 			UnitValue: unitValue,
 			UnitCost:  unitCost,
-			DayChange: c.HoldingChange{
+			DayChange: c.PositionChange{
 				Amount:  assetQuote.QuotePrice.Change * aggregatedLot.Quantity * currencyRateByUse.QuotePrice,
 				Percent: assetQuote.QuotePrice.ChangePercent,
 			},
-			TotalChange: c.HoldingChange{
+			TotalChange: c.PositionChange{
 				Amount:  totalChangeAmount,
 				Percent: totalChangePercent,
 			},
@@ -161,7 +163,7 @@ func getHoldingFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]A
 		}
 	}
 
-	return c.Holding{}
+	return c.Position{}
 
 }
 

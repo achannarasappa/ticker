@@ -21,7 +21,7 @@ var _ = Describe("Sorter", func() {
 				Change:         10000.0,
 				ChangePercent:  20.0,
 			},
-			Holding: c.Holding{
+			Position: c.Position{
 				Value: 50000.0,
 			},
 			Exchange: c.Exchange{
@@ -56,7 +56,7 @@ var _ = Describe("Sorter", func() {
 				Change:        -32.02,
 				ChangePercent: -1.35,
 			},
-			Holding: c.Holding{
+			Position: c.Position{
 				Value: 2523.53,
 			},
 			Exchange: c.Exchange{
@@ -165,13 +165,13 @@ var _ = Describe("Sorter", func() {
 				sorter := NewSorter("value")
 
 				bitcoinQuoteWithHolding := bitcoinQuote
-				bitcoinQuoteWithHolding.Holding.Value = 50000.0
+				bitcoinQuoteWithHolding.Position.Value = 50000.0
 				googleQuoteWithHolding := googleQuote
-				googleQuoteWithHolding.Holding.Value = 2523.53
+				googleQuoteWithHolding.Position.Value = 2523.53
 				rblxQuoteWithHolding := rblxQuote
-				rblxQuoteWithHolding.Holding.Value = 900.00
+				rblxQuoteWithHolding.Position.Value = 900.00
 				msftQuoteWithHolding := msftQuote
-				msftQuoteWithHolding.Holding.Value = 100.00
+				msftQuoteWithHolding.Position.Value = 100.00
 
 				assets := []*c.Asset{
 					&bitcoinQuoteWithHolding,

@@ -69,7 +69,7 @@ var _ = Describe("Cli", func() {
 			ExtraInfoExchange:     false,
 			ExtraInfoFundamentals: false,
 			ShowSummary:           false,
-			ShowHoldings:          false,
+			ShowPositions:          false,
 			Sort:                  "",
 		}
 		dep = c.Dependencies{
@@ -223,6 +223,38 @@ var _ = Describe("Cli", func() {
 											"Symbol":   Equal("SOL1-USD"),
 											"Quantity": Equal(17.0),
 											"UnitCost": Equal(159.10),
+										}),
+									}),
+								}),
+							}),
+						}),
+					}),
+				}),
+
+				Entry("when groups use holdings field (backwards compatibility)", Case{
+					InputOptions: cli.Options{},
+					InputConfigFileContents: strings.Join([]string{
+						"groups:",
+						"  - name: test-group",
+						"    watchlist:",
+						"      - AAPL",
+						"    holdings:",
+						"      - symbol: TSLA",
+						"        quantity: 10",
+						"        unit_cost: 200.0",
+					}, "\n"),
+					AssertionErr: BeNil(),
+					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Groups": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+							"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+								"ConfigAssetGroup": g.MatchFields(g.IgnoreExtras, g.Fields{
+									"Name":      Equal("test-group"),
+									"Watchlist": Equal([]string{"AAPL"}),
+									"Lots": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+										"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+											"Symbol":   Equal("TSLA"),
+											"Quantity": Equal(10.0),
+											"UnitCost": Equal(200.0),
 										}),
 									}),
 								}),

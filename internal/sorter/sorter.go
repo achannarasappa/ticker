@@ -71,11 +71,11 @@ func sortByValue(assetsIn []*c.Asset) []*c.Asset {
 	activeAssets, inactiveAssets := splitActiveAssets(assets)
 
 	sort.SliceStable(inactiveAssets, func(i, j int) bool {
-		return inactiveAssets[j].Holding.Value < inactiveAssets[i].Holding.Value
+		return inactiveAssets[j].Position.Value < inactiveAssets[i].Position.Value
 	})
 
 	sort.SliceStable(activeAssets, func(i, j int) bool {
-		return activeAssets[j].Holding.Value < activeAssets[i].Holding.Value
+		return activeAssets[j].Position.Value < activeAssets[i].Position.Value
 	})
 
 	return append(activeAssets, inactiveAssets...)

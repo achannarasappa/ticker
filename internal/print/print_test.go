@@ -92,7 +92,7 @@ var _ = Describe("Print", func() {
 						},
 					},
 					ConfigAssetGroup: c.ConfigAssetGroup{
-						Holdings: []c.Lot{
+						Lots: []c.Lot{
 							{
 								Symbol:   "GOOG",
 								UnitCost: 1000,
@@ -122,7 +122,7 @@ var _ = Describe("Print", func() {
 
 		When("there are no holdings in the default group", func() {
 			BeforeEach(func() {
-				inputContext.Groups[0].ConfigAssetGroup.Holdings = []c.Lot{}
+				inputContext.Groups[0].ConfigAssetGroup.Lots = []c.Lot{}
 			})
 
 			It("should print an empty array", func() {

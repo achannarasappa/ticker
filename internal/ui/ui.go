@@ -40,7 +40,7 @@ type Model struct {
 	assets             []c.Asset
 	assetQuotes        []c.AssetQuote
 	assetQuotesLookup  map[string]int
-	holdingSummary     asset.HoldingSummary
+	positionSummary    asset.PositionSummary
 	viewport           viewport.Model
 	watchlist          *watchlist.Model
 	summary            *summary.Model
@@ -81,11 +81,11 @@ func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
 		assets:            make([]c.Asset, 0),
 		assetQuotes:       make([]c.AssetQuote, 0),
 		assetQuotesLookup: make(map[string]int),
-		holdingSummary:    asset.HoldingSummary{},
+		positionSummary:   asset.PositionSummary{},
 		watchlist: watchlist.NewModel(watchlist.Config{
 			Sort:                  ctx.Config.Sort,
 			Separate:              ctx.Config.Separate,
-			ShowHoldings:          ctx.Config.ShowHoldings,
+			ShowPositions:         ctx.Config.ShowPositions,
 			ExtraInfoExchange:     ctx.Config.ExtraInfoExchange,
 			ExtraInfoFundamentals: ctx.Config.ExtraInfoFundamentals,
 			Styles:                ctx.Reference.Styles,
@@ -210,7 +210,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Update watchlist and summary components
 		m.watchlist, cmd = m.watchlist.Update(watchlist.SetAssetsMsg(m.assets))
-		m.summary, _ = m.summary.Update(summary.SetSummaryMsg(m.holdingSummary))
+		m.summary, _ = m.summary.Update(summary.SetSummaryMsg(m.positionSummary))
 
 		cmds = append(cmds, cmd)
 
@@ -232,15 +232,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.mu.Lock()
 		defer m.mu.Unlock()
 
-		// Do not update the assets and holding summary if the versionVector has changed
+		// Do not update the assets and position summary if the versionVector has changed
 		if msg.versionVector != m.versionVector {
 			return m, nil
 		}
 
-		assets, holdingSummary := asset.GetAssets(m.ctx, msg.assetGroupQuote)
+		assets, positionSummary := asset.GetAssets(m.ctx, msg.assetGroupQuote)
 
 		m.assets = assets
-		m.holdingSummary = holdingSummary
+		m.positionSummary = positionSummary
 
 		m.assetQuotes = msg.assetGroupQuote.AssetQuotes
 		for i, assetQuote := range m.assetQuotes {
@@ -278,7 +278,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-		// Update the asset quote and generate a new holding summary
+		// Update the asset quote and generate a new position summary
 		m.assetQuotes[i] = msg.assetQuote
 
 		assetGroupQuote := c.AssetGroupQuote{
@@ -286,10 +286,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			AssetGroup:  m.ctx.Groups[m.groupSelectedIndex],
 		}
 
-		assets, holdingSummary := asset.GetAssets(m.ctx, assetGroupQuote)
+		assets, positionSummary := asset.GetAssets(m.ctx, assetGroupQuote)
 
 		m.assets = assets
-		m.holdingSummary = holdingSummary
+		m.positionSummary = positionSummary
 
 		return m, nil
 
@@ -316,7 +316,7 @@ func (m *Model) View() string {
 
 	viewSummary := ""
 
-	if m.ctx.Config.ShowSummary && m.ctx.Config.ShowHoldings {
+	if m.ctx.Config.ShowSummary && m.ctx.Config.ShowPositions {
 		viewSummary += m.summary.View() + "\n"
 	}
 
@@ -353,7 +353,7 @@ func footer(width int, time string, groupSelectedName string) string {
 }
 
 func getVerticalMargin(config c.Config) int {
-	if config.ShowSummary && config.ShowHoldings {
+	if config.ShowSummary && config.ShowPositions {
 		return 2
 	}
 

@@ -657,4 +657,74 @@ var _ = Describe("Watchlist", func() {
 			Expect(cmd).To(BeNil())
 		})
 	})
+
+	Describe("ChangeSortMsg", func() {
+		It("should update the sort order when ChangeSortMsg is received", func() {
+			m := NewModel(Config{
+				Styles: stylesFixture,
+				Sort:   "alpha",
+			})
+
+			// Set up test assets
+			setAssetsMsg := []c.Asset{
+				{
+					Symbol: "GOOG",
+					Name:   "Google Inc.",
+					QuotePrice: c.QuotePrice{
+						Price:         2523.53,
+						Change:        -32.02,
+						ChangePercent: -1.35,
+					},
+					Exchange: c.Exchange{
+						IsActive:                true,
+						IsRegularTradingSession: true,
+					},
+				},
+				{
+					Symbol: "AAPL",
+					Name:   "Apple Inc.",
+					QuotePrice: c.QuotePrice{
+						Price:         150.00,
+						Change:        5.00,
+						ChangePercent: 3.33,
+					},
+					Exchange: c.Exchange{
+						IsActive:                true,
+						IsRegularTradingSession: true,
+					},
+				},
+				{
+					Symbol: "BTC-USD",
+					Name:   "Bitcoin",
+					QuotePrice: c.QuotePrice{
+						Price:         50000.0,
+						Change:        10000.0,
+						ChangePercent: 20.0,
+					},
+					Exchange: c.Exchange{
+						IsActive:                true,
+						IsRegularTradingSession: true,
+					},
+				},
+			}
+			m, _ = m.Update(SetAssetsMsg(setAssetsMsg))
+
+			// Initial sort should be alphabetical (AAPL, BTC-USD, GOOG)
+			view := m.View()
+			aaplIndex := strings.Index(view, "AAPL")
+			btcIndex := strings.Index(view, "BTC-USD")
+			googIndex := strings.Index(view, "GOOG")
+			Expect(aaplIndex).To(BeNumerically("<", btcIndex))
+			Expect(btcIndex).To(BeNumerically("<", googIndex))
+
+			// Change sort to default (change percent) - should be BTC-USD (20%), AAPL (3.33%), GOOG (-1.35%)
+			m, _ = m.Update(ChangeSortMsg(""))
+			view = m.View()
+			btcIndex = strings.Index(view, "BTC-USD")
+			aaplIndex = strings.Index(view, "AAPL")
+			googIndex = strings.Index(view, "GOOG")
+			Expect(btcIndex).To(BeNumerically("<", aaplIndex))
+			Expect(aaplIndex).To(BeNumerically("<", googIndex))
+		})
+	})
 })

@@ -192,6 +192,7 @@ type QuoteFutures struct {
 	Basis            float64
 	OpenInterest     float64
 	Expiry           string
+	ContractSize     float64
 }
 
 type Exchange struct {

@@ -396,5 +396,70 @@ var _ = Describe("Asset", func() {
 			})
 		})
 
+		When("there is a futures contract with contract size", func() {
+			It("should multiply price by contract size for position value calculation", func() {
+				inputContext := c.Context{}
+				inputAssetGroupQuote := c.AssetGroupQuote{
+					AssetGroup: c.AssetGroup{
+						ConfigAssetGroup: c.ConfigAssetGroup{
+							Watchlist: []string{"BIT-31JAN25-CDE.CB"},
+							Lots: []c.Lot{
+								{
+									Symbol:    "BIT-31JAN25-CDE.CB",
+									UnitCost:  59000.0,
+									Quantity:  2.0, // 2 contracts
+									FixedCost: 0,
+								},
+							},
+						},
+					},
+					AssetQuotes: []c.AssetQuote{
+						{
+							Name:     "Bitcoin January 2025 Future",
+							Symbol:   "BIT-31JAN25-CDE.CB",
+							Class:    c.AssetClassFuturesContract,
+							Currency: c.Currency{FromCurrencyCode: "USD"},
+							QuotePrice: c.QuotePrice{
+								Price:         60000.0, // Display price (unchanged)
+								PricePrevClose: 59000.0,
+								Change:         1000.0,
+								ChangePercent:  1.69,
+							},
+							QuoteFutures: c.QuoteFutures{
+								ContractSize: 0.01, // Contract size multiplier
+							},
+						},
+					},
+				}
+
+				outputAssets, outputPositionSummary := GetAssets(inputContext, inputAssetGroupQuote)
+
+				Expect(outputAssets).To(HaveLen(1))
+
+				// Display price should remain unchanged
+				Expect(outputAssets[0].QuotePrice.Price).To(Equal(60000.0))
+
+				// Position value should use price * contract_size
+				// value = quantity * (price * contract_size) = 2 * (60000 * 0.01) = 2 * 600 = 1200
+				Expect(outputAssets[0].Position.Value).To(Equal(1200.0))
+				Expect(outputAssets[0].Position.Quantity).To(Equal(2.0))
+				// cost = quantity * unit_cost = 2 * 59000 = 118000 (not multiplied by contract_size)
+				Expect(outputAssets[0].Position.Cost).To(Equal(118000.0))
+				// unitValue = value / quantity = 1200 / 2 = 600
+				Expect(outputAssets[0].Position.UnitValue).To(Equal(600.0))
+				// unitCost = cost / quantity = 118000 / 2 = 59000
+				Expect(outputAssets[0].Position.UnitCost).To(Equal(59000.0))
+				// totalChange = value - cost = 1200 - 118000 = -116800
+				Expect(outputAssets[0].Position.TotalChange.Amount).To(Equal(-116800.0))
+				// Day change should also use contract_size: change * quantity * contract_size = 1000 * 2 * 0.01 = 20
+				Expect(outputAssets[0].Position.DayChange.Amount).To(Equal(20.0))
+				Expect(outputAssets[0].Position.DayChange.Percent).To(Equal(1.69))
+
+				Expect(outputPositionSummary.Value).To(Equal(1200.0))
+				Expect(outputPositionSummary.Cost).To(Equal(118000.0))
+				Expect(outputPositionSummary.TotalChange.Amount).To(Equal(-116800.0))
+			})
+		})
+
 	})
 })

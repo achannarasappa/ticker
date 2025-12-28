@@ -34,6 +34,7 @@ type ResponseQuoteFutureProductDetails struct {
 	ExpirationDate      string `json:"contract_expiry"`
 	ExpirationTimezone  string `json:"expiration_timezone"`
 	NonCrypto           bool   `json:"non_crypto"`
+	ContractSize        string `json:"contract_size"`
 }
 
 // ResponseQuote represents a quote of a single product from the Coinbase API
@@ -107,9 +108,16 @@ func transformResponseQuote(responseQuote ResponseQuote) c.AssetQuote {
 		expirationTimezone, _ := time.LoadLocation(responseQuote.FutureProductDetails.ExpirationTimezone)
 		expirationDate, _ := time.ParseInLocation(time.RFC3339, responseQuote.FutureProductDetails.ExpirationDate, expirationTimezone)
 
+		contractSize, _ := strconv.ParseFloat(responseQuote.FutureProductDetails.ContractSize, 64)
+		// Default to 1.0 if contract_size is not provided or invalid
+		if contractSize == 0 {
+			contractSize = 1.0
+		}
+
 		quoteFutures = c.QuoteFutures{
 			SymbolUnderlying: responseQuote.FutureProductDetails.ContractRootUnit + "-USD",
 			Expiry:           formatExpiry(expirationDate),
+			ContractSize:     contractSize,
 		}
 	}
 

@@ -113,6 +113,78 @@ var _ = Describe("Unary", func() {
 				Expect(quotes[0].QuoteFutures.IndexPrice).To(Equal(0.00))
 				Expect(quotes[0].QuoteFutures.Basis).To(Equal(0.00))
 				Expect(quotes[0].QuoteFutures.Expiry).To(MatchRegexp(`-?\d+d -?\d+h`))
+				// Contract size should default to 1.0 when not provided
+				Expect(quotes[0].QuoteFutures.ContractSize).To(Equal(1.0))
+			})
+
+			It("should extract contract_size from API response", func() {
+				server.AppendHandlers(
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BIT-31JAN25-CDE"),
+						ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
+							Products: []unary.ResponseQuote{
+								{
+									Symbol:         "BIT-31JAN25-CDE",
+									ProductID:      "BIT-31JAN25-CDE",
+									ShortName:      "Bitcoin January 2025 Future",
+									Price:          "60000.00",
+									PriceChange24H: "5.00",
+									Volume24H:      "1000000.00",
+									MarketState:    "online",
+									Currency:       "USD",
+									ExchangeName:   "CDE",
+									ProductType:    "FUTURE",
+									FutureProductDetails: unary.ResponseQuoteFutureProductDetails{
+										ContractRootUnit: "BTC",
+										ContractSize:      "0.01",
+									},
+								},
+							},
+						}),
+					),
+				)
+
+				api := unary.NewUnaryAPI(server.URL())
+				quotes, _, err := api.GetAssetQuotes([]string{"BIT-31JAN25-CDE"})
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(quotes).To(HaveLen(1))
+				Expect(quotes[0].QuoteFutures.ContractSize).To(Equal(0.01))
+			})
+
+			It("should default contract_size to 1.0 when missing or invalid", func() {
+				server.AppendHandlers(
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=BIT-31JAN25-CDE"),
+						ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
+							Products: []unary.ResponseQuote{
+								{
+									Symbol:         "BIT-31JAN25-CDE",
+									ProductID:      "BIT-31JAN25-CDE",
+									ShortName:      "Bitcoin January 2025 Future",
+									Price:          "60000.00",
+									PriceChange24H: "5.00",
+									Volume24H:      "1000000.00",
+									MarketState:    "online",
+									Currency:       "USD",
+									ExchangeName:   "CDE",
+									ProductType:    "FUTURE",
+									FutureProductDetails: unary.ResponseQuoteFutureProductDetails{
+										ContractRootUnit: "BTC",
+										ContractSize:      "", // Empty string should default to 1.0
+									},
+								},
+							},
+						}),
+					),
+				)
+
+				api := unary.NewUnaryAPI(server.URL())
+				quotes, _, err := api.GetAssetQuotes([]string{"BIT-31JAN25-CDE"})
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(quotes).To(HaveLen(1))
+				Expect(quotes[0].QuoteFutures.ContractSize).To(Equal(1.0))
 			})
 
 			When("the expiration is on the current day", func() {

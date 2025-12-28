@@ -133,7 +133,18 @@ func updatePositionWeights(assets []c.Asset, positionSummary PositionSummary) []
 func getPositionFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]AggregatedLot, currencyRateByUse currencyRateByUse) c.Position {
 
 	if aggregatedLot, ok := lotsBySymbol[assetQuote.Symbol]; ok {
-		value := aggregatedLot.Quantity * assetQuote.QuotePrice.Price * currencyRateByUse.QuotePrice
+		// For futures contracts, multiply price by contract size for PnL calculations
+		// The displayed price remains unchanged (uses QuotePrice.Price directly)
+		priceForPosition := assetQuote.QuotePrice.Price
+		changeForPosition := assetQuote.QuotePrice.Change
+
+		if assetQuote.Class == c.AssetClassFuturesContract {
+			contractSize := assetQuote.QuoteFutures.ContractSize
+			priceForPosition = assetQuote.QuotePrice.Price * contractSize
+			changeForPosition = assetQuote.QuotePrice.Change * contractSize
+		}
+
+		value := aggregatedLot.Quantity * priceForPosition * currencyRateByUse.QuotePrice
 		cost := aggregatedLot.Cost * currencyRateByUse.PositionCost
 		totalChangeAmount := value - cost
 
@@ -152,7 +163,7 @@ func getPositionFromAssetQuote(assetQuote c.AssetQuote, lotsBySymbol map[string]
 			UnitValue: unitValue,
 			UnitCost:  unitCost,
 			DayChange: c.PositionChange{
-				Amount:  assetQuote.QuotePrice.Change * aggregatedLot.Quantity * currencyRateByUse.QuotePrice,
+				Amount:  changeForPosition * aggregatedLot.Quantity * currencyRateByUse.QuotePrice,
 				Percent: assetQuote.QuotePrice.ChangePercent,
 			},
 			TotalChange: c.PositionChange{

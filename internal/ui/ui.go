@@ -373,7 +373,13 @@ func footer(width int, time string, groupSelectedName string, currentSort string
 		sortDisplayName = "user"
 	}
 
-	helpText := " q: exit ↑: scroll up ↓: scroll down s: change sort (" + sortDisplayName + ") ⭾: change group"
+	baseHelpText := " q: exit ↑: scroll up ↓: scroll down ⭾: change group"
+	sortHelpText := " s: change sort (" + sortDisplayName + ")"
+
+	// Calculate minimum width for sort help text to appear
+	// Longest sort text is "s: change sort (change)" = 24 characters
+	// Minimum width needed: logo(8) + max group(14) + base help(52) + sort help(24) + time(12) = 110
+	const sortHelpMinWidth = 114
 
 	return grid.Render(grid.Grid{
 		Rows: []grid.Row{
@@ -382,7 +388,8 @@ func footer(width int, time string, groupSelectedName string, currentSort string
 				Cells: []grid.Cell{
 					{Text: styleLogo(" ticker "), Width: 8},
 					{Text: styleGroup(" " + groupSelectedName + " "), Width: len(groupSelectedName) + 2, VisibleMinWidth: 95},
-					{Text: styleHelp(helpText), Width: len(helpText)},
+					{Text: styleHelp(baseHelpText), Width: 52},
+					{Text: styleHelp(sortHelpText), Width: len(sortHelpText), VisibleMinWidth: sortHelpMinWidth},
 					{Text: styleHelp("↻  " + time), Align: grid.Right},
 				},
 			},

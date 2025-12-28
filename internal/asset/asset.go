@@ -46,7 +46,7 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Pos
 
 	for _, assetQuote := range assetGroupQuote.AssetQuotes {
 
-		currencyRateByUse := getCurrencyRateByUse(ctx, assetQuote.Currency.FromCurrencyCode, assetQuote.Currency.ToCurrencyCode, assetQuote.Currency.Rate)
+		currencyRateByUse := getCurrencyRateByUse(ctx, assetQuote.Class, assetQuote.Currency.FromCurrencyCode, assetQuote.Currency.ToCurrencyCode, assetQuote.Currency.Rate)
 
 		position := getPositionFromAssetQuote(assetQuote, lotsBySymbol, currencyRateByUse)
 		positionSummary = addPositionToPositionSummary(positionSummary, position, currencyRateByUse)

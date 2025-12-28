@@ -126,6 +126,10 @@ func getAssetClass(assetClass string) c.AssetClass {
 		return c.AssetClassCryptocurrency
 	}
 
+	if assetClass == "CURRENCY" {
+		return c.AssetClassCurrency
+	}
+
 	return c.AssetClassStock
 
 }

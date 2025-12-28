@@ -14,7 +14,18 @@ type currencyRateByUse struct { //nolint:golint,revive
 }
 
 // getCurrencyRateByUse reads currency rates from the context and sets the conversion rate for each use case
-func getCurrencyRateByUse(ctx c.Context, fromCurrency string, toCurrency string, rate float64) currencyRateByUse {
+func getCurrencyRateByUse(ctx c.Context, assetClass c.AssetClass, fromCurrency string, toCurrency string, rate float64) currencyRateByUse {
+
+	// Skip currency conversion for currency pairs (e.g., KRW=X) when explicitly watched
+	if assetClass == c.AssetClassCurrency {
+		return currencyRateByUse{
+			ToCurrencyCode: fromCurrency,
+			QuotePrice:     1.0,
+			PositionCost:   1.0,
+			SummaryValue:   1.0,
+			SummaryCost:    1.0,
+		}
+	}
 
 	if rate == 0 {
 		return currencyRateByUse{

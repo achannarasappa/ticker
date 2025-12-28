@@ -338,5 +338,53 @@ var _ = Describe("Currency", func() {
 			})
 
 		})
+
+		When("a currency pair is explicitly watched", func() {
+			It("should not convert currency even when currency conversion is enabled", func() {
+				inputCtx := c.Context{
+					Config: c.Config{
+						Currency: "EUR",
+					},
+					Reference: c.Reference{},
+				}
+				assetGroupQuote := c.AssetGroupQuote{
+					AssetGroup: c.AssetGroup{
+						ConfigAssetGroup: c.ConfigAssetGroup{
+							Lots: []c.Lot{
+								{
+									Symbol:   "KRW=X",
+									Quantity: 1000,
+									UnitCost: 0.00075, // Cost in USD
+								},
+							},
+						},
+					},
+					AssetQuotes: []c.AssetQuote{
+						{
+							Symbol: "KRW=X",
+							Class:  c.AssetClassCurrency,
+							Currency: c.Currency{
+								FromCurrencyCode: "USD",
+								ToCurrencyCode:   "EUR",
+								Rate:             1.25, // This rate should be ignored for currency pairs
+							},
+							QuotePrice: c.QuotePrice{
+								Price: 0.00075, // Exchange rate: 1 KRW = 0.00075 USD
+							},
+						},
+					},
+				}
+				assets, summary := GetAssets(inputCtx, assetGroupQuote)
+
+				Expect(assets).To(HaveLen(1))
+				Expect(assets[0].Currency.FromCurrencyCode).To(Equal("USD"))
+				Expect(assets[0].Currency.ToCurrencyCode).To(Equal("USD")) // Should remain USD, not converted to EUR
+				Expect(assets[0].QuotePrice.Price).To(Equal(0.00075))      // No conversion applied
+				Expect(assets[0].Position.Value).To(Equal(0.75))            // 1000 * 0.00075, no conversion
+				Expect(assets[0].Position.Cost).To(Equal(0.75))            // No conversion applied
+				Expect(summary.Value).To(Equal(0.75))                       // No conversion applied
+				Expect(summary.Cost).To(Equal(0.75))                        // No conversion applied
+			})
+		})
 	})
 })

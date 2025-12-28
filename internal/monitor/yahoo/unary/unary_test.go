@@ -160,6 +160,47 @@ var _ = Describe("Unary", func() {
 			Expect(outputError).To(BeNil())
 		})
 
+		It("should return the asset class as a currency", func() {
+			// Create a new response to avoid mutating the shared fixture
+			resp := unary.Response{
+				QuoteResponse: unary.ResponseQuoteResponse{
+					Quotes: []unary.ResponseQuote{
+						{
+							MarketState:                "REGULAR",
+							ShortName:                  "KRW/USD",
+							PreMarketChange:            unary.ResponseFieldFloat{Raw: 0.0, Fmt: "0.0"},
+							PreMarketChangePercent:     unary.ResponseFieldFloat{Raw: 0.0, Fmt: "0.0"},
+							PreMarketPrice:             unary.ResponseFieldFloat{Raw: 0.0, Fmt: "0.0"},
+							RegularMarketChange:        unary.ResponseFieldFloat{Raw: 0.00001, Fmt: "0.00001"},
+							RegularMarketChangePercent: unary.ResponseFieldFloat{Raw: 0.1, Fmt: "0.1"},
+							RegularMarketPrice:         unary.ResponseFieldFloat{Raw: 0.00075, Fmt: "0.00075"},
+							RegularMarketPreviousClose: unary.ResponseFieldFloat{Raw: 0.00074, Fmt: "0.00074"},
+							RegularMarketOpen:          unary.ResponseFieldFloat{Raw: 0.00074, Fmt: "0.00074"},
+							RegularMarketDayHigh:       unary.ResponseFieldFloat{Raw: 0.00076, Fmt: "0.00076"},
+							RegularMarketDayLow:        unary.ResponseFieldFloat{Raw: 0.00073, Fmt: "0.00073"},
+							PostMarketChange:           unary.ResponseFieldFloat{Raw: 0.0, Fmt: "0.0"},
+							PostMarketChangePercent:    unary.ResponseFieldFloat{Raw: 0.0, Fmt: "0.0"},
+							PostMarketPrice:            unary.ResponseFieldFloat{Raw: 0.0, Fmt: "0.0"},
+							Symbol:                     "KRW=X",
+							QuoteType:                  "CURRENCY",
+							Currency:                   "USD",
+						},
+					},
+					Error: nil,
+				},
+			}
+
+			appendQuoteHandler(server, "KRW=X", urlParams, resp)
+
+			outputSlice, _, outputError := client.GetAssetQuotes([]string{"KRW=X"})
+			Expect(outputSlice).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+				"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+					"Class": Equal(c.AssetClassCurrency),
+				}),
+			}))
+			Expect(outputError).To(BeNil())
+		})
+
 		Context("session", func() {
 			When("the session is not set or is expired", func() {
 				It("should refresh the session and then retry the request", func() {

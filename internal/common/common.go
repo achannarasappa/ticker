@@ -236,6 +236,7 @@ const (
 	AssetClassPrivateSecurity
 	AssetClassUnknown
 	AssetClassFuturesContract
+	AssetClassCurrency
 )
 
 type QuoteSource int

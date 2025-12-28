@@ -213,6 +213,7 @@ func getCellWidths(assets []*c.Asset) row.CellWidthsContainer {
 		if asset.Position != (c.Position{}) {
 			positionLength := len(u.ConvertFloatToString(asset.Position.Value, asset.Meta.IsVariablePrecision))
 			positionQuantityLength := len(u.ConvertFloatToString(asset.Position.Quantity, asset.Meta.IsVariablePrecision))
+			positionUnitCostLength := len(u.ConvertFloatToString(asset.Position.UnitCost, asset.Meta.IsVariablePrecision))
 
 			if positionLength > cellMaxWidths.PositionLength {
 				cellMaxWidths.PositionLength = positionLength
@@ -225,6 +226,10 @@ func getCellWidths(assets []*c.Asset) row.CellWidthsContainer {
 
 			if positionQuantityLength > cellMaxWidths.WidthPositionExtended {
 				cellMaxWidths.WidthPositionExtended = positionQuantityLength
+			}
+
+			if positionUnitCostLength > cellMaxWidths.WidthPositionExtended {
+				cellMaxWidths.WidthPositionExtended = positionUnitCostLength
 			}
 
 		}

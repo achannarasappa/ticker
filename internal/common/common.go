@@ -103,15 +103,7 @@ type Lot struct {
 	UnitCost  float64 `yaml:"unit_cost"`
 	Quantity  float64 `yaml:"quantity"`
 	FixedCost float64 `yaml:"fixed_cost"`
-	// FixedProperties LotFixedProperties `yaml:"fixed_properties"`
 }
-
-// type LotFixedProperties struct {
-// 	Class       string  `yaml:"class"`
-// 	Description string  `yaml:"description"`
-// 	Currency    string  `yaml:"currency"`
-// 	UnitValue   float64 `yaml:"unit_value"`
-// }
 
 // CurrencyRates is a map of currency rates for lookup by currency that needs to be converted
 type CurrencyRates map[string]CurrencyRate

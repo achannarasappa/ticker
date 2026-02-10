@@ -53,8 +53,13 @@ func NewStyle(fg string, bg string, bold bool) func(string) string {
 	return s.Styled
 }
 
-func getStylePriceFn(colorScheme c.ConfigPriceColorScheme) func(float64, string) string {
+func getStylePriceFn(colorSchemeGroup c.ConfigPriceColorSchemeGroup) func(float64, string) string {
 	return func(percent float64, text string) string { //nolint:cyclop
+
+		colorScheme := colorSchemeGroup.Light
+		if te.HasDarkBackground() {
+			colorScheme = colorSchemeGroup.Dark
+		}
 
 		out := te.String(text)
 
@@ -118,7 +123,7 @@ func getNormalizedPercentWithMax(percent float64, maxPercent float64) float64 {
 
 // GetColorScheme generates a color scheme based on user defined colors or defaults
 func GetColorScheme(colorScheme c.ConfigColorScheme) c.Styles {
-	priceColorScheme := getPriceColorScheme(colorScheme)
+	priceColorScheme := getPriceColorSchemeGroup(colorScheme)
 	return c.Styles{
 		Text: NewStyle(
 			getColorOrDefault(colorScheme.Text, defaultColorScheme.Text),
@@ -154,21 +159,27 @@ func GetColorScheme(colorScheme c.ConfigColorScheme) c.Styles {
 	}
 }
 
-// getPriceColorScheme returns the appropriate price color scheme based on the terminal
-// background and user defined colors or defaults
-func getPriceColorScheme(colorScheme c.ConfigColorScheme) c.ConfigPriceColorScheme {
-	source := colorScheme.PriceColorScheme.Light
-	defaults := defaultColorScheme.PriceColorScheme.Light
-	if te.HasDarkBackground() {
-		source = colorScheme.PriceColorScheme.Dark
-		defaults = defaultColorScheme.PriceColorScheme.Dark
-	}
+// getPriceColorSchemeGroup returns the color scheme group for price changes based
+// on user defined colors or defaults for light and dark mode
+func getPriceColorSchemeGroup(colorScheme c.ConfigColorScheme) c.ConfigPriceColorSchemeGroup {
+	lightSource := &colorScheme.PriceColorScheme.Light
+	lightDefaults := &defaultColorScheme.PriceColorScheme.Light
+	darkSource := &colorScheme.PriceColorScheme.Dark
+	darkDefaults := &defaultColorScheme.PriceColorScheme.Dark
 
-	return c.ConfigPriceColorScheme{
-		PositiveStart: getColorOrDefault(source.PositiveStart, defaults.PositiveStart),
-		PositiveEnd:   getColorOrDefault(source.PositiveEnd, defaults.PositiveEnd),
-		NegativeStart: getColorOrDefault(source.NegativeStart, defaults.NegativeStart),
-		NegativeEnd:   getColorOrDefault(source.NegativeEnd, defaults.NegativeEnd),
+	return c.ConfigPriceColorSchemeGroup{
+		Light: c.ConfigPriceColorScheme{
+			PositiveStart: getColorOrDefault(lightSource.PositiveStart, lightDefaults.PositiveStart),
+			PositiveEnd:   getColorOrDefault(lightSource.PositiveEnd, lightDefaults.PositiveEnd),
+			NegativeStart: getColorOrDefault(lightSource.NegativeStart, lightDefaults.NegativeStart),
+			NegativeEnd:   getColorOrDefault(lightSource.NegativeEnd, lightDefaults.NegativeEnd),
+		},
+		Dark: c.ConfigPriceColorScheme{
+			PositiveStart: getColorOrDefault(darkSource.PositiveStart, darkDefaults.PositiveStart),
+			PositiveEnd:   getColorOrDefault(darkSource.PositiveEnd, darkDefaults.PositiveEnd),
+			NegativeStart: getColorOrDefault(darkSource.NegativeStart, darkDefaults.NegativeStart),
+			NegativeEnd:   getColorOrDefault(darkSource.NegativeEnd, darkDefaults.NegativeEnd),
+		},
 	}
 }
 

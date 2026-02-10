@@ -36,12 +36,28 @@ type Config struct {
 
 // ConfigColorScheme represents user defined color scheme
 type ConfigColorScheme struct {
-	Text          string `yaml:"text"`
-	TextLight     string `yaml:"text-light"`
-	TextLabel     string `yaml:"text-label"`
-	TextLine      string `yaml:"text-line"`
-	TextTag       string `yaml:"text-tag"`
-	BackgroundTag string `yaml:"background-tag"`
+	Text             string                      `yaml:"text"`
+	TextLight        string                      `yaml:"text-light"`
+	TextLabel        string                      `yaml:"text-label"`
+	TextLine         string                      `yaml:"text-line"`
+	TextTag          string                      `yaml:"text-tag"`
+	BackgroundTag    string                      `yaml:"background-tag"`
+	PriceColorScheme ConfigPriceColorSchemeGroup `yaml:"price-color-scheme"`
+}
+
+// ConfigPriceColorSchemeGroup represents user defined price color scheme for light and dark mode
+type ConfigPriceColorSchemeGroup struct {
+	Light ConfigPriceColorScheme `yaml:"light"`
+	Dark  ConfigPriceColorScheme `yaml:"dark"`
+}
+
+// ConfigPriceColorScheme represents user defined price color scheme with start and end colors
+// for positive and negative price changes
+type ConfigPriceColorScheme struct {
+	PositiveStart string `yaml:"positive-start"`
+	PositiveEnd   string `yaml:"positive-end"`
+	NegativeStart string `yaml:"negative-start"`
+	NegativeEnd   string `yaml:"negative-end"`
 }
 
 type ConfigAssetGroup struct {

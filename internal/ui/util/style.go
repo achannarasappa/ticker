@@ -160,12 +160,12 @@ func GetColorScheme(colorScheme c.ConfigColorScheme) c.Styles {
 // getPriceColorScheme returns the color scheme group for price changes based
 // on user defined colors or defaults for light and dark mode
 func getPriceColorScheme(colorScheme c.ConfigColorScheme) c.ConfigPriceColorScheme {
-	source := &colorScheme.PriceColorScheme.Light
-	defaults := &defaultColorScheme.PriceColorScheme.Light
+	source := colorScheme.PriceColorScheme.Light
+	defaults := defaultColorScheme.PriceColorScheme.Light
 
 	if te.HasDarkBackground() {
-		source = &colorScheme.PriceColorScheme.Dark
-		defaults = &defaultColorScheme.PriceColorScheme.Dark
+		source = colorScheme.PriceColorScheme.Dark
+		defaults = defaultColorScheme.PriceColorScheme.Dark
 	}
 
 	return c.ConfigPriceColorScheme{

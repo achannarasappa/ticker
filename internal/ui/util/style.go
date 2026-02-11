@@ -17,7 +17,8 @@ const (
 
 //nolint:gochecknoglobals
 var (
-	p = te.ColorProfile()
+	p          = te.ColorProfile()
+	colorRegex = regexp.MustCompile(`^#(?:[0-9a-fA-F]{3}){1,2}$`)
 )
 
 var defaultColorScheme = c.ConfigColorScheme{
@@ -53,26 +54,23 @@ func NewStyle(fg string, bg string, bold bool) func(string) string {
 	return s.Styled
 }
 
-func getStylePriceFn(colorSchemeGroup c.ConfigPriceColorSchemeGroup) func(float64, string) string {
-	return func(percent float64, text string) string { //nolint:cyclop
+func getStylePriceFn(colorScheme c.ConfigPriceColorScheme) func(float64, string) string {
+	positiveGradient := newStyleFromGradient(colorScheme.PositiveStart, colorScheme.PositiveEnd)
+	negativeGradient := newStyleFromGradient(colorScheme.NegativeStart, colorScheme.NegativeEnd)
 
-		colorScheme := colorSchemeGroup.Light
-		if te.HasDarkBackground() {
-			colorScheme = colorSchemeGroup.Dark
+	return func(percent float64, text string) string { //nolint:cyclop
+		if p == te.TrueColor && percent > 0.0 {
+			return positiveGradient(percent, text)
+		}
+
+		if p == te.TrueColor && percent < 0.0 {
+			return negativeGradient(percent, text)
 		}
 
 		out := te.String(text)
 
 		if percent == 0.0 {
 			return out.Foreground(p.Color("241")).String()
-		}
-
-		if p == te.TrueColor && percent > 0.0 {
-			return newStyleFromGradient(colorScheme.PositiveStart, colorScheme.PositiveEnd)(percent, text)
-		}
-
-		if p == te.TrueColor && percent < 0.0 {
-			return newStyleFromGradient(colorScheme.NegativeStart, colorScheme.NegativeEnd)(percent, text)
 		}
 
 		if percent > strongChangeThreshold {
@@ -123,7 +121,7 @@ func getNormalizedPercentWithMax(percent float64, maxPercent float64) float64 {
 
 // GetColorScheme generates a color scheme based on user defined colors or defaults
 func GetColorScheme(colorScheme c.ConfigColorScheme) c.Styles {
-	priceColorScheme := getPriceColorSchemeGroup(colorScheme)
+	priceColorScheme := getPriceColorScheme(colorScheme)
 	return c.Styles{
 		Text: NewStyle(
 			getColorOrDefault(colorScheme.Text, defaultColorScheme.Text),
@@ -159,34 +157,27 @@ func GetColorScheme(colorScheme c.ConfigColorScheme) c.Styles {
 	}
 }
 
-// getPriceColorSchemeGroup returns the color scheme group for price changes based
+// getPriceColorScheme returns the color scheme group for price changes based
 // on user defined colors or defaults for light and dark mode
-func getPriceColorSchemeGroup(colorScheme c.ConfigColorScheme) c.ConfigPriceColorSchemeGroup {
-	lightSource := &colorScheme.PriceColorScheme.Light
-	lightDefaults := &defaultColorScheme.PriceColorScheme.Light
-	darkSource := &colorScheme.PriceColorScheme.Dark
-	darkDefaults := &defaultColorScheme.PriceColorScheme.Dark
+func getPriceColorScheme(colorScheme c.ConfigColorScheme) c.ConfigPriceColorScheme {
+	source := &colorScheme.PriceColorScheme.Light
+	defaults := &defaultColorScheme.PriceColorScheme.Light
 
-	return c.ConfigPriceColorSchemeGroup{
-		Light: c.ConfigPriceColorScheme{
-			PositiveStart: getColorOrDefault(lightSource.PositiveStart, lightDefaults.PositiveStart),
-			PositiveEnd:   getColorOrDefault(lightSource.PositiveEnd, lightDefaults.PositiveEnd),
-			NegativeStart: getColorOrDefault(lightSource.NegativeStart, lightDefaults.NegativeStart),
-			NegativeEnd:   getColorOrDefault(lightSource.NegativeEnd, lightDefaults.NegativeEnd),
-		},
-		Dark: c.ConfigPriceColorScheme{
-			PositiveStart: getColorOrDefault(darkSource.PositiveStart, darkDefaults.PositiveStart),
-			PositiveEnd:   getColorOrDefault(darkSource.PositiveEnd, darkDefaults.PositiveEnd),
-			NegativeStart: getColorOrDefault(darkSource.NegativeStart, darkDefaults.NegativeStart),
-			NegativeEnd:   getColorOrDefault(darkSource.NegativeEnd, darkDefaults.NegativeEnd),
-		},
+	if te.HasDarkBackground() {
+		source = &colorScheme.PriceColorScheme.Dark
+		defaults = &defaultColorScheme.PriceColorScheme.Dark
+	}
+
+	return c.ConfigPriceColorScheme{
+		PositiveStart: getColorOrDefault(source.PositiveStart, defaults.PositiveStart),
+		PositiveEnd:   getColorOrDefault(source.PositiveEnd, defaults.PositiveEnd),
+		NegativeStart: getColorOrDefault(source.NegativeStart, defaults.NegativeStart),
+		NegativeEnd:   getColorOrDefault(source.NegativeEnd, defaults.NegativeEnd),
 	}
 }
 
 func getColorOrDefault(colorConfig string, colorDefault string) string {
-	re := regexp.MustCompile(`^#(?:[0-9a-fA-F]{3}){1,2}$`)
-
-	if len(re.FindStringIndex(colorConfig)) > 0 {
+	if len(colorRegex.FindStringIndex(colorConfig)) > 0 {
 		return colorConfig
 	}
 

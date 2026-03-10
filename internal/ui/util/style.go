@@ -150,7 +150,7 @@ func GetColorScheme(colorScheme c.ConfigColorScheme) c.Styles {
 		),
 		TextPrice: getStylePriceFn(priceColorScheme),
 		Tag: NewStyle(
-			getColorOrDefault(colorScheme.TextTag, defaultColorScheme.TextLight),
+			getColorOrDefault(colorScheme.TextTag, defaultColorScheme.TextTag),
 			getColorOrDefault(colorScheme.BackgroundTag, defaultColorScheme.BackgroundTag),
 			false,
 		),

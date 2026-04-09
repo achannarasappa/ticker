@@ -27,6 +27,7 @@ type Options struct {
 	Separate              bool
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
+	ShowSentiment         bool
 	ShowSummary           bool
 	ShowHoldings          bool // Deprecated: use ShowPositions instead, kept for backwards compatibility
 	ShowPositions         bool // Preferred field name
@@ -121,6 +122,7 @@ func GetDependencies() c.Dependencies {
 		MonitorYahooSessionConsentURL:    "https://consent.yahoo.com",
 		MonitorPriceCoinbaseBaseURL:      "https://api.coinbase.com",
 		MonitorPriceCoinbaseStreamingURL: "wss://ws-feed.exchange.coinbase.com",
+		SentimentAdanosBaseURL:           "https://api.adanos.org",
 	}
 }
 
@@ -211,6 +213,7 @@ func GetConfig(dep c.Dependencies, configPath string, options Options) (c.Config
 	config.Separate = getBoolOption(options.Separate, config.Separate)
 	config.ExtraInfoExchange = getBoolOption(options.ExtraInfoExchange, config.ExtraInfoExchange)
 	config.ExtraInfoFundamentals = getBoolOption(options.ExtraInfoFundamentals, config.ExtraInfoFundamentals)
+	config.ShowSentiment = getBoolOption(options.ShowSentiment, config.ShowSentiment)
 	config.ShowSummary = getBoolOption(options.ShowSummary, config.ShowSummary)
 	// Merge ShowHoldings into ShowPositions with positions taking precedence
 	// First check if Positions is set (CLI or config), then fall back to Holdings if not
@@ -227,6 +230,9 @@ func GetConfig(dep c.Dependencies, configPath string, options Options) (c.Config
 		config.ShowPositions = showHoldingsFromCLI || showHoldingsFromConfig
 	}
 	config.Sort = getStringOption(options.Sort, config.Sort)
+	if config.SentimentAPIKey == "" {
+		config.SentimentAPIKey = strings.TrimSpace(os.Getenv("ADANOS_API_KEY"))
+	}
 
 	return config, nil
 }

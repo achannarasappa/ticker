@@ -208,6 +208,35 @@ var _ = Describe("Sorter", func() {
 				Expect(sortedQuotes).To(Equal(expected))
 			})
 		})
+		When("providing \"sentiment\" as a sort parameter", func() {
+			It("should sort by Adanos buzz with available sentiment first", func() {
+				sorter := NewSorter("sentiment")
+
+				bitcoinWithSentiment := bitcoinQuote
+				bitcoinWithSentiment.Sentiment = c.MarketSentiment{Available: true, AverageBuzz: 20.0}
+				googleWithSentiment := googleQuote
+				googleWithSentiment.Sentiment = c.MarketSentiment{Available: true, AverageBuzz: 80.0}
+				msftWithSentiment := msftQuote
+				msftWithSentiment.Sentiment = c.MarketSentiment{Available: true, AverageBuzz: 10.0}
+
+				assets := []*c.Asset{
+					&bitcoinWithSentiment,
+					&twQuote,
+					&googleWithSentiment,
+					&msftWithSentiment,
+				}
+
+				sortedQuotes := sorter(assets)
+				expected := []*c.Asset{
+					&googleWithSentiment,
+					&bitcoinWithSentiment,
+					&twQuote,
+					&msftWithSentiment,
+				}
+
+				Expect(sortedQuotes).To(Equal(expected))
+			})
+		})
 		When("providing no quotes", func() {
 			When("default sorter", func() {
 				It("should return no quotes", func() {
@@ -239,6 +268,15 @@ var _ = Describe("Sorter", func() {
 			When("user sorter", func() {
 				It("should return no quotes", func() {
 					sorter := NewSorter("user")
+
+					sortedQuotes := sorter([]*c.Asset{})
+					expected := []*c.Asset{}
+					Expect(sortedQuotes).To(Equal(expected))
+				})
+			})
+			When("sentiment sorter", func() {
+				It("should return no quotes", func() {
+					sorter := NewSorter("sentiment")
 
 					sortedQuotes := sorter([]*c.Asset{})
 					expected := []*c.Asset{}

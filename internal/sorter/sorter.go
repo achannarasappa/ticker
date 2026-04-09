@@ -12,9 +12,10 @@ type Sorter func([]*c.Asset) []*c.Asset
 // NewSorter creates a sorting function
 func NewSorter(sort string) Sorter {
 	var sortDict = map[string]Sorter{
-		"alpha": sortByAlpha,
-		"value": sortByValue,
-		"user":  sortByUser,
+		"alpha":     sortByAlpha,
+		"value":     sortByValue,
+		"user":      sortByUser,
+		"sentiment": sortBySentiment,
 	}
 	if sorter, ok := sortDict[sort]; ok {
 		return sorter
@@ -104,6 +105,37 @@ func sortByChange(assetsIn []*c.Asset) []*c.Asset {
 
 	return append(activeAssets, inactiveAssets...)
 
+}
+
+func sortBySentiment(assetsIn []*c.Asset) []*c.Asset {
+	assetCount := len(assetsIn)
+
+	if assetCount <= 0 {
+		return assetsIn
+	}
+
+	assets := make([]*c.Asset, assetCount)
+	copy(assets, assetsIn)
+
+	activeAssets, inactiveAssets := splitActiveAssets(assets)
+
+	sort.SliceStable(activeAssets, func(i, j int) bool {
+		return sentimentLess(activeAssets[i], activeAssets[j])
+	})
+
+	sort.SliceStable(inactiveAssets, func(i, j int) bool {
+		return sentimentLess(inactiveAssets[i], inactiveAssets[j])
+	})
+
+	return append(activeAssets, inactiveAssets...)
+}
+
+func sentimentLess(left *c.Asset, right *c.Asset) bool {
+	if left.Sentiment.Available != right.Sentiment.Available {
+		return left.Sentiment.Available
+	}
+
+	return right.Sentiment.AverageBuzz < left.Sentiment.AverageBuzz
 }
 
 func splitActiveAssets(assets []*c.Asset) ([]*c.Asset, []*c.Asset) {

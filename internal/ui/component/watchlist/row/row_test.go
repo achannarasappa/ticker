@@ -293,4 +293,32 @@ var _ = Describe("Row", func() {
 
 	})
 
+	Describe("View", func() {
+		It("should render a sentiment line when configured and available", func() {
+			inputRow := row.New(row.Config{
+				ShowSentiment: true,
+				Styles:        styles,
+				Asset: &c.Asset{
+					Symbol: "AAPL",
+					QuotePrice: c.QuotePrice{
+						Price: 150.00,
+					},
+					Sentiment: c.MarketSentiment{
+						Available:       true,
+						AverageBuzz:     42.5,
+						BullishPercent:  68.0,
+						Coverage:        3,
+						SourceAlignment: "aligned",
+					},
+				},
+			})
+
+			view := strings.ReplaceAll(inputRow.View(), "\n", " ")
+			Expect(view).To(ContainSubstring("Buzz 42.50"))
+			Expect(view).To(ContainSubstring("Bullish 68.00%"))
+			Expect(view).To(ContainSubstring("Coverage 3/4"))
+			Expect(view).To(ContainSubstring("aligned"))
+		})
+	})
+
 })

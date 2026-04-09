@@ -19,6 +19,7 @@ Terminal stock & crypto price watcher and position tracker
 * Track value of your stock positions
 * Support for multiple cost basis lots
 * Support for pre and post market price quotes
+* Optional Adanos market sentiment overlay for watchlists
 
 ## Install
 
@@ -82,10 +83,11 @@ ticker -w NET,AAPL,TSLA
 |`watchlist`        |-w|--watchlist        |                |comma separated list of symbols to watch|
 |`show-tags`        |  |--show-tags        |                |display currency, exchange name, and quote delay for each quote |
 |`show-fundamentals`|  |--show-fundamentals|                |display open price, previous close, and day range |
+|`show-sentiment`   |  |--show-sentiment   |                |display optional Adanos market sentiment when `ADANOS_API_KEY` or `sentiment-api-key` is configured |
 |`show-separator`   |  |--show-separator   |                |layout with separators between each quote|
 |`show-summary`     |  |--show-summary     |                |show total day change, total value, and total value change|
 |`show-positions`   |  |--show-positions   |                |show positions including weight, average cost, and quantity|
-|`sort`             |  |--sort             |                |sort quotes on the UI - options are change percent (default), `alpha`, `value`, and `user`|
+|`sort`             |  |--sort             |                |sort quotes on the UI - options are change percent (default), `alpha`, `value`, `user`, and `sentiment`|
 |`version`          |  |--version          |                |print the current version number|
 |`debug`            |  |                   |                |enable debug logging to `./ticker-log-<date>.log`|
 
@@ -98,11 +100,13 @@ Configuration is not required to watch stock price but is helpful when always wa
 show-summary: true
 show-tags: true
 show-fundamentals: true
+show-sentiment: true
 show-separator: true
 show-positions: true
 interval: 5
 currency: USD
 currency-summary-only: false
+sentiment-api-key: "" # optional, or set ADANOS_API_KEY in the environment
 watchlist:
   - NET
   - TEAM
@@ -133,6 +137,7 @@ groups:
 ```
 
 * All properties in `.ticker.yaml` are optional
+* Adanos sentiment is fully optional and remains disabled unless `show-sentiment` is enabled and an API key is configured
 * Symbols not on the watchlist that exists in `lots` are implicitly added to the watchlist
 * To add multiple cost basis lots (`quantity`, `unit_cost`) for the same `symbol`, include two or more entries - see `ARKW` example above
 * `.ticker.yaml` can be set in user home directory, the current directory, or [XDG config home](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
@@ -140,7 +145,7 @@ groups:
 
 ### Display Options
 
-With  `--show-summary`, `--show-tags`, `--show-fundamentals`, `--show-positions`, and `--show-separator` options set, the layout and information displayed expands:
+With  `--show-summary`, `--show-tags`, `--show-fundamentals`, `--show-sentiment`, `--show-positions`, and `--show-separator` options set, the layout and information displayed expands:
 
 <img src="./docs/ticker-all-options.png" />
 
@@ -152,6 +157,7 @@ It's possible to set a custom sort order with the `--sort` flag or `sort:` confi
 * `alpha` to sort alphabetically by symbol
 * `value` to sort by position value
 * `user` to sort by the order defined in configuration with positions on first then watched symbols
+* `sentiment` to sort by Adanos average buzz score when sentiment is available
 
 ### Groups
 

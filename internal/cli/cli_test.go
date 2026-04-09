@@ -456,6 +456,24 @@ var _ = Describe("Cli", func() {
 					}),
 				}),
 
+				Entry("when show-sentiment is set in config file", Case{
+					InputOptions:            cli.Options{},
+					InputConfigFileContents: "show-sentiment: true",
+					AssertionErr:            BeNil(),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"ShowSentiment": Equal(true),
+					}),
+				}),
+
+				Entry("when show-sentiment is set in options", Case{
+					InputOptions:            cli.Options{ShowSentiment: true},
+					InputConfigFileContents: "",
+					AssertionErr:            BeNil(),
+					AssertionConfig: g.MatchFields(g.IgnoreExtras, g.Fields{
+						"ShowSentiment": Equal(true),
+					}),
+				}),
+
 				// option: debug
 				Entry("when debug is set in config file", Case{
 					InputOptions:            cli.Options{},
@@ -466,6 +484,17 @@ var _ = Describe("Cli", func() {
 					}),
 				}),
 			)
+
+			It("should use ADANOS_API_KEY when sentiment-api-key is not set", func() {
+				Expect(os.Setenv("ADANOS_API_KEY", "sk_test_adanos")).To(Succeed())
+				DeferCleanup(func() {
+					Expect(os.Unsetenv("ADANOS_API_KEY")).To(Succeed())
+				})
+
+				outputConfig, outputErr := cli.GetConfig(dep, "", cli.Options{})
+				Expect(outputErr).To(BeNil())
+				Expect(outputConfig.SentimentAPIKey).To(Equal("sk_test_adanos"))
+			})
 
 		})
 

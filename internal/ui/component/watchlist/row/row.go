@@ -48,6 +48,7 @@ type Config struct {
 	ShowPositions         bool
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
+	ShowSentiment         bool
 	Styles                c.Styles
 	Asset                 *c.Asset
 }
@@ -217,6 +218,17 @@ func (m *Model) View() string {
 				Width: m.width,
 				Cells: []grid.Cell{
 					{Text: textTags(m.config.Asset, m.config.Styles)},
+				},
+			})
+	}
+
+	if m.config.ShowSentiment && m.config.Asset.Sentiment.Available {
+		rows = append(
+			rows,
+			grid.Row{
+				Width: m.width,
+				Cells: []grid.Cell{
+					{Text: textSentiment(m.config.Asset, m.config.Styles)},
 				},
 			})
 	}
@@ -560,6 +572,15 @@ func textTags(asset *c.Asset, styles c.Styles) string {
 	}
 
 	return formatTag(currencyText, styles) + " " + formatTag(exchangeDelayText(asset.Exchange.Delay, asset.Exchange.DelayText), styles) + " " + formatTag(asset.Exchange.Name, styles)
+}
+
+func textSentiment(asset *c.Asset, styles c.Styles) string {
+	sentiment := asset.Sentiment
+
+	return formatTag("Buzz "+u.ConvertFloatToString(sentiment.AverageBuzz, false), styles) + " " +
+		formatTag("Bullish "+u.ConvertFloatToString(sentiment.BullishPercent, false)+"%", styles) + " " +
+		formatTag("Coverage "+strconv.Itoa(sentiment.Coverage)+"/4", styles) + " " +
+		formatTag(strings.ReplaceAll(sentiment.SourceAlignment, "_", " "), styles)
 }
 
 func exchangeDelayText(delay float64, delayText string) string {

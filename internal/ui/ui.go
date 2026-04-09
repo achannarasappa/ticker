@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -9,6 +11,7 @@ import (
 	"github.com/achannarasappa/ticker/v5/internal/asset"
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 	mon "github.com/achannarasappa/ticker/v5/internal/monitor"
+	"github.com/achannarasappa/ticker/v5/internal/sentiment/adanos"
 	"github.com/achannarasappa/ticker/v5/internal/ui/component/summary"
 	"github.com/achannarasappa/ticker/v5/internal/ui/component/watchlist"
 	"github.com/achannarasappa/ticker/v5/internal/ui/component/watchlist/row"
@@ -50,6 +53,8 @@ type Model struct {
 	groupSelectedName  string
 	currentSort        string
 	monitors           *mon.Monitor
+	sentimentClient    *adanos.Client
+	sentimentBySymbol  map[string]c.MarketSentiment
 	mu                 sync.RWMutex
 }
 
@@ -66,6 +71,11 @@ type SetAssetQuoteMsg struct {
 type SetAssetGroupQuoteMsg struct {
 	assetGroupQuote c.AssetGroupQuote
 	versionVector   int
+}
+
+type SetSentimentMsg struct {
+	snapshots     map[string]c.MarketSentiment
+	versionVector int
 }
 
 // NewModel is the constructor for UI model
@@ -89,6 +99,7 @@ func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
 			ShowPositions:         ctx.Config.ShowPositions,
 			ExtraInfoExchange:     ctx.Config.ExtraInfoExchange,
 			ExtraInfoFundamentals: ctx.Config.ExtraInfoFundamentals,
+			ShowSentiment:         ctx.Config.ShowSentiment,
 			Styles:                ctx.Reference.Styles,
 		}),
 		summary:            summary.NewModel(ctx),
@@ -97,6 +108,8 @@ func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
 		groupSelectedName:  "       ",
 		currentSort:        ctx.Config.Sort,
 		monitors:           monitors,
+		sentimentClient:    newSentimentClient(dep, ctx.Config),
+		sentimentBySymbol:  make(map[string]c.MarketSentiment),
 	}
 }
 
@@ -174,7 +187,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.mu.Lock()
 
 			// Cycle through sort options: default -> alpha -> value -> user -> default
-			sortOptions := []string{"", "alpha", "value", "user"}
+			sortOptions := []string{"", "alpha", "value", "user", "sentiment"}
 			currentIndex := -1
 			for i, sortOpt := range sortOptions {
 				if m.currentSort == sortOpt {
@@ -264,6 +277,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		assets, positionSummary := asset.GetAssets(m.ctx, msg.assetGroupQuote)
+		assets = applySentiment(assets, m.sentimentBySymbol)
 
 		m.assets = assets
 		m.positionSummary = positionSummary
@@ -275,7 +289,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.groupSelectedName = m.ctx.Groups[m.groupSelectedIndex].Name
 
-		return m, nil
+		return m, requestSentiment(m.sentimentClient, assetSymbols(assets), m.versionVector)
 
 	case SetAssetQuoteMsg:
 
@@ -313,11 +327,26 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		assets, positionSummary := asset.GetAssets(m.ctx, assetGroupQuote)
+		assets = applySentiment(assets, m.sentimentBySymbol)
 
 		m.assets = assets
 		m.positionSummary = positionSummary
 
 		return m, nil
+
+	case SetSentimentMsg:
+
+		m.mu.Lock()
+		defer m.mu.Unlock()
+
+		if msg.versionVector != m.versionVector {
+			return m, nil
+		}
+
+		m.sentimentBySymbol = msg.snapshots
+		m.assets = applySentiment(m.assets, m.sentimentBySymbol)
+
+		return m, tickImmediate(msg.versionVector)
 
 	case row.FrameMsg:
 		var cmd tea.Cmd
@@ -371,15 +400,16 @@ func footer(width int, time string, groupSelectedName string, currentSort string
 		sortDisplayName = "value"
 	case "user":
 		sortDisplayName = "user"
+	case "sentiment":
+		sortDisplayName = "sentiment"
 	}
 
 	baseHelpText := " q: exit ↑: scroll up ↓: scroll down ⭾: change group"
 	sortHelpText := " s: change sort (" + sortDisplayName + ")"
 
 	// Calculate minimum width for sort help text to appear
-	// Longest sort text is "s: change sort (change)" = 24 characters
-	// Minimum width needed: logo(8) + max group(14) + base help(52) + sort help(24) + time(12) = 110
-	const sortHelpMinWidth = 114
+	// Longest sort text is "s: change sort (sentiment)" = 27 characters.
+	const sortHelpMinWidth = 117
 
 	return grid.Render(grid.Grid{
 		Rows: []grid.Row{
@@ -429,4 +459,72 @@ func getTime() string {
 	t := time.Now()
 
 	return fmt.Sprintf("%s %02d:%02d:%02d", t.Weekday().String(), t.Hour(), t.Minute(), t.Second())
+}
+
+func newSentimentClient(dep c.Dependencies, config c.Config) *adanos.Client {
+	if config.SentimentAPIKey == "" {
+		return nil
+	}
+
+	return adanos.NewClient(dep.SentimentAdanosBaseURL, config.SentimentAPIKey, nil, 5*time.Minute)
+}
+
+func requestSentiment(client *adanos.Client, symbols []string, versionVector int) tea.Cmd {
+	if client == nil || !client.Enabled() || len(symbols) == 0 {
+		return nil
+	}
+
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		snapshots, err := client.FetchSnapshots(ctx, symbols)
+		if err != nil {
+			return nil
+		}
+
+		return SetSentimentMsg{
+			snapshots:     snapshots,
+			versionVector: versionVector,
+		}
+	}
+}
+
+func applySentiment(assets []c.Asset, snapshots map[string]c.MarketSentiment) []c.Asset {
+	if len(assets) == 0 {
+		return assets
+	}
+
+	enriched := make([]c.Asset, len(assets))
+	copy(enriched, assets)
+
+	for i := range enriched {
+		snapshot, ok := snapshots[strings.ToUpper(enriched[i].Symbol)]
+		if ok {
+			enriched[i].Sentiment = snapshot
+		} else {
+			enriched[i].Sentiment = c.MarketSentiment{}
+		}
+	}
+
+	return enriched
+}
+
+func assetSymbols(assets []c.Asset) []string {
+	symbols := make([]string, 0, len(assets))
+	seen := make(map[string]struct{}, len(assets))
+
+	for _, asset := range assets {
+		symbol := strings.ToUpper(strings.TrimSpace(asset.Symbol))
+		if symbol == "" {
+			continue
+		}
+		if _, ok := seen[symbol]; ok {
+			continue
+		}
+		seen[symbol] = struct{}{}
+		symbols = append(symbols, symbol)
+	}
+
+	return symbols
 }

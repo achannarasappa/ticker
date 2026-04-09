@@ -22,10 +22,12 @@ type Config struct {
 	Separate                          bool               `yaml:"show-separator"`
 	ExtraInfoExchange                 bool               `yaml:"show-tags"`
 	ExtraInfoFundamentals             bool               `yaml:"show-fundamentals"`
+	ShowSentiment                     bool               `yaml:"show-sentiment"`
 	ShowSummary                       bool               `yaml:"show-summary"`
 	ShowHoldings                      bool               `yaml:"show-holdings"`  // Deprecated: use ShowPositions instead, kept for backwards compatibility
 	ShowPositions                     bool               `yaml:"show-positions"` // Preferred field name
 	Sort                              string             `yaml:"sort"`
+	SentimentAPIKey                   string             `yaml:"sentiment-api-key"`
 	Currency                          string             `yaml:"currency"`
 	CurrencyConvertSummaryOnly        bool               `yaml:"currency-summary-only"`
 	CurrencyDisableUnitCostConversion bool               `yaml:"currency-disable-unit-cost-conversion"`
@@ -81,6 +83,7 @@ type Dependencies struct {
 	MonitorYahooSessionRootURL       string
 	MonitorYahooSessionCrumbURL      string
 	MonitorYahooSessionConsentURL    string
+	SentimentAdanosBaseURL           string
 }
 
 type Monitor interface {
@@ -217,6 +220,15 @@ type Asset struct {
 	QuoteSource   QuoteSource
 	Exchange      Exchange
 	Meta          Meta
+	Sentiment     MarketSentiment
+}
+
+type MarketSentiment struct {
+	Available       bool
+	AverageBuzz     float64
+	BullishPercent  float64
+	Coverage        int
+	SourceAlignment string
 }
 
 type AssetClass int

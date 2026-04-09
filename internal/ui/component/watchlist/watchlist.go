@@ -18,6 +18,7 @@ type Config struct {
 	ShowPositions         bool
 	ExtraInfoExchange     bool
 	ExtraInfoFundamentals bool
+	ShowSentiment         bool
 	Sort                  string
 	Styles                c.Styles
 }
@@ -89,6 +90,7 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 					Separate:              m.config.Separate,
 					ExtraInfoExchange:     m.config.ExtraInfoExchange,
 					ExtraInfoFundamentals: m.config.ExtraInfoFundamentals,
+					ShowSentiment:         m.config.ShowSentiment,
 					ShowPositions:         m.config.ShowPositions,
 					Styles:                m.config.Styles,
 					Asset:                 asset,

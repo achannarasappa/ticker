@@ -3,6 +3,7 @@ package util
 import (
 	"math"
 	"regexp"
+	"strings"
 
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 	"github.com/lucasb-eyer/go-colorful"
@@ -143,4 +144,46 @@ func getColorOrDefault(colorConfig string, colorDefault string) string {
 	}
 
 	return colorDefault
+}
+
+// GetRowAlternateBackground returns the resolved background color hex for alternate rows
+func GetRowAlternateBackground(colorScheme c.ConfigColorScheme) string {
+	return getColorOrDefault(colorScheme.BackgroundRow, "#303030")
+}
+
+// GetRowAlternateBackgroundColor returns the alternate row background color when the feature
+// is enabled in the config, or an empty string when the feature is disabled.
+func GetRowAlternateBackgroundColor(config c.Config) string {
+	if !config.ShowAlternateRowBackground {
+		return ""
+	}
+
+	return GetRowAlternateBackground(config.ColorScheme)
+}
+
+// ApplyBackground applies a background color to a rendered terminal string,
+// including re-applying after any terminal reset sequences so that fill spaces
+// between styled chunks also receive the background color.
+func ApplyBackground(text string, bgHex string) string {
+	if bgHex == "" {
+		return text
+	}
+
+	bgColor := p.Color(bgHex)
+
+	// te.Style{}.Background(color).Styled("") returns "\x1b[48;...m\x1b[0m" or "" for ASCII profile
+	openCode := te.Style{}.Background(bgColor).Styled("")
+	openBgCode := strings.TrimSuffix(openCode, "\x1b[0m")
+
+	if openBgCode == "" {
+		// ASCII profile or unknown color - no background available
+		return text
+	}
+
+	const resetCode = "\x1b[0m"
+
+	// Prepend background, and re-apply it after every reset in the text
+	result := openBgCode + strings.ReplaceAll(text, resetCode, resetCode+openBgCode)
+
+	return result + resetCode
 }

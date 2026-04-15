@@ -14,12 +14,13 @@ import (
 
 // Config represents the configuration for the watchlist component
 type Config struct {
-	Separate              bool
-	ShowPositions         bool
-	ExtraInfoExchange     bool
-	ExtraInfoFundamentals bool
-	Sort                  string
-	Styles                c.Styles
+	Separate                    bool
+	ShowPositions               bool
+	ExtraInfoExchange           bool
+	ExtraInfoFundamentals       bool
+	Sort                        string
+	Styles                      c.Styles
+	RowAlternateBackgroundColor string
 }
 
 // Model for watchlist section
@@ -85,6 +86,10 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 				cmds = append(cmds, cmd)
 				m.rowsBySymbol[assets[i].Symbol] = m.rows[i]
 			} else {
+				rowBackground := ""
+				if i%2 == 1 {
+					rowBackground = m.config.RowAlternateBackgroundColor
+				}
 				m.rows = append(m.rows, row.New(row.Config{
 					Separate:              m.config.Separate,
 					ExtraInfoExchange:     m.config.ExtraInfoExchange,
@@ -92,6 +97,7 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 					ShowPositions:         m.config.ShowPositions,
 					Styles:                m.config.Styles,
 					Asset:                 asset,
+					RowBackground:         rowBackground,
 				}))
 				m.rowsBySymbol[assets[i].Symbol] = m.rows[len(m.rows)-1]
 			}

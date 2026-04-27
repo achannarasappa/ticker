@@ -1,3 +1,4 @@
+version: 2
 project_name: ticker
 before:
   hooks:
@@ -64,8 +65,8 @@ builds:
       - -s -w -X 'github.com/achannarasappa/ticker/v5/cmd.Version={{.Version}}'
 archives:
   - id: release-winget
-    format: zip
-    builds:
+    formats: [zip]
+    ids:
       - build-windows-64
     name_template: >-
       {{- .ProjectName }}-
@@ -75,7 +76,7 @@ archives:
       {{- .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
       {{- if .Mips }}-{{ .Mips }}{{ end }}
   - id: release
-    format: tar.gz
+    formats: [tar.gz]
     name_template: >-
       {{- .ProjectName }}-
       {{- .Version }}-
@@ -84,7 +85,7 @@ archives:
       {{- .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}
       {{- if .Mips }}-{{ .Mips }}{{ end }}
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 checksum:
   name_template: "{{ .ProjectName }}-{{ .Version }}-checksums.txt"
 release:
@@ -94,7 +95,7 @@ release:
 brews:
   -
     name: ticker
-    tap:
+    repository:
       owner: achannarasappa
       name: tap
     commit_author:
@@ -151,7 +152,7 @@ docker_manifests:
 nfpms:
   -
     file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}-{{ .Mips }}{{ end }}"
-    builds:
+    ids:
       - build-linux-64
     homepage: https://github.com/achannarasappa/ticker
     maintainer: Ani Channarasappa <ticker@ani.dev>
@@ -164,7 +165,7 @@ snapcrafts:
   -
     id: ticker
     name: ticker
-    builds:
+    ids:
       - build-linux-64
     publish: true
     summary: Terminal stock watcher and stock position tracker

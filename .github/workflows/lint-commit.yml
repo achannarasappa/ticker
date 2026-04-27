@@ -1,5 +1,5 @@
 name: lint-commit-message
-on: [push]
+on: [push, pull_request]
 
 jobs:
   commitlint:

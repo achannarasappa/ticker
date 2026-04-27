@@ -1,7 +1,8 @@
 package sorter
 
 import (
-	"sort"
+	"cmp"
+	"slices"
 
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 )
@@ -31,8 +32,8 @@ func sortByUser(assets []*c.Asset) []*c.Asset {
 		return assets
 	}
 
-	sort.SliceStable(assets, func(i, j int) bool {
-		return assets[j].Meta.OrderIndex > assets[i].Meta.OrderIndex
+	slices.SortStableFunc(assets, func(a, b *c.Asset) int {
+		return cmp.Compare(a.Meta.OrderIndex, b.Meta.OrderIndex)
 	})
 
 	return assets
@@ -50,8 +51,8 @@ func sortByAlpha(assetsIn []*c.Asset) []*c.Asset {
 	assets := make([]*c.Asset, assetCount)
 	copy(assets, assetsIn)
 
-	sort.SliceStable(assets, func(i, j int) bool {
-		return assets[j].Symbol > assets[i].Symbol
+	slices.SortStableFunc(assets, func(a, b *c.Asset) int {
+		return cmp.Compare(a.Symbol, b.Symbol)
 	})
 
 	return assets
@@ -70,12 +71,12 @@ func sortByValue(assetsIn []*c.Asset) []*c.Asset {
 
 	activeAssets, inactiveAssets := splitActiveAssets(assets)
 
-	sort.SliceStable(inactiveAssets, func(i, j int) bool {
-		return inactiveAssets[j].Position.Value < inactiveAssets[i].Position.Value
+	slices.SortStableFunc(inactiveAssets, func(a, b *c.Asset) int {
+		return cmp.Compare(b.Position.Value, a.Position.Value)
 	})
 
-	sort.SliceStable(activeAssets, func(i, j int) bool {
-		return activeAssets[j].Position.Value < activeAssets[i].Position.Value
+	slices.SortStableFunc(activeAssets, func(a, b *c.Asset) int {
+		return cmp.Compare(b.Position.Value, a.Position.Value)
 	})
 
 	return append(activeAssets, inactiveAssets...)
@@ -94,12 +95,12 @@ func sortByChange(assetsIn []*c.Asset) []*c.Asset {
 
 	activeAssets, inactiveAssets := splitActiveAssets(assets)
 
-	sort.SliceStable(activeAssets, func(i, j int) bool {
-		return activeAssets[j].QuotePrice.ChangePercent < activeAssets[i].QuotePrice.ChangePercent
+	slices.SortStableFunc(activeAssets, func(a, b *c.Asset) int {
+		return cmp.Compare(b.QuotePrice.ChangePercent, a.QuotePrice.ChangePercent)
 	})
 
-	sort.SliceStable(inactiveAssets, func(i, j int) bool {
-		return inactiveAssets[j].QuotePrice.ChangePercent < inactiveAssets[i].QuotePrice.ChangePercent
+	slices.SortStableFunc(inactiveAssets, func(a, b *c.Asset) int {
+		return cmp.Compare(b.QuotePrice.ChangePercent, a.QuotePrice.ChangePercent)
 	})
 
 	return append(activeAssets, inactiveAssets...)

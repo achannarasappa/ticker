@@ -3,6 +3,7 @@ package monitorCurrencyRate
 import (
 	"context"
 	"errors"
+	"maps"
 	"sync"
 
 	c "github.com/achannarasappa/ticker/v5/internal/common"
@@ -143,9 +144,7 @@ func (m *MonitorCurrencyRateYahoo) handleRequestCurrencyRates() {
 
 			// Update the cache
 			m.mu.Lock()
-			for currency, rate := range rates {
-				m.currencyRateCache[currency] = rate
-			}
+			maps.Copy(m.currencyRateCache, rates)
 			m.mu.Unlock()
 			m.chanUpdateCurrencyRates <- m.currencyRateCache
 		}

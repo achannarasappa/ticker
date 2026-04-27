@@ -22,15 +22,16 @@ import (
 
 // Options to configured ticker behavior
 type Options struct {
-	RefreshInterval       int
-	Watchlist             string
-	Separate              bool
-	ExtraInfoExchange     bool
-	ExtraInfoFundamentals bool
-	ShowSummary           bool
-	ShowHoldings          bool // Deprecated: use ShowPositions instead, kept for backwards compatibility
-	ShowPositions         bool // Preferred field name
-	Sort                  string
+	RefreshInterval            int
+	Watchlist                  string
+	Separate                   bool
+	ExtraInfoExchange          bool
+	ExtraInfoFundamentals      bool
+	ShowSummary                bool
+	ShowHoldings               bool // Deprecated: use ShowPositions instead, kept for backwards compatibility
+	ShowPositions              bool // Preferred field name
+	ShowAlternateRowBackground bool
+	Sort                       string
 }
 
 type symbolSource struct {
@@ -228,6 +229,7 @@ func GetConfig(dep c.Dependencies, configPath string, options Options) (c.Config
 		config.ShowPositions = showHoldingsFromCLI || showHoldingsFromConfig
 	}
 	config.Sort = getStringOption(options.Sort, config.Sort)
+	config.ShowAlternateRowBackground = getBoolOption(options.ShowAlternateRowBackground, config.ShowAlternateRowBackground)
 
 	return config, nil
 }

@@ -12,11 +12,13 @@ import (
 	"github.com/achannarasappa/ticker/v5/internal/ui/component/summary"
 	"github.com/achannarasappa/ticker/v5/internal/ui/component/watchlist"
 	"github.com/achannarasappa/ticker/v5/internal/ui/component/watchlist/row"
+	"github.com/achannarasappa/ticker/v5/internal/updater"
 
 	util "github.com/achannarasappa/ticker/v5/internal/ui/util"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/spf13/afero"
 )
 
 //nolint:gochecknoglobals
@@ -51,11 +53,19 @@ type Model struct {
 	currentSort        string
 	monitors           *mon.Monitor
 	mu                 sync.RWMutex
+	version            string
+	latestVersion      string
+	releasesURL        string
+	fs                 afero.Fs
 }
 
 type tickMsg struct {
 	versionVector int
 }
+
+type updateCheckMsg string
+
+type updateCheckTickMsg struct{}
 
 type SetAssetQuoteMsg struct {
 	symbol        string
@@ -69,7 +79,7 @@ type SetAssetGroupQuoteMsg struct {
 }
 
 // NewModel is the constructor for UI model
-func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
+func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor, version string) *Model {
 
 	groupMaxIndex := len(ctx.Groups) - 1
 
@@ -97,6 +107,9 @@ func NewModel(dep c.Dependencies, ctx c.Context, monitors *mon.Monitor) *Model {
 		groupSelectedName:  "       ",
 		currentSort:        ctx.Config.Sort,
 		monitors:           monitors,
+		version:            version,
+		releasesURL:        dep.GitHubReleasesURL,
+		fs:                 dep.Fs,
 	}
 }
 
@@ -107,6 +120,7 @@ func (m *Model) Init() tea.Cmd {
 	// Start renderer and set symbols in parallel
 	return tea.Batch(
 		tick(0),
+		updateCheckTick(),
 		func() tea.Msg {
 			err := (*m.monitors).SetAssetGroup(m.ctx.Groups[m.groupSelectedIndex], m.versionVector)
 
@@ -116,11 +130,14 @@ func (m *Model) Init() tea.Cmd {
 
 			return nil
 		},
+		func() tea.Msg {
+			return updateCheckMsg(updater.Check(m.version, m.releasesURL, updater.CacheFilePath(), m.fs))
+		},
 	)
 }
 
 // Update hook for bubbletea
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) { //nolint:maintidx
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -324,6 +341,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.watchlist, cmd = m.watchlist.Update(msg)
 
 		return m, cmd
+
+	case updateCheckMsg:
+		m.latestVersion = string(msg)
+
+		return m, nil
+
+	case updateCheckTickMsg:
+		return m, tea.Batch(
+			updateCheckTick(),
+			func() tea.Msg {
+				return updateCheckMsg(updater.Check(m.version, m.releasesURL, updater.CacheFilePath(), m.fs))
+			},
+		)
 	}
 
 	return m, nil
@@ -348,11 +378,11 @@ func (m *Model) View() string {
 
 	return viewSummary +
 		m.viewport.View() + "\n" +
-		footer(m.viewport.Width, m.lastUpdateTime, m.groupSelectedName, m.currentSort)
+		footer(m.viewport.Width, m.lastUpdateTime, m.groupSelectedName, m.currentSort, m.latestVersion)
 
 }
 
-func footer(width int, time string, groupSelectedName string, currentSort string) string {
+func footer(width int, time string, groupSelectedName string, currentSort string, latestVersion string) string {
 
 	if width < 80 {
 		return styleLogo(" ticker ")
@@ -376,6 +406,11 @@ func footer(width int, time string, groupSelectedName string, currentSort string
 	baseHelpText := " q: exit ↑: scroll up ↓: scroll down ⭾: change group"
 	sortHelpText := " s: change sort (" + sortDisplayName + ")"
 
+	updateText := ""
+	if latestVersion != "" {
+		updateText = " ↑ " + latestVersion + " available"
+	}
+
 	// Calculate minimum width for sort help text to appear
 	// Longest sort text is "s: change sort (change)" = 24 characters
 	// Minimum width needed: logo(8) + max group(14) + base help(52) + sort help(24) + time(12) = 110
@@ -390,6 +425,7 @@ func footer(width int, time string, groupSelectedName string, currentSort string
 					{Text: styleGroup(" " + groupSelectedName + " "), Width: len(groupSelectedName) + 2, VisibleMinWidth: 95},
 					{Text: styleHelp(baseHelpText), Width: 52},
 					{Text: styleHelp(sortHelpText), Width: len(sortHelpText), VisibleMinWidth: sortHelpMinWidth},
+					{Text: styleHelp(updateText), Width: len(updateText), VisibleMinWidth: sortHelpMinWidth + len(updateText)},
 					{Text: styleHelp("↻  " + time), Align: grid.Right},
 				},
 			},
@@ -404,6 +440,12 @@ func getVerticalMargin(config c.Config) int {
 	}
 
 	return 0
+}
+
+func updateCheckTick() tea.Cmd {
+	return tea.Tick(3*time.Hour, func(time.Time) tea.Msg {
+		return updateCheckTickMsg{}
+	})
 }
 
 // Send a new tick message with the versionVector 200ms from now

@@ -29,7 +29,7 @@ var (
 		Short:   "Terminal stock ticker and stock gain/loss tracker",
 		PreRun:  initContext,
 		Args:    cli.Validate(&config, &options, &err),
-		Run:     cli.Run(ui.Start(&dep, &ctx)),
+		Run:     cli.Run(ui.Start(&dep, &ctx, Version)),
 	}
 	printCmd = &cobra.Command{
 		Use:    "print",

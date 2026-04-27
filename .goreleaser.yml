@@ -37,6 +37,9 @@ builds:
       - CGO_ENABLED=0
     goos:
       - darwin
+    goarch:
+      - amd64
+      - arm64
     ldflags:
       - -s -w -X 'github.com/achannarasappa/ticker/v5/cmd.Version={{.Version}}'
   - id: build-windows-64

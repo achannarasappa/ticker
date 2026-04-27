@@ -28,7 +28,7 @@ type PollerConfig struct {
 }
 
 func NewPoller(ctx context.Context, config PollerConfig) *Poller {
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(ctx) //nolint:gosec // cancel stored in struct and called via Stop()
 
 	return &Poller{
 		refreshInterval:      0,

@@ -18,7 +18,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Test
-      run: go run github.com/onsi/ginkgo/ginkgo@v1.16.5 -skip="GetQuotes Response" -cover ./...
+      run: go tool ginkgo -skip="GetQuotes Response" -cover ./...
   coverage:
     runs-on: ubuntu-latest
     steps:
@@ -30,7 +30,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Generate coverage
-      run: go run github.com/onsi/ginkgo/ginkgo@v1.16.5 -skip="GetQuotes Response" -cover -outputdir=./ -coverprofile=coverage.out ./...
+      run: go tool ginkgo -skip="GetQuotes Response" -cover -outputdir=./ -coverprofile=coverage.out ./...
     - name: Coveralls
       uses: coverallsapp/github-action@v2
       with:

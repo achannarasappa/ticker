@@ -82,7 +82,7 @@ func (m *MonitorCurrencyRateYahoo) Stop() error {
 
 func (m *MonitorCurrencyRateYahoo) SetTargetCurrency(targetCurrency string) {
 
-	fromCurrencies := make([]string, 0)
+	fromCurrencies := make([]string, 0, len(m.currencyRateCache))
 
 	m.mu.RLock()
 	for currency := range m.currencyRateCache {

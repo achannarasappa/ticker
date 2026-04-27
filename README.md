@@ -235,12 +235,12 @@ $ ticker --config=./.ticker.yaml print
 
 Running tests:
 ```sh
-go run github.com/onsi/ginkgo/v2/ginkgo -cover ./...
+go tool ginkgo -cover ./...
 ```
 
 Linting:
 ```sh
-golangci-lint run
+go tool golangci-lint run
 ```
 
 ## Libraries `ticker` uses

@@ -20,4 +20,4 @@ jobs:
       with:
         go-version: ${{ matrix.go-version }}
     - name: Test Quote API
-      run: go run github.com/onsi/ginkgo/ginkgo@v1.16.5 -r -v ./test/contract/yahoo/ -focus "GetAssetQuotes Response"
+      run: go tool ginkgo -r -v ./test/contract/yahoo/ -focus "GetAssetQuotes Response"

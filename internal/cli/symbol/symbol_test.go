@@ -1,10 +1,10 @@
 package symbol_test
 
 import (
+	"net/http"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"net/http"
 
 	"github.com/achannarasappa/ticker/v5/internal/cli/symbol"
 	c "github.com/achannarasappa/ticker/v5/internal/common"
@@ -72,7 +72,7 @@ var _ = Describe("Symbol", func() {
 			outputSymbols, outputErr := symbol.GetTickerSymbols(server.URL() + "/symbols.csv")
 
 			Expect(outputSymbols).To(Equal(expectedSymbols))
-			Expect(outputErr).To(BeNil())
+			Expect(outputErr).NotTo(HaveOccurred())
 		})
 
 		When("a ticker symbol has an unknown source", func() {
@@ -98,7 +98,7 @@ var _ = Describe("Symbol", func() {
 				outputSymbols, outputErr := symbol.GetTickerSymbols(server.URL() + "/symbols.csv")
 
 				Expect(outputSymbols).To(Equal(expectedSymbols))
-				Expect(outputErr).To(BeNil())
+				Expect(outputErr).NotTo(HaveOccurred())
 			})
 
 		})
@@ -119,7 +119,7 @@ var _ = Describe("Symbol", func() {
 
 				_, outputErr := symbol.GetTickerSymbols(server.URL() + "/symbols.csv")
 
-				Expect(outputErr).ToNot(BeNil())
+				Expect(outputErr).To(HaveOccurred())
 			})
 
 		})
@@ -136,7 +136,7 @@ var _ = Describe("Symbol", func() {
 
 				_, outputErr := symbol.GetTickerSymbols(server.URL() + "/symbols.csv")
 
-				Expect(outputErr).ToNot(BeNil())
+				Expect(outputErr).To(HaveOccurred())
 			})
 
 		})

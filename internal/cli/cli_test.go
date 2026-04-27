@@ -344,7 +344,7 @@ var _ = Describe("Cli", func() {
 
 				_, outputErr := GetContext(dep, c.Config{})
 
-				Expect(outputErr).ToNot(BeNil())
+				Expect(outputErr).To(HaveOccurred())
 
 			})
 
@@ -488,7 +488,7 @@ var _ = Describe("Cli", func() {
 					outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
 
 					Expect(outputConfig.Watchlist).To(Equal([]string{"NOK"}))
-					Expect(outputErr).To(BeNil())
+					Expect(outputErr).NotTo(HaveOccurred())
 				})
 			})
 
@@ -500,7 +500,7 @@ var _ = Describe("Cli", func() {
 						depLocal.Fs.MkdirAll(inputHome, 0755)
 						outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
 
-						Expect(outputErr).To(BeNil())
+						Expect(outputErr).NotTo(HaveOccurred())
 						Expect(outputConfig).To(Equal(c.Config{RefreshInterval: 5}))
 					})
 				})
@@ -514,7 +514,7 @@ var _ = Describe("Cli", func() {
 						outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
 
 						Expect(outputConfig.Watchlist).To(Equal([]string{"AMD"}))
-						Expect(outputErr).To(BeNil())
+						Expect(outputErr).NotTo(HaveOccurred())
 					})
 				})
 				When("there is a config file in the current directory", func() {
@@ -527,7 +527,7 @@ var _ = Describe("Cli", func() {
 						outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
 
 						Expect(outputConfig.Watchlist).To(Equal([]string{"JNJ"}))
-						Expect(outputErr).To(BeNil())
+						Expect(outputErr).NotTo(HaveOccurred())
 					})
 				})
 				When("there is a config file in the XDG config directory", func() {
@@ -543,7 +543,7 @@ var _ = Describe("Cli", func() {
 						os.Unsetenv("XDG_CONFIG_HOME")
 
 						Expect(outputConfig.Watchlist).To(Equal([]string{"ABNB"}))
-						Expect(outputErr).To(BeNil())
+						Expect(outputErr).NotTo(HaveOccurred())
 					})
 				})
 			})

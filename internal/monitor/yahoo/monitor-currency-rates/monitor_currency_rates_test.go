@@ -1,14 +1,13 @@
 package monitorCurrencyRate_test
 
 import (
+	"context"
 	"net/http"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
-
-	"context"
 
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 	. "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-currency-rates"
@@ -49,7 +48,7 @@ var _ = Describe("MonitorCurrencyRates", func() {
 			})
 
 			err := monitor.Start()
-			Expect(err).To(BeNil())
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		When("the monitor is already started", func() {
@@ -69,7 +68,7 @@ var _ = Describe("MonitorCurrencyRates", func() {
 				})
 
 				err := monitor.Start()
-				Expect(err).To(BeNil())
+				Expect(err).NotTo(HaveOccurred())
 
 				err = monitor.Start()
 				Expect(err).To(MatchError("monitor already started"))
@@ -103,7 +102,7 @@ var _ = Describe("MonitorCurrencyRates", func() {
 					})
 
 					err := monitor.Start()
-					Expect(err).To(BeNil())
+					Expect(err).NotTo(HaveOccurred())
 
 					// Request EUR
 					requestCh <- []string{"EUR"}
@@ -159,7 +158,7 @@ var _ = Describe("MonitorCurrencyRates", func() {
 						})
 
 						err := monitor.Start()
-						Expect(err).To(BeNil())
+						Expect(err).NotTo(HaveOccurred())
 
 						// Send empty request
 						requestCh <- []string{}
@@ -194,7 +193,7 @@ var _ = Describe("MonitorCurrencyRates", func() {
 						})
 
 						err := monitor.Start()
-						Expect(err).To(BeNil())
+						Expect(err).NotTo(HaveOccurred())
 
 						// First request for EUR (should hit the server)
 						requestCh <- []string{"EUR"}
@@ -238,7 +237,7 @@ var _ = Describe("MonitorCurrencyRates", func() {
 						})
 
 						err := monitor.Start()
-						Expect(err).To(BeNil())
+						Expect(err).NotTo(HaveOccurred())
 
 						// Send a request that will trigger an error
 						requestCh <- []string{"EUR"}
@@ -272,10 +271,10 @@ var _ = Describe("MonitorCurrencyRates", func() {
 			})
 
 			err := monitor.Start()
-			Expect(err).To(BeNil())
+			Expect(err).NotTo(HaveOccurred())
 
 			err = monitor.Stop()
-			Expect(err).To(BeNil())
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		When("the monitor is not started", func() {
@@ -321,7 +320,7 @@ var _ = Describe("MonitorCurrencyRates", func() {
 			})
 
 			err := monitor.Start()
-			Expect(err).To(BeNil())
+			Expect(err).NotTo(HaveOccurred())
 
 			monitor.SetTargetCurrency("EURUSD=X")
 
@@ -359,7 +358,7 @@ var _ = Describe("MonitorCurrencyRates", func() {
 				})
 
 				err := monitor.Start()
-				Expect(err).To(BeNil())
+				Expect(err).NotTo(HaveOccurred())
 
 				// Send a request to set the cache
 				requestCh <- []string{"EUR"}

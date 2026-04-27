@@ -310,7 +310,7 @@ var _ = Describe("Monitor", func() {
 				OnUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote, versionVector int) {},
 				OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, versionVector int) {},
 			})
-			Expect(err).To(BeNil())
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		When("either asset or asset group quote update callback is not set", func() {

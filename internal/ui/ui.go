@@ -406,9 +406,9 @@ func footer(width int, time string, groupSelectedName string, currentSort string
 	baseHelpText := " q: exit ↑: scroll up ↓: scroll down ⭾: change group"
 	sortHelpText := " s: change sort (" + sortDisplayName + ")"
 
-	updateText := ""
+	rightText := "↻  " + time
 	if latestVersion != "" {
-		updateText = " ↑ " + latestVersion + " available"
+		rightText = "↑ " + latestVersion + " available"
 	}
 
 	// Calculate minimum width for sort help text to appear
@@ -425,8 +425,7 @@ func footer(width int, time string, groupSelectedName string, currentSort string
 					{Text: styleGroup(" " + groupSelectedName + " "), Width: len(groupSelectedName) + 2, VisibleMinWidth: 95},
 					{Text: styleHelp(baseHelpText), Width: 52},
 					{Text: styleHelp(sortHelpText), Width: len(sortHelpText), VisibleMinWidth: sortHelpMinWidth},
-					{Text: styleHelp(updateText), Width: len(updateText), VisibleMinWidth: sortHelpMinWidth + len(updateText)},
-					{Text: styleHelp("↻  " + time), Align: grid.Right},
+					{Text: styleHelp(rightText), Align: grid.Right},
 				},
 			},
 		},

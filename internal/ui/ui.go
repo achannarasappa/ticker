@@ -342,7 +342,7 @@ func (m *Model) View() string {
 
 	viewSummary := ""
 
-	if m.ctx.Config.ShowSummary && m.ctx.Config.ShowPositions {
+	if m.ctx.Config.ShowSummary {
 		viewSummary += m.summary.View() + "\n"
 	}
 
@@ -399,7 +399,7 @@ func footer(width int, time string, groupSelectedName string, currentSort string
 }
 
 func getVerticalMargin(config c.Config) int {
-	if config.ShowSummary && config.ShowPositions {
+	if config.ShowSummary {
 		return 2
 	}
 

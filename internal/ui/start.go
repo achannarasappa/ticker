@@ -7,7 +7,7 @@ import (
 )
 
 // Start launches the command line interface and starts capturing input
-func Start(dep *c.Dependencies, ctx *c.Context) func() error {
+func Start(dep *c.Dependencies, ctx *c.Context, version string) func() error {
 	return func() error {
 
 		monitors, _ := mon.NewMonitor(mon.ConfigMonitor{
@@ -27,7 +27,7 @@ func Start(dep *c.Dependencies, ctx *c.Context) func() error {
 		})
 
 		p := tea.NewProgram(
-			NewModel(*dep, *ctx, monitors),
+			NewModel(*dep, *ctx, monitors, version),
 			tea.WithMouseCellMotion(),
 			tea.WithAltScreen(),
 		)

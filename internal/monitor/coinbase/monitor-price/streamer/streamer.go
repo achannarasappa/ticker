@@ -59,7 +59,7 @@ type StreamerConfig struct {
 }
 
 func NewStreamer(ctx context.Context, config StreamerConfig) *Streamer {
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(ctx) //nolint:gosec // cancel stored in struct and called via Stop()
 
 	s := &Streamer{
 		chanStreamUpdateQuotePrice:    config.ChanStreamUpdateQuotePrice,

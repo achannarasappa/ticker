@@ -1,0 +1,95 @@
+# ticker configuration example
+# Default location: ~/.ticker.yaml
+# Also supported: current directory or XDG config home (~/.config/ticker/.ticker.yaml)
+
+# Refresh interval in seconds (default: 5)
+interval: 5
+
+# Symbols to watch. Symbols with no suffix use Yahoo Finance.
+# Suffix .CB to use Coinbase (e.g. BTC-USD.CB becomes BTC-USD on Coinbase).
+# Suffix .X to use ticker shorthand symbols for popular crypto assets (e.g. SOL.X).
+# Full list of .X symbols: https://github.com/achannarasappa/ticker-static/blob/master/symbols.csv
+watchlist:
+  - NET
+  - AAPL
+  - BTC-USD
+  - SOL.X
+  - ETH.CB
+
+# Cost basis lots for position tracking.
+# Symbols not in the watchlist are implicitly added when defined here.
+# Multiple lots for the same symbol are supported and will be aggregated.
+# Quantities can be negative to represent short positions or closed lots.
+lots:
+  - symbol: "AAPL"
+    quantity: 10.0
+    unit_cost: 150.00
+  - symbol: "AAPL"           # second lot for same symbol
+    quantity: 5.0
+    unit_cost: 172.50
+    fixed_cost: 7.00         # optional: brokerage commission or fixed fee
+  - symbol: "NET"
+    quantity: 20.0
+    unit_cost: 65.00
+
+# Display options
+show-separator: false        # layout with separators between each quote
+show-tags: false             # display currency, exchange name, and quote delay
+show-fundamentals: false     # display open price, high, low, and volume
+show-summary: false          # display total day change, total value, and cost basis
+show-positions: false        # display average cost, quantity, and portfolio weight
+
+# Sort order for quotes (default: change percent, with closed markets at end)
+# Options:
+#   (empty)  - sort by change percent, closed markets at end
+#   alpha    - sort alphabetically by symbol
+#   value    - sort by position value (requires lots)
+#   user     - sort by order defined in this file, positions first
+sort: ""
+
+# Currency conversion: ISO 4217 3-letter code (e.g. EUR, GBP, JPY)
+# When set, all prices and values are converted from the exchange currency.
+# Define lots in the exchange currency — conversion is applied automatically.
+# Exchange rates are fetched once at startup.
+# currency: USD
+
+# When true, currency conversion applies to the summary only, not individual quotes.
+currency-summary-only: false
+
+# When true, cost basis is not converted when calculating position value.
+# Useful if unit_cost was entered in the local currency at time of purchase.
+currency-disable-unit-cost-conversion: false
+
+# Groups allow multiple independent watchlists, cycled with TAB / SHIFT+TAB.
+# Top-level watchlist and lots entries are placed in a group named "default".
+# Groups are displayed in the order defined here.
+groups:
+  - name: crypto
+    watchlist:
+      - BTC-USD
+      - ETH.CB
+      - SOL.X
+    lots:
+      - symbol: "SOL.X"
+        quantity: 17.0
+        unit_cost: 159.10
+  - name: tech
+    watchlist:
+      - NET
+      - TEAM
+      - ESTC
+
+# Custom color scheme (hex triplet format, e.g. "#ff0000")
+# Omitted or invalid values fall back to the default color scheme.
+# Terminals supporting TrueColor display the full color space;
+# others will downsample to the nearest supported color.
+# colors:
+#   text: "#ffffff"
+#   text-light: "#c0c0c0"
+#   text-label: "#aaaaaa"
+#   text-line: "#555555"
+#   text-tag: "#ffffff"
+#   background-tag: "#333333"
+
+# Enable debug logging to ./ticker-log-<date>.log
+debug: false

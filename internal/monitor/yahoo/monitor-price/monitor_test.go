@@ -73,7 +73,7 @@ var _ = Describe("Monitor Yahoo", func() {
 			assetQuotes, err := monitor.GetAssetQuotes()
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(assetQuotes)).To(Equal(2))
+			Expect(assetQuotes).To(HaveLen(2))
 			Expect(assetQuotes[0].Symbol).To(Equal("NET"))
 			Expect(assetQuotes[1].Symbol).To(Equal("GOOG"))
 			Expect(assetQuotes[0].QuotePrice.Price).To(Equal(84.98))

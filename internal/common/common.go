@@ -91,6 +91,7 @@ type Reference struct {
 type Dependencies struct {
 	Fs                               afero.Fs
 	SymbolsURL                       string
+	GitHubReleasesURL                string
 	MonitorPriceCoinbaseBaseURL      string
 	MonitorPriceCoinbaseStreamingURL string
 	MonitorYahooBaseURL              string

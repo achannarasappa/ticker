@@ -1,0 +1,22 @@
+mode: set
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:33.66,46.2 2 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:49.66,52.2 2 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:55.67,57.17 1 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:57.17,59.3 1 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:61.2,63.12 2 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:67.32,68.17 1 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:68.17,70.3 1 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:72.2,72.28 1 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:72.28,74.3 1 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:76.2,79.12 2 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:79.12,83.7 3 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:83.7,84.11 1 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:85.24,87.11 1 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:88.20,90.28 1 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:90.28,92.14 1 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:95.5,100.19 3 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:100.19,103.14 2 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:107.5,107.44 1 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:107.44,113.6 1 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:118.2,118.12 1 1
+github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price/poller/poller.go:122.31,126.2 2 1

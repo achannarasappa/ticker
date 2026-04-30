@@ -1,14 +1,13 @@
-name: lint
+name: govulncheck
+
 on: [push, pull_request]
 
 jobs:
-  lint:
-    name: lint
+  govulncheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v6
         with:
           go-version: '1.26.2'
-      - name: lint
-        run: go tool golangci-lint run
+      - uses: golang/govulncheck-action@v1

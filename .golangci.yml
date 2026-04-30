@@ -1,43 +1,132 @@
-linters:
-  presets:
-    - bugs
-    - complexity
-    - format
-    - performance
-    - unused
-    - style
-  disable:
-    - paralleltest
-    - wrapcheck
-    - whitespace
-    - wsl
-    - godot
-    - lll
-    - funlen
-    - gofumpt
-    - unparam
-    - tagliatelle
-    - forbidigo
-    - gci
-    - varnamelen
-    - exhaustruct
-    - depguard
-    - nolintlint
-    - mnd
-    - copyloopvar
-    - revive
-    - gocognit
-    - nestif
-    - stylecheck
-    - godox
-    - cyclop
-    - nonamedreturns
-    - ireturn
-    - noctx
-    - containedctx
-    - err113
+version: "2"
 run:
   tests: false
+linters:
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - contextcheck
+    - decorder
+    - dogsled
+    - dupl
+    - durationcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - exptostd
+    - fatcontext
+    - forcetypeassert
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - gochecknoglobals
+    - gochecknoinits
+    - gochecksumtype
+    - goconst
+    - gocritic
+    - gocyclo
+    - goheader
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosmopolitan
+    - grouper
+    - iface
+    - importas
+    - inamedparam
+    - interfacebloat
+    - intrange
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
+    - misspell
+    - musttag
+    - nakedret
+    - nilerr
+    - nilnesserr
+    - nilnil
+    - nlreturn
+    - nosprintfhostport
+    - perfsprint
+    - prealloc
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
+    - recvcheck
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - tagalign
+    - testifylint
+    - testpackage
+    - tparallel
+    - unconvert
+    - usestdlibvars
+    - wastedassign
+    - zerologlint
+  disable:
+    - containedctx
+    - copyloopvar
+    - cyclop
+    - depguard
+    - err113
+    - exhaustruct
+    - forbidigo
+    - funlen
+    - gocognit
+    - godot
+    - godox
+    - ireturn
+    - lll
+    - mnd
+    - nestif
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - paralleltest
+    - revive
+    - tagliatelle
+    - unparam
+    - varnamelen
+    - whitespace
+    - wrapcheck
+    - wsl
+    - prealloc
+  settings:
+    staticcheck:
+      checks:
+        - "all"
+        - "-QF1008"
+        - "-QF1003"
+        - "-ST1003"
+        - "-ST1016"
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
   fix: false
-    
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

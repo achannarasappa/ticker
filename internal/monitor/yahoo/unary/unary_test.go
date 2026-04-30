@@ -68,7 +68,7 @@ var _ = Describe("Unary", func() {
 				}),
 			}))
 			Expect(outputMap).To(HaveKey("NET"))
-			Expect(outputError).To(BeNil())
+			Expect(outputError).NotTo(HaveOccurred())
 		})
 
 		When("no symbols are provided", func() {
@@ -76,7 +76,7 @@ var _ = Describe("Unary", func() {
 				outputSlice, outputMap, outputError := client.GetAssetQuotes([]string{})
 				Expect(outputSlice).To(BeEmpty())
 				Expect(outputMap).To(BeEmpty())
-				Expect(outputError).To(BeNil())
+				Expect(outputError).NotTo(HaveOccurred())
 			})
 		})
 
@@ -134,7 +134,7 @@ var _ = Describe("Unary", func() {
 						}),
 					}),
 				}))
-				Expect(outputError).To(BeNil())
+				Expect(outputError).NotTo(HaveOccurred())
 			},
 			Entry("regular session", "REGULAR", 0.0, 0.0, true, true, 84.98),
 			Entry("post market with price", "POST", 86.56, 0.0, true, false, 86.56),
@@ -157,7 +157,7 @@ var _ = Describe("Unary", func() {
 					"Class": Equal(c.AssetClassCryptocurrency),
 				}),
 			}))
-			Expect(outputError).To(BeNil())
+			Expect(outputError).NotTo(HaveOccurred())
 		})
 
 		It("should return the asset class as a currency", func() {
@@ -198,7 +198,7 @@ var _ = Describe("Unary", func() {
 					"Class": Equal(c.AssetClassCurrency),
 				}),
 			}))
-			Expect(outputError).To(BeNil())
+			Expect(outputError).NotTo(HaveOccurred())
 		})
 
 		Context("session", func() {
@@ -213,7 +213,7 @@ var _ = Describe("Unary", func() {
 					outputSlice, outputMap, outputError := client.GetAssetQuotes([]string{"NET"})
 					Expect(outputSlice).NotTo(BeEmpty())
 					Expect(outputMap).To(HaveKey("NET"))
-					Expect(outputError).To(BeNil())
+					Expect(outputError).NotTo(HaveOccurred())
 				})
 
 				When("the session was refreshed by the response code is unexpected", func() {
@@ -255,7 +255,7 @@ var _ = Describe("Unary", func() {
 						outputSlice, outputMap, outputError := client.GetAssetQuotes([]string{"NET"})
 						Expect(outputSlice).NotTo(BeEmpty())
 						Expect(outputMap).To(HaveKey("NET"))
-						Expect(outputError).To(BeNil())
+						Expect(outputError).NotTo(HaveOccurred())
 					})
 
 					When("the there is a problem agreeing to the consent form (HTTP protocol related error)", func() {
@@ -633,7 +633,7 @@ var _ = Describe("Unary", func() {
 
 			outputMap, outputErr := client.GetCurrencyMap([]string{"NET"})
 			Expect(outputMap).To(HaveKey("NET"))
-			Expect(outputErr).To(BeNil())
+			Expect(outputErr).NotTo(HaveOccurred())
 		})
 
 		When("there are no symbols", func() {
@@ -642,7 +642,7 @@ var _ = Describe("Unary", func() {
 
 				outputMap, outputErr := client.GetCurrencyMap([]string{})
 				Expect(outputMap).To(BeEmpty())
-				Expect(outputErr).To(BeNil())
+				Expect(outputErr).NotTo(HaveOccurred())
 			})
 		})
 
@@ -676,7 +676,7 @@ var _ = Describe("Unary", func() {
 
 				output, err := client.GetCurrencyRates([]string{"EUR"}, "")
 
-				Expect(err).To(BeNil())
+				Expect(err).NotTo(HaveOccurred())
 				Expect(output).To(HaveKey("EUR"))
 				Expect(output["EUR"].FromCurrency).To(Equal("EUR"))
 				Expect(output["EUR"].ToCurrency).To(Equal("USD"))
@@ -689,7 +689,7 @@ var _ = Describe("Unary", func() {
 
 			It("should return an empty set of currency rates", func() {
 				output, err := client.GetCurrencyRates([]string{}, "USD")
-				Expect(err).To(BeNil())
+				Expect(err).NotTo(HaveOccurred())
 				Expect(output).To(BeEmpty())
 			})
 
@@ -707,7 +707,7 @@ var _ = Describe("Unary", func() {
 						),
 					)
 					output, err := client.GetCurrencyRates([]string{"", "USD"}, "USD")
-					Expect(err).To(BeNil())
+					Expect(err).NotTo(HaveOccurred())
 					Expect(output).NotTo(HaveKey(""))
 					Expect(output).NotTo(HaveKey("USD"))
 				})
@@ -743,7 +743,7 @@ var _ = Describe("Unary", func() {
 
 					output, err := client.GetCurrencyRates([]string{"EUR"}, "USD")
 
-					Expect(err).To(BeNil())
+					Expect(err).NotTo(HaveOccurred())
 					Expect(output).To(HaveKey("EUR"))
 					Expect(output["EUR"].FromCurrency).To(Equal("EUR"))
 					Expect(output["EUR"].ToCurrency).To(Equal("USD"))

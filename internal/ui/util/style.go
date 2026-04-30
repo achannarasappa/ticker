@@ -21,6 +21,7 @@ var (
 	colorRegex = regexp.MustCompile(`^#(?:[0-9a-fA-F]{3}){1,2}$`)
 )
 
+//nolint:gochecknoglobals
 var defaultColorScheme = c.ConfigColorScheme{
 	Text:          "#d0d0d0",
 	TextLight:     "#8a8a8a",
@@ -122,6 +123,7 @@ func getNormalizedPercentWithMax(percent float64, maxPercent float64) float64 {
 // GetColorScheme generates a color scheme based on user defined colors or defaults
 func GetColorScheme(colorScheme c.ConfigColorScheme) c.Styles {
 	priceColorScheme := getPriceColorScheme(colorScheme)
+
 	return c.Styles{
 		Text: NewStyle(
 			getColorOrDefault(colorScheme.Text, defaultColorScheme.Text),

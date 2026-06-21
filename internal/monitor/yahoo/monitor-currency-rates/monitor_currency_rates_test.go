@@ -140,6 +140,12 @@ var _ = Describe("MonitorCurrencyRates", func() {
 					Expect(rates).To(HaveKey("GBP"))
 					Expect(rates["EUR"].Rate).To(Equal(1.1))
 					Expect(rates["GBP"].Rate).To(Equal(1.3))
+
+					// Minor currency rates should be derived alongside their major rates
+					Expect(rates).To(HaveKey("EUr"))
+					Expect(rates).To(HaveKey("GBp"))
+					Expect(rates["EUr"].Rate).To(BeNumerically("~", 0.011, 1e-9))
+					Expect(rates["GBp"].Rate).To(BeNumerically("~", 0.013, 1e-9))
 				})
 
 				When("the currency request is empty", func() {

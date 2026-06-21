@@ -43,12 +43,51 @@ var (
 			Error: nil,
 		},
 	}
+	responseQuoteForCurrencyMapMinorFixture = unary.Response{
+		QuoteResponse: unary.ResponseQuoteResponse{
+			Quotes: []unary.ResponseQuote{
+				{
+					ShortName:          "abrdn European Logistics Income plc",
+					RegularMarketPrice: unary.ResponseFieldFloat{Raw: 5000.50, Fmt: "5000.50"},
+					Symbol:             "JEGP.L",
+					Currency:           "GBp",
+				},
+			},
+			Error: nil,
+		},
+	}
+	responseQuoteMinorCurrencyFixture = unary.Response{
+		QuoteResponse: unary.ResponseQuoteResponse{
+			Quotes: []unary.ResponseQuote{
+				{
+					MarketState:        "REGULAR",
+					ShortName:          "abrdn European Logistics Income plc",
+					RegularMarketPrice: unary.ResponseFieldFloat{Raw: 5000.50, Fmt: "5000.50"},
+					Symbol:             "JEGP.L",
+					Currency:           "GBp",
+				},
+			},
+			Error: nil,
+		},
+	}
 	responseQuoteForCurrencyRates1Fixture = unary.Response{
 		QuoteResponse: unary.ResponseQuoteResponse{
 			Quotes: []unary.ResponseQuote{
 				{
 					Symbol:             "EURUSD=X",
 					RegularMarketPrice: unary.ResponseFieldFloat{Raw: 1.1, Fmt: "1.1"},
+					Currency:           "USD",
+				},
+			},
+			Error: nil,
+		},
+	}
+	responseQuoteForCurrencyRatesJPYFixture = unary.Response{
+		QuoteResponse: unary.ResponseQuoteResponse{
+			Quotes: []unary.ResponseQuote{
+				{
+					Symbol:             "JPYUSD=X",
+					RegularMarketPrice: unary.ResponseFieldFloat{Raw: 0.0068, Fmt: "0.0068"},
 					Currency:           "USD",
 				},
 			},

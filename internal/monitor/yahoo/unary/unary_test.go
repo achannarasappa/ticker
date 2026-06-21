@@ -80,6 +80,22 @@ var _ = Describe("Unary", func() {
 			})
 		})
 
+		When("the quote is denominated in a minor currency", func() {
+			It("should preserve the case of the currency code", func() {
+				appendQuoteHandler(server, "JEGP.L", urlParams, responseQuoteMinorCurrencyFixture)
+
+				outputSlice, _, outputError := client.GetAssetQuotes([]string{"JEGP.L"})
+				Expect(outputError).NotTo(HaveOccurred())
+				Expect(outputSlice).To(g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+					"0": g.MatchFields(g.IgnoreExtras, g.Fields{
+						"Currency": g.MatchFields(g.IgnoreExtras, g.Fields{
+							"FromCurrencyCode": Equal("GBp"),
+						}),
+					}),
+				}))
+			})
+		})
+
 		Context("when the request fails", func() {
 			When("the response is invalid", func() {
 				It("should return an error", func() {
@@ -636,6 +652,16 @@ var _ = Describe("Unary", func() {
 			Expect(outputErr).NotTo(HaveOccurred())
 		})
 
+		When("the quote is denominated in a minor currency", func() {
+			It("should preserve the case of the currency code", func() {
+				appendQuoteHandler(server, "JEGP.L", urlParamsForCurrency, responseQuoteForCurrencyMapMinorFixture)
+
+				outputMap, outputErr := client.GetCurrencyMap([]string{"JEGP.L"})
+				Expect(outputErr).NotTo(HaveOccurred())
+				Expect(outputMap["JEGP.L"].FromCurrency).To(Equal("GBp"))
+			})
+		})
+
 		When("there are no symbols", func() {
 			It("should return an empty map", func() {
 				appendQuoteHandler(server, "NET", urlParamsForCurrency, responseQuoteForCurrencyMap1Fixture)
@@ -748,6 +774,46 @@ var _ = Describe("Unary", func() {
 					Expect(output["EUR"].FromCurrency).To(Equal("EUR"))
 					Expect(output["EUR"].ToCurrency).To(Equal("USD"))
 					Expect(output["EUR"].Rate).To(Equal(1.1))
+				})
+
+				When("the currency has a minor form", func() {
+
+					It("should also return a rate for the minor currency scaled by its minor unit", func() {
+						server.AppendHandlers(
+							ghttp.CombineHandlers(
+								verifyRequest(server, "GET", "/v7/finance/quote", "symbols", "EURUSD=X"),
+								ghttp.RespondWithJSONEncoded(http.StatusOK, responseQuoteForCurrencyRates1Fixture),
+							),
+						)
+
+						output, err := client.GetCurrencyRates([]string{"EUR"}, "USD")
+
+						Expect(err).NotTo(HaveOccurred())
+						Expect(output).To(HaveKey("EUr"))
+						Expect(output["EUr"].FromCurrency).To(Equal("EUr"))
+						Expect(output["EUr"].ToCurrency).To(Equal("USD"))
+						Expect(output["EUr"].Rate).To(BeNumerically("~", 0.011, 1e-9))
+					})
+
+				})
+
+				When("the currency does not have a minor form", func() {
+
+					It("should not return a minor currency rate", func() {
+						server.AppendHandlers(
+							ghttp.CombineHandlers(
+								verifyRequest(server, "GET", "/v7/finance/quote", "symbols", "JPYUSD=X"),
+								ghttp.RespondWithJSONEncoded(http.StatusOK, responseQuoteForCurrencyRatesJPYFixture),
+							),
+						)
+
+						output, err := client.GetCurrencyRates([]string{"JPY"}, "USD")
+
+						Expect(err).NotTo(HaveOccurred())
+						Expect(output).To(HaveKey("JPY"))
+						Expect(output).NotTo(HaveKey("JPy"))
+					})
+
 				})
 
 			})

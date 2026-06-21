@@ -1,0 +1,21 @@
+name: lint-pr-title
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+permissions:
+  pull-requests: read
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      # The PR title becomes the squash-merge commit title by default, so
+      # lint it against the same conventional-commit rules as commitlint to
+      # keep the squashed commit on the default branch valid.
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

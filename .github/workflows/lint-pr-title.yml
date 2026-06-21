@@ -7,15 +7,25 @@ on:
       - synchronize
 
 permissions:
-  pull-requests: read
+  contents: read
 
 jobs:
   pr-title:
     runs-on: ubuntu-latest
+    # The PR title becomes the squash-merge commit title by default, so lint
+    # it against conventional-commit rules to keep the squashed commit on the
+    # default branch valid. The title is read via env (not interpolated into
+    # the script) to avoid shell injection.
+    env:
+      PR_TITLE: ${{ github.event.pull_request.title }}
     steps:
-      # The PR title becomes the squash-merge commit title by default, so
-      # lint it against the same conventional-commit rules as commitlint to
-      # keep the squashed commit on the default branch valid.
-      - uses: amannn/action-semantic-pull-request@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Validate PR title is a conventional commit
+        run: |
+          pattern='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([^)]+\))?!?: .+'
+          if ! printf '%s' "$PR_TITLE" | grep -Eq "$pattern"; then
+            echo "::error::PR title \"$PR_TITLE\" is not a valid conventional commit."
+            echo "Expected: <type>(optional scope): <subject>  e.g. 'feat: add minor currency support'"
+            echo "Valid types: build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test"
+            exit 1
+          fi
+          echo "PR title OK: $PR_TITLE"

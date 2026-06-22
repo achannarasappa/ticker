@@ -25,6 +25,7 @@ type Config struct {
 	ShowSummary                       bool               `yaml:"show-summary"`
 	ShowHoldings                      bool               `yaml:"show-holdings"`  // Deprecated: use ShowPositions instead, kept for backwards compatibility
 	ShowPositions                     bool               `yaml:"show-positions"` // Preferred field name
+	ShowAlternateRowBackground        bool               `yaml:"show-alternate-row-background"`
 	Sort                              string             `yaml:"sort"`
 	Currency                          string             `yaml:"currency"`
 	CurrencyConvertSummaryOnly        bool               `yaml:"currency-summary-only"`
@@ -42,6 +43,7 @@ type ConfigColorScheme struct {
 	TextLine      string `yaml:"text-line"`
 	TextTag       string `yaml:"text-tag"`
 	BackgroundTag string `yaml:"background-tag"`
+	BackgroundRow string `yaml:"background-row"`
 }
 
 type ConfigAssetGroup struct {

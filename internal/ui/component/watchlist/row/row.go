@@ -50,6 +50,7 @@ type Config struct {
 	ExtraInfoFundamentals bool
 	Styles                c.Styles
 	Asset                 *c.Asset
+	RowBackground         string
 }
 
 type UpdateAssetMsg *c.Asset
@@ -221,18 +222,27 @@ func (m *Model) View() string {
 			})
 	}
 
-	if m.config.Separate {
-		rows = append(
-			rows,
-			grid.Row{
-				Width: m.width,
-				Cells: []grid.Cell{
-					{Text: textSeparator(m.width, m.config.Styles)},
-				},
-			})
+	contentResult := grid.Render(grid.Grid{Rows: rows, GutterHorizontal: WidthGutter})
+
+	if m.config.RowBackground != "" {
+		contentResult = u.ApplyBackground(contentResult, m.config.RowBackground)
 	}
 
-	return grid.Render(grid.Grid{Rows: rows, GutterHorizontal: WidthGutter})
+	if m.config.Separate {
+		separatorResult := grid.Render(grid.Grid{
+			Rows: []grid.Row{
+				{
+					Width: m.width,
+					Cells: []grid.Cell{
+						{Text: textSeparator(m.width, m.config.Styles)},
+					},
+				},
+			},
+		})
+		contentResult = contentResult + "\n" + separatorResult
+	}
+
+	return contentResult
 }
 
 func (m *Model) buildCells() []grid.Cell {

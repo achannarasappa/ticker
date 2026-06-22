@@ -202,6 +202,17 @@ colors:
   text-line: "#00ffff"
   text-tag: "#005fff"
   background-tag: "#0087ff"
+  price-color-scheme:
+    light:
+      positive-start: "#22C55E"
+      positive-end: "#15803D"
+      negative-start: "#EF4444"
+      negative-end: "#B91C1C"
+    dark:
+      positive-start: "#C6FF40"
+      positive-end: "#779929"
+      negative-start: "#FF7940"
+      negative-end: "#994926"
 ```
 
 * Terminals supporting TrueColor will be able to represent the full color space and in other cases colors will be down sampled

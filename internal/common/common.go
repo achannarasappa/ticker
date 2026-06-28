@@ -2,6 +2,7 @@ package common
 
 import (
 	"log"
+	"time"
 
 	"github.com/spf13/afero"
 )
@@ -12,6 +13,21 @@ type Context struct {
 	Groups    []AssetGroup
 	Reference Reference
 	Logger    *log.Logger
+	Cache     Cache
+}
+
+// Cache is a key/value store for data fetched at startup and other
+// slow-changing data, shared across ticker instances on the same machine.
+// Implementations must tolerate being nil-checked by callers and must never
+// panic on a miss.
+type Cache interface {
+	// Get reports whether key has a fresh entry and, if so, decodes its value
+	// into out. It returns false on a miss, an expired entry, or a decode error.
+	Get(key string, out any) bool
+	// Set stores value under key with the given time-to-live. Failures are
+	// silently ignored since the cache is an optimization that must never break
+	// startup.
+	Set(key string, value any, ttl time.Duration)
 }
 
 // Config represents user defined configuration
@@ -32,6 +48,11 @@ type Config struct {
 	ColorScheme                       ConfigColorScheme  `yaml:"colors"`
 	AssetGroup                        []ConfigAssetGroup `yaml:"groups"`
 	Debug                             bool               `yaml:"debug"`
+	// Cache enables the on-disk cache. It is a pointer so that an unset config
+	// value (nil) can be distinguished from an explicit false, allowing the
+	// cache to default to on while still being disableable via config or
+	// --no-cache.
+	Cache *bool `yaml:"cache"`
 }
 
 // ConfigColorScheme represents user defined color scheme

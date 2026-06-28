@@ -13,10 +13,19 @@ import (
 	unary "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/unary"
 )
 
+const (
+	// cacheKeyCurrencyMap namespaces cached per-symbol denomination currencies.
+	cacheKeyCurrencyMap = "yahoo:currency-map:"
+	// ttlCurrencyMap caches a symbol's denomination currency, which is effectively
+	// static, so it can be reused for a long time.
+	ttlCurrencyMap = 7 * 24 * time.Hour
+)
+
 // MonitorPriceYahoo represents a Yahoo Finance monitor
 type MonitorPriceYahoo struct {
 	unaryAPI                 *unary.UnaryAPI
 	poller                   *poller.Poller
+	cache                    c.Cache
 	input                    input
 	symbols                  []string
 	symbolToCurrency         map[string]string         // Map of symbols to currency
@@ -47,6 +56,7 @@ type Config struct {
 	ChanError                chan error
 	ChanUpdateAssetQuote     chan c.MessageUpdate[c.AssetQuote]
 	ChanRequestCurrencyRates chan []string
+	Cache                    c.Cache
 }
 
 // Option defines an option for configuring the monitor
@@ -62,6 +72,7 @@ func NewMonitorPriceYahoo(config Config, opts ...Option) *MonitorPriceYahoo {
 		chanPollUpdateAssetQuote: make(chan c.MessageUpdate[c.AssetQuote]),
 		chanError:                config.ChanError,
 		unaryAPI:                 config.UnaryAPI,
+		cache:                    config.Cache,
 		ctx:                      ctx,
 		cancel:                   cancel,
 		chanUpdateAssetQuote:     config.ChanUpdateAssetQuote,
@@ -335,10 +346,36 @@ func (m *MonitorPriceYahoo) getCurrencyForEachSymbolAndUpdateCurrencyMap() error
 	}
 	m.muCurrencyRates.RUnlock()
 
-	// Get the currency each symbol's price quote will be denominated in
-	symbolToCurrency, err := m.unaryAPI.GetCurrencyMap(symbolsWithoutCurrency)
-	if err != nil {
-		return fmt.Errorf("failed to get currency information: %w", err)
+	// Resolve a symbol's currency from cache since the currency
+	// for a symbol is effectively static
+	symbolToCurrency := make(map[string]unary.SymbolToCurrency)
+	symbolsToFetch := make([]string, 0, len(symbolsWithoutCurrency))
+
+	for _, symbol := range symbolsWithoutCurrency {
+		var cached unary.SymbolToCurrency
+		if m.cache != nil && m.cache.Get(cacheKeyCurrencyMap+symbol, &cached) {
+			symbolToCurrency[symbol] = cached
+
+			continue
+		}
+
+		symbolsToFetch = append(symbolsToFetch, symbol)
+	}
+
+	if len(symbolsToFetch) > 0 {
+		// Get the currency each symbol's price quote will be denominated in
+		fetched, err := m.unaryAPI.GetCurrencyMap(symbolsToFetch)
+		if err != nil {
+			return fmt.Errorf("failed to get currency information: %w", err)
+		}
+
+		for symbol, currency := range fetched {
+			symbolToCurrency[symbol] = currency
+
+			if m.cache != nil {
+				m.cache.Set(cacheKeyCurrencyMap+symbol, currency, ttlCurrencyMap)
+			}
+		}
 	}
 
 	m.muCurrencyRates.Lock()

@@ -494,14 +494,15 @@ var _ = Describe("Cli", func() {
 
 			When("the config path option is empty", func() {
 				When("there is no config file on disk", func() {
-					It("should return an empty config and no error", func() {
+					It("should return a default config with the cache enabled and no error", func() {
 						inputHome, _ := homedir.Dir()
 						inputConfigPath := ""
+						cacheEnabled := true
 						depLocal.Fs.MkdirAll(inputHome, 0755)
 						outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
 
 						Expect(outputErr).NotTo(HaveOccurred())
-						Expect(outputConfig).To(Equal(c.Config{RefreshInterval: 5}))
+						Expect(outputConfig).To(Equal(c.Config{RefreshInterval: 5, Cache: &cacheEnabled}))
 					})
 				})
 				When("there is a config file in the home directory", func() {

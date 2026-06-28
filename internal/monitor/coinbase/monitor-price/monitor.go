@@ -15,7 +15,11 @@ import (
 )
 
 const (
-	fromCurrencyCode = "USD"
+	fromCurrencyCode   = "USD"
+	cacheKeyUnderlying = "coinbase:underlying:"
+	// ttlUnderlying caches the mapping from a futures product to its underlying
+	// asset, which does not change for the life of the contract.
+	ttlUnderlying = 7 * 24 * time.Hour
 )
 
 type MonitorPriceCoinbase struct {
@@ -43,6 +47,7 @@ type MonitorPriceCoinbase struct {
 	isStarted                        bool
 	chanUpdateAssetQuote             chan c.MessageUpdate[c.AssetQuote]
 	chanRequestCurrencyRates         chan []string // Channel for currency rate requests
+	cache                            c.Cache
 }
 
 type input struct {
@@ -57,6 +62,7 @@ type Config struct {
 	ChanError                chan error
 	ChanUpdateAssetQuote     chan c.MessageUpdate[c.AssetQuote]
 	ChanRequestCurrencyRates chan []string
+	Cache                    c.Cache
 }
 
 // Option defines an option for configuring the monitor
@@ -81,6 +87,7 @@ func NewMonitorPriceCoinbase(config Config, opts ...Option) *MonitorPriceCoinbas
 		cancel:                           cancel,
 		chanUpdateAssetQuote:             config.ChanUpdateAssetQuote,
 		chanRequestCurrencyRates:         config.ChanRequestCurrencyRates,
+		cache:                            config.Cache,
 	}
 
 	pollerConfig := poller.PollerConfig{
@@ -493,21 +500,48 @@ func (m *MonitorPriceCoinbase) getUnderlyingAssetsAndUpdateProductIds() error {
 		return nil
 	}
 
-	// Get new quotes for symbols with underlying assets in order to get their underlying symbols
-	underlyingAssetQuotes, _, err := m.unaryAPI.GetAssetQuotes(symbolsWithUnderlying)
-	if err != nil {
-		return err
+	// The mapping between a futures product and its underlying asset is reference
+	// data that does not change, so resolve it from the cache where possible and
+	// only fetch the symbols that are missing from the cache.
+	resolvedUnderlyings := make(map[string]string)
+	symbolsToFetch := make([]string, 0, len(symbolsWithUnderlying))
+
+	for _, productId := range symbolsWithUnderlying {
+		var underlying string
+		if m.cache != nil && m.cache.Get(cacheKeyUnderlying+productId, &underlying) {
+			resolvedUnderlyings[productId] = underlying
+
+			continue
+		}
+
+		symbolsToFetch = append(symbolsToFetch, productId)
+	}
+
+	if len(symbolsToFetch) > 0 {
+		// Get new quotes for symbols with underlying assets in order to get their underlying symbols
+		underlyingAssetQuotes, _, err := m.unaryAPI.GetAssetQuotes(symbolsToFetch)
+		if err != nil {
+			return err
+		}
+
+		for _, quote := range underlyingAssetQuotes {
+			resolvedUnderlyings[quote.Meta.SymbolInSourceAPI] = quote.QuoteFutures.SymbolUnderlying
+
+			if m.cache != nil {
+				m.cache.Set(cacheKeyUnderlying+quote.Meta.SymbolInSourceAPI, quote.QuoteFutures.SymbolUnderlying, ttlUnderlying)
+			}
+		}
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	for _, quote := range underlyingAssetQuotes {
+	for productId, underlying := range resolvedUnderlyings {
 		// Add mapping between symbol and underlying symbol to map for lookup
-		m.productIdsToUnderlyingProductIds[quote.Meta.SymbolInSourceAPI] = quote.QuoteFutures.SymbolUnderlying
+		m.productIdsToUnderlyingProductIds[productId] = underlying
 
 		// Append underlying symbol to list of all symbols
-		underlyingSymbolsResponse = append(underlyingSymbolsResponse, quote.QuoteFutures.SymbolUnderlying)
+		underlyingSymbolsResponse = append(underlyingSymbolsResponse, underlying)
 	}
 
 	// Merge and deduplicate productIds since and underlying symbol could also have been explicitly requested

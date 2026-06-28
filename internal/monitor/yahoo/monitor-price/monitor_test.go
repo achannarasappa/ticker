@@ -9,11 +9,13 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/achannarasappa/ticker/v5/internal/cache"
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 	monitorPriceYahoo "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price"
 	"github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/unary"
 
 	"github.com/onsi/gomega/ghttp"
+	"github.com/spf13/afero"
 )
 
 var _ = Describe("Monitor Yahoo", func() {
@@ -673,6 +675,44 @@ var _ = Describe("Monitor Yahoo", func() {
 			})
 		})
 
+	})
+
+	Describe("currency map cache", func() {
+		It("serves a symbol's currency from the cache without a currency network request", func() {
+			sharedCache := cache.New(afero.NewMemMapFs(), "/cache/ticker/cache.json", true)
+			sharedCache.Set("yahoo:currency-map:NET", unary.SymbolToCurrency{Symbol: "NET", FromCurrency: "USD"}, time.Hour)
+			sharedCache.Set("yahoo:currency-map:GOOG", unary.SymbolToCurrency{Symbol: "GOOG", FromCurrency: "USD"}, time.Hour)
+
+			currencyRequested := false
+			server.RouteToHandler(http.MethodGet, "/v7/finance/quote",
+				func(w http.ResponseWriter, r *http.Request) {
+					if r.URL.Query().Get("fields") == "regularMarketPrice,currency" {
+						currencyRequested = true
+						json.NewEncoder(w).Encode(currencyResponseFixture) //nolint:errcheck,errchkjson
+
+						return
+					}
+					json.NewEncoder(w).Encode(responseQuote1Fixture) //nolint:errcheck,errchkjson
+				},
+			)
+
+			monitor := monitorPriceYahoo.NewMonitorPriceYahoo(monitorPriceYahoo.Config{
+				UnaryAPI:                 unaryAPI,
+				Ctx:                      context.Background(),
+				ChanRequestCurrencyRates: make(chan []string, 1),
+				Cache:                    sharedCache,
+			}, monitorPriceYahoo.WithRefreshInterval(time.Millisecond*100))
+
+			err := monitor.SetSymbols([]string{"NET", "GOOG"}, 0)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Currencies came from the cache, so no currency lookup was requested
+			Expect(currencyRequested).To(BeFalse())
+
+			assetQuotes, err := monitor.GetAssetQuotes()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(assetQuotes).To(HaveLen(2))
+		})
 	})
 
 })

@@ -87,7 +87,8 @@ ticker -w NET,AAPL,TSLA
 |`show-positions`   |  |--show-positions   |                |show positions including weight, average cost, and quantity|
 |`sort`             |  |--sort             |                |sort quotes on the UI - options are change percent (default), `alpha`, `value`, and `user`|
 |`version`          |  |--version          |                |print the current version number|
-|`debug`            |  |                   |                |enable debug logging to `./ticker-log-<date>.log`|
+|`cache`            |  |--no-cache         |`true`          |cache data retrieved at startup|
+|`debug`            |  |--debug            |                |enable debug logging to `./ticker-log-<date>.log`|
 
 ## Configuration
 
@@ -192,6 +193,10 @@ These are the behaviors for a minor unit quote:
 * No `currency` set (or `currency-summary-only: true`) - per-position values, quote price, and the cost basis are all displayed in the minor unit and cost basis should be set in the minor unit
 * `currency` is set - all displayed values are converted to the major unit. Cost basis should still be entered in the minor unit
 * `currency` is set with `currency-disable-unit-cost-conversion` - displayed values are converted to the major unit and cost basis should be set in the major unit
+
+### Cache
+
+`ticker` caches reference data to single local file shared between sessions and instances of `ticker` to speed up startup. The cache can be disabled with `--no-cache` flag or `cache: false` in `.ticker.yaml`.
 
 ### Custom Color Schemes
 

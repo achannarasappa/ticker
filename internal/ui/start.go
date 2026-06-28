@@ -14,6 +14,7 @@ func Start(dep *c.Dependencies, ctx *c.Context, version string) func() error {
 			RefreshInterval: ctx.Config.RefreshInterval,
 			TargetCurrency:  ctx.Config.Currency,
 			Logger:          ctx.Logger,
+			Cache:           ctx.Cache,
 			ConfigMonitorsYahoo: mon.ConfigMonitorsYahoo{
 				BaseURL:           dep.MonitorYahooBaseURL,
 				SessionRootURL:    dep.MonitorYahooSessionRootURL,

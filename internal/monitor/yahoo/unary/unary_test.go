@@ -1,6 +1,7 @@
 package unary_test
 
 import (
+	"github.com/achannarasappa/ticker/v5/internal/cache"
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 	"github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/unary"
 	. "github.com/onsi/ginkgo/v2"
@@ -12,6 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/onsi/gomega/ghttp"
+	"github.com/spf13/afero"
 )
 
 const (
@@ -822,6 +824,42 @@ var _ = Describe("Unary", func() {
 
 	})
 
+	Describe("startup cache", func() {
+
+		var testCache c.Cache
+
+		BeforeEach(func() {
+			testCache = cache.New(afero.NewMemMapFs(), "/cache/startup-cache.json", true)
+		})
+
+		When("a session has been cached by a previous instance", func() {
+			It("reuses it without performing a session handshake", func() {
+				// First instance performs the full session handshake and caches the session
+				firstServer := ghttp.NewServer()
+				defer firstServer.Close()
+				firstClient := newTestClientWithCache(firstServer, testCache)
+				appendQuote401(firstServer, "NET")
+				appendRootSessionOK(firstServer)
+				appendCrumb(firstServer, "gf34y383")
+				appendQuoteWithCrumb(firstServer, "NET", "gf34y383", responseQuote1Fixture)
+
+				_, _, errFirst := firstClient.GetAssetQuotes([]string{"NET"})
+				Expect(errFirst).NotTo(HaveOccurred())
+
+				// Second instance shares the cache and should skip the handshake entirely
+				secondServer := ghttp.NewServer()
+				defer secondServer.Close()
+				secondClient := newTestClientWithCache(secondServer, testCache)
+				appendQuoteWithCrumb(secondServer, "NET", "gf34y383", responseQuote1Fixture)
+
+				_, _, errSecond := secondClient.GetAssetQuotes([]string{"NET"})
+				Expect(errSecond).NotTo(HaveOccurred())
+				Expect(secondServer.ReceivedRequests()).To(HaveLen(1))
+			})
+		})
+
+	})
+
 })
 
 // Create a new API client for testing
@@ -831,6 +869,17 @@ func newTestClient(server *ghttp.Server) *unary.UnaryAPI {
 		SessionRootURL:    server.URL(),
 		SessionCrumbURL:   server.URL(),
 		SessionConsentURL: server.URL(),
+	})
+}
+
+// Create a new API client with a startup cache for testing
+func newTestClientWithCache(server *ghttp.Server, cache c.Cache) *unary.UnaryAPI {
+	return unary.NewUnaryAPI(unary.Config{
+		BaseURL:           server.URL(),
+		SessionRootURL:    server.URL(),
+		SessionCrumbURL:   server.URL(),
+		SessionConsentURL: server.URL(),
+		Cache:             cache,
 	})
 }
 

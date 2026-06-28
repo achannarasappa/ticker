@@ -8,7 +8,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
+	"github.com/spf13/afero"
 
+	"github.com/achannarasappa/ticker/v5/internal/cache"
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 	. "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-currency-rates"
 	"github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/unary"
@@ -216,6 +218,38 @@ var _ = Describe("MonitorCurrencyRates", func() {
 
 						// Only one HTTP request should have been made
 						Expect(server.ReceivedRequests()).To(HaveLen(1))
+					})
+				})
+
+				When("a currency rate is cached on disk", func() {
+					It("should serve it without making a network request", func() {
+						sharedCache := cache.New(afero.NewMemMapFs(), "/cache/ticker/cache.json", true)
+						sharedCache.Set("yahoo:currency-rate:USD:EUR", c.CurrencyRate{FromCurrency: "EUR", ToCurrency: "USD", Rate: 1.1}, time.Hour)
+
+						updateCh := make(chan c.CurrencyRates, 2)
+						requestCh := make(chan []string, 2)
+						errCh := make(chan error, 1)
+
+						monitor := NewMonitorCurrencyRateYahoo(Config{
+							Ctx:                      context.Background(),
+							UnaryAPI:                 client,
+							ChanUpdateCurrencyRates:  updateCh,
+							ChanRequestCurrencyRates: requestCh,
+							ChanError:                errCh,
+							Cache:                    sharedCache,
+						})
+
+						err := monitor.Start()
+						Expect(err).NotTo(HaveOccurred())
+
+						requestCh <- []string{"EUR"}
+
+						var rates c.CurrencyRates
+						Eventually(updateCh, 500*time.Millisecond).Should(Receive(&rates))
+						Expect(rates).To(HaveKeyWithValue("EUR", c.CurrencyRate{FromCurrency: "EUR", ToCurrency: "USD", Rate: 1.1}))
+
+						// The rate was served from the cache so no network request was made
+						Expect(server.ReceivedRequests()).To(BeEmpty())
 					})
 				})
 

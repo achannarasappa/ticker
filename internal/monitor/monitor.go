@@ -37,6 +37,7 @@ type ConfigMonitor struct {
 	RefreshInterval int
 	TargetCurrency  string
 	Logger          *log.Logger
+	Cache           c.Cache
 	ConfigMonitorPriceCoinbase
 	ConfigMonitorsYahoo
 }
@@ -78,6 +79,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 			ChanError:                chanError,
 			ChanUpdateAssetQuote:     chanUpdateAssetQuote,
 			ChanRequestCurrencyRates: chanRequestCurrencyRate,
+			Cache:                    configMonitor.Cache,
 		},
 		monitorPriceCoinbase.WithStreamingURL(configMonitor.ConfigMonitorPriceCoinbase.StreamingURL),
 		monitorPriceCoinbase.WithRefreshInterval(time.Duration(configMonitor.RefreshInterval)*time.Second),
@@ -89,6 +91,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 		SessionRootURL:    configMonitor.ConfigMonitorsYahoo.SessionRootURL,
 		SessionCrumbURL:   configMonitor.ConfigMonitorsYahoo.SessionCrumbURL,
 		SessionConsentURL: configMonitor.ConfigMonitorsYahoo.SessionConsentURL,
+		Cache:             configMonitor.Cache,
 	})
 
 	yahoo := monitorPriceYahoo.NewMonitorPriceYahoo(
@@ -98,6 +101,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 			ChanError:                chanError,
 			ChanUpdateAssetQuote:     chanUpdateAssetQuote,
 			ChanRequestCurrencyRates: chanRequestCurrencyRate,
+			Cache:                    configMonitor.Cache,
 		},
 		monitorPriceYahoo.WithRefreshInterval(time.Duration(configMonitor.RefreshInterval)*time.Second),
 	)
@@ -109,6 +113,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 			ChanUpdateCurrencyRates:  chanUpdateCurrencyRate,
 			ChanRequestCurrencyRates: chanRequestCurrencyRate,
 			ChanError:                chanError,
+			Cache:                    configMonitor.Cache,
 		},
 	)
 

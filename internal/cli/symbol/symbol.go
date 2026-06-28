@@ -6,9 +6,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 )
+
+// ttlSymbolMap is how long the symbol source map is cached. It is sourced from a
+// static CSV that changes rarely, so it can be reused for a long time.
+const ttlSymbolMap = 7 * 24 * time.Hour
 
 type SymbolSourceMap struct { //nolint:golint,revive
 	TickerSymbol string
@@ -59,8 +64,19 @@ func parseTickerSymbolToSourceSymbol(body io.ReadCloser) (TickerSymbolToSourceSy
 	return out, nil
 }
 
-// GetTickerSymbols retrieves a list of ticker specific symbols and their data source
-func GetTickerSymbols(url string) (TickerSymbolToSourceSymbol, error) {
+// GetTickerSymbols retrieves a list of ticker specific symbols and their data
+// source. When a cache is provided and holds a fresh entry, the symbols are
+// served from it without a network request.
+func GetTickerSymbols(url string, cache c.Cache) (TickerSymbolToSourceSymbol, error) {
+	cacheKey := "symbols:" + url
+
+	if cache != nil {
+		var cached TickerSymbolToSourceSymbol
+		if cache.Get(cacheKey, &cached) {
+			return cached, nil
+		}
+	}
+
 	resp, err := http.Get(url) //nolint:gosec
 	if err != nil {
 		return TickerSymbolToSourceSymbol{}, err
@@ -74,6 +90,10 @@ func GetTickerSymbols(url string) (TickerSymbolToSourceSymbol, error) {
 	tickerSymbolToSourceSymbol, err := parseTickerSymbolToSourceSymbol(resp.Body)
 	if err != nil {
 		return TickerSymbolToSourceSymbol{}, err
+	}
+
+	if cache != nil {
+		cache.Set(cacheKey, tickerSymbolToSourceSymbol, ttlSymbolMap)
 	}
 
 	return tickerSymbolToSourceSymbol, nil

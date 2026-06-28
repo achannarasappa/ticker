@@ -5,14 +5,30 @@ import (
 	"errors"
 	"maps"
 	"sync"
+	"time"
 
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 	"github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/unary"
 )
 
+const (
+	// cacheKeyCurrencyRate namespaces a single from -> to currency rate so
+	// overlapping currencies are shared across instances regardless of the full
+	// set requested.
+	cacheKeyCurrencyRate = "yahoo:currency-rate:"
+	// ttlCurrencyRates is kept short since exchange rates drift continuously.
+	ttlCurrencyRates = time.Hour
+)
+
+// currencyRateKey builds the cache key for a single from -> to currency rate.
+func currencyRateKey(fromCurrency, toCurrency string) string {
+	return cacheKeyCurrencyRate + toCurrency + ":" + fromCurrency
+}
+
 // MonitorCurrencyRatesYahoo represents a Yahoo Finance monitor
 type MonitorCurrencyRateYahoo struct {
 	unaryAPI                 *unary.UnaryAPI
+	cache                    c.Cache
 	ctx                      context.Context
 	cancel                   context.CancelFunc
 	currencyRateCache        map[string]c.CurrencyRate
@@ -31,6 +47,7 @@ type Config struct {
 	ChanUpdateCurrencyRates  chan c.CurrencyRates
 	ChanRequestCurrencyRates chan []string
 	ChanError                chan error
+	Cache                    c.Cache
 }
 
 // NewMonitorCurrencyRateYahoo creates a new MonitorCurrencyRateYahoo
@@ -40,6 +57,7 @@ func NewMonitorCurrencyRateYahoo(config Config) *MonitorCurrencyRateYahoo {
 
 	monitor := &MonitorCurrencyRateYahoo{
 		unaryAPI:                 config.UnaryAPI,
+		cache:                    config.Cache,
 		ctx:                      ctx,
 		cancel:                   cancel,
 		chanUpdateCurrencyRates:  config.ChanUpdateCurrencyRates,
@@ -134,17 +152,42 @@ func (m *MonitorCurrencyRateYahoo) handleRequestCurrencyRates() {
 				continue
 			}
 
-			// Get currency rates from Yahoo unary API
-			rates, err := m.unaryAPI.GetCurrencyRates(fromCurrenciesToRequest, m.targetCurrency)
-			if err != nil {
-				m.chanError <- err
+			// Resolve rates from the on-disk cache
+			resolvedRates := make(map[string]c.CurrencyRate)
+			currenciesToFetch := make([]string, 0, len(fromCurrenciesToRequest))
 
-				continue
+			for _, currency := range fromCurrenciesToRequest {
+				var cached c.CurrencyRate
+				if m.cache != nil && m.cache.Get(currencyRateKey(currency, m.targetCurrency), &cached) {
+					resolvedRates[currency] = cached
+
+					continue
+				}
+
+				currenciesToFetch = append(currenciesToFetch, currency)
+			}
+
+			if len(currenciesToFetch) > 0 {
+				// Get currency rates from Yahoo unary API
+				rates, err := m.unaryAPI.GetCurrencyRates(currenciesToFetch, m.targetCurrency)
+				if err != nil {
+					m.chanError <- err
+
+					continue
+				}
+
+				for currency, rate := range rates {
+					resolvedRates[currency] = rate
+
+					if m.cache != nil {
+						m.cache.Set(currencyRateKey(currency, m.targetCurrency), rate, ttlCurrencyRates)
+					}
+				}
 			}
 
 			// Update the cache
 			m.mu.Lock()
-			maps.Copy(m.currencyRateCache, rates)
+			maps.Copy(m.currencyRateCache, resolvedRates)
 			m.mu.Unlock()
 			m.chanUpdateCurrencyRates <- m.currencyRateCache
 		}

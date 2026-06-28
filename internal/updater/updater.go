@@ -3,23 +3,20 @@ package updater
 import (
 	"encoding/json"
 	"net/http"
-	"path/filepath"
 	"time"
 
-	"github.com/adrg/xdg"
+	"github.com/achannarasappa/ticker/v5/internal/cache"
 	"github.com/spf13/afero"
 )
 
-const checkInterval = 3 * time.Hour
+const (
+	checkInterval         = 3 * time.Hour
+	cacheKeyLatestVersion = "latest-version"
+)
 
-type cacheEntry struct {
-	CheckedAt     time.Time `json:"checked_at"`
-	LatestVersion string    `json:"latest_version"`
-}
-
-// CacheFilePath returns the path to the update check cache file
+// CacheFilePath returns the path to the cache file
 func CacheFilePath() string {
-	return filepath.Join(xdg.CacheHome, "ticker", "update-check.json")
+	return cache.FilePath()
 }
 
 // Check returns the latest version if one is available and newer than currentVersion,
@@ -30,14 +27,11 @@ func Check(currentVersion, releasesURL, cacheFilePath string, fs afero.Fs) strin
 		return ""
 	}
 
-	if entry, err := readCache(cacheFilePath, fs); err == nil {
-		if time.Since(entry.CheckedAt) < checkInterval {
-			if entry.LatestVersion != currentVersion {
-				return entry.LatestVersion
-			}
+	c := cache.New(fs, cacheFilePath, true)
 
-			return ""
-		}
+	var latest string
+	if c.Get(cacheKeyLatestVersion, &latest) {
+		return newerVersion(latest, currentVersion)
 	}
 
 	latest, err := fetchLatest(releasesURL)
@@ -45,41 +39,19 @@ func Check(currentVersion, releasesURL, cacheFilePath string, fs afero.Fs) strin
 		return ""
 	}
 
-	_ = writeCache(cacheFilePath, latest, fs)
+	c.Set(cacheKeyLatestVersion, latest, checkInterval)
 
+	return newerVersion(latest, currentVersion)
+}
+
+// newerVersion returns latest when it differs from currentVersion, otherwise an
+// empty string.
+func newerVersion(latest, currentVersion string) string {
 	if latest != currentVersion {
 		return latest
 	}
 
 	return ""
-}
-
-func readCache(path string, fs afero.Fs) (cacheEntry, error) {
-	data, err := afero.ReadFile(fs, path)
-	if err != nil {
-		return cacheEntry{}, err
-	}
-	var entry cacheEntry
-	if err := json.Unmarshal(data, &entry); err != nil {
-		return cacheEntry{}, err
-	}
-
-	return entry, nil
-}
-
-func writeCache(path, latestVersion string, fs afero.Fs) error {
-	data, err := json.Marshal(cacheEntry{
-		CheckedAt:     time.Now(),
-		LatestVersion: latestVersion,
-	})
-	if err != nil {
-		return err
-	}
-	if err := fs.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return err
-	}
-
-	return afero.WriteFile(fs, path, data, 0644)
 }
 
 func fetchLatest(releasesURL string) (string, error) {

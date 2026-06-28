@@ -8,7 +8,9 @@ import (
 
 	"github.com/achannarasappa/ticker/v5/internal/cli/symbol"
 	c "github.com/achannarasappa/ticker/v5/internal/common"
+	"github.com/achannarasappa/ticker/v5/internal/cache"
 	"github.com/onsi/gomega/ghttp"
+	"github.com/spf13/afero"
 )
 
 var _ = Describe("Symbol", func() {
@@ -69,7 +71,7 @@ var _ = Describe("Symbol", func() {
 				},
 			}
 
-			outputSymbols, outputErr := symbol.GetTickerSymbols(server.URL() + "/symbols.csv")
+			outputSymbols, outputErr := symbol.GetTickerSymbols(server.URL()+"/symbols.csv", nil)
 
 			Expect(outputSymbols).To(Equal(expectedSymbols))
 			Expect(outputErr).NotTo(HaveOccurred())
@@ -95,7 +97,7 @@ var _ = Describe("Symbol", func() {
 					},
 				}
 
-				outputSymbols, outputErr := symbol.GetTickerSymbols(server.URL() + "/symbols.csv")
+				outputSymbols, outputErr := symbol.GetTickerSymbols(server.URL()+"/symbols.csv", nil)
 
 				Expect(outputSymbols).To(Equal(expectedSymbols))
 				Expect(outputErr).NotTo(HaveOccurred())
@@ -117,9 +119,33 @@ var _ = Describe("Symbol", func() {
 					),
 				)
 
-				_, outputErr := symbol.GetTickerSymbols(server.URL() + "/symbols.csv")
+				_, outputErr := symbol.GetTickerSymbols(server.URL()+"/symbols.csv", nil)
 
 				Expect(outputErr).To(HaveOccurred())
+			})
+
+		})
+
+		When("a cache is provided", func() {
+
+			It("serves from the cache on a subsequent call without a network request", func() {
+				responseFixture := `"BTC.X","BTC-USDC","cb"
+`
+				server.RouteToHandler("GET", "/symbols.csv",
+					ghttp.CombineHandlers(
+						ghttp.RespondWith(http.StatusOK, responseFixture, http.Header{"Content-Type": []string{"text/plain; charset=utf-8"}}),
+					),
+				)
+
+				cache := cache.New(afero.NewMemMapFs(), "/cache/startup-cache.json", true)
+
+				outputFirst, errFirst := symbol.GetTickerSymbols(server.URL()+"/symbols.csv", cache)
+				outputSecond, errSecond := symbol.GetTickerSymbols(server.URL()+"/symbols.csv", cache)
+
+				Expect(errFirst).NotTo(HaveOccurred())
+				Expect(errSecond).NotTo(HaveOccurred())
+				Expect(outputSecond).To(Equal(outputFirst))
+				Expect(server.ReceivedRequests()).To(HaveLen(1))
 			})
 
 		})
@@ -134,7 +160,7 @@ var _ = Describe("Symbol", func() {
 					),
 				)
 
-				_, outputErr := symbol.GetTickerSymbols(server.URL() + "/symbols.csv")
+				_, outputErr := symbol.GetTickerSymbols(server.URL()+"/symbols.csv", nil)
 
 				Expect(outputErr).To(HaveOccurred())
 			})

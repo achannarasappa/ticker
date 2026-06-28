@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/achannarasappa/ticker/v5/internal/cache"
 	"github.com/achannarasappa/ticker/v5/internal/cli/symbol"
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 	"github.com/achannarasappa/ticker/v5/internal/ui/util"
@@ -31,6 +32,8 @@ type Options struct {
 	ShowHoldings          bool // Deprecated: use ShowPositions instead, kept for backwards compatibility
 	ShowPositions         bool // Preferred field name
 	Sort                  string
+	NoCache               bool
+	Debug                 bool
 }
 
 type symbolSource struct {
@@ -137,7 +140,19 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		err       error
 	)
 
-	groups, err = getGroups(config, d)
+	var logger *log.Logger
+
+	if config.Debug {
+		logger, err = getLogger(d)
+
+		if err != nil {
+			return c.Context{}, err
+		}
+	}
+
+	cache := cache.New(d.Fs, cache.FilePath(), cacheEnabled(config.Cache))
+
+	groups, err = getGroups(config, d, cache)
 
 	if err != nil {
 		return c.Context{}, err
@@ -149,21 +164,12 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		return c.Context{}, err
 	}
 
-	var logger *log.Logger
-
-	if config.Debug {
-		logger, err = getLogger(d)
-
-		if err != nil {
-			return c.Context{}, err
-		}
-	}
-
 	context := c.Context{
 		Reference: reference,
 		Config:    config,
 		Groups:    groups,
 		Logger:    logger,
+		Cache:     cache,
 	}
 
 	return context, err
@@ -232,8 +238,33 @@ func GetConfig(dep c.Dependencies, configPath string, options Options) (c.Config
 		config.ShowPositions = showHoldingsFromCLI || showHoldingsFromConfig
 	}
 	config.Sort = getStringOption(options.Sort, config.Sort)
+	config.Cache = getCacheOption(options.NoCache, config.Cache)
+	config.Debug = getBoolOption(options.Debug, config.Debug)
 
 	return config, nil
+}
+
+// cacheEnabled reports whether the cache is enabled, defaulting to on when the
+// config value is unset (nil).
+func cacheEnabled(configValue *bool) bool {
+	return configValue == nil || *configValue
+}
+
+// getCacheOption resolves whether the cache is enabled. The cache defaults to on
+// and is disabled only by an explicit `cache: false` in config or the
+// --no-cache flag, with the flag taking precedence.
+func getCacheOption(noCacheFlag bool, configValue *bool) *bool {
+	enabled := true
+
+	if configValue != nil {
+		enabled = *configValue
+	}
+
+	if noCacheFlag {
+		enabled = false
+	}
+
+	return &enabled
 }
 
 func getConfigPath(fs afero.Fs, configPathOption string) (string, error) {
@@ -300,12 +331,12 @@ func getStringOption(cliValue string, configValue string) string {
 	return ""
 }
 
-func getGroups(config c.Config, d c.Dependencies) ([]c.AssetGroup, error) {
+func getGroups(config c.Config, d c.Dependencies, cache c.Cache) ([]c.AssetGroup, error) {
 
 	groups := make([]c.AssetGroup, 0)
 	var configAssetGroups []c.ConfigAssetGroup
 
-	tickerSymbolToSourceSymbol, err := symbol.GetTickerSymbols(d.SymbolsURL)
+	tickerSymbolToSourceSymbol, err := symbol.GetTickerSymbols(d.SymbolsURL, cache)
 
 	if err != nil {
 		return []c.AssetGroup{}, err

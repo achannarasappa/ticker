@@ -1,7 +1,6 @@
 package updater_test
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -10,23 +9,20 @@ import (
 	"github.com/onsi/gomega/ghttp"
 	"github.com/spf13/afero"
 
+	"github.com/achannarasappa/ticker/v5/internal/cache"
 	"github.com/achannarasappa/ticker/v5/internal/updater"
 )
 
 const (
-	cacheFilePath  = "/cache/ticker/update-check.json"
+	cacheFilePath  = "/cache/ticker/cache.json"
 	currentVersion = "v5.0.0"
 	latestVersion  = "v5.1.0"
 )
 
-func writeCacheFile(fs afero.Fs, checkedAt time.Time, version string) {
-	type cacheEntry struct {
-		CheckedAt     time.Time `json:"checked_at"`
-		LatestVersion string    `json:"latest_version"`
-	}
-	data, _ := json.Marshal(cacheEntry{CheckedAt: checkedAt, LatestVersion: version})
-	fs.MkdirAll("/cache/ticker", 0755) //nolint:errcheck
-	afero.WriteFile(fs, cacheFilePath, data, 0644) //nolint:errcheck
+// setupCache writes a cached latest-version entry with the given time-to-live so
+// tests can simulate a fresh (positive ttl) or stale (negative ttl) cache.
+func setupCache(fs afero.Fs, version string, ttl time.Duration) {
+	cache.New(fs, cacheFilePath, true).Set("latest-version", version, ttl)
 }
 
 var _ = Describe("Check", func() {
@@ -62,7 +58,7 @@ var _ = Describe("Check", func() {
 	When("the cache is fresh", func() {
 		When("the cached version is newer than the current version", func() {
 			It("should return the cached version without making a network request", func() {
-				writeCacheFile(fs, time.Now(), latestVersion)
+				setupCache(fs, latestVersion, time.Hour)
 				output := updater.Check(currentVersion, server.URL()+"/releases/latest", cacheFilePath, fs)
 				Expect(output).To(Equal(latestVersion))
 				Expect(server.ReceivedRequests()).To(BeEmpty())
@@ -71,7 +67,7 @@ var _ = Describe("Check", func() {
 
 		When("the cached version matches the current version", func() {
 			It("should return empty without making a network request", func() {
-				writeCacheFile(fs, time.Now(), currentVersion)
+				setupCache(fs, currentVersion, time.Hour)
 				output := updater.Check(currentVersion, server.URL()+"/releases/latest", cacheFilePath, fs)
 				Expect(output).To(BeEmpty())
 				Expect(server.ReceivedRequests()).To(BeEmpty())
@@ -81,7 +77,7 @@ var _ = Describe("Check", func() {
 
 	When("the cache is stale", func() {
 		It("should fetch from the API and return the latest version", func() {
-			writeCacheFile(fs, time.Now().Add(-4*time.Hour), currentVersion)
+			setupCache(fs, currentVersion, -time.Minute)
 			output := updater.Check(currentVersion, server.URL()+"/releases/latest", cacheFilePath, fs)
 			Expect(output).To(Equal(latestVersion))
 			Expect(server.ReceivedRequests()).To(HaveLen(1))

@@ -7,8 +7,20 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	c "github.com/achannarasappa/ticker/v5/internal/common"
+)
+
+const (
+	// cacheKeySession identifies the cached Yahoo session (cookies + crumb). The
+	// session is transport-level authentication shared by every Yahoo request, so
+	// it is cached here; use-case data (currency map, currency rates) is cached by
+	// the monitors that own it, not in this transport client.
+	cacheKeySession = "yahoo:session"
+	// ttlSession bounds reuse of the Yahoo session. The session itself is valid
+	// for much longer and is re-established automatically if rejected.
+	ttlSession = 24 * time.Hour
 )
 
 // UnaryAPI is a client for the API
@@ -20,6 +32,7 @@ type UnaryAPI struct {
 	sessionConsentURL string
 	cookies           []*http.Cookie
 	crumb             string
+	cache             c.Cache
 }
 
 // Config contains configuration options for the UnaryAPI client
@@ -28,11 +41,24 @@ type Config struct {
 	SessionRootURL    string
 	SessionCrumbURL   string
 	SessionConsentURL string
+	Cache             c.Cache
 }
 
 type SymbolToCurrency struct {
 	Symbol       string
 	FromCurrency string
+}
+
+// sessionCache is the serializable form of the Yahoo session (cookies + crumb)
+// persisted to the startup cache so it can be shared between ticker instances.
+type sessionCache struct {
+	Cookies []sessionCookie `json:"cookies"`
+	Crumb   string          `json:"crumb"`
+}
+
+type sessionCookie struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 // NewUnaryAPI creates a new client
@@ -54,7 +80,46 @@ func NewUnaryAPI(config Config) *UnaryAPI {
 		sessionRootURL:    config.SessionRootURL,
 		sessionCrumbURL:   config.SessionCrumbURL,
 		sessionConsentURL: config.SessionConsentURL,
+		cache:             config.Cache,
 	}
+}
+
+// loadSessionFromCache populates cookies and crumb from the shared cache when
+// available. It returns true on a cache hit.
+func (u *UnaryAPI) loadSessionFromCache() bool {
+	if u.cache == nil {
+		return false
+	}
+
+	var session sessionCache
+	if !u.cache.Get(cacheKeySession, &session) {
+		return false
+	}
+
+	cookies := make([]*http.Cookie, 0, len(session.Cookies))
+	for _, cookie := range session.Cookies {
+		// Reconstructed outbound request cookies; only Name and Value are sent via req.AddCookie
+		cookies = append(cookies, &http.Cookie{Name: cookie.Name, Value: cookie.Value}) //nolint:gosec
+	}
+
+	u.cookies = cookies
+	u.crumb = session.Crumb
+
+	return true
+}
+
+// saveSessionToCache persists the current cookies and crumb to the shared cache.
+func (u *UnaryAPI) saveSessionToCache() {
+	if u.cache == nil {
+		return
+	}
+
+	session := sessionCache{Crumb: u.crumb}
+	for _, cookie := range u.cookies {
+		session.Cookies = append(session.Cookies, sessionCookie{Name: cookie.Name, Value: cookie.Value})
+	}
+
+	u.cache.Set(cacheKeySession, session, ttlSession)
 }
 
 // GetAssetQuotes issues a HTTP request to retrieve quotes from the API and process the response
@@ -168,6 +233,12 @@ func (u *UnaryAPI) GetCurrencyRates(fromCurrencies []string, toCurrency string) 
 
 func (u *UnaryAPI) getQuotes(symbols []string, fields []string) (Response, error) {
 
+	// Reuse a session shared by other instances when one is cached, so the first
+	// request is authenticated and the session handshake can be skipped.
+	if u.crumb == "" && len(u.cookies) == 0 {
+		u.loadSessionFromCache()
+	}
+
 	// Build URL with query parameters
 	reqURL, err := url.Parse(u.baseURL + "/v7/finance/quote")
 	if err != nil {
@@ -221,6 +292,9 @@ func (u *UnaryAPI) getQuotes(symbols []string, fields []string) (Response, error
 		if err := u.refreshSession(); err != nil {
 			return Response{}, fmt.Errorf("session refresh failed: %w", err)
 		}
+
+		// Persist the freshly established session so other instances can reuse it
+		u.saveSessionToCache()
 
 		// Retry request with refreshed session
 		return u.getQuotes(symbols, fields)

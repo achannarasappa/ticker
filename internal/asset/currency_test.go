@@ -386,5 +386,205 @@ var _ = Describe("Currency", func() {
 				Expect(summary.Cost).To(Equal(0.75))                        // No conversion applied
 			})
 		})
+
+		Describe("Position weight with minor currency assets", func() {
+			When("a single asset is quoted in a minor currency and no display currency is set", func() {
+				It("should weight the position at 100% by converting the value to the summary currency before dividing", func() {
+					inputCtx := c.Context{
+						Reference: c.Reference{},
+					}
+					assetGroupQuote := c.AssetGroupQuote{
+						AssetGroup: c.AssetGroup{
+							ConfigAssetGroup: c.ConfigAssetGroup{
+								Lots: []c.Lot{
+									{
+										Symbol:   "JEGP.L",
+										Quantity: 10,
+										UnitCost: 4000.0, // GBp (quote currency)
+									},
+								},
+							},
+						},
+						AssetQuotes: []c.AssetQuote{
+							{
+								Symbol: "JEGP.L",
+								Currency: c.Currency{
+									FromCurrencyCode: "GBp",
+									ToCurrencyCode:   "USD",
+									Rate:             0.013, // GBp -> USD (GBP -> USD scaled by 10^-2)
+								},
+								QuotePrice: c.QuotePrice{
+									Price: 5000.0, // GBp
+								},
+							},
+						},
+					}
+					assets, _ := GetAssets(inputCtx, assetGroupQuote)
+
+					Expect(assets).To(HaveLen(1))
+					Expect(assets[0].Position.Value).To(Equal(50000.0)) // 10 * 5000 GBp, left in quote currency
+					Expect(assets[0].Position.Weight).To(Equal(100.0))  // not 1/0.013 * 100 ~= 7692%
+				})
+			})
+
+			When("minor and major currency assets are mixed with summary-only conversion", func() {
+				It("should compute weights in the common summary currency", func() {
+					inputCtx := c.Context{
+						Config: c.Config{
+							Currency:                   "GBP",
+							CurrencyConvertSummaryOnly: true,
+						},
+						Reference: c.Reference{},
+					}
+					assetGroupQuote := c.AssetGroupQuote{
+						AssetGroup: c.AssetGroup{
+							ConfigAssetGroup: c.ConfigAssetGroup{
+								Lots: []c.Lot{
+									{
+										Symbol:   "JEGP.L",
+										Quantity: 10,
+										UnitCost: 4000.0, // GBp
+									},
+									{
+										Symbol:   "VUAG.L",
+										Quantity: 10,
+										UnitCost: 40.0, // GBP
+									},
+								},
+							},
+						},
+						AssetQuotes: []c.AssetQuote{
+							{
+								Symbol: "JEGP.L",
+								Currency: c.Currency{
+									FromCurrencyCode: "GBp",
+									ToCurrencyCode:   "GBP",
+									Rate:             0.01, // GBp -> GBP
+								},
+								QuotePrice: c.QuotePrice{
+									Price: 5000.0, // GBp -> 500 GBP worth of value at qty 10
+								},
+							},
+							{
+								Symbol: "VUAG.L",
+								Currency: c.Currency{
+									FromCurrencyCode: "GBP",
+									ToCurrencyCode:   "GBP",
+									Rate:             1.0, // GBP -> GBP
+								},
+								QuotePrice: c.QuotePrice{
+									Price: 50.0, // GBP -> 500 GBP worth of value at qty 10
+								},
+							},
+						},
+					}
+					assets, summary := GetAssets(inputCtx, assetGroupQuote)
+
+					Expect(assets).To(HaveLen(2))
+					// Per-position values stay in their quote currency
+					Expect(assets[0].Position.Value).To(Equal(50000.0)) // GBp
+					Expect(assets[1].Position.Value).To(Equal(500.0))   // GBP
+					// Both contribute 500 GBP to the summary, so weights are equal
+					Expect(assets[0].Position.Weight).To(Equal(50.0))
+					Expect(assets[1].Position.Weight).To(Equal(50.0))
+					Expect(summary.Value).To(Equal(1000.0)) // 500 GBP + 500 GBP
+				})
+			})
+
+			When("a minor currency asset is fully converted to the major unit", func() {
+				It("should convert value, cost, and avg cost to the major unit and weight at 100%", func() {
+					inputCtx := c.Context{
+						Config: c.Config{
+							Currency: "GBP",
+						},
+						Reference: c.Reference{},
+					}
+					assetGroupQuote := c.AssetGroupQuote{
+						AssetGroup: c.AssetGroup{
+							ConfigAssetGroup: c.ConfigAssetGroup{
+								Lots: []c.Lot{
+									{
+										Symbol:    "JEGP.L",
+										Quantity:  10,
+										UnitCost:  4000.0, // GBp (quote currency, converted automatically)
+										FixedCost: 100.0,  // GBp
+									},
+								},
+							},
+						},
+						AssetQuotes: []c.AssetQuote{
+							{
+								Symbol: "JEGP.L",
+								Currency: c.Currency{
+									FromCurrencyCode: "GBp",
+									ToCurrencyCode:   "GBP",
+									Rate:             0.01, // GBp -> GBP
+								},
+								QuotePrice: c.QuotePrice{
+									Price: 5000.0, // GBp
+								},
+							},
+						},
+					}
+					assets, summary := GetAssets(inputCtx, assetGroupQuote)
+
+					Expect(assets).To(HaveLen(1))
+					Expect(assets[0].Currency.ToCurrencyCode).To(Equal("GBP"))
+					Expect(assets[0].QuotePrice.Price).To(Equal(50.0))  // 5000 GBp -> 50 GBP
+					Expect(assets[0].Position.Value).To(Equal(500.0))   // 10 * 5000 GBp -> 500 GBP
+					Expect(assets[0].Position.Cost).To(Equal(401.0))    // (4000*10 + 100) GBp -> 401 GBP
+					Expect(assets[0].Position.UnitCost).To(Equal(40.1)) // GBP
+					Expect(assets[0].Position.Weight).To(Equal(100.0))
+					Expect(summary.Value).To(Equal(500.0)) // already in GBP
+				})
+			})
+
+			When("a minor currency asset is converted but unit cost conversion is disabled", func() {
+				It("should convert value to the major unit while leaving the cost basis as entered", func() {
+					inputCtx := c.Context{
+						Config: c.Config{
+							Currency:                          "GBP",
+							CurrencyDisableUnitCostConversion: true,
+						},
+						Reference: c.Reference{},
+					}
+					assetGroupQuote := c.AssetGroupQuote{
+						AssetGroup: c.AssetGroup{
+							ConfigAssetGroup: c.ConfigAssetGroup{
+								Lots: []c.Lot{
+									{
+										Symbol:    "JEGP.L",
+										Quantity:  10,
+										UnitCost:  40.0,  // GBP (major unit, entered directly)
+										FixedCost: 11.95, // GBP
+									},
+								},
+							},
+						},
+						AssetQuotes: []c.AssetQuote{
+							{
+								Symbol: "JEGP.L",
+								Currency: c.Currency{
+									FromCurrencyCode: "GBp",
+									ToCurrencyCode:   "GBP",
+									Rate:             0.01, // GBp -> GBP
+								},
+								QuotePrice: c.QuotePrice{
+									Price: 5000.0, // GBp
+								},
+							},
+						},
+					}
+					assets, summary := GetAssets(inputCtx, assetGroupQuote)
+
+					Expect(assets).To(HaveLen(1))
+					Expect(assets[0].QuotePrice.Price).To(Equal(50.0)) // 5000 GBp -> 50 GBP
+					Expect(assets[0].Position.Value).To(Equal(500.0))  // 10 * 5000 GBp -> 500 GBP
+					Expect(assets[0].Position.Cost).To(Equal(411.95))  // (40*10 + 11.95) GBP, not converted
+					Expect(assets[0].Position.Weight).To(Equal(100.0))
+					Expect(summary.Value).To(Equal(500.0))
+				})
+			})
+		})
 	})
 })

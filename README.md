@@ -184,6 +184,15 @@ Note: Coincap (`.CC`) and CoinGecko (`.CG`) are no longer supported after v5.0.0
 * If the `currency-summary-only` is set to `true` and a value is set for `currency`, only the summary values will be converted
 * If `currency-disable-unit-cost-conversion` flag to `true`, currency conversion will not be done when calculating the cost basis. This can be useful for users that purchase a non-US asset and want to use the currency exchange rate at the time of purchase by inputting the unit cost in their local currency (set in `currency`) rather than using the most recent currency exchange rate.
 
+#### Minor currencies
+
+`ticker` supports quotes returned in a currency's minor unit rather than its major unit (e.g. London Stock Exchange listings quoted in pence as `GBp` instead of pounds as `GBP`). Minor unit conversion to major unit behavior can be controlled similarly to the currency conversion feature.
+
+These are the behaviors for a minor unit quote:
+* No `currency` set (or `currency-summary-only: true`) - per-position values, quote price, and the cost basis are all displayed in the minor unit and cost basis should be set in the minor unit
+* `currency` is set - all displayed values are converted to the major unit. Cost basis should still be entered in the minor unit
+* `currency` is set with `currency-disable-unit-cost-conversion` - displayed values are converted to the major unit and cost basis should be set in the major unit
+
 ### Custom Color Schemes
 
 `ticker` supports setting custom color schemes from the config file. Colors are represented by a [hex triplet](https://en.wikipedia.org/wiki/Web_colors#Hex_triplet). Below is an annotated example config block from `.ticker.yaml` where custom colors are set:

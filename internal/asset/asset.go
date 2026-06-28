@@ -29,6 +29,7 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Pos
 
 	var positionSummary PositionSummary
 	assets := make([]c.Asset, 0)
+	summaryValues := make([]float64, 0) // per-asset value expressed in the summary/display currency, used for weights
 	lotsBySymbol := getLots(lots)
 	orderIndex := make(map[string]int)
 
@@ -50,6 +51,7 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Pos
 
 		position := getPositionFromAssetQuote(assetQuote, lotsBySymbol, currencyRateByUse)
 		positionSummary = addPositionToPositionSummary(positionSummary, position, currencyRateByUse)
+		summaryValues = append(summaryValues, position.Value*currencyRateByUse.SummaryValue)
 
 		assets = append(assets, c.Asset{
 			Name:   assetQuote.Name,
@@ -73,7 +75,7 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Pos
 
 	}
 
-	assets = updatePositionWeights(assets, positionSummary)
+	assets = updatePositionWeights(assets, summaryValues, positionSummary)
 
 	return assets, positionSummary
 
@@ -116,14 +118,16 @@ func addPositionToPositionSummary(positionSummary PositionSummary, position c.Po
 	}
 }
 
-func updatePositionWeights(assets []c.Asset, positionSummary PositionSummary) []c.Asset {
+func updatePositionWeights(assets []c.Asset, summaryValues []float64, positionSummary PositionSummary) []c.Asset {
 
 	if positionSummary.Value == 0 {
 		return assets
 	}
 
-	for i, asset := range assets {
-		assets[i].Position.Weight = (asset.Position.Value / positionSummary.Value) * 100
+	// Weight uses each position's value expressed in the summary/display currency so the numerator and
+	// denominator share a currency (e.g. a GBp-quoted position whose value is otherwise left in pence).
+	for i := range assets {
+		assets[i].Position.Weight = (summaryValues[i] / positionSummary.Value) * 100
 	}
 
 	return assets

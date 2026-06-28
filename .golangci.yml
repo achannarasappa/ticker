@@ -100,6 +100,8 @@ linters:
     - wsl
     - prealloc
   settings:
+    goconst:
+      min-occurrences: 4
     staticcheck:
       checks:
         - "all"

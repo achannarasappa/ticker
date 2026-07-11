@@ -2,6 +2,7 @@ package common
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	"github.com/spf13/afero"
@@ -47,6 +48,7 @@ type Config struct {
 	CurrencyDisableUnitCostConversion bool               `yaml:"currency-disable-unit-cost-conversion"`
 	ColorScheme                       ConfigColorScheme  `yaml:"colors"`
 	AssetGroup                        []ConfigAssetGroup `yaml:"groups"`
+	SnapTrade                         ConfigSnapTrade    `yaml:"snaptrade"`
 	Debug                             bool               `yaml:"debug"`
 	// Cache enables the on-disk cache. It is a pointer so that an unset config
 	// value (nil) can be distinguished from an explicit false, allowing the
@@ -55,14 +57,37 @@ type Config struct {
 	Cache *bool `yaml:"cache"`
 }
 
+// ConfigSnapTrade represents SnapTrade credentials used to pull live brokerage holdings.
+// Personal keys (a single self-serve user) need only ClientID + ConsumerKey. Commercial
+// keys additionally register and identify users via UserID.
+type ConfigSnapTrade struct {
+	ClientID    string `yaml:"client-id"`
+	ConsumerKey string `yaml:"consumer-key"` // secret
+	AccountType string `yaml:"account-type"` // "personal" or "commercial"; inferred from UserID when empty
+	UserID      string `yaml:"user-id"`      // commercial only: partner-chosen user identifier, e.g. an email
+}
+
+// IsPersonal reports whether these are personal SnapTrade keys (the client ID and
+// consumer key identify a single user, so no registration or user ID is needed).
+// An explicit AccountType wins; otherwise the absence of a UserID implies personal.
+func (st ConfigSnapTrade) IsPersonal() bool {
+	if st.AccountType != "" {
+		return strings.EqualFold(st.AccountType, "personal")
+	}
+
+	return st.UserID == ""
+}
+
 // ConfigColorScheme represents user defined color scheme
 type ConfigColorScheme struct {
-	Text          string `yaml:"text"`
-	TextLight     string `yaml:"text-light"`
-	TextLabel     string `yaml:"text-label"`
-	TextLine      string `yaml:"text-line"`
-	TextTag       string `yaml:"text-tag"`
-	BackgroundTag string `yaml:"background-tag"`
+	Text             string `yaml:"text"`
+	TextLight        string `yaml:"text-light"`
+	TextLabel        string `yaml:"text-label"`
+	TextLine         string `yaml:"text-line"`
+	TextTag          string `yaml:"text-tag"`
+	TextHeader       string `yaml:"text-header"`
+	BackgroundTag    string `yaml:"background-tag"`
+	BackgroundHeader string `yaml:"background-header"`
 }
 
 type ConfigAssetGroup struct {
@@ -70,11 +95,20 @@ type ConfigAssetGroup struct {
 	Watchlist []string `yaml:"watchlist"`
 	Lots      []Lot    `yaml:"lots"`     // Preferred field name
 	Holdings  []Lot    `yaml:"holdings"` // Deprecated: use Lots instead, kept for backwards compatibility
+	Options   []Option `yaml:"options"`
 }
 
 type AssetGroup struct {
 	ConfigAssetGroup
 	SymbolsBySource []AssetGroupSymbolsBySource
+	// IsSnapTrade marks groups derived from a SnapTrade brokerage account (built at runtime, not from config)
+	IsSnapTrade bool
+	// SnapTradeAccountID identifies the account so its holdings can be loaded lazily
+	SnapTradeAccountID string
+	// SnapTradeInstitution is the brokerage name (e.g. "Robinhood"), shown as the group source
+	SnapTradeInstitution string
+	// SnapTradeAccountNumber is the account number, shown masked (last 4) alongside the name
+	SnapTradeAccountNumber string
 }
 
 type AssetGroupSymbolsBySource struct {
@@ -103,6 +137,7 @@ type Dependencies struct {
 	MonitorYahooSessionRootURL       string
 	MonitorYahooSessionCrumbURL      string
 	MonitorYahooSessionConsentURL    string
+	SnapTradeBaseURL                 string
 }
 
 type Monitor interface {
@@ -127,6 +162,17 @@ type Lot struct {
 	FixedCost float64 `yaml:"fixed_cost"`
 }
 
+// Option represents an option contract
+type Option struct {
+	Symbol         string  `yaml:"symbol"`
+	StrikePrice    float64 `yaml:"strike_price"`
+	Type           string  `yaml:"type"` // "put" or "call"
+	Premium        float64 `yaml:"premium"`
+	CurrentPremium float64 `yaml:"current_premium"` // current market premium per share (optional; from broker)
+	Contracts      float64 `yaml:"contracts"`
+	Expiration     string  `yaml:"expiration"`
+}
+
 // CurrencyRates is a map of currency rates for lookup by currency that needs to be converted
 type CurrencyRates map[string]CurrencyRate
 
@@ -139,13 +185,14 @@ type CurrencyRate struct {
 
 // Styles represents style functions for components of the UI
 type Styles struct {
-	Text      StyleFn
-	TextLight StyleFn
-	TextLabel StyleFn
-	TextBold  StyleFn
-	TextLine  StyleFn
-	TextPrice func(float64, string) string
-	Tag       StyleFn
+	Text       StyleFn
+	TextLight  StyleFn
+	TextLabel  StyleFn
+	TextBold   StyleFn
+	TextLine   StyleFn
+	TextHeader StyleFn
+	TextPrice  func(float64, string) string
+	Tag        StyleFn
 }
 
 // StyleFn is a function that styles text
@@ -209,6 +256,17 @@ type QuoteFutures struct {
 	ContractSize     float64
 }
 
+type QuoteOption struct {
+	StrikePrice    float64
+	BreakevenPrice float64
+	Type           string // "put" or "call"
+	Premium        float64
+	CurrentPremium float64
+	Contracts      float64
+	DiffToStrike   float64
+	Expiration     string
+}
+
 type Exchange struct {
 	Name                    string
 	Delay                   float64
@@ -236,6 +294,7 @@ type Asset struct {
 	QuotePrice    QuotePrice
 	QuoteExtended QuoteExtended
 	QuoteFutures  QuoteFutures
+	QuoteOption   QuoteOption
 	QuoteSource   QuoteSource
 	Exchange      Exchange
 	Meta          Meta
@@ -250,6 +309,7 @@ const (
 	AssetClassPrivateSecurity
 	AssetClassUnknown
 	AssetClassFuturesContract
+	AssetClassOption
 	AssetClassCurrency
 )
 

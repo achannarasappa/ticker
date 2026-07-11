@@ -125,6 +125,12 @@ func GetColorScheme(colorScheme c.ConfigColorScheme) c.Styles {
 			"",
 			false,
 		),
+		// A distinct chip-style header (like the "ticker" logo, but blue)
+		TextHeader: NewStyle(
+			getColorOrDefault(colorScheme.TextHeader, "#ffffd7"),
+			getColorOrDefault(colorScheme.BackgroundHeader, "#0087d7"),
+			true,
+		),
 		TextPrice: stylePrice,
 		Tag: NewStyle(
 			getColorOrDefault(colorScheme.TextTag, "#8a8a8a"),

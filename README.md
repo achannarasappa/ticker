@@ -77,7 +77,7 @@ ticker -w NET,AAPL,TSLA
 ## Usage
 |Option Name|Alias|Flag|Default|Description|
 |-------------------|--|-------------------|----------------|-------------------------------------------------|
-|                   |  |--config           |`~/.ticker.yaml`|config file location with watchlist and positions|
+|                   |  |--config           |`~/.config/ticker/config.yaml`|config file location with watchlist and positions|
 |`interval`         |-i|--interval         |`5`             |Refresh interval in seconds|
 |`watchlist`        |-w|--watchlist        |                |comma separated list of symbols to watch|
 |`show-tags`        |  |--show-tags        |                |display currency, exchange name, and quote delay for each quote |
@@ -95,7 +95,7 @@ ticker -w NET,AAPL,TSLA
 Configuration is not required to watch stock price but is helpful when always watching the same stocks. Configuration can also be used to set cost basis lots which will in turn be used to show total gain or loss on any position.
 
 ```yaml
-# ~/.ticker.yaml
+# ~/.config/ticker/config.yaml
 show-summary: true
 show-tags: true
 show-fundamentals: true
@@ -133,10 +133,10 @@ groups:
         unit_cost: 159.10
 ```
 
-* All properties in `.ticker.yaml` are optional
+* All properties in the config file are optional
 * Symbols not on the watchlist that exists in `lots` are implicitly added to the watchlist
 * To add multiple cost basis lots (`quantity`, `unit_cost`) for the same `symbol`, include two or more entries - see `ARKW` example above
-* `.ticker.yaml` can be set in user home directory, the current directory, or [XDG config home](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
+* The default config location is `~/.config/ticker/config.yaml` (i.e. `config.yaml` under [XDG config home](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)/`ticker`). For backward compatibility, a legacy `.ticker.yaml` in the user home directory, the current directory, or XDG config home is also still read if present.
 * Quantities can be negative to represent closed positions (position netting), short positions, borrowed assets, and other concepts
 
 ### Display Options
@@ -160,6 +160,91 @@ Watchlists and lots can be grouped in `.ticker.yml` under the `groups` property.
 
 * If top level `watchlist` or `lots` properties are defined in the configuration file, the entries there will be added to a group named `default` which will always be shown first
 * Ordering is defined by order in the configuration file
+
+### Options Tracking
+
+Track options contracts with strike price, breakeven price, and difference to strike. Options can be added to groups alongside watchlists and holdings:
+
+```yaml
+groups:
+  - name: option_group
+    options:
+      - symbol: AAPL
+        strike_price: 150.00
+        type: put
+        premium: 3.50
+        contracts: 2
+        expiration: 2026-07-10
+      - symbol: TSLA
+        strike_price: 250.00
+        type: call
+        premium: 15.00
+        contracts: 1
+```
+
+Each option is its own row, keyed by contract rather than by symbol. You can list multiple options on the same underlying (e.g. different strikes or expirations) and they each get a distinct row, and a stock holding and an option on the same underlying appear as separate rows. When a group mixes holdings and options, they are shown as separate labeled lists (`Holdings` then `Options`).
+
+When viewing options with `--show-fundamentals` (columns left → right):
+* **Strike Price** / **Breakeven** - Contract terms (breakeven is strike ± premium for calls/puts)
+* **Strike Diff** / **Status** - Distance to strike and moneyness (`ITM` / `ATM` / `OTM`)
+* **Premium** / **Cur. Premium** - Cost basis vs current mark per share (mark shown when available, e.g. from a broker)
+* **Contracts** / **Total Premium** - Position size (with `--show-positions`)
+* **Underlying price** with **premium change** underneath (mark − cost), not the underlying's day move
+
+* `symbol` - Ticker symbol of the underlying asset
+* `strike_price` - Strike price of the option
+* `type` - Either `put` or `call`
+* `premium` - Premium paid per share
+* `current_premium` - (optional) Current market premium per share
+* `contracts` - Number of contracts
+* `expiration` - (optional) Expiration date (`YYYY-MM-DD`), shown in the row label to distinguish contracts
+
+
+### Live Brokerage Holdings (SnapTrade)
+
+`ticker` can pull live holdings directly from a connected brokerage (e.g. Robinhood) using [SnapTrade](https://snaptrade.com). Each connected account is shown as its own group (tab). Quantity and cost basis come from the brokerage; prices are quoted live from the normal data sources.
+
+You need SnapTrade API credentials (`clientId` and `consumerKey`), available from the [SnapTrade dashboard](https://dashboard.snaptrade.com/signup). Both **personal** and **commercial** keys are supported.
+
+**Personal keys** (individual self-serve accounts) identify a single user by the credentials themselves — that's all you need:
+
+```yaml
+snaptrade:
+  client-id: YOUR_SNAPTRADE_CLIENT_ID
+  consumer-key: YOUR_SNAPTRADE_CONSUMER_KEY
+```
+
+**Commercial keys** register and identify users, so add a `user-id`:
+
+```yaml
+snaptrade:
+  client-id: YOUR_SNAPTRADE_CLIENT_ID
+  consumer-key: YOUR_SNAPTRADE_CONSUMER_KEY
+  account-type: commercial
+  user-id: your-identifier # any stable identifier you choose, e.g. your email
+```
+
+Then connect a brokerage once:
+
+```sh
+ticker snaptrade connect
+```
+
+This opens a SnapTrade connection portal in your browser where you log into your brokerage and authorize read-only access. (Commercial keys additionally register a user and store the resulting secret locally under your XDG data directory.) After connecting, run `ticker` and your accounts appear as groups — switch between them with `⭾` and press `r` to re-fetch holdings on demand.
+
+Each account appears as a single group. When an account holds both stocks and options, the watchlist shows them as separate labeled lists — a `Holdings` section followed by an `Options` section. Options are displayed against their underlying's live price — strike, breakeven, premium, and difference to strike are shown with `--show-fundamentals`.
+
+Accounts load in the background so startup stays fast: the account list appears first and each account's holdings load the first time you open its tab.
+
+Press `a` while running `ticker` to open the account selector, where you can choose which accounts to show and set a default account to start on. These choices are saved under your XDG data directory (alongside the connection) and applied on subsequent runs.
+
+* `client-id` - Your SnapTrade client ID
+* `consumer-key` - Your SnapTrade consumer key (secret)
+* `account-type` - `personal` (default) or `commercial`; inferred as commercial when a `user-id` is set
+* `user-id` - Commercial keys only: a stable identifier you choose for your SnapTrade user
+
+If SnapTrade is unreachable or not connected, `ticker` starts normally without the brokerage groups.
+
 
 ### Data Sources & Symbols
 
@@ -203,7 +288,7 @@ These are the behaviors for a minor unit quote:
 `ticker` supports setting custom color schemes from the config file. Colors are represented by a [hex triplet](https://en.wikipedia.org/wiki/Web_colors#Hex_triplet). Below is an annotated example config block from `.ticker.yaml` where custom colors are set:
 
 ```yaml
-# ~/.ticker.yaml
+# ~/.config/ticker/config.yaml
 watchlist:
   - NET
   - TEAM
@@ -216,7 +301,11 @@ colors:
   text-line: "#00ffff"
   text-tag: "#005fff"
   background-tag: "#0087ff"
+  text-header: "#ffffd7"
+  background-header: "#0087d7"
 ```
+
+* `text-header` / `background-header` style the section headers (e.g. `HOLDINGS` / `OPTIONS`) shown when a group mixes holdings and options
 
 * Terminals supporting TrueColor will be able to represent the full color space and in other cases colors will be down sampled
 * Any omitted or invalid colors will revert to default color scheme values

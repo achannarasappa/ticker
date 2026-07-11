@@ -67,11 +67,11 @@ var _ = Describe("Currency", func() {
 					Expect(assets[0].Currency.FromCurrencyCode).To(Equal("EUR"))
 					Expect(assets[0].Currency.ToCurrencyCode).To(Equal("EUR"))
 					Expect(assets[0].QuotePrice.Price).To(Equal(100.0)) // No conversion applied
-					Expect(assets[0].Position.Value).To(Equal(1000.0))   // No conversion applied
+					Expect(assets[0].Position.Value).To(Equal(1000.0))  // No conversion applied
 					Expect(assets[1].Currency.FromCurrencyCode).To(Equal("GBP"))
 					Expect(assets[1].Currency.ToCurrencyCode).To(Equal("GBP"))
 					Expect(assets[1].QuotePrice.Price).To(Equal(100.0)) // No conversion applied
-					Expect(assets[1].Position.Value).To(Equal(1000.0))   // No conversion applied
+					Expect(assets[1].Position.Value).To(Equal(1000.0))  // No conversion applied
 					// These may be incorrect (only if differing quoting currencies) since different currencies may be added together however if currency rate is not available, nothing can be done to fix
 					Expect(summary.Value).To(Equal(2000.0))
 					Expect(summary.Cost).To(Equal(1500.0))
@@ -221,11 +221,11 @@ var _ = Describe("Currency", func() {
 					Expect(assets[0].Currency.FromCurrencyCode).To(Equal("USD"))
 					Expect(assets[0].Currency.ToCurrencyCode).To(Equal("USD"))
 					Expect(assets[0].QuotePrice.Price).To(Equal(100.0)) // No conversion applied
-					Expect(assets[0].Position.Value).To(Equal(1000.0))   // No conversion applied
+					Expect(assets[0].Position.Value).To(Equal(1000.0))  // No conversion applied
 					Expect(assets[1].Currency.FromCurrencyCode).To(Equal("GBP"))
 					Expect(assets[1].Currency.ToCurrencyCode).To(Equal("GBP"))
 					Expect(assets[1].QuotePrice.Price).To(Equal(100.0)) // No conversion applied
-					Expect(assets[1].Position.Value).To(Equal(1000.0))   // No conversion applied
+					Expect(assets[1].Position.Value).To(Equal(1000.0))  // No conversion applied
 					// These may be incorrect (only if differing quoting currencies) since different currencies may be added together however if currency rate is not available, nothing can be done to fix
 					Expect(summary.Value).To(Equal(2000.0))
 					Expect(summary.Cost).To(Equal(1500.0))
@@ -275,11 +275,11 @@ var _ = Describe("Currency", func() {
 					Expect(assets[0].Currency.FromCurrencyCode).To(Equal("USD"))
 					Expect(assets[0].Currency.ToCurrencyCode).To(Equal("EUR"))
 					Expect(assets[0].QuotePrice.Price).To(Equal(125.0)) // Converted
-					Expect(assets[0].Position.Cost).To(Equal(1000.0))    // Not converted
+					Expect(assets[0].Position.Cost).To(Equal(1000.0))   // Not converted
 					Expect(assets[1].Currency.FromCurrencyCode).To(Equal("GBP"))
 					Expect(assets[1].Currency.ToCurrencyCode).To(Equal("EUR"))
 					Expect(assets[1].QuotePrice.Price).To(Equal(50.0)) // Converted
-					Expect(assets[1].Position.Cost).To(Equal(500.0))    // Not converted
+					Expect(assets[1].Position.Cost).To(Equal(500.0))   // Not converted
 					Expect(summary.Value).To(Equal(1750.0))            // Converted
 					Expect(summary.Cost).To(Equal(1500.0))             // Not converted
 				})
@@ -327,11 +327,11 @@ var _ = Describe("Currency", func() {
 					Expect(assets[0].Currency.FromCurrencyCode).To(Equal("USD"))
 					Expect(assets[0].Currency.ToCurrencyCode).To(Equal("USD"))
 					Expect(assets[0].QuotePrice.Price).To(Equal(100.0)) // No conversion applied
-					Expect(assets[0].Position.Value).To(Equal(1000.0))   // No conversion applied
+					Expect(assets[0].Position.Value).To(Equal(1000.0))  // No conversion applied
 					Expect(assets[1].Currency.FromCurrencyCode).To(Equal("GBP"))
 					Expect(assets[1].Currency.ToCurrencyCode).To(Equal("GBP"))
 					Expect(assets[1].QuotePrice.Price).To(Equal(100.0)) // No conversion applied
-					Expect(assets[1].Position.Value).To(Equal(1000.0))   // No conversion applied
+					Expect(assets[1].Position.Value).To(Equal(1000.0))  // No conversion applied
 					Expect(summary.Value).To(Equal(1750.0))             // Converted
 					Expect(summary.Cost).To(Equal(1500.0))              // Converted
 				})
@@ -380,10 +380,10 @@ var _ = Describe("Currency", func() {
 				Expect(assets[0].Currency.FromCurrencyCode).To(Equal("USD"))
 				Expect(assets[0].Currency.ToCurrencyCode).To(Equal("USD")) // Should remain USD, not converted to EUR
 				Expect(assets[0].QuotePrice.Price).To(Equal(0.00075))      // No conversion applied
-				Expect(assets[0].Position.Value).To(Equal(0.75))            // 1000 * 0.00075, no conversion
+				Expect(assets[0].Position.Value).To(Equal(0.75))           // 1000 * 0.00075, no conversion
 				Expect(assets[0].Position.Cost).To(Equal(0.75))            // No conversion applied
-				Expect(summary.Value).To(Equal(0.75))                       // No conversion applied
-				Expect(summary.Cost).To(Equal(0.75))                        // No conversion applied
+				Expect(summary.Value).To(Equal(0.75))                      // No conversion applied
+				Expect(summary.Cost).To(Equal(0.75))                       // No conversion applied
 			})
 		})
 

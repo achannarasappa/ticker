@@ -2,6 +2,8 @@ package watchlist
 
 import (
 	"fmt"
+	"math"
+	"strconv"
 	"strings"
 
 	c "github.com/achannarasappa/ticker/v5/internal/common"
@@ -24,14 +26,12 @@ type Config struct {
 
 // Model for watchlist section
 type Model struct {
-	width          int
-	assets         []*c.Asset
-	assetsBySymbol map[string]*c.Asset
-	sorter         s.Sorter
-	config         Config
-	cellWidths     row.CellWidthsContainer
-	rows           []*row.Model
-	rowsBySymbol   map[string]*row.Model
+	width      int
+	assets     []*c.Asset
+	sorter     s.Sorter
+	config     Config
+	cellWidths row.CellWidthsContainer
+	rows       []*row.Model
 }
 
 // Messages for replacing assets
@@ -46,12 +46,10 @@ type ChangeSortMsg string
 // NewModel returns a model with default values
 func NewModel(config Config) *Model {
 	return &Model{
-		width:          80,
-		config:         config,
-		assets:         make([]*c.Asset, 0),
-		assetsBySymbol: make(map[string]*c.Asset),
-		sorter:         s.NewSorter(config.Sort),
-		rowsBySymbol:   make(map[string]*row.Model),
+		width:  80,
+		config: config,
+		assets: make([]*c.Asset, 0),
+		sorter: s.NewSorter(config.Sort),
 	}
 }
 
@@ -68,13 +66,11 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 		var cmd tea.Cmd
 		cmds := make([]tea.Cmd, 0)
 
-		// Convert []c.Asset to []*c.Asset and update assetsBySymbol map
+		// Convert []c.Asset to []*c.Asset
 		assets := make([]*c.Asset, len(msg))
-		assetsBySymbol := make(map[string]*c.Asset)
 
 		for i := range msg {
 			assets[i] = &msg[i]
-			assetsBySymbol[msg[i].Symbol] = assets[i]
 		}
 
 		assets = m.sorter(assets)
@@ -83,7 +79,6 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 			if i < len(m.rows) {
 				m.rows[i], cmd = m.rows[i].Update(row.UpdateAssetMsg(asset))
 				cmds = append(cmds, cmd)
-				m.rowsBySymbol[assets[i].Symbol] = m.rows[i]
 			} else {
 				m.rows = append(m.rows, row.New(row.Config{
 					Separate:              m.config.Separate,
@@ -93,7 +88,6 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 					Styles:                m.config.Styles,
 					Asset:                 asset,
 				}))
-				m.rowsBySymbol[assets[i].Symbol] = m.rows[len(m.rows)-1]
 			}
 		}
 
@@ -102,7 +96,6 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 		}
 
 		m.assets = assets
-		m.assetsBySymbol = assetsBySymbol
 
 		// TODO: only set conditionally if all assets have changed
 		m.cellWidths = getCellWidths(m.assets)
@@ -174,14 +167,54 @@ func (m *Model) View() string {
 		return fmt.Sprintf("Terminal window too narrow to render content\nResize to fix (%d/80)", m.width)
 	}
 
-	rows := make([]string, 0)
-	for _, row := range m.rows {
-		rows = append(rows, row.View())
+	// Partition into options and everything else, preserving the sorted order within each.
+	holdingsRows := make([]string, 0, len(m.rows))
+	optionsRows := make([]string, 0)
+
+	for i, row := range m.rows {
+		if i < len(m.assets) && m.assets[i].Class == c.AssetClassOption {
+			optionsRows = append(optionsRows, row.View())
+
+			continue
+		}
+
+		holdingsRows = append(holdingsRows, row.View())
 	}
+
+	// When a group mixes holdings and options, render them as separate labeled lists.
+	if len(holdingsRows) > 0 && len(optionsRows) > 0 {
+		sections := make([]string, 0, len(m.rows)+3)
+		sections = append(sections, m.sectionHeading("Holdings"))
+		sections = append(sections, holdingsRows...)
+		sections = append(sections, "")
+		sections = append(sections, m.sectionHeading("Options"))
+		sections = append(sections, optionsRows...)
+
+		return strings.Join(sections, "\n")
+	}
+
+	rows := make([]string, 0, len(holdingsRows)+len(optionsRows))
+	rows = append(rows, holdingsRows...)
+	rows = append(rows, optionsRows...)
 
 	return strings.Join(rows, "\n")
 
 }
+
+// sectionHeading renders a chip-style label followed by a full-width rule,
+// used to visually separate the holdings and options lists within a group.
+func (m *Model) sectionHeading(label string) string {
+
+	chip := " " + strings.ToUpper(label) + " "
+
+	ruleWidth := m.width - len(chip) - 1
+	if ruleWidth < 0 {
+		ruleWidth = 0
+	}
+
+	return m.config.Styles.TextHeader(chip) + " " + m.config.Styles.TextLine(strings.Repeat("─", ruleWidth))
+}
+
 func getCellWidths(assets []*c.Asset) row.CellWidthsContainer {
 
 	cellMaxWidths := row.CellWidthsContainer{}
@@ -189,14 +222,14 @@ func getCellWidths(assets []*c.Asset) row.CellWidthsContainer {
 	for _, asset := range assets {
 		var quoteLength int
 
-		volumeMarketCapLength := len(u.ConvertFloatToString(asset.QuoteExtended.MarketCap, true))
+		volumeMarketCapLength := len(u.ConvertFloatToStringWithCommas(asset.QuoteExtended.MarketCap, true))
 
 		if asset.QuoteExtended.FiftyTwoWeekHigh == 0.0 {
-			quoteLength = len(u.ConvertFloatToString(asset.QuotePrice.Price, asset.Meta.IsVariablePrecision))
+			quoteLength = len(u.ConvertFloatToStringWithCommas(asset.QuotePrice.Price, asset.Meta.IsVariablePrecision))
 		}
 
 		if asset.QuoteExtended.FiftyTwoWeekHigh != 0.0 {
-			quoteLength = len(u.ConvertFloatToString(asset.QuoteExtended.FiftyTwoWeekHigh, asset.Meta.IsVariablePrecision))
+			quoteLength = len(u.ConvertFloatToStringWithCommas(asset.QuoteExtended.FiftyTwoWeekHigh, asset.Meta.IsVariablePrecision))
 		}
 
 		if volumeMarketCapLength > cellMaxWidths.WidthVolumeMarketCap {
@@ -232,6 +265,46 @@ func getCellWidths(assets []*c.Asset) row.CellWidthsContainer {
 				cellMaxWidths.WidthPositionExtended = positionUnitCostLength
 			}
 
+		}
+
+		// Options remap the fundamental columns and reuse position-extended for
+		// contracts / total premium — size each to the values actually shown.
+		if asset.Class == c.AssetClassOption {
+			strikeLen := len(u.ConvertFloatToStringWithCommas(asset.QuoteOption.StrikePrice, asset.Meta.IsVariablePrecision))
+			breakevenLen := len(u.ConvertFloatToStringWithCommas(asset.QuoteOption.BreakevenPrice, asset.Meta.IsVariablePrecision))
+			diffLen := len(u.ConvertFloatToStringWithCommas(asset.QuoteOption.DiffToStrike, asset.Meta.IsVariablePrecision))
+			premiumLen := len(u.ConvertFloatToStringWithCommas(asset.QuoteOption.Premium, asset.Meta.IsVariablePrecision))
+			curPremiumLen := 1 // "-"
+			if asset.QuoteOption.CurrentPremium != 0.0 {
+				curPremiumLen = len(u.ConvertFloatToStringWithCommas(asset.QuoteOption.CurrentPremium, asset.Meta.IsVariablePrecision))
+			}
+
+			if strikeLen > cellMaxWidths.WidthVolumeMarketCap {
+				cellMaxWidths.WidthVolumeMarketCap = strikeLen
+			}
+			if breakevenLen > cellMaxWidths.WidthVolumeMarketCap {
+				cellMaxWidths.WidthVolumeMarketCap = breakevenLen
+			}
+			if diffLen > cellMaxWidths.WidthQuoteRange {
+				cellMaxWidths.WidthQuoteRange = diffLen
+			}
+			if premiumLen > cellMaxWidths.WidthQuoteExtended {
+				cellMaxWidths.WidthQuoteExtended = premiumLen
+			}
+			if curPremiumLen > cellMaxWidths.WidthQuoteExtended {
+				cellMaxWidths.WidthQuoteExtended = curPremiumLen
+			}
+
+			totalPremium := math.Abs(asset.QuoteOption.Premium * asset.QuoteOption.Contracts * 100)
+			contractsLength := len(strconv.FormatFloat(math.Abs(asset.QuoteOption.Contracts), 'f', 0, 64))
+			totalPremiumLength := len(u.ConvertFloatToStringWithCommas(totalPremium, asset.Meta.IsVariablePrecision))
+
+			if contractsLength > cellMaxWidths.WidthPositionExtended {
+				cellMaxWidths.WidthPositionExtended = contractsLength
+			}
+			if totalPremiumLength > cellMaxWidths.WidthPositionExtended {
+				cellMaxWidths.WidthPositionExtended = totalPremiumLength
+			}
 		}
 
 	}

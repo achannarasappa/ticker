@@ -13,13 +13,14 @@ import (
 )
 
 var styles = c.Styles{
-	Text:      func(v string) string { return v },
-	TextLight: func(v string) string { return v },
-	TextLabel: func(v string) string { return v },
-	TextBold:  func(v string) string { return v },
-	TextLine:  func(v string) string { return v },
-	TextPrice: func(percent float64, text string) string { return text },
-	Tag:       func(v string) string { return v },
+	Text:       func(v string) string { return v },
+	TextLight:  func(v string) string { return v },
+	TextLabel:  func(v string) string { return v },
+	TextBold:   func(v string) string { return v },
+	TextLine:   func(v string) string { return v },
+	TextHeader: func(v string) string { return v },
+	TextPrice:  func(percent float64, text string) string { return text },
+	Tag:        func(v string) string { return v },
 }
 
 var _ = Describe("Row", func() {
@@ -181,7 +182,7 @@ var _ = Describe("Row", func() {
 
 							view := stripANSI(outputRow.View())
 							Expect(view).To(ContainSubstring("AAPL"), "output was: %q", view)
-							Expect(view).To(ContainSubstring("1500.00"), "output was: %q", view)
+							Expect(view).To(ContainSubstring("1,500.00"), "output was: %q", view)
 							Expect(cmd).ToNot(BeNil())
 
 							// Simulate frame updates
@@ -196,7 +197,7 @@ var _ = Describe("Row", func() {
 							view = stripANSI(outputRow.View())
 							Expect(cmd).To(BeNil(), "expected cmd to be nil after final frame, got: %v", cmd)
 							Expect(view).To(ContainSubstring("AAPL"), "output was: %q", view)
-							Expect(view).To(ContainSubstring("1500.00"), "output was: %q", view)
+							Expect(view).To(ContainSubstring("1,500.00"), "output was: %q", view)
 						})
 
 					})

@@ -81,7 +81,7 @@ func Validate(config *c.Config, options *Options, prevErr *error) func(*cobra.Co
 			return *prevErr
 		}
 
-		if len(config.Watchlist) == 0 && len(options.Watchlist) == 0 && len(config.Lots) == 0 && len(config.AssetGroup) == 0 {
+		if len(config.Watchlist) == 0 && len(options.Watchlist) == 0 && len(config.Lots) == 0 && len(config.AssetGroup) == 0 && config.SnapTrade.ClientID == "" {
 			return errors.New("invalid config: No watchlist provided") //nolint:goerr113
 		}
 
@@ -129,6 +129,7 @@ func GetDependencies() c.Dependencies {
 		MonitorYahooSessionConsentURL:    "https://consent.yahoo.com",
 		MonitorPriceCoinbaseBaseURL:      "https://api.coinbase.com",
 		MonitorPriceCoinbaseStreamingURL: "wss://ws-feed.exchange.coinbase.com",
+		SnapTradeBaseURL:                 "https://api.snaptrade.com/api/v1",
 	}
 }
 
@@ -150,6 +151,9 @@ func GetContext(d c.Dependencies, config c.Config) (c.Context, error) {
 		}
 	}
 
+	// SnapTrade accounts and their holdings are fetched asynchronously by the UI
+	// (see FetchSnapTradeAccountGroups / LoadSnapTradeAccountGroup) so a slow
+	// brokerage API doesn't block startup; getGroups builds config-derived groups only.
 	cache := cache.New(d.Fs, cache.FilePath(), cacheEnabled(config.Cache))
 
 	groups, err = getGroups(config, d, cache)
@@ -268,28 +272,64 @@ func getCacheOption(noCacheFlag bool, configValue *bool) *bool {
 }
 
 func getConfigPath(fs afero.Fs, configPathOption string) (string, error) {
-	var err error
 	if configPathOption != "" {
 		return configPathOption, nil
 	}
 
 	home, _ := homedir.Dir()
 
-	v := viper.New()
-	v.SetFs(fs)
-	v.SetConfigType("yaml")
-	v.AddConfigPath(home)
-	v.AddConfigPath(".")
-	v.AddConfigPath(xdg.ConfigHome)
-	v.AddConfigPath(xdg.ConfigHome + "/ticker")
-	v.SetConfigName(".ticker")
-	err = v.ReadInConfig()
+	// Documented default is always ~/.config/ticker/config.yaml. On macOS,
+	// adrg/xdg maps ConfigHome to ~/Library/Application Support, so that
+	// platform path is searched as well. Legacy .ticker.yaml locations are
+	// kept for backward compatibility.
+	dotConfigTicker := home + "/.config/ticker"
+	xdgTicker := xdg.ConfigHome + "/ticker"
 
-	if err != nil {
-		return "", fmt.Errorf("invalid config: %w", err)
+	searches := []struct {
+		name  string
+		paths []string
+	}{
+		{name: "config", paths: uniquePaths(dotConfigTicker, xdgTicker)},
+		{name: ".ticker", paths: uniquePaths(home, ".", home+"/.config", xdg.ConfigHome, dotConfigTicker, xdgTicker)},
 	}
 
-	return v.ConfigFileUsed(), nil
+	var err error
+
+	for _, search := range searches {
+		v := viper.New()
+		v.SetFs(fs)
+		v.SetConfigType("yaml")
+		for _, path := range search.paths {
+			v.AddConfigPath(path)
+		}
+		v.SetConfigName(search.name)
+
+		if err = v.ReadInConfig(); err == nil {
+			return v.ConfigFileUsed(), nil
+		}
+	}
+
+	return "", fmt.Errorf("invalid config: %w", err)
+}
+
+// uniquePaths returns paths with empty strings and duplicates removed,
+// preserving order so search precedence stays stable.
+func uniquePaths(paths ...string) []string {
+	seen := make(map[string]struct{}, len(paths))
+	out := make([]string, 0, len(paths))
+
+	for _, p := range paths {
+		if p == "" {
+			continue
+		}
+		if _, ok := seen[p]; ok {
+			continue
+		}
+		seen[p] = struct{}{}
+		out = append(out, p)
+	}
+
+	return out
 }
 
 func getRefreshInterval(optionsRefreshInterval int, configRefreshInterval int) int {
@@ -353,47 +393,56 @@ func getGroups(config c.Config, d c.Dependencies, cache c.Cache) ([]c.AssetGroup
 	configAssetGroups = append(configAssetGroups, config.AssetGroup...)
 
 	for _, configAssetGroup := range configAssetGroups {
-
-		symbols := make(map[string]bool)
-		symbolsUnique := make(map[c.QuoteSource]c.AssetGroupSymbolsBySource)
-		var assetGroupSymbolsBySource []c.AssetGroupSymbolsBySource
-
-		for _, symbol := range configAssetGroup.Watchlist {
-			if !symbols[symbol] {
-				symbols[symbol] = true
-				symbolAndSource := getSymbolAndSource(symbol, tickerSymbolToSourceSymbol)
-				symbolsUnique = appendSymbol(symbolsUnique, symbolAndSource)
-			}
-		}
-
-		lots := configAssetGroup.Lots
-		mergedConfigAssetGroup := configAssetGroup
-		if len(lots) == 0 {
-			lots = configAssetGroup.Holdings
-			mergedConfigAssetGroup.Lots = lots
-		}
-
-		for _, lot := range lots {
-			if !symbols[lot.Symbol] {
-				symbols[lot.Symbol] = true
-				symbolAndSource := getSymbolAndSource(lot.Symbol, tickerSymbolToSourceSymbol)
-				symbolsUnique = appendSymbol(symbolsUnique, symbolAndSource)
-			}
-		}
-
-		for _, symbolsBySource := range symbolsUnique {
-			assetGroupSymbolsBySource = append(assetGroupSymbolsBySource, symbolsBySource)
-		}
-
-		groups = append(groups, c.AssetGroup{
-			ConfigAssetGroup: mergedConfigAssetGroup,
-			SymbolsBySource:  assetGroupSymbolsBySource,
-		})
-
+		groups = append(groups, buildAssetGroup(configAssetGroup, tickerSymbolToSourceSymbol))
 	}
 
 	return groups, nil
 
+}
+
+// buildAssetGroup resolves each symbol in a config group to its quote source,
+// producing a runtime AssetGroup. Shared by config-derived groups and SnapTrade groups.
+func buildAssetGroup(configAssetGroup c.ConfigAssetGroup, tickerSymbolToSourceSymbol symbol.TickerSymbolToSourceSymbol) c.AssetGroup {
+
+	symbols := make(map[string]bool)
+	symbolsUnique := make(map[c.QuoteSource]c.AssetGroupSymbolsBySource)
+	var assetGroupSymbolsBySource []c.AssetGroupSymbolsBySource
+
+	appendUnique := func(sym string) {
+		if !symbols[sym] {
+			symbols[sym] = true
+			symbolsUnique = appendSymbol(symbolsUnique, getSymbolAndSource(sym, tickerSymbolToSourceSymbol))
+		}
+	}
+
+	// Prefer Lots; fall back to the deprecated Holdings field for backwards compatibility
+	lots := configAssetGroup.Lots
+	mergedConfigAssetGroup := configAssetGroup
+	if len(lots) == 0 {
+		lots = configAssetGroup.Holdings
+		mergedConfigAssetGroup.Lots = lots
+	}
+
+	for _, sym := range configAssetGroup.Watchlist {
+		appendUnique(sym)
+	}
+
+	for _, lot := range lots {
+		appendUnique(lot.Symbol)
+	}
+
+	for _, option := range configAssetGroup.Options {
+		appendUnique(option.Symbol)
+	}
+
+	for _, symbolsBySource := range symbolsUnique {
+		assetGroupSymbolsBySource = append(assetGroupSymbolsBySource, symbolsBySource)
+	}
+
+	return c.AssetGroup{
+		ConfigAssetGroup: mergedConfigAssetGroup,
+		SymbolsBySource:  assetGroupSymbolsBySource,
+	}
 }
 
 func getLogger(d c.Dependencies) (*log.Logger, error) {

@@ -1,7 +1,9 @@
 package asset
 
 import (
+	"strconv"
 	"strings"
+	"time"
 
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 )
@@ -31,6 +33,7 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Pos
 	assets := make([]c.Asset, 0)
 	summaryValues := make([]float64, 0) // per-asset value expressed in the summary/display currency, used for weights
 	lotsBySymbol := getLots(lots)
+	optionsBySymbol := getOptions(assetGroupQuote.AssetGroup.ConfigAssetGroup.Options)
 	orderIndex := make(map[string]int)
 
 	for i, lot := range lots {
@@ -39,11 +42,21 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Pos
 		}
 	}
 
-	for i, symbol := range assetGroupQuote.AssetGroup.ConfigAssetGroup.Watchlist {
-		if _, exists := orderIndex[symbol]; !exists {
-			orderIndex[strings.ToLower(symbol)] = i + len(lots)
+	optionOffset := len(lots)
+	for i, option := range assetGroupQuote.AssetGroup.ConfigAssetGroup.Options {
+		if _, exists := orderIndex[option.Symbol]; !exists {
+			orderIndex[strings.ToLower(option.Symbol)] = optionOffset + i
 		}
 	}
+
+	watchlistOffset := optionOffset + len(assetGroupQuote.AssetGroup.ConfigAssetGroup.Options)
+	for i, symbol := range assetGroupQuote.AssetGroup.ConfigAssetGroup.Watchlist {
+		if _, exists := orderIndex[symbol]; !exists {
+			orderIndex[strings.ToLower(symbol)] = watchlistOffset + i
+		}
+	}
+
+	watchlistSet := getWatchlistSet(assetGroupQuote.AssetGroup.ConfigAssetGroup.Watchlist)
 
 	for _, assetQuote := range assetGroupQuote.AssetQuotes {
 
@@ -51,27 +64,58 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Pos
 
 		position := getPositionFromAssetQuote(assetQuote, lotsBySymbol, currencyRateByUse)
 		positionSummary = addPositionToPositionSummary(positionSummary, position, currencyRateByUse)
-		summaryValues = append(summaryValues, position.Value*currencyRateByUse.SummaryValue)
 
-		assets = append(assets, c.Asset{
-			Name:   assetQuote.Name,
-			Symbol: assetQuote.Symbol,
-			Class:  assetQuote.Class,
-			Currency: c.Currency{
-				FromCurrencyCode: assetQuote.Currency.FromCurrencyCode,
-				ToCurrencyCode:   currencyRateByUse.ToCurrencyCode,
-			},
-			Position:      position,
-			QuotePrice:    convertAssetQuotePriceCurrency(currencyRateByUse, assetQuote.QuotePrice),
-			QuoteExtended: convertAssetQuoteExtendedCurrency(currencyRateByUse, assetQuote.QuoteExtended),
-			QuoteFutures:  assetQuote.QuoteFutures,
-			QuoteSource:   assetQuote.QuoteSource,
-			Exchange:      assetQuote.Exchange,
-			Meta: c.Meta{
-				IsVariablePrecision: assetQuote.Meta.IsVariablePrecision,
-				OrderIndex:          orderIndex[strings.ToLower(assetQuote.Symbol)],
-			},
-		})
+		currency := c.Currency{
+			FromCurrencyCode: assetQuote.Currency.FromCurrencyCode,
+			ToCurrencyCode:   currencyRateByUse.ToCurrencyCode,
+		}
+		quotePrice := convertAssetQuotePriceCurrency(currencyRateByUse, assetQuote.QuotePrice)
+		quoteExtended := convertAssetQuoteExtendedCurrency(currencyRateByUse, assetQuote.QuoteExtended)
+		meta := c.Meta{
+			IsVariablePrecision: assetQuote.Meta.IsVariablePrecision,
+			OrderIndex:          orderIndex[strings.ToLower(assetQuote.Symbol)],
+		}
+
+		options := optionsBySymbol[assetQuote.Symbol]
+		_, isPosition := lotsBySymbol[assetQuote.Symbol]
+		isWatchlist := watchlistSet[strings.ToUpper(assetQuote.Symbol)]
+
+		// Emit a non-option row for plain quotes, positions, and watchlist entries.
+		// A symbol present solely as an option underlying gets only its option rows.
+		if len(options) == 0 || isPosition || isWatchlist {
+			assets = append(assets, c.Asset{
+				Name:          assetQuote.Name,
+				Symbol:        assetQuote.Symbol,
+				Class:         assetQuote.Class,
+				Currency:      currency,
+				Position:      position,
+				QuotePrice:    quotePrice,
+				QuoteExtended: quoteExtended,
+				QuoteFutures:  assetQuote.QuoteFutures,
+				QuoteSource:   assetQuote.QuoteSource,
+				Exchange:      assetQuote.Exchange,
+				Meta:          meta,
+			})
+			summaryValues = append(summaryValues, position.Value*currencyRateByUse.SummaryValue)
+		}
+
+		// Emit one row per option contract on this underlying so multiple options
+		// (and a position held on the same underlying) each get their own row.
+		for _, option := range options {
+			assets = append(assets, c.Asset{
+				Name:          optionLabel(option),
+				Symbol:        assetQuote.Symbol,
+				Class:         c.AssetClassOption,
+				Currency:      currency,
+				QuotePrice:    quotePrice,
+				QuoteExtended: quoteExtended,
+				QuoteOption:   computeQuoteOption(option, assetQuote.QuotePrice.Price),
+				QuoteSource:   assetQuote.QuoteSource,
+				Exchange:      assetQuote.Exchange,
+				Meta:          meta,
+			})
+			summaryValues = append(summaryValues, 0) // options don't contribute a position value/weight
+		}
 
 	}
 
@@ -79,6 +123,39 @@ func GetAssets(ctx c.Context, assetGroupQuote c.AssetGroupQuote) ([]c.Asset, Pos
 
 	return assets, positionSummary
 
+}
+
+func getWatchlistSet(watchlist []string) map[string]bool {
+
+	watchlistSet := make(map[string]bool, len(watchlist))
+
+	for _, symbol := range watchlist {
+		watchlistSet[strings.ToUpper(symbol)] = true
+	}
+
+	return watchlistSet
+}
+
+// optionLabel builds a compact display name that distinguishes options on the
+// same underlying (e.g. "CALL 417.5 07/10"). The row's Symbol stays the underlying.
+func optionLabel(option c.Option) string {
+
+	label := strings.ToUpper(option.Type) + " " + strconv.FormatFloat(option.StrikePrice, 'f', -1, 64)
+
+	if expiration := shortExpiration(option.Expiration); expiration != "" {
+		label += " " + expiration
+	}
+
+	return label
+}
+
+func shortExpiration(expiration string) string {
+
+	if date, err := time.Parse("2006-01-02", expiration); err == nil {
+		return date.Format("01/02")
+	}
+
+	return expiration
 }
 
 // calculateChangePercent calculates the percentage change, returning 0 if base is 0 to avoid division by zero
@@ -215,4 +292,42 @@ func getLots(lots []c.Lot) map[string]AggregatedLot {
 	}
 
 	return aggregatedLots
+}
+
+func getOptions(options []c.Option) map[string][]c.Option {
+
+	optionsBySymbol := map[string][]c.Option{}
+
+	for _, option := range options {
+		optionsBySymbol[option.Symbol] = append(optionsBySymbol[option.Symbol], option)
+	}
+
+	return optionsBySymbol
+}
+
+// computeQuoteOption derives the display values for a single option contract
+// against the current underlying price.
+func computeQuoteOption(option c.Option, underlyingPrice float64) c.QuoteOption {
+
+	// Calculate breakeven price
+	// For a call: breakeven = strike + premium
+	// For a put: breakeven = strike - premium
+	breakevenPrice := option.StrikePrice
+	switch strings.ToLower(option.Type) {
+	case "call":
+		breakevenPrice = option.StrikePrice + option.Premium
+	case "put":
+		breakevenPrice = option.StrikePrice - option.Premium
+	}
+
+	return c.QuoteOption{
+		StrikePrice:    option.StrikePrice,
+		BreakevenPrice: breakevenPrice,
+		Type:           option.Type,
+		Premium:        option.Premium,
+		CurrentPremium: option.CurrentPremium,
+		Contracts:      option.Contracts,
+		DiffToStrike:   underlyingPrice - option.StrikePrice,
+		Expiration:     option.Expiration,
+	}
 }

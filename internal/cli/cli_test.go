@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/adrg/xdg"
 	"github.com/mitchellh/go-homedir"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -69,7 +70,7 @@ var _ = Describe("Cli", func() {
 			ExtraInfoExchange:     false,
 			ExtraInfoFundamentals: false,
 			ShowSummary:           false,
-			ShowPositions:          false,
+			ShowPositions:         false,
 			Sort:                  "",
 		}
 		dep = c.Dependencies{
@@ -503,6 +504,33 @@ var _ = Describe("Cli", func() {
 
 						Expect(outputErr).NotTo(HaveOccurred())
 						Expect(outputConfig).To(Equal(c.Config{RefreshInterval: 5, Cache: &cacheEnabled}))
+					})
+				})
+				When("there is a config file in the XDG ticker directory", func() {
+					It("should read config.yaml from the primary location", func() {
+						inputConfigPath := ""
+						configDir := xdg.ConfigHome + "/ticker"
+						depLocal.Fs.MkdirAll(configDir, 0755)
+						afero.WriteFile(depLocal.Fs, configDir+"/config.yaml", []byte("watchlist:\n  - PLTR"), 0644)
+						outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
+
+						Expect(outputConfig.Watchlist).To(Equal([]string{"PLTR"}))
+						Expect(outputErr).To(BeNil())
+					})
+				})
+				When("there is a config file in ~/.config/ticker", func() {
+					It("should read config.yaml from the documented default location", func() {
+						// On macOS, xdg.ConfigHome is ~/Library/Application Support,
+						// not ~/.config. The documented default path must still work.
+						inputHome, _ := homedir.Dir()
+						inputConfigPath := ""
+						configDir := inputHome + "/.config/ticker"
+						depLocal.Fs.MkdirAll(configDir, 0755)
+						afero.WriteFile(depLocal.Fs, configDir+"/config.yaml", []byte("watchlist:\n  - TSLA"), 0644)
+						outputConfig, outputErr := GetConfig(depLocal, inputConfigPath, cli.Options{})
+
+						Expect(outputConfig.Watchlist).To(Equal([]string{"TSLA"}))
+						Expect(outputErr).To(BeNil())
 					})
 				})
 				When("there is a config file in the home directory", func() {

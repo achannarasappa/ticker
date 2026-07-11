@@ -6,9 +6,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/achannarasappa/ticker/v5/internal/cache"
 	"github.com/achannarasappa/ticker/v5/internal/cli/symbol"
 	c "github.com/achannarasappa/ticker/v5/internal/common"
-	"github.com/achannarasappa/ticker/v5/internal/cache"
 	"github.com/onsi/gomega/ghttp"
 	"github.com/spf13/afero"
 )

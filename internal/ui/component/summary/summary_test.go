@@ -20,13 +20,14 @@ func removeFormatting(text string) string {
 var _ = Describe("Summary", func() {
 
 	ctxFixture := c.Context{Reference: c.Reference{Styles: c.Styles{
-		Text:      func(v string) string { return v },
-		TextLight: func(v string) string { return v },
-		TextLabel: func(v string) string { return v },
-		TextBold:  func(v string) string { return v },
-		TextLine:  func(v string) string { return v },
-		TextPrice: func(percent float64, text string) string { return text },
-		Tag:       func(v string) string { return v },
+		Text:       func(v string) string { return v },
+		TextLight:  func(v string) string { return v },
+		TextLabel:  func(v string) string { return v },
+		TextBold:   func(v string) string { return v },
+		TextLine:   func(v string) string { return v },
+		TextHeader: func(v string) string { return v },
+		TextPrice:  func(percent float64, text string) string { return text },
+		Tag:        func(v string) string { return v },
 	}}}
 
 	When("the change is positive", func() {
@@ -46,7 +47,7 @@ var _ = Describe("Summary", func() {
 				},
 			}))
 			Expect(removeFormatting(m.View())).To(Equal(strings.Join([]string{
-				"Day Change: ↑ 100.00 (10.00%) • Change: ↑ 9000.00 (1000.00%)  • Value: 10000.00  • Cost: 1000.00  ",
+				"Day Change: ↑ 100.00 (10.00%) • Change: ↑ 9,000.00 (1,000.00%)  • Value: 10,000.00  • Cost: 1,000.00  ",
 				"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
 			}, "\n")))
 		})
@@ -69,7 +70,7 @@ var _ = Describe("Summary", func() {
 				},
 			}))
 			Expect(removeFormatting(m.View())).To(Equal(strings.Join([]string{
-				"Day Change: ↓ -100.00 (-10.00%) • Change: ↓ -9000.00 (-1000.00%)  • Value: 1000.00  • Cost: 10000.00",
+				"Day Change: ↓ -100.00 (-10.00%) • Change: ↓ -9,000.00 (-1,000.00%)  • Value: 1,000.00  • Cost: 10,000.00",
 				"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
 			}, "\n")))
 		})

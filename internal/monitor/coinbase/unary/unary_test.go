@@ -136,7 +136,7 @@ var _ = Describe("Unary", func() {
 									ProductType:    "FUTURE",
 									FutureProductDetails: unary.ResponseQuoteFutureProductDetails{
 										ContractRootUnit: "BTC",
-										ContractSize:      "0.01",
+										ContractSize:     "0.01",
 									},
 								},
 							},
@@ -171,7 +171,7 @@ var _ = Describe("Unary", func() {
 									ProductType:    "FUTURE",
 									FutureProductDetails: unary.ResponseQuoteFutureProductDetails{
 										ContractRootUnit: "BTC",
-										ContractSize:      "", // Empty string should default to 1.0
+										ContractSize:     "", // Empty string should default to 1.0
 									},
 								},
 							},

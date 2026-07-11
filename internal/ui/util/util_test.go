@@ -11,13 +11,14 @@ import (
 var _ = Describe("Util", func() {
 
 	stylesFixture := c.Styles{
-		Text:      func(v string) string { return v },
-		TextLight: func(v string) string { return v },
-		TextLabel: func(v string) string { return v },
-		TextBold:  func(v string) string { return v },
-		TextLine:  func(v string) string { return v },
-		TextPrice: func(percent float64, text string) string { return text },
-		Tag:       func(v string) string { return v },
+		Text:       func(v string) string { return v },
+		TextLight:  func(v string) string { return v },
+		TextLabel:  func(v string) string { return v },
+		TextBold:   func(v string) string { return v },
+		TextLine:   func(v string) string { return v },
+		TextHeader: func(v string) string { return v },
+		TextPrice:  func(percent float64, text string) string { return text },
+		Tag:        func(v string) string { return v },
 	}
 
 	Describe("ConvertFloatToString", func() {
@@ -62,6 +63,29 @@ var _ = Describe("Util", func() {
 			It("should append a M when the value is over a trillion", func() {
 				output := ConvertFloatToString(43523398000000, true)
 				Expect(output).To(Equal("43.523 T"))
+			})
+		})
+
+		When("formatting with comma delimiters", func() {
+			It("should add commas for thousands", func() {
+				output := ConvertFloatToStringWithCommas(1000.00, false)
+				Expect(output).To(Equal("1,000.00"))
+			})
+			It("should add commas for millions", func() {
+				output := ConvertFloatToStringWithCommas(1234567.89, false)
+				Expect(output).To(Equal("1,234,567.89"))
+			})
+			It("should add commas for negative numbers", func() {
+				output := ConvertFloatToStringWithCommas(-1234567.89, false)
+				Expect(output).To(Equal("-1,234,567.89"))
+			})
+			It("should not add commas for numbers under 1000", func() {
+				output := ConvertFloatToStringWithCommas(999.99, false)
+				Expect(output).To(Equal("999.99"))
+			})
+			It("should add commas with variable precision", func() {
+				output := ConvertFloatToStringWithCommas(5432.10, true)
+				Expect(output).To(Equal("5,432.10"))
 			})
 		})
 

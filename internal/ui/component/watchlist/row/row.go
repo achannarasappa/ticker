@@ -1,6 +1,7 @@
 package row
 
 import (
+	"math"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -84,7 +85,7 @@ func New(config Config) *Model {
 		id:                   id,
 		width:                80,
 		config:               config,
-		priceNoChangeSegment: u.ConvertFloatToString(config.Asset.QuotePrice.Price, config.Asset.Meta.IsVariablePrecision),
+		priceNoChangeSegment: u.ConvertFloatToStringWithCommas(config.Asset.QuotePrice.Price, config.Asset.Meta.IsVariablePrecision),
 		priceChangeSegment:   "",
 	}
 }
@@ -111,8 +112,8 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 			m.priceStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("15")).Background(lipgloss.Color(""))
 			m.frame = 0
 
-			oldPrice := u.ConvertFloatToString(m.config.Asset.QuotePrice.Price, m.config.Asset.Meta.IsVariablePrecision)
-			newPrice := u.ConvertFloatToString(msg.QuotePrice.Price, msg.Meta.IsVariablePrecision)
+			oldPrice := u.ConvertFloatToStringWithCommas(m.config.Asset.QuotePrice.Price, m.config.Asset.Meta.IsVariablePrecision)
+			newPrice := u.ConvertFloatToStringWithCommas(msg.QuotePrice.Price, msg.Meta.IsVariablePrecision)
 
 			if msg.QuotePrice.Price > m.config.Asset.QuotePrice.Price {
 				m.priceChangeDirection = 1
@@ -147,7 +148,7 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 
 		// If symbol has changed or price has not changed then just update the asset
 		m.config.Asset = msg
-		m.priceNoChangeSegment = u.ConvertFloatToString(msg.QuotePrice.Price, msg.Meta.IsVariablePrecision)
+		m.priceNoChangeSegment = u.ConvertFloatToStringWithCommas(msg.QuotePrice.Price, msg.Meta.IsVariablePrecision)
 		m.priceChangeSegment = ""
 
 		return m, nil
@@ -288,47 +289,46 @@ func (m *Model) buildCells() []grid.Cell {
 	}
 
 	if m.config.ExtraInfoFundamentals {
-		cells = append(
-			[]grid.Cell{
-				{
-					Text:            textVolumeMarketCapLabels(m.config.Asset, m.config.Styles),
-					Width:           WidthLabel,
-					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (6 * WidthGutter) + (3 * WidthLabel) + m.cellWidths.WidthQuoteRange + m.cellWidths.WidthVolumeMarketCap,
-				},
-				{
-					Text:            textVolumeMarketCap(m.config.Asset),
-					Width:           m.cellWidths.WidthVolumeMarketCap,
-					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (5 * WidthGutter) + (2 * WidthLabel) + m.cellWidths.WidthQuoteRange + m.cellWidths.WidthVolumeMarketCap,
-				},
-				{
-					Text:            textQuoteRangeLabels(m.config.Asset, m.config.Styles),
-					Width:           WidthLabel,
-					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (4 * WidthGutter) + (2 * WidthLabel) + m.cellWidths.WidthQuoteRange,
-				},
-				{
-					Text:            textQuoteRange(m.config.Asset, m.config.Styles),
-					Width:           m.cellWidths.WidthQuoteRange,
-					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (3 * WidthGutter) + WidthLabel + m.cellWidths.WidthQuoteRange,
-				},
-				{
-					Text:            textQuoteExtendedLabels(m.config.Asset, m.config.Styles),
-					Width:           WidthLabel,
-					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (2 * WidthGutter) + WidthLabel,
-				},
-				{
-					Text:            textQuoteExtended(m.config.Asset, m.config.Styles),
-					Width:           m.cellWidths.WidthQuoteExtended,
-					Align:           grid.Right,
-					VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + WidthGutter,
-				},
+		fundamentalCells := []grid.Cell{
+			{
+				Text:            textVolumeMarketCapLabels(m.config.Asset, m.config.Styles),
+				Width:           WidthLabel,
+				Align:           grid.Right,
+				VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (6 * WidthGutter) + (3 * WidthLabel) + m.cellWidths.WidthQuoteRange + m.cellWidths.WidthVolumeMarketCap,
 			},
-			cells...,
-		)
+			{
+				Text:            textVolumeMarketCap(m.config.Asset, m.config.Styles),
+				Width:           m.cellWidths.WidthVolumeMarketCap,
+				Align:           grid.Right,
+				VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (5 * WidthGutter) + (2 * WidthLabel) + m.cellWidths.WidthQuoteRange + m.cellWidths.WidthVolumeMarketCap,
+			},
+			{
+				Text:            textQuoteRangeLabels(m.config.Asset, m.config.Styles),
+				Width:           WidthLabel,
+				Align:           grid.Right,
+				VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (4 * WidthGutter) + (2 * WidthLabel) + m.cellWidths.WidthQuoteRange,
+			},
+			{
+				Text:            textQuoteRange(m.config.Asset, m.config.Styles),
+				Width:           m.cellWidths.WidthQuoteRange,
+				Align:           grid.Right,
+				VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (3 * WidthGutter) + WidthLabel + m.cellWidths.WidthQuoteRange,
+			},
+			{
+				Text:            textQuoteExtendedLabels(m.config.Asset, m.config.Styles),
+				Width:           WidthLabel,
+				Align:           grid.Right,
+				VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + (2 * WidthGutter) + WidthLabel,
+			},
+			{
+				Text:            textQuoteExtended(m.config.Asset, m.config.Styles),
+				Width:           m.cellWidths.WidthQuoteExtended,
+				Align:           grid.Right,
+				VisibleMinWidth: widthMinTerm + m.cellWidths.WidthQuoteExtended + WidthGutter,
+			},
+		}
+
+		cells = append(fundamentalCells, cells...)
 	}
 
 	cells = append(
@@ -354,7 +354,24 @@ func textName(asset *c.Asset, styles c.Styles) string {
 func textQuote(asset *c.Asset, styles c.Styles, priceStyle lipgloss.Style, priceNoChangeSegment string, priceChangeSegment string) string {
 	return priceNoChangeSegment + priceStyle.Render(priceChangeSegment) +
 		"\n" +
-		quoteChangeText(asset.QuotePrice.Change, asset.QuotePrice.ChangePercent, asset.Meta.IsVariablePrecision, styles)
+		textQuoteChange(asset, styles)
+}
+
+// textQuoteChange is the secondary line under the price. For options with a
+// known mark, this is premium P&L (current − cost) rather than the underlying's
+// day move — that's what you care about for the contract.
+func textQuoteChange(asset *c.Asset, styles c.Styles) string {
+	if asset.Class == c.AssetClassOption && asset.QuoteOption.CurrentPremium != 0.0 {
+		change := asset.QuoteOption.CurrentPremium - asset.QuoteOption.Premium
+		changePercent := 0.0
+		if asset.QuoteOption.Premium != 0.0 {
+			changePercent = (change / asset.QuoteOption.Premium) * 100
+		}
+
+		return quoteChangeText(change, changePercent, asset.Meta.IsVariablePrecision, styles)
+	}
+
+	return quoteChangeText(asset.QuotePrice.Change, asset.QuotePrice.ChangePercent, asset.Meta.IsVariablePrecision, styles)
 }
 
 func textPosition(asset *c.Asset, styles c.Styles) string {
@@ -380,28 +397,47 @@ func textPosition(asset *c.Asset, styles c.Styles) string {
 
 func textQuoteExtended(asset *c.Asset, styles c.Styles) string {
 
+	// Premiums sit next to the price column so cost vs mark is easy to scan
+	// against the premium change shown under the underlying.
+	if asset.Class == c.AssetClassOption {
+		currentPremium := "-"
+		if asset.QuoteOption.CurrentPremium != 0.0 {
+			currentPremium = u.ConvertFloatToStringWithCommas(asset.QuoteOption.CurrentPremium, asset.Meta.IsVariablePrecision)
+		}
+
+		return styles.Text(u.ConvertFloatToStringWithCommas(asset.QuoteOption.Premium, asset.Meta.IsVariablePrecision)) +
+			"\n" +
+			styles.Text(currentPremium)
+	}
+
 	if asset.Class == c.AssetClassFuturesContract && asset.QuoteFutures.IndexPrice == 0.0 {
 		return ""
 	}
 
 	if asset.Class == c.AssetClassFuturesContract {
-		return styles.Text(u.ConvertFloatToString(asset.QuoteFutures.IndexPrice, asset.Meta.IsVariablePrecision)) +
+		return styles.Text(u.ConvertFloatToStringWithCommas(asset.QuoteFutures.IndexPrice, asset.Meta.IsVariablePrecision)) +
 			"\n" +
-			styles.Text(u.ConvertFloatToString(asset.QuoteFutures.Basis, false)) + "%"
+			styles.Text(u.ConvertFloatToStringWithCommas(asset.QuoteFutures.Basis, false)) + "%"
 	}
 
 	if asset.QuotePrice.PriceOpen == 0.0 {
-		return styles.Text(u.ConvertFloatToString(asset.QuotePrice.PricePrevClose, asset.Meta.IsVariablePrecision)) +
+		return styles.Text(u.ConvertFloatToStringWithCommas(asset.QuotePrice.PricePrevClose, asset.Meta.IsVariablePrecision)) +
 			"\n"
 	}
 
-	return styles.Text(u.ConvertFloatToString(asset.QuotePrice.PricePrevClose, asset.Meta.IsVariablePrecision)) +
+	return styles.Text(u.ConvertFloatToStringWithCommas(asset.QuotePrice.PricePrevClose, asset.Meta.IsVariablePrecision)) +
 		"\n" +
-		styles.Text(u.ConvertFloatToString(asset.QuotePrice.PriceOpen, asset.Meta.IsVariablePrecision))
+		styles.Text(u.ConvertFloatToStringWithCommas(asset.QuotePrice.PriceOpen, asset.Meta.IsVariablePrecision))
 
 }
 
 func textQuoteExtendedLabels(asset *c.Asset, styles c.Styles) string {
+
+	if asset.Class == c.AssetClassOption {
+		return styles.TextLabel("Premium:") +
+			"\n" +
+			styles.TextLabel("Cur. Premium:")
+	}
 
 	if asset.Class == c.AssetClassFuturesContract && asset.QuoteFutures.IndexPrice == 0.0 {
 		return ""
@@ -425,6 +461,18 @@ func textQuoteExtendedLabels(asset *c.Asset, styles c.Styles) string {
 
 func textPositionExtended(asset *c.Asset, styles c.Styles) string {
 
+	// Options reuse this column (aligning with a holding's Avg Cost / Quantity)
+	// to show the contract count and total premium.
+	if asset.Class == c.AssetClassOption {
+		const sharesPerContract = 100
+		contracts := math.Abs(asset.QuoteOption.Contracts)
+		totalPremium := math.Abs(asset.QuoteOption.Premium * asset.QuoteOption.Contracts * sharesPerContract)
+
+		return styles.Text(strconv.FormatFloat(contracts, 'f', 0, 64)) +
+			"\n" +
+			styles.Text(u.ConvertFloatToStringWithCommas(totalPremium, asset.Meta.IsVariablePrecision))
+	}
+
 	if asset.Position.Quantity == 0.0 {
 		return ""
 	}
@@ -437,6 +485,12 @@ func textPositionExtended(asset *c.Asset, styles c.Styles) string {
 
 func textPositionExtendedLabels(asset *c.Asset, styles c.Styles) string {
 
+	if asset.Class == c.AssetClassOption {
+		return styles.TextLabel("Contracts:") +
+			"\n" +
+			styles.TextLabel("Total Premium:")
+	}
+
 	if asset.Position.Quantity == 0.0 {
 		return ""
 	}
@@ -448,12 +502,19 @@ func textPositionExtendedLabels(asset *c.Asset, styles c.Styles) string {
 
 func textQuoteRange(asset *c.Asset, styles c.Styles) string {
 
+	// Moneyness pair: distance to strike alongside ITM/ATM/OTM.
+	if asset.Class == c.AssetClassOption {
+		return u.ConvertFloatToStringWithCommas(asset.QuoteOption.DiffToStrike, asset.Meta.IsVariablePrecision) +
+			"\n" +
+			textMoneyness(asset, styles)
+	}
+
 	if asset.Class == c.AssetClassFuturesContract {
 
 		if asset.QuotePrice.PriceDayHigh != 0.0 && asset.QuotePrice.PriceDayLow != 0.0 {
-			return u.ConvertFloatToString(asset.QuotePrice.PriceDayLow, asset.Meta.IsVariablePrecision) +
+			return u.ConvertFloatToStringWithCommas(asset.QuotePrice.PriceDayLow, asset.Meta.IsVariablePrecision) +
 				styles.Text(" - ") +
-				u.ConvertFloatToString(asset.QuotePrice.PriceDayHigh, asset.Meta.IsVariablePrecision) +
+				u.ConvertFloatToStringWithCommas(asset.QuotePrice.PriceDayHigh, asset.Meta.IsVariablePrecision) +
 				"\n" +
 				asset.QuoteFutures.Expiry
 		}
@@ -463,13 +524,13 @@ func textQuoteRange(asset *c.Asset, styles c.Styles) string {
 	}
 
 	if asset.QuotePrice.PriceDayHigh != 0.0 && asset.QuotePrice.PriceDayLow != 0.0 {
-		return u.ConvertFloatToString(asset.QuotePrice.PriceDayLow, asset.Meta.IsVariablePrecision) +
+		return u.ConvertFloatToStringWithCommas(asset.QuotePrice.PriceDayLow, asset.Meta.IsVariablePrecision) +
 			styles.Text(" - ") +
-			u.ConvertFloatToString(asset.QuotePrice.PriceDayHigh, asset.Meta.IsVariablePrecision) +
+			u.ConvertFloatToStringWithCommas(asset.QuotePrice.PriceDayHigh, asset.Meta.IsVariablePrecision) +
 			"\n" +
-			u.ConvertFloatToString(asset.QuoteExtended.FiftyTwoWeekLow, asset.Meta.IsVariablePrecision) +
+			u.ConvertFloatToStringWithCommas(asset.QuoteExtended.FiftyTwoWeekLow, asset.Meta.IsVariablePrecision) +
 			styles.Text(" - ") +
-			u.ConvertFloatToString(asset.QuoteExtended.FiftyTwoWeekHigh, asset.Meta.IsVariablePrecision)
+			u.ConvertFloatToStringWithCommas(asset.QuoteExtended.FiftyTwoWeekHigh, asset.Meta.IsVariablePrecision)
 	}
 
 	return ""
@@ -477,6 +538,12 @@ func textQuoteRange(asset *c.Asset, styles c.Styles) string {
 }
 
 func textQuoteRangeLabels(asset *c.Asset, styles c.Styles) string {
+
+	if asset.Class == c.AssetClassOption {
+		return styles.TextLabel("Strike Diff:") +
+			"\n" +
+			styles.TextLabel("Status:")
+	}
 
 	if asset.Class == c.AssetClassFuturesContract {
 
@@ -498,19 +565,32 @@ func textQuoteRangeLabels(asset *c.Asset, styles c.Styles) string {
 	return ""
 }
 
-func textVolumeMarketCap(asset *c.Asset) string {
+func textVolumeMarketCap(asset *c.Asset, styles c.Styles) string {
 
-	if asset.Class == c.AssetClassFuturesContract {
-		return u.ConvertFloatToString(asset.QuoteFutures.OpenInterest, true) +
+	// Contract definition pair: strike and breakeven.
+	if asset.Class == c.AssetClassOption {
+		return styles.Text(u.ConvertFloatToStringWithCommas(asset.QuoteOption.StrikePrice, asset.Meta.IsVariablePrecision)) +
 			"\n" +
-			u.ConvertFloatToString(asset.QuoteExtended.Volume, true)
+			styles.Text(u.ConvertFloatToStringWithCommas(asset.QuoteOption.BreakevenPrice, asset.Meta.IsVariablePrecision))
 	}
 
-	return u.ConvertFloatToString(asset.QuoteExtended.MarketCap, true) +
+	if asset.Class == c.AssetClassFuturesContract {
+		return u.ConvertFloatToStringWithCommas(asset.QuoteFutures.OpenInterest, true) +
+			"\n" +
+			u.ConvertFloatToStringWithCommas(asset.QuoteExtended.Volume, true)
+	}
+
+	return u.ConvertFloatToStringWithCommas(asset.QuoteExtended.MarketCap, true) +
 		"\n" +
-		u.ConvertFloatToString(asset.QuoteExtended.Volume, true)
+		u.ConvertFloatToStringWithCommas(asset.QuoteExtended.Volume, true)
 }
 func textVolumeMarketCapLabels(asset *c.Asset, styles c.Styles) string {
+
+	if asset.Class == c.AssetClassOption {
+		return styles.TextLabel("Strike Price:") +
+			"\n" +
+			styles.TextLabel("Breakeven:")
+	}
 
 	if asset.Class == c.AssetClassFuturesContract {
 		return styles.TextLabel("Open Interest:") +
@@ -521,6 +601,31 @@ func textVolumeMarketCapLabels(asset *c.Asset, styles c.Styles) string {
 	return styles.TextLabel("Market Cap:") +
 		"\n" +
 		styles.TextLabel("Volume:")
+}
+
+// textMoneyness returns whether an option is in, at, or out of the money based on
+// the underlying's distance from the strike. In-the-money is emphasized.
+func textMoneyness(asset *c.Asset, styles c.Styles) string {
+
+	diffToStrike := asset.QuoteOption.DiffToStrike
+
+	if diffToStrike == 0.0 {
+		return styles.Text("ATM")
+	}
+
+	inTheMoney := false
+	switch strings.ToLower(asset.QuoteOption.Type) {
+	case "call":
+		inTheMoney = diffToStrike > 0.0
+	case "put":
+		inTheMoney = diffToStrike < 0.0
+	}
+
+	if inTheMoney {
+		return styles.Text("ITM")
+	}
+
+	return styles.TextLight("OTM")
 }
 
 func textMarketState(asset *c.Asset, styles c.Styles) string {
@@ -537,14 +642,14 @@ func textMarketState(asset *c.Asset, styles c.Styles) string {
 
 func quoteChangeText(change float64, changePercent float64, isVariablePrecision bool, styles c.Styles) string {
 	if change == 0.0 {
-		return styles.TextPrice(changePercent, "  "+u.ConvertFloatToString(change, isVariablePrecision)+" ("+u.ConvertFloatToString(changePercent, false)+"%)")
+		return styles.TextPrice(changePercent, "  "+u.ConvertFloatToStringWithCommas(change, isVariablePrecision)+" ("+u.ConvertFloatToStringWithCommas(changePercent, false)+"%)")
 	}
 
 	if change > 0.0 {
-		return styles.TextPrice(changePercent, "↑ "+u.ConvertFloatToString(change, isVariablePrecision)+" ("+u.ConvertFloatToString(changePercent, false)+"%)")
+		return styles.TextPrice(changePercent, "↑ "+u.ConvertFloatToStringWithCommas(change, isVariablePrecision)+" ("+u.ConvertFloatToStringWithCommas(changePercent, false)+"%)")
 	}
 
-	return styles.TextPrice(changePercent, "↓ "+u.ConvertFloatToString(change, isVariablePrecision)+" ("+u.ConvertFloatToString(changePercent, false)+"%)")
+	return styles.TextPrice(changePercent, "↓ "+u.ConvertFloatToStringWithCommas(change, isVariablePrecision)+" ("+u.ConvertFloatToStringWithCommas(changePercent, false)+"%)")
 }
 
 func textSeparator(width int, styles c.Styles) string {

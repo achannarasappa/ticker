@@ -16,10 +16,14 @@ import (
 type Model struct {
 	width   int
 	summary asset.PositionSummary
+	header  string
 	styles  c.Styles
 }
 
 type SetSummaryMsg asset.PositionSummary
+
+// SetHeaderMsg sets a right-aligned label on the summary row (e.g. the current account)
+type SetHeaderMsg string
 
 // NewModel returns a model with default values
 func NewModel(ctx c.Context) *Model {
@@ -45,6 +49,10 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 		m.summary = asset.PositionSummary(msg)
 
 		return m, nil
+	case SetHeaderMsg:
+		m.header = string(msg)
+
+		return m, nil
 	}
 
 	return m, nil
@@ -62,32 +70,43 @@ func (m *Model) View() string {
 		m.styles.TextLabel("Change: ") + quoteChangeText(m.summary.TotalChange.Amount, m.summary.TotalChange.Percent, m.styles)
 	widthChange := ansi.PrintableRuneWidth(textChange)
 	textValue := m.styles.TextLabel(" • ") +
-		m.styles.TextLabel("Value: ") + m.styles.TextLabel(u.ConvertFloatToString(m.summary.Value, false))
+		m.styles.TextLabel("Value: ") + m.styles.TextLabel(u.ConvertFloatToStringWithCommas(m.summary.Value, false))
 	widthValue := ansi.PrintableRuneWidth(textValue)
 	textCost := m.styles.TextLabel(" • ") +
-		m.styles.TextLabel("Cost: ") + m.styles.TextLabel(u.ConvertFloatToString(m.summary.Cost, false))
+		m.styles.TextLabel("Cost: ") + m.styles.TextLabel(u.ConvertFloatToStringWithCommas(m.summary.Cost, false))
 	widthCost := ansi.PrintableRuneWidth(textValue)
+
+	summaryCells := []grid.Cell{
+		{
+			Text:  textChange,
+			Width: widthChange,
+		},
+		{
+			Text:            textValue,
+			Width:           widthValue,
+			VisibleMinWidth: widthChange + widthValue,
+		},
+		{
+			Text:            textCost,
+			Width:           widthCost,
+			VisibleMinWidth: widthChange + widthValue + widthCost,
+		},
+	}
+
+	// Right-aligned account label (e.g. the SnapTrade account), where there is room
+	if m.header != "" {
+		summaryCells = append(summaryCells, grid.Cell{
+			Text:            m.styles.TextLabel(m.header),
+			Align:           grid.Right,
+			VisibleMinWidth: widthChange + widthValue + widthCost + ansi.PrintableRuneWidth(m.header),
+		})
+	}
 
 	return grid.Render(grid.Grid{
 		Rows: []grid.Row{
 			{
 				Width: m.width,
-				Cells: []grid.Cell{
-					{
-						Text:  textChange,
-						Width: widthChange,
-					},
-					{
-						Text:            textValue,
-						Width:           widthValue,
-						VisibleMinWidth: widthChange + widthValue,
-					},
-					{
-						Text:            textCost,
-						Width:           widthCost,
-						VisibleMinWidth: widthChange + widthValue + widthCost,
-					},
-				},
+				Cells: summaryCells,
 			},
 			{
 				Width: m.width,
@@ -103,12 +122,12 @@ func (m *Model) View() string {
 
 func quoteChangeText(change float64, changePercent float64, styles c.Styles) string {
 	if change == 0.0 {
-		return styles.TextLabel(u.ConvertFloatToString(change, false) + " (" + u.ConvertFloatToString(changePercent, false) + "%)")
+		return styles.TextLabel(u.ConvertFloatToStringWithCommas(change, false) + " (" + u.ConvertFloatToStringWithCommas(changePercent, false) + "%)")
 	}
 
 	if change > 0.0 {
-		return styles.TextPrice(changePercent, "↑ "+u.ConvertFloatToString(change, false)+" ("+u.ConvertFloatToString(changePercent, false)+"%)")
+		return styles.TextPrice(changePercent, "↑ "+u.ConvertFloatToStringWithCommas(change, false)+" ("+u.ConvertFloatToStringWithCommas(changePercent, false)+"%)")
 	}
 
-	return styles.TextPrice(changePercent, "↓ "+u.ConvertFloatToString(change, false)+" ("+u.ConvertFloatToString(changePercent, false)+"%)")
+	return styles.TextPrice(changePercent, "↓ "+u.ConvertFloatToStringWithCommas(change, false)+" ("+u.ConvertFloatToStringWithCommas(changePercent, false)+"%)")
 }

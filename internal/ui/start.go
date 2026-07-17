@@ -25,6 +25,9 @@ func Start(dep *c.Dependencies, ctx *c.Context, version string) func() error {
 				BaseURL:      dep.MonitorPriceCoinbaseBaseURL,
 				StreamingURL: dep.MonitorPriceCoinbaseStreamingURL,
 			},
+			ConfigMonitorPriceCoinPaprika: mon.ConfigMonitorPriceCoinPaprika{
+				BaseURL: dep.MonitorPriceCoinPaprikaBaseURL,
+			},
 		})
 
 		p := tea.NewProgram(

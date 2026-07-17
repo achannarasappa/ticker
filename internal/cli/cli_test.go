@@ -302,6 +302,7 @@ var _ = Describe("Cli", func() {
 						"  - ADA.CB",             // coinbase
 						"  - BIT-31JAN25-CDE.CB", // coinbase futures
 						"  - SOL.X",              // ticker
+						"  - BTC.CP",             // coinpaprika
 					}, "\n"),
 					AssertionErr: BeNil(),
 					AssertionCtx: g.MatchFields(g.IgnoreExtras, g.Fields{
@@ -323,6 +324,12 @@ var _ = Describe("Cli", func() {
 											"2": Equal("SOL-USD"),
 										}),
 										"Source": Equal(c.QuoteSourceCoinbase),
+									}),
+									"6": g.MatchFields(g.IgnoreExtras, g.Fields{
+										"Symbols": g.MatchAllElementsWithIndex(g.IndexIdentity, g.Elements{
+											"0": Equal("BTC"),
+										}),
+										"Source": Equal(c.QuoteSourceCoinPaprika),
 									}),
 								}),
 							}),

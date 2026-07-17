@@ -99,6 +99,7 @@ type Dependencies struct {
 	GitHubReleasesURL                string
 	MonitorPriceCoinbaseBaseURL      string
 	MonitorPriceCoinbaseStreamingURL string
+	MonitorPriceCoinPaprikaBaseURL   string
 	MonitorYahooBaseURL              string
 	MonitorYahooSessionRootURL       string
 	MonitorYahooSessionCrumbURL      string
@@ -262,6 +263,7 @@ const (
 	QuoteSourceUnknown
 	QuoteSourceCoinCap
 	QuoteSourceCoinbase
+	QuoteSourceCoinPaprika
 )
 
 // AssetQuote represents a price quote and related attributes for a single security

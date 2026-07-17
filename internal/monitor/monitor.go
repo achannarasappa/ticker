@@ -10,10 +10,16 @@ import (
 
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 	monitorPriceCoinbase "github.com/achannarasappa/ticker/v5/internal/monitor/coinbase/monitor-price"
+	monitorPriceCoinPaprika "github.com/achannarasappa/ticker/v5/internal/monitor/coinpaprika/monitor-price"
 	monitorCurrencyRate "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-currency-rates"
 	monitorPriceYahoo "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/monitor-price"
 	unaryClientYahoo "github.com/achannarasappa/ticker/v5/internal/monitor/yahoo/unary"
 )
+
+// refreshIntervalMinCoinPaprika is the minimum polling interval for the
+// CoinPaprika monitor; CoinPaprika API responses are cached upstream for
+// around 30 seconds so polling faster only returns cached data
+const refreshIntervalMinCoinPaprika = 30 * time.Second
 
 // Monitor represents an overall monitor which manages API specific monitors
 type Monitor struct {
@@ -39,6 +45,7 @@ type ConfigMonitor struct {
 	Logger          *log.Logger
 	Cache           c.Cache
 	ConfigMonitorPriceCoinbase
+	ConfigMonitorPriceCoinPaprika
 	ConfigMonitorsYahoo
 }
 
@@ -46,6 +53,11 @@ type ConfigMonitor struct {
 type ConfigMonitorPriceCoinbase struct {
 	BaseURL      string
 	StreamingURL string
+}
+
+// ConfigMonitorPriceCoinPaprika represents the configuration for the CoinPaprika monitor
+type ConfigMonitorPriceCoinPaprika struct {
+	BaseURL string
 }
 
 // ConfigMonitorsYahoo represents the configuration for the Yahoo monitors (price and currency rate)
@@ -85,6 +97,24 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 		monitorPriceCoinbase.WithRefreshInterval(time.Duration(configMonitor.RefreshInterval)*time.Second),
 	)
 
+	// CoinPaprika quotes only refresh upstream about every 30 seconds so poll no faster than that
+	refreshIntervalCoinPaprika := time.Duration(configMonitor.RefreshInterval) * time.Second
+	if refreshIntervalCoinPaprika < refreshIntervalMinCoinPaprika {
+		refreshIntervalCoinPaprika = refreshIntervalMinCoinPaprika
+	}
+
+	coinpaprika := monitorPriceCoinPaprika.NewMonitorPriceCoinPaprika(
+		monitorPriceCoinPaprika.Config{
+			Ctx:                      ctx,
+			UnaryURL:                 configMonitor.ConfigMonitorPriceCoinPaprika.BaseURL,
+			ChanError:                chanError,
+			ChanUpdateAssetQuote:     chanUpdateAssetQuote,
+			ChanRequestCurrencyRates: chanRequestCurrencyRate,
+			Cache:                    configMonitor.Cache,
+		},
+		monitorPriceCoinPaprika.WithRefreshInterval(refreshIntervalCoinPaprika),
+	)
+
 	// Create and configure the API client for the Yahoo API shared between monitors
 	unaryAPI := unaryClientYahoo.NewUnaryAPI(unaryClientYahoo.Config{
 		BaseURL:           configMonitor.ConfigMonitorsYahoo.BaseURL,
@@ -121,8 +151,9 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 
 	m := &Monitor{
 		monitors: map[c.QuoteSource]c.Monitor{
-			c.QuoteSourceCoinbase: coinbase,
-			c.QuoteSourceYahoo:    yahoo,
+			c.QuoteSourceCoinbase:    coinbase,
+			c.QuoteSourceCoinPaprika: coinpaprika,
+			c.QuoteSourceYahoo:       yahoo,
 		},
 		monitorCurrencyRate:     yahooCurrencyRate,
 		chanUpdateAssetQuote:    chanUpdateAssetQuote,

@@ -169,6 +169,7 @@ Watchlists and lots can be grouped in `.ticker.yml` under the `groups` property.
 * `.X` - symbols with this suffix are shorthand symbols that are specific to ticker and intended to provide more concise and familiar symbols for popular assets (e.g. using `SOL.X` rather than `SOLANA.CG`)
   * The full list of ticker symbols can be found [here](https://github.com/achannarasappa/ticker-static/blob/master/symbols.csv). Initial values are populated with the top cryptocurrencies by volume on Coinbase at the time of update
 * `.CB` - symbols with this suffix will use Coinbase as the data source. The symbol can be found by searching for the asset on [Coinbase](https://www.coinbase.com/explore/s/listed) and finding the symbol for the asset. (e.g. for Starknet check the [market page](https://www.coinbase.com/advanced-trade/spot/STRK-USD) to find the symbol `STRK` and set the symbol to `STRK.CB` in ticker).
+* `.CP` - symbols with this suffix will use [CoinPaprika](https://coinpaprika.com) as the data source. Use the asset's ticker symbol (e.g. `BTC.CP`, `ETH.CP`) and ticker will resolve it to the highest ranked coin on CoinPaprika with that exact symbol. CoinPaprika aggregates prices across exchanges and covers 12,000+ cryptocurrencies including assets that are not listed on Coinbase. The free CoinPaprika API refreshes quotes every few minutes so ticker polls it no faster than every 30 seconds regardless of the configured refresh interval.
 
 Note: Coincap (`.CC`) and CoinGecko (`.CG`) are no longer supported after v5.0.0
 

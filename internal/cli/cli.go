@@ -129,6 +129,7 @@ func GetDependencies() c.Dependencies {
 		MonitorYahooSessionConsentURL:    "https://consent.yahoo.com",
 		MonitorPriceCoinbaseBaseURL:      "https://api.coinbase.com",
 		MonitorPriceCoinbaseStreamingURL: "wss://ws-feed.exchange.coinbase.com",
+		MonitorPriceCoinPaprikaBaseURL:   "https://api.coinpaprika.com",
 	}
 }
 
@@ -427,6 +428,14 @@ func getSymbolAndSource(symbol string, tickerSymbolToSourceSymbol symbol.TickerS
 		return symbolSource{
 			source: c.QuoteSourceCoinbase,
 			symbol: symbol + "-USD",
+		}
+	}
+
+	if strings.HasSuffix(symbolUppercase, ".CP") {
+
+		return symbolSource{
+			source: c.QuoteSourceCoinPaprika,
+			symbol: symbolUppercase[:len(symbolUppercase)-3],
 		}
 	}
 

@@ -7,6 +7,7 @@ interval: 5
 
 # Symbols to watch. Symbols with no suffix use Yahoo Finance.
 # Suffix .CB to use Coinbase (e.g. BTC-USD.CB becomes BTC-USD on Coinbase).
+# Suffix .CP to use CoinPaprika (e.g. BTC.CP resolves to the top ranked coin with symbol BTC).
 # Suffix .X to use ticker shorthand symbols for popular crypto assets (e.g. SOL.X).
 # Full list of .X symbols: https://github.com/achannarasappa/ticker-static/blob/master/symbols.csv
 watchlist:

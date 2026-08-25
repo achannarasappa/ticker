@@ -3,6 +3,7 @@ package updater
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/achannarasappa/ticker/v5/internal/cache"
@@ -45,9 +46,11 @@ func Check(currentVersion, releasesURL, cacheFilePath string, fs afero.Fs) strin
 }
 
 // newerVersion returns latest when it differs from currentVersion, otherwise an
-// empty string.
+// empty string. The leading "v" is ignored on both sides: release binaries are
+// built with a version stripped of that prefix while the GitHub tag keeps it,
+// so comparing the raw strings would report an update on every release.
 func newerVersion(latest, currentVersion string) string {
-	if latest != currentVersion {
+	if strings.TrimPrefix(latest, "v") != strings.TrimPrefix(currentVersion, "v") {
 		return latest
 	}
 

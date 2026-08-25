@@ -2,6 +2,7 @@ package updater_test
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -114,6 +115,25 @@ var _ = Describe("Check", func() {
 			)
 			output := updater.Check(currentVersion, server.URL()+"/releases/latest", cacheFilePath, fs)
 			Expect(output).To(BeEmpty())
+		})
+	})
+
+	When("the current version is a release build without the v prefix", func() {
+		// Release binaries are built with the version stripped of its leading
+		// "v" while the GitHub tag keeps it, so the two must still compare equal.
+		It("should return empty when the latest version only differs by that prefix", func() {
+			server.SetHandler(0,
+				ghttp.CombineHandlers(
+					ghttp.RespondWithJSONEncoded(http.StatusOK, map[string]string{"tag_name": currentVersion}),
+				),
+			)
+			output := updater.Check(strings.TrimPrefix(currentVersion, "v"), server.URL()+"/releases/latest", cacheFilePath, fs)
+			Expect(output).To(BeEmpty())
+		})
+
+		It("should still return the latest version when a newer one is available", func() {
+			output := updater.Check(strings.TrimPrefix(currentVersion, "v"), server.URL()+"/releases/latest", cacheFilePath, fs)
+			Expect(output).To(Equal(latestVersion))
 		})
 	})
 })

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync/atomic"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -392,6 +393,7 @@ var _ = Describe("Monitor", func() {
 					},
 				})
 				Expect(err).NotTo(HaveOccurred())
+				defer m.Stop()
 
 				err = m.SetAssetGroup(c.AssetGroup{
 					SymbolsBySource: []c.AssetGroupSymbolsBySource{
@@ -451,6 +453,7 @@ var _ = Describe("Monitor", func() {
 					},
 				})
 				Expect(err).NotTo(HaveOccurred())
+				defer m.Stop()
 
 				err = m.SetAssetGroup(c.AssetGroup{
 					SymbolsBySource: []c.AssetGroupSymbolsBySource{
@@ -463,9 +466,159 @@ var _ = Describe("Monitor", func() {
 
 		})
 
+		When("setting symbols fails at first and succeeds later", func() {
+
+			It("should keep retrying and send the asset group quote once the symbols are set", func() {
+
+				// Fail the first two requests, as an unreachable or rate limited API would at startup
+				var requestsToFail atomic.Int32
+				requestsToFail.Store(2)
+
+				serverYahoo.RouteToHandler("GET", "/v7/finance/quote",
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/v7/finance/quote"),
+						func(w http.ResponseWriter, req *http.Request) {
+							if requestsToFail.Add(-1) >= 0 {
+								w.Write([]byte("not a quote response"))
+
+								return
+							}
+							json.NewEncoder(w).Encode(yahooQuoteResponse(req.URL.Query().Get("symbols")))
+						},
+					),
+				)
+
+				m, err := monitor.NewMonitor(monitor.ConfigMonitor{
+					RefreshInterval: 1,
+					TargetCurrency:  "USD",
+					ConfigMonitorPriceCoinbase: monitor.ConfigMonitorPriceCoinbase{
+						BaseURL:      serverCoinbase.URL(),
+						StreamingURL: "ws://" + wsServer.URL[7:],
+					},
+					ConfigMonitorsYahoo: monitor.ConfigMonitorsYahoo{
+						BaseURL:           serverYahoo.URL(),
+						SessionRootURL:    serverYahoo.URL(),
+						SessionCrumbURL:   serverYahoo.URL(),
+						SessionConsentURL: serverYahoo.URL(),
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				defer m.Stop()
+
+				assetGroupQuotes := make(chan c.AssetGroupQuote, 10)
+				err = m.SetOnUpdate(monitor.ConfigUpdateFns{
+					OnUpdateAssetQuote: func(symbol string, assetQuote c.AssetQuote, versionVector int) {},
+					OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, versionVector int) {
+						assetGroupQuotes <- assetGroupQuote
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				err = m.SetAssetGroup(c.AssetGroup{
+					SymbolsBySource: []c.AssetGroupSymbolsBySource{
+						{Source: c.QuoteSourceYahoo, Symbols: []string{"AAPL"}},
+					},
+				}, 0)
+				Expect(err).To(MatchError(ContainSubstring("errors setting symbols")))
+
+				var assetGroupQuote c.AssetGroupQuote
+				Eventually(assetGroupQuotes, 5*time.Second).Should(Receive(&assetGroupQuote))
+				Expect(assetGroupQuote.AssetQuotes).To(HaveLen(1))
+				Expect(assetGroupQuote.AssetQuotes[0].Symbol).To(Equal("AAPL"))
+			})
+
+		})
+
+		When("a newer asset group is set while an earlier one is being retried", func() {
+
+			It("should stop retrying the earlier asset group", func() {
+
+				var failAAPL atomic.Bool
+				failAAPL.Store(true)
+
+				serverYahoo.RouteToHandler("GET", "/v7/finance/quote",
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/v7/finance/quote"),
+						func(w http.ResponseWriter, req *http.Request) {
+							symbols := req.URL.Query().Get("symbols")
+							if symbols == "AAPL" && failAAPL.Load() {
+								w.Write([]byte("not a quote response"))
+
+								return
+							}
+							json.NewEncoder(w).Encode(yahooQuoteResponse(symbols))
+						},
+					),
+				)
+
+				m, err := monitor.NewMonitor(monitor.ConfigMonitor{
+					RefreshInterval: 1,
+					TargetCurrency:  "USD",
+					ConfigMonitorPriceCoinbase: monitor.ConfigMonitorPriceCoinbase{
+						BaseURL:      serverCoinbase.URL(),
+						StreamingURL: "ws://" + wsServer.URL[7:],
+					},
+					ConfigMonitorsYahoo: monitor.ConfigMonitorsYahoo{
+						BaseURL:           serverYahoo.URL(),
+						SessionRootURL:    serverYahoo.URL(),
+						SessionCrumbURL:   serverYahoo.URL(),
+						SessionConsentURL: serverYahoo.URL(),
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				defer m.Stop()
+
+				versionVectors := make(chan int, 10)
+				err = m.SetOnUpdate(monitor.ConfigUpdateFns{
+					OnUpdateAssetQuote: func(symbol string, assetQuote c.AssetQuote, versionVector int) {},
+					OnUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, versionVector int) {
+						versionVectors <- versionVector
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				err = m.SetAssetGroup(c.AssetGroup{
+					SymbolsBySource: []c.AssetGroupSymbolsBySource{
+						{Source: c.QuoteSourceYahoo, Symbols: []string{"AAPL"}},
+					},
+				}, 0)
+				Expect(err).To(HaveOccurred())
+
+				err = m.SetAssetGroup(c.AssetGroup{
+					SymbolsBySource: []c.AssetGroupSymbolsBySource{
+						{Source: c.QuoteSourceYahoo, Symbols: []string{"MSFT"}},
+					},
+				}, 1)
+				Expect(err).NotTo(HaveOccurred())
+				Eventually(versionVectors).Should(Receive(Equal(1)))
+
+				// The earlier asset group would load now, if it were still being retried
+				failAAPL.Store(false)
+				Consistently(versionVectors, 3*time.Second).ShouldNot(Receive())
+			})
+
+		})
+
 	})
 
 })
+
+// yahooQuoteResponse builds a Yahoo Finance quote response with one quote for the symbol
+func yahooQuoteResponse(symbol string) unary.Response {
+	return unary.Response{
+		QuoteResponse: unary.ResponseQuoteResponse{
+			Quotes: []unary.ResponseQuote{
+				{
+					Symbol:             symbol,
+					ShortName:          symbol,
+					MarketState:        "REGULAR",
+					Currency:           "USD",
+					RegularMarketPrice: unary.ResponseFieldFloat{Raw: 150.00, Fmt: "150.00"},
+				},
+			},
+		},
+	}
+}
 
 // setupCoinbaseMockHandler sets up a mock handler for Coinbase API responses
 func setupCoinbaseMockHandler(server *ghttp.Server) {

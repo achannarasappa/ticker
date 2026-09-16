@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	c "github.com/achannarasappa/ticker/v5/internal/common"
@@ -26,6 +27,9 @@ type Monitor struct {
 	onUpdateAssetGroupQuote func(assetGroupQuote c.AssetGroupQuote, versionVector int)
 	assetGroupVersionVector int
 	assetGroup              c.AssetGroup
+	requestedVersionVector  int          // versionVector of the asset group most recently requested with SetAssetGroup
+	attemptsInFlight        atomic.Int32 // attempts to set an asset group with a call to a monitor still running
+	refreshInterval         time.Duration
 	mu                      sync.RWMutex
 	logger                  *log.Logger
 	ctx                     context.Context
@@ -130,6 +134,7 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 		chanError:               chanError,
 		onUpdateAssetGroupQuote: func(assetGroupQuote c.AssetGroupQuote, versionVector int) {},
 		onUpdateAssetQuote:      func(symbol string, assetQuote c.AssetQuote, versionVector int) {},
+		refreshInterval:         getRetryInterval(configMonitor.RefreshInterval),
 		logger:                  configMonitor.Logger,
 		ctx:                     ctx,
 		cancel:                  cancel,
@@ -139,7 +144,71 @@ func NewMonitor(configMonitor ConfigMonitor) (*Monitor, error) {
 }
 
 // SetAssetGroup sets the asset group for the monitor
+//
+// If the symbols cannot be set on every monitor, for example because an API is unreachable or
+// rate limited when ticker starts, the error is returned and setting the asset group is retried
+// at the refresh interval until it succeeds or a newer asset group is set. Otherwise nothing
+// would request quotes for the asset group again and the watchlist would stay empty.
 func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, versionVector int) error {
+	m.mu.Lock()
+	m.requestedVersionVector = versionVector
+	m.mu.Unlock()
+
+	err := m.setAssetGroup(assetGroup, versionVector)
+
+	if err != nil {
+		go m.retrySetAssetGroup(assetGroup, versionVector)
+	}
+
+	return err
+}
+
+// retrySetAssetGroup sets the asset group at the refresh interval until it succeeds, a newer asset group is requested, or the monitor is stopped
+func (m *Monitor) retrySetAssetGroup(assetGroup c.AssetGroup, versionVector int) {
+	ticker := time.NewTicker(m.refreshInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-m.ctx.Done():
+
+			return
+		case <-ticker.C:
+			if m.isSuperseded(versionVector) {
+
+				return
+			}
+
+			// Let an earlier attempt that timed out finish rather than setting symbols on the same monitors concurrently
+			if m.attemptsInFlight.Load() > 0 {
+
+				continue
+			}
+
+			err := m.setAssetGroup(assetGroup, versionVector)
+
+			if err == nil {
+
+				return
+			}
+
+			if m.logger != nil {
+				m.logger.Printf("%v", err)
+			}
+		}
+	}
+}
+
+// isSuperseded returns true if an asset group newer than the one with versionVector has been requested
+func (m *Monitor) isSuperseded(versionVector int) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return versionVector != m.requestedVersionVector
+}
+
+// setAssetGroup makes one attempt to set the symbols for each monitor and to send the asset group quote
+func (m *Monitor) setAssetGroup(assetGroup c.AssetGroup, versionVector int) error {
 	var wg sync.WaitGroup
 
 	// Create a channel for timeout
@@ -148,6 +217,9 @@ func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, versionVector int) erro
 	chanError := make(chan error, len(assetGroup.SymbolsBySource))
 	// Create a slice to collect errors
 	var errors []error
+
+	// Count this attempt as in flight until every monitor has returned, which can be after a timeout
+	m.attemptsInFlight.Add(1)
 
 	// Concurrently set symbols for each monitor (execute a synchronous call to update quotes for each monitor)
 	for _, symbolBySource := range assetGroup.SymbolsBySource {
@@ -166,6 +238,7 @@ func (m *Monitor) SetAssetGroup(assetGroup c.AssetGroup, versionVector int) erro
 	// Wait for the waitgroup to finish in the background
 	go func() {
 		wg.Wait()
+		m.attemptsInFlight.Add(-1)
 		close(done)
 	}()
 
@@ -193,6 +266,12 @@ Continue:
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	// Do not replace an asset group that was requested after this one
+	if versionVector != m.requestedVersionVector {
+
+		return nil
+	}
 
 	// Update the versionVector so that any messages from the previous asset group can be ignored
 	m.assetGroupVersionVector = versionVector
@@ -305,4 +384,13 @@ func (m *Monitor) Stop() {
 
 	m.cancel()
 
+}
+
+// getRetryInterval returns how often to retry setting an asset group: the refresh interval, or five seconds when none is set
+func getRetryInterval(refreshInterval int) time.Duration {
+	if refreshInterval <= 0 {
+		return 5 * time.Second
+	}
+
+	return time.Duration(refreshInterval) * time.Second
 }

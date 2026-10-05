@@ -100,6 +100,7 @@ func NewMonitorPriceCoinbase(config Config, opts ...Option) *MonitorPriceCoinbas
 	streamerConfig := streamer.StreamerConfig{
 		ChanStreamUpdateQuotePrice:    monitor.chanStreamUpdateQuotePrice,
 		ChanStreamUpdateQuoteExtended: monitor.chanStreamUpdateQuoteExtended,
+		ChanError:                     monitor.chanError,
 	}
 
 	monitor.streamer = streamer.NewStreamer(ctx, streamerConfig)
@@ -245,6 +246,7 @@ func (m *MonitorPriceCoinbase) Stop() error {
 	}
 
 	m.cancel()
+	m.streamer.Stop()
 
 	return nil
 }

@@ -2,7 +2,9 @@ package streamer_test
 
 import (
 	"context"
+	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -12,6 +14,7 @@ import (
 	c "github.com/achannarasappa/ticker/v5/internal/common"
 	streamer "github.com/achannarasappa/ticker/v5/internal/monitor/coinbase/monitor-price/streamer"
 	testWs "github.com/achannarasappa/ticker/v5/test/websocket"
+	"github.com/gorilla/websocket"
 )
 
 var _ = Describe("Streamer", func() {
@@ -38,6 +41,7 @@ var _ = Describe("Streamer", func() {
 		})
 
 		AfterEach(func() {
+			s.Stop()
 			inputServer.Close()
 		})
 
@@ -181,6 +185,7 @@ var _ = Describe("Streamer", func() {
 		})
 
 		AfterEach(func() {
+			s.Stop()
 			inputServer.Close()
 		})
 
@@ -219,7 +224,194 @@ var _ = Describe("Streamer", func() {
 				err = s.SetURL("wss://example.com")
 				Expect(err).To(MatchError("cannot set URL while streamer is connected"))
 
+				s.Stop()
 				inputServer.Close()
+			})
+		})
+	})
+
+	Describe("Stop", func() {
+		It("should stop the streamer without an error", func() {
+			inputServer = testWs.NewTestServer([]string{})
+			s = streamer.NewStreamer(context.Background(), streamer.StreamerConfig{})
+			s.SetURL("ws://" + inputServer.URL[7:])
+			err := s.Start()
+			Expect(err).NotTo(HaveOccurred())
+
+			s.Stop()
+			inputServer.Close()
+		})
+	})
+
+	Describe("Error recovery and reconnect signaling", func() {
+		inputTick := `{
+			"type": "ticker",
+			"sequence": 37475248783,
+			"product_id": "ETH-USD",
+			"price": "1285.22",
+			"open_24h": "1310.79",
+			"volume_24h": "245532.79269678",
+			"low_24h": "1280.52",
+			"high_24h": "1313.8",
+			"volume_30d": "9788783.60117027",
+			"best_bid": "1285.04",
+			"best_bid_size": "0.46688654",
+			"best_ask": "1285.27",
+			"best_ask_size": "1.56637040",
+			"side": "buy",
+			"time": "2022-10-19T23:28:22.061769Z",
+			"trade_id": 370843401,
+			"last_size": "11.4396987"
+		}`
+
+		When("the websocket connection drops", func() {
+			It("should report the error, reconnect with backoff, and signal on ChanReconnect", func() {
+				upgrader := websocket.Upgrader{
+					CheckOrigin: func(r *http.Request) bool { return true },
+				}
+				var connectionCount atomic.Int32
+
+				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					conn, err := upgrader.Upgrade(w, r, nil)
+					if err != nil {
+						return
+					}
+					count := connectionCount.Add(1)
+					if count == 1 {
+						conn.Close()
+
+						return
+					}
+
+					defer conn.Close()
+					_ = conn.WriteMessage(websocket.TextMessage, []byte(inputTick))
+					time.Sleep(500 * time.Millisecond)
+				}))
+				defer server.Close()
+
+				chanErr := make(chan error, 5)
+				chanReconnect := make(chan struct{}, 5)
+				chanPrice := make(chan c.MessageUpdate[c.QuotePrice], 5)
+				chanExt := make(chan c.MessageUpdate[c.QuoteExtended], 5)
+
+				testStreamer := streamer.NewStreamer(context.Background(), streamer.StreamerConfig{
+					ChanStreamUpdateQuotePrice:    chanPrice,
+					ChanStreamUpdateQuoteExtended: chanExt,
+					ChanError:                     chanErr,
+					ChanReconnect:                 chanReconnect,
+					BackoffMin:                    50 * time.Millisecond,
+					BackoffMax:                    500 * time.Millisecond,
+				})
+				defer testStreamer.Stop()
+
+				err := testStreamer.SetURL("ws://" + server.URL[7:])
+				Expect(err).NotTo(HaveOccurred())
+
+				err = testStreamer.Start()
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(chanErr, 2*time.Second).Should(Receive())
+				Eventually(chanReconnect, 2*time.Second).Should(Receive())
+				Eventually(chanPrice, 2*time.Second).Should(Receive(
+					g.MatchFields(g.IgnoreExtras, g.Fields{
+						"ID": Equal("ETH-USD"),
+						"Data": g.MatchFields(g.IgnoreExtras, g.Fields{
+							"Price": Equal(1285.22),
+						}),
+					}),
+				))
+			})
+		})
+
+		When("ChanError is nil and a websocket error occurs", func() {
+			It("should not block indefinitely and should reconnect successfully", func() {
+				upgrader := websocket.Upgrader{
+					CheckOrigin: func(r *http.Request) bool { return true },
+				}
+				var connectionCount atomic.Int32
+
+				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					conn, err := upgrader.Upgrade(w, r, nil)
+					if err != nil {
+						return
+					}
+					count := connectionCount.Add(1)
+					if count == 1 {
+						conn.Close()
+
+						return
+					}
+
+					defer conn.Close()
+					_ = conn.WriteMessage(websocket.TextMessage, []byte(inputTick))
+					time.Sleep(500 * time.Millisecond)
+				}))
+				defer server.Close()
+
+				chanReconnect := make(chan struct{}, 5)
+				chanPrice := make(chan c.MessageUpdate[c.QuotePrice], 5)
+
+				testStreamer := streamer.NewStreamer(context.Background(), streamer.StreamerConfig{
+					ChanStreamUpdateQuotePrice: chanPrice,
+					ChanError:                  nil,
+					ChanReconnect:              chanReconnect,
+					BackoffMin:                 50 * time.Millisecond,
+					BackoffMax:                 500 * time.Millisecond,
+				})
+				defer testStreamer.Stop()
+
+				err := testStreamer.SetURL("ws://" + server.URL[7:])
+				Expect(err).NotTo(HaveOccurred())
+
+				err = testStreamer.Start()
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(chanReconnect, 2*time.Second).Should(Receive())
+				Eventually(chanPrice, 2*time.Second).Should(Receive(
+					g.MatchFields(g.IgnoreExtras, g.Fields{
+						"ID": Equal("ETH-USD"),
+						"Data": g.MatchFields(g.IgnoreExtras, g.Fields{
+							"Price": Equal(1285.22),
+						}),
+					}),
+				))
+			})
+		})
+
+		When("the streamer is stopped during reconnection", func() {
+			It("should abort reconnect loop cleanly", func() {
+				upgrader := websocket.Upgrader{
+					CheckOrigin: func(r *http.Request) bool { return true },
+				}
+				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					conn, err := upgrader.Upgrade(w, r, nil)
+					if err != nil {
+						return
+					}
+					conn.Close()
+				}))
+				defer server.Close()
+
+				chanErr := make(chan error, 10)
+				testStreamer := streamer.NewStreamer(context.Background(), streamer.StreamerConfig{
+					ChanError:  chanErr,
+					BackoffMin: 50 * time.Millisecond,
+					BackoffMax: 100 * time.Millisecond,
+				})
+
+				err := testStreamer.SetURL("ws://" + server.URL[7:])
+				Expect(err).NotTo(HaveOccurred())
+
+				err = testStreamer.Start()
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(chanErr, 2*time.Second).Should(Receive())
+
+				testStreamer.Stop()
+
+				chanReconnect := make(chan struct{}, 5)
+				testStreamer.SetReconnectChannel(chanReconnect)
+				Consistently(chanReconnect, 200*time.Millisecond).ShouldNot(Receive())
 			})
 		})
 	})

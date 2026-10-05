@@ -528,6 +528,56 @@ var _ = Describe("Monitor Coinbase", func() {
 			})
 		})
 
+		When("the streamer encounters a websocket error after disconnect", func() {
+			It("should report the error to the monitor error channel and stop cleanly", func() {
+				server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/api/v3/brokerage/market/products", "product_ids=ETH-USD"),
+						ghttp.RespondWithJSONEncoded(http.StatusOK, unary.Response{
+							Products: []unary.ResponseQuote{
+								{
+									Symbol:         "ETH",
+									ProductID:      "ETH-USD",
+									ShortName:      "Ethereum",
+									Price:          "1285.22",
+									PriceChange24H: "2.5",
+									Volume24H:      "245532.79",
+									DisplayName:    "Ethereum",
+									MarketState:    "online",
+									Currency:       "USD",
+									ExchangeName:   "CBE",
+									ProductType:    "SPOT",
+								},
+							},
+						}),
+					),
+				)
+
+				disconnectServer := testWs.NewTestServer([]string{})
+				defer disconnectServer.Close()
+
+				chanErr := make(chan error, 10)
+				monitor := monitorPriceCoinbase.NewMonitorPriceCoinbase(monitorPriceCoinbase.Config{
+					UnaryURL:                 server.URL(),
+					Ctx:                      context.Background(),
+					ChanError:                chanErr,
+					ChanRequestCurrencyRates: make(chan []string, 1),
+				},
+					monitorPriceCoinbase.WithRefreshInterval(10*time.Second),
+					monitorPriceCoinbase.WithStreamingURL("ws://"+disconnectServer.URL[7:]),
+				)
+
+				monitor.SetSymbols([]string{"ETH-USD"}, 0)
+				err := monitor.Start()
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(chanErr, 2*time.Second).Should(Receive())
+
+				err = monitor.Stop()
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+
 		When("there is a streaming price update", func() {
 			It("should send the updated price quote to the channel", func() {
 				server.RouteToHandler("GET", "/api/v3/brokerage/market/products",
